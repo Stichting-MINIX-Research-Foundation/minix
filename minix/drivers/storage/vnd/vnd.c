@@ -28,7 +28,7 @@ static unsigned int instance;
 
 static int vnd_open(devminor_t, int);
 static int vnd_close(devminor_t);
-static int vnd_transfer(devminor_t, int, u64_t, endpoint_t, iovec_t *,
+static ssize_t vnd_transfer(devminor_t, int, u64_t, endpoint_t, iovec_t *,
 	unsigned int, int);
 static int vnd_ioctl(devminor_t, unsigned long, endpoint_t, cp_grant_id_t,
 	endpoint_t);
@@ -48,8 +48,7 @@ static struct blockdriver vnd_dtab = {
 /*
  * Parse partition tables.
  */
-static void
-vnd_partition(void)
+static void vnd_partition(void)
 {
 	memset(state.part, 0, sizeof(state.part));
 	memset(state.subpart, 0, sizeof(state.subpart));
@@ -62,8 +61,7 @@ vnd_partition(void)
 /*
  * Open a device.
  */
-static int
-vnd_open(devminor_t minor, int access)
+static int vnd_open(devminor_t minor, int access)
 {
 	/* No sub/partition devices are available before initialization. */
 	if (state.fd == -1 && minor != 0)
@@ -106,8 +104,7 @@ vnd_open(devminor_t minor, int access)
 /*
  * Close a device.
  */
-static int
-vnd_close(devminor_t UNUSED(minor))
+static int vnd_close(devminor_t UNUSED(minor))
 {
 	if (state.openct == 0) {
 		printf("VND%u: closing already-closed device\n", instance);
@@ -126,8 +123,7 @@ vnd_close(devminor_t UNUSED(minor))
  * Copy a number of bytes from or to the caller, to or from the intermediate
  * buffer.  If the given endpoint is SELF, a local memory copy must be made.
  */
-static int
-vnd_copy(iovec_s_t *iov, size_t iov_off, size_t bytes, endpoint_t endpt,
+static int vnd_copy(iovec_t *iov, size_t iov_off, size_t bytes, endpoint_t endpt,
 	int do_write)
 {
 	struct vscp_vec vvec[SCPVEC_NR], *vvp;
@@ -144,7 +140,12 @@ vnd_copy(iovec_s_t *iov, size_t iov_off, size_t bytes, endpoint_t endpt,
 		chunk = MIN(bytes - off, iov->iov_size - iov_off);
 
 		if (endpt == SELF) {
-			ptr = (char *) iov->iov_grant + iov_off;
+			/* For a SELF transfer, iov_addr is a local address.
+			 * It must be read as the full-width vir_bytes iov_addr,
+			 * not the low 32 bits of an iovec_s_t pun: a user-space
+			 * address with bit 31 set would sign-extend into the
+			 * kernel half on amd64 and fault. */
+			ptr = (char *)(uintptr_t) iov->iov_addr + iov_off;
 
 			if (do_write)
 				memcpy(&state.buf[off], ptr, chunk);
@@ -156,7 +157,8 @@ vnd_copy(iovec_s_t *iov, size_t iov_off, size_t bytes, endpoint_t endpt,
 			vvp->v_from = do_write ? endpt : SELF;
 			vvp->v_to = do_write ? SELF : endpt;
 			vvp->v_bytes = chunk;
-			vvp->v_gid = iov->iov_grant;
+			/* For a non-SELF transfer, iov_addr holds the grant ID. */
+			vvp->v_gid = (cp_grant_id_t) iov->iov_addr;
 			vvp->v_offset = iov_off;
 			vvp->v_addr = (vir_bytes) &state.buf[off];
 
@@ -181,8 +183,8 @@ vnd_copy(iovec_s_t *iov, size_t iov_off, size_t bytes, endpoint_t endpt,
  * Advance the given I/O vector, and the offset into its first element, by the
  * given number of bytes.
  */
-static iovec_s_t *
-vnd_advance(iovec_s_t *iov, size_t *iov_offp, size_t bytes)
+static iovec_t *
+vnd_advance(iovec_t *iov, size_t *iov_offp, size_t bytes)
 {
 	size_t iov_off;
 
@@ -208,17 +210,16 @@ vnd_advance(iovec_s_t *iov, size_t *iov_offp, size_t bytes)
 /*
  * Perform data transfer on the selected device.
  */
-static int
-vnd_transfer(devminor_t minor, int do_write, u64_t position,
+static ssize_t vnd_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iovt, unsigned int nr_req, int flags)
 {
 	struct device *dv;
-	iovec_s_t *iov;
+	iovec_t *iov;
 	size_t off, chunk, bytes, iov_off;
 	ssize_t r;
 	unsigned int i;
 
-	iov = (iovec_s_t *) iovt;
+	iov = iovt;
 
 	if (state.fd == -1 || (dv = vnd_part(minor)) == NULL)
 		return ENXIO;
@@ -252,7 +253,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
 	for (off = 0; off < bytes; off += chunk) {
 		chunk = MIN(bytes - off, VND_BUF_SIZE);
 
-		assert((unsigned int) (iov - (iovec_s_t *) iovt) < nr_req);
+		assert((unsigned int) (iov - iovt) < nr_req);
 
 		/* For reads, read in the data for the chunk; possibly less. */
 		if (!do_write) {
@@ -270,7 +271,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
 
 		/* Copy the data for this chunk from or to the caller. */
 		if ((r = vnd_copy(iov, iov_off, chunk, endpt, do_write)) < 0) {
-			printf("VND%u: data copy failed (%d)\n", instance, r);
+			printf("VND%u: data copy failed (%zd)\n", instance, r);
 			return r;
 		}
 
@@ -282,7 +283,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
 			if (r <= 0) {
 				if (r < 0)
 					r = -errno;
-				printf("VND%u: pwrite failed (%d)\n", instance,
+				printf("VND%u: pwrite failed (%zd)\n", instance,
 				    r);
 				return (r < 0) ? r : EIO;
 			}
@@ -307,8 +308,7 @@ vnd_transfer(devminor_t minor, int do_write, u64_t position,
  * user provided a geometry, this will be used; otherwise, a geometry will be
  * computed.
  */
-static int
-vnd_layout(u64_t size, struct vnd_ioctl *vnd)
+static int vnd_layout(u64_t size, struct vnd_ioctl *vnd)
 {
 	u64_t sectors;
 
@@ -356,8 +356,7 @@ vnd_layout(u64_t size, struct vnd_ioctl *vnd)
 /*
  * Process I/O control requests.
  */
-static int
-vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
+static int vnd_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t user_endpt)
 {
 	struct vnd_ioctl vnd;
@@ -516,8 +515,7 @@ vnd_part(devminor_t minor)
 /*
  * Return geometry information.
  */
-static void
-vnd_geometry(devminor_t UNUSED(minor), struct part_geom *part)
+static void vnd_geometry(devminor_t UNUSED(minor), struct part_geom *part)
 {
 	part->cylinders = state.geom.cylinders;
 	part->heads = state.geom.heads;
@@ -527,8 +525,7 @@ vnd_geometry(devminor_t UNUSED(minor), struct part_geom *part)
 /*
  * Initialize the device.
  */
-static int
-vnd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int vnd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	long v;
 
@@ -555,8 +552,7 @@ vnd_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*
  * Process an incoming signal.
  */
-static void
-vnd_signal(int signo)
+static void vnd_signal(int signo)
 {
 
 	/* In case of a termination signal, initiate driver shutdown. */
@@ -573,8 +569,7 @@ vnd_signal(int signo)
 /*
  * Set callbacks and initialize the System Event Framework (SEF).
  */
-static void
-vnd_startup(void)
+static void vnd_startup(void)
 {
 
 	/* Register init and signal callbacks. */
@@ -588,8 +583,7 @@ vnd_startup(void)
 /*
  * Driver task.
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
 	/* Initialize the driver. */

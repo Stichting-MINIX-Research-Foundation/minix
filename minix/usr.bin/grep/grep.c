@@ -1,7 +1,7 @@
 /*	$OpenBSD: grep.c,v 1.45 2012/12/29 01:32:44 millert Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -169,8 +169,7 @@ struct option long_options[] =
 };
 
 
-static void
-add_pattern(char *pat, size_t len)
+static void add_pattern(char *pat, size_t len)
 {
 	if (!xflag && (len == 0 || matchall)) {
 		matchall = 1;
@@ -207,8 +206,7 @@ add_pattern(char *pat, size_t len)
 	++patterns;
 }
 
-static void
-add_patterns(char *pats)
+static void add_patterns(char *pats)
 {
 	char *nl;
 
@@ -219,8 +217,7 @@ add_patterns(char *pats)
 	add_pattern(pats, strlen(pats));
 }
 
-static void
-read_patterns(const char *fn)
+static void read_patterns(const char *fn)
 {
 	FILE *f;
 	char *line;
@@ -235,8 +232,7 @@ read_patterns(const char *fn)
 	fclose(f);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int c, lastc, prevoptind, newarg, i, needpattern, exprs, expr_sz;
 	struct patfile *patfile, *pf_next;

@@ -123,7 +123,7 @@ void format_track(int ffd, unsigned type, unsigned cyl, unsigned head)
 	if (lseek(ffd, track_pos, SEEK_SET) == -1) {
 		fprintf(stderr,
 		"format: seeking to cyl %u, head %u (pos %lld) failed: %s\n",
-			cyl, head, track_pos, strerror(errno));
+			cyl, head, (long long)track_pos, strerror(errno));
 		exit(1);
 	}
 
@@ -155,7 +155,7 @@ void verify_track(int vfd, unsigned type, unsigned cyl, unsigned head)
 	if (lseek(vfd, track_pos, SEEK_SET) == -1) {
 		fprintf(stderr,
 		"format: seeking to cyl %u, head %u (pos %lld) failed: %s\n",
-			cyl, head, track_pos, strerror(errno));
+			cyl, head, (long long)track_pos, strerror(errno));
 		exit(1);
 	}
 
@@ -168,7 +168,7 @@ void verify_track(int vfd, unsigned type, unsigned cyl, unsigned head)
 		if (lseek(vfd, track_pos, SEEK_SET) == -1) {
 			fprintf(stderr,
 	"format: seeking to cyl %u, head %u, sector %u (pos %lld) failed: %s\n",
-				cyl, head, sector, track_pos, strerror(errno));
+				cyl, head, sector, (long long)track_pos, strerror(errno));
 			exit(1);
 		}
 
@@ -176,7 +176,7 @@ void verify_track(int vfd, unsigned type, unsigned cyl, unsigned head)
 		case -1:
 			fprintf(stderr,
 		"format: bad sector at cyl %u, head %u, sector %u (pos %lld)\n",
-				cyl, head, sector, track_pos);
+				cyl, head, sector, (long long)track_pos);
 			bad_count++;
 			break;
 		case SECTOR_SIZE:
@@ -184,7 +184,7 @@ void verify_track(int vfd, unsigned type, unsigned cyl, unsigned head)
 			break;
 		default:
 			fprintf(stderr, "format: short read at pos %lld\n",
-				track_pos);
+				(long long)track_pos);
 			bad_count++;
 		}
 		track_pos+= SECTOR_SIZE;

@@ -43,8 +43,7 @@ static int running;
 /*
  * Announce that we are up and running, after a fresh start or a restart.
  */
-void
-sockdriver_announce(void)
+void sockdriver_announce(void)
 {
 	static const char *sockdriver_prefix = "drv.sck.";
 	char key[DS_MAX_KEYLEN], label[DS_MAX_KEYLEN];
@@ -63,8 +62,7 @@ sockdriver_announce(void)
  * Copy data from the caller into the local address space.  Return OK or a
  * negative error code.
  */
-int
-sockdriver_copyin(const struct sockdriver_data * __restrict data, size_t off,
+int sockdriver_copyin(const struct sockdriver_data * __restrict data, size_t off,
 	void * __restrict ptr, size_t len)
 {
 
@@ -81,8 +79,7 @@ sockdriver_copyin(const struct sockdriver_data * __restrict data, size_t off,
  * Copy data from the local address space to the caller.  Return OK or a
  * negative error code.
  */
-int
-sockdriver_copyout(const struct sockdriver_data * __restrict data, size_t off,
+int sockdriver_copyout(const struct sockdriver_data * __restrict data, size_t off,
 	const void * __restrict ptr, size_t len)
 {
 
@@ -99,8 +96,7 @@ sockdriver_copyout(const struct sockdriver_data * __restrict data, size_t off,
  * Copy data between the caller and the local address space, using a vector of
  * at most SOCKDRIVER_IOV_MAX buffers.  Return OK or an error code.
  */
-static int
-sockdriver_vcopy(const struct sockdriver_data * __restrict data, size_t off,
+static int sockdriver_vcopy(const struct sockdriver_data * __restrict data, size_t off,
 	const iovec_t * __restrict iov, unsigned int iovcnt, int copyin)
 {
 	static struct vscp_vec vec[SOCKDRIVER_IOV_MAX];
@@ -155,8 +151,7 @@ sockdriver_vcopy(const struct sockdriver_data * __restrict data, size_t off,
  * Copy data from the caller into the local address space, using a vector of
  * buffers.  Return OK or a negative error code.
  */
-int
-sockdriver_vcopyin(const struct sockdriver_data * __restrict data, size_t off,
+int sockdriver_vcopyin(const struct sockdriver_data * __restrict data, size_t off,
 	const iovec_t * __restrict iov, unsigned int iovcnt)
 {
 
@@ -167,8 +162,7 @@ sockdriver_vcopyin(const struct sockdriver_data * __restrict data, size_t off,
  * Copy data from the local address space to the caller, using a vector of
  * buffers.  Return OK or a negative error code.
  */
-int
-sockdriver_vcopyout(const struct sockdriver_data * __restrict data, size_t off,
+int sockdriver_vcopyout(const struct sockdriver_data * __restrict data, size_t off,
 	const iovec_t * __restrict iov, unsigned int iovcnt)
 {
 
@@ -180,8 +174,7 @@ sockdriver_vcopyout(const struct sockdriver_data * __restrict data, size_t off,
  * semantics: fail the call with EINVAL if the given 'optlen' is not equal to
  * the given 'len'.  Return OK or a negative error code.
  */
-int
-sockdriver_copyin_opt(const struct sockdriver_data * __restrict data,
+int sockdriver_copyin_opt(const struct sockdriver_data * __restrict data,
 	void * __restrict ptr, size_t len, socklen_t optlen)
 {
 
@@ -197,8 +190,7 @@ sockdriver_copyin_opt(const struct sockdriver_data * __restrict data,
  * 'optlen', and return the possibly truncated size in 'optlen' on success.
  * Return OK or a negative error code.
  */
-int
-sockdriver_copyout_opt(const struct sockdriver_data * __restrict data,
+int sockdriver_copyout_opt(const struct sockdriver_data * __restrict data,
 	const void * __restrict ptr, size_t len, socklen_t * __restrict optlen)
 {
 	int r;
@@ -222,8 +214,7 @@ sockdriver_copyout_opt(const struct sockdriver_data * __restrict data,
  * of 'data'.  Return EINVAL if the given parameters do not match; this would
  * typically be a sign that the calling application messed up badly.
  */
-int
-sockdriver_pack_data(struct sockdriver_packed_data * pack,
+int sockdriver_pack_data(struct sockdriver_packed_data * pack,
 	const struct sockdriver_call * call,
 	const struct sockdriver_data * data, size_t len)
 {
@@ -243,8 +234,7 @@ sockdriver_pack_data(struct sockdriver_packed_data * pack,
  * parameters.  Return the unpacked version of 'pack' in 'data'.  This function
  * always succeeds.
  */
-void
-sockdriver_unpack_data(struct sockdriver_data * data,
+void sockdriver_unpack_data(struct sockdriver_data * data,
 	const struct sockdriver_call * call,
 	const struct sockdriver_packed_data * pack, size_t len)
 {
@@ -257,8 +247,7 @@ sockdriver_unpack_data(struct sockdriver_data * data,
 /*
  * Send a reply to a request.
  */
-static void
-send_reply(endpoint_t endpt, int type, message * m_ptr)
+static void send_reply(endpoint_t endpt, int type, message * m_ptr)
 {
 	int r;
 
@@ -272,8 +261,7 @@ send_reply(endpoint_t endpt, int type, message * m_ptr)
 /*
  * Send a reply which takes only a result code and no additional reply fields.
  */
-static void
-send_generic_reply(endpoint_t endpt, sockreq_t req, int reply)
+static void send_generic_reply(endpoint_t endpt, sockreq_t req, int reply)
 {
 	message m;
 
@@ -290,8 +278,7 @@ send_generic_reply(endpoint_t endpt, sockreq_t req, int reply)
  * Send a reply to an earlier suspended request which takes only a result code
  * and no additional reply fields.
  */
-void
-sockdriver_reply_generic(const struct sockdriver_call * call, int reply)
+void sockdriver_reply_generic(const struct sockdriver_call * call, int reply)
 {
 
 	send_generic_reply(call->sc_endpt, call->sc_req, reply);
@@ -301,8 +288,7 @@ sockdriver_reply_generic(const struct sockdriver_call * call, int reply)
  * Send a reply to a socket or a socketpair request.  Since these calls may not
  * be suspended, this function is used internally only.
  */
-static void
-send_socket_reply(endpoint_t endpt, sockreq_t req, sockid_t reply,
+static void send_socket_reply(endpoint_t endpt, sockreq_t req, sockid_t reply,
 	sockid_t reply2)
 {
 	message m;
@@ -323,8 +309,7 @@ send_socket_reply(endpoint_t endpt, sockreq_t req, sockid_t reply,
  * address must be given as 'addr', and its nonzero length must be given as
  * 'addr_len'.
  */
-void
-sockdriver_reply_accept(const struct sockdriver_call * __restrict call,
+void sockdriver_reply_accept(const struct sockdriver_call * __restrict call,
 	sockid_t reply, struct sockaddr * __restrict addr, socklen_t addr_len)
 {
 	sockid_t id;
@@ -397,8 +382,7 @@ sockdriver_reply_accept(const struct sockdriver_call * __restrict call,
  * address and 'addr_len' must contain the address length; for connection-
  * oriented sockets, 'addr_len' must be zero, in which case 'addr' is ignored.
  */
-void
-sockdriver_reply_recv(const struct sockdriver_call * __restrict call,
+void sockdriver_reply_recv(const struct sockdriver_call * __restrict call,
 	int reply, socklen_t ctl_len, struct sockaddr * __restrict addr,
 	socklen_t addr_len, int flags)
 {
@@ -446,8 +430,7 @@ sockdriver_reply_recv(const struct sockdriver_call * __restrict call,
 /*
  * Send a reply to a select request.
  */
-static void
-send_select_reply(const struct sockdriver_select * sel, int type, sockid_t id,
+static void send_select_reply(const struct sockdriver_select * sel, int type, sockid_t id,
 	int ops)
 {
 	message m;
@@ -464,8 +447,7 @@ send_select_reply(const struct sockdriver_select * sel, int type, sockid_t id,
 /*
  * Send a reply to an earlier select call that requested notifications.
  */
-void
-sockdriver_reply_select(const struct sockdriver_select * sel, sockid_t id,
+void sockdriver_reply_select(const struct sockdriver_select * sel, sockid_t id,
 	int ops)
 {
 
@@ -475,8 +457,7 @@ sockdriver_reply_select(const struct sockdriver_select * sel, sockid_t id,
 /*
  * Create a new socket.  This call may not be suspended.
  */
-static void
-do_socket(const struct sockdriver * __restrict sdp,
+static void do_socket(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	sockid_t r;
@@ -497,8 +478,7 @@ do_socket(const struct sockdriver * __restrict sdp,
  * Create a pair of connected sockets.  Relevant for UNIX domain sockets only.
  * This call may not be suspended.
  */
-static void
-do_socketpair(const struct sockdriver * __restrict sdp,
+static void do_socketpair(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	sockid_t sockid[2];
@@ -531,8 +511,7 @@ do_socketpair(const struct sockdriver * __restrict sdp,
  * suggests that blocking bind(2) calls may be interrupted by signals (as on
  * MINIX3 they can be), yet EINTR is not defined as a valid return code for it.
  */
-static void
-do_bind_connect(const struct sockdriver * __restrict sdp,
+static void do_bind_connect(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	int (*proc)(sockid_t, const struct sockaddr * __restrict, socklen_t,
@@ -584,8 +563,7 @@ do_bind_connect(const struct sockdriver * __restrict sdp,
 /*
  * Put a socket in listening mode.  This call may not be suspended.
  */
-static void
-do_listen(const struct sockdriver * __restrict sdp,
+static void do_listen(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	int r;
@@ -605,8 +583,7 @@ do_listen(const struct sockdriver * __restrict sdp,
  * This call may be suspended by the socket driver, in which case
  * sockdriver_reply_accept() must be used to reply later.
  */
-static void
-do_accept(const struct sockdriver * __restrict sdp,
+static void do_accept(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -645,8 +622,7 @@ do_accept(const struct sockdriver * __restrict sdp,
  * driver, in which case sockdriver_reply_generic() must be used to reply
  * later.
  */
-static void
-do_send(const struct sockdriver * __restrict sdp,
+static void do_send(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -713,8 +689,7 @@ do_send(const struct sockdriver * __restrict sdp,
  * socket driver, in which case sockdriver_reply_recv() must be used to reply
  * later.
  */
-static void
-do_recv(const struct sockdriver * __restrict sdp,
+static void do_recv(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -769,8 +744,7 @@ do_recv(const struct sockdriver * __restrict sdp,
  * driver, in which case sockdriver_reply_generic() must be used to reply
  * later.
  */
-static void
-do_ioctl(const struct sockdriver * __restrict sdp,
+static void do_ioctl(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -810,8 +784,7 @@ do_ioctl(const struct sockdriver * __restrict sdp,
 /*
  * Set socket options.  This call may not be suspended.
  */
-static void
-do_setsockopt(const struct sockdriver * __restrict sdp,
+static void do_setsockopt(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_data data;
@@ -836,8 +809,7 @@ do_setsockopt(const struct sockdriver * __restrict sdp,
 /*
  * Retrieve socket options.  This call may not be suspended.
  */
-static void
-do_getsockopt(const struct sockdriver * __restrict sdp,
+static void do_getsockopt(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_data data;
@@ -877,8 +849,7 @@ do_getsockopt(const struct sockdriver * __restrict sdp,
 /*
  * Get local or remote address.  This call may not be suspended.
  */
-static void
-do_getname(const struct sockdriver * __restrict sdp,
+static void do_getname(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	int (*proc)(sockid_t, struct sockaddr * __restrict,
@@ -935,8 +906,7 @@ do_getname(const struct sockdriver * __restrict sdp,
  * Shut down socket send and receive operations.  This call may not be
  * suspended.
  */
-static void
-do_shutdown(const struct sockdriver * __restrict sdp,
+static void do_shutdown(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	int r;
@@ -958,8 +928,7 @@ do_shutdown(const struct sockdriver * __restrict sdp,
  * currently does not support blocking close operations, and will mark all
  * close operations as nonblocking.  This will be changed in the future.
  */
-static void
-do_close(const struct sockdriver * __restrict sdp,
+static void do_close(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -989,8 +958,7 @@ do_close(const struct sockdriver * __restrict sdp,
  * reply (typically EINTR) must be sent for it.  If no matching operation was
  * found, no reply must be sent at all.
  */
-static void
-do_cancel(const struct sockdriver * __restrict sdp,
+static void do_cancel(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_call call;
@@ -1015,8 +983,7 @@ do_cancel(const struct sockdriver * __restrict sdp,
  * and only those ready operations are forgotten, leaving any other non-ready
  * operations for other late replies.
  */
-static void
-do_select(const struct sockdriver * __restrict sdp,
+static void do_select(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr)
 {
 	struct sockdriver_select sel;
@@ -1039,8 +1006,7 @@ do_select(const struct sockdriver * __restrict sdp,
 /*
  * Return TRUE if the given endpoint may initiate socket requests.
  */
-static int
-may_request(endpoint_t endpt)
+static int may_request(endpoint_t endpt)
 {
 
 	/*
@@ -1057,8 +1023,7 @@ may_request(endpoint_t endpt)
 /*
  * Process an incoming message, and (typically) send a reply.
  */
-void
-sockdriver_process(const struct sockdriver * __restrict sdp,
+void sockdriver_process(const struct sockdriver * __restrict sdp,
 	const message * __restrict m_ptr, int ipc_status)
 {
 
@@ -1116,8 +1081,7 @@ sockdriver_process(const struct sockdriver * __restrict sdp,
 /*
  * Break out of the main loop after finishing the current request.
  */
-void
-sockdriver_terminate(void)
+void sockdriver_terminate(void)
 {
 
 	running = FALSE;
@@ -1128,8 +1092,7 @@ sockdriver_terminate(void)
 /*
  * Main program of any socket driver.
  */
-void
-sockdriver_task(const struct sockdriver * sdp)
+void sockdriver_task(const struct sockdriver * sdp)
 {
 	message m;
 	int r, ipc_status;

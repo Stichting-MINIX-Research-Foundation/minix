@@ -122,8 +122,7 @@ int ifaddr_accept_rtadv = 0;	/* settable but completely disregarded */
  * Initialize the local address administration for an interface that is in the
  * process of being created.
  */
-void
-ifaddr_init(struct ifdev * ifdev)
+void ifaddr_init(struct ifdev * ifdev)
 {
 	unsigned int i;
 
@@ -142,8 +141,7 @@ ifaddr_init(struct ifdev * ifdev)
  * with the IPv4 address number stored in 'num'.  On failure, return a negative
  * error code.
  */
-int
-ifaddr_v4_find(struct ifdev * ifdev, const struct sockaddr_in * addr,
+int ifaddr_v4_find(struct ifdev * ifdev, const struct sockaddr_in * addr,
 	ifaddr_v4_num_t * num)
 {
 	ip_addr_t ipaddr;
@@ -169,8 +167,7 @@ ifaddr_v4_find(struct ifdev * ifdev, const struct sockaddr_in * addr,
  * IPv4 address, of which the number is stored in 'nump' on return.  Return
  * FALSE if there are no more IPv4 addresses locally assigned to the interface.
  */
-int
-ifaddr_v4_enum(struct ifdev * ifdev, ifaddr_v4_num_t * num)
+int ifaddr_v4_enum(struct ifdev * ifdev, ifaddr_v4_num_t * num)
 {
 
 	/*
@@ -191,8 +188,7 @@ ifaddr_v4_enum(struct ifdev * ifdev, ifaddr_v4_num_t * num)
  * zeroing them is that some callers use the same buffer for both.  On failure,
  * return a negative error code.
  */
-int
-ifaddr_v4_get(struct ifdev * ifdev, ifaddr_v4_num_t num,
+int ifaddr_v4_get(struct ifdev * ifdev, ifaddr_v4_num_t num,
 	struct sockaddr_in * addr, struct sockaddr_in * mask,
 	struct sockaddr_in * bcast, struct sockaddr_in * dest)
 {
@@ -257,8 +253,7 @@ ifaddr_v4_get(struct ifdev * ifdev, ifaddr_v4_num_t num,
  * Obtain NetBSD-style state flags (IN_IFF_) for the given local IPv4 address.
  * The given number must identify an existing address.  Return the flags.
  */
-int
-ifaddr_v4_get_flags(struct ifdev * ifdev, ifaddr_v4_num_t num)
+int ifaddr_v4_get_flags(struct ifdev * ifdev, ifaddr_v4_num_t num)
 {
 
 	/* IPv4 per-address flags are not supported yet. */
@@ -272,8 +267,7 @@ ifaddr_v4_get_flags(struct ifdev * ifdev, ifaddr_v4_num_t num)
  * address in 'netbase' and the number of prefix bits in 'prefixp'.  Return
  * FALSE if no subnet route should be added for the assigned address.
  */
-static unsigned int
-ifaddr_v4_netroute(struct ifdev * ifdev, ifaddr_v4_num_t num,
+static unsigned int ifaddr_v4_netroute(struct ifdev * ifdev, ifaddr_v4_num_t num,
 	ip_addr_t * netbase, unsigned int * prefixp)
 {
 	const ip_addr_t *ipaddr, *netmask;
@@ -319,8 +313,7 @@ ifaddr_v4_netroute(struct ifdev * ifdev, ifaddr_v4_num_t num,
  * as 'ifdev', and the number of the just-added IPv4 address is given as 'num'.
  * Generate a routing socket message and add local routes as appropriate.
  */
-static void
-ifaddr_v4_added(struct ifdev * ifdev, ifaddr_v4_num_t num)
+static void ifaddr_v4_added(struct ifdev * ifdev, ifaddr_v4_num_t num)
 {
 	const ip_addr_t *ipaddr;
 	ip_addr_t netbase;
@@ -373,8 +366,7 @@ ifaddr_v4_added(struct ifdev * ifdev, ifaddr_v4_num_t num)
  * local subnet route (but didn't, as such duplicate routes can obviously not
  * be added), and if so, readd the route for that other address.
  */
-static void
-ifaddr_v4_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
+static void ifaddr_v4_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
 	unsigned int oprefix)
 {
 	struct ifdev *ifdev;
@@ -403,8 +395,7 @@ ifaddr_v4_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
  * given as 'ifdev', and the number of the IPv4 address that is about to be
  * deleted is given as 'num'.
  */
-static void
-ifaddr_v4_deleted(struct ifdev * ifdev, ifaddr_v4_num_t num)
+static void ifaddr_v4_deleted(struct ifdev * ifdev, ifaddr_v4_num_t num)
 {
 	struct route_entry *route;
 	ip_addr_t netbase;
@@ -448,8 +439,7 @@ ifaddr_v4_deleted(struct ifdev * ifdev, ifaddr_v4_num_t num)
  * field may contain NetBSD-style address flags (IN_IFF_).  Return OK if the
  * address was successfully added or updated, or a negative error code if not.
  */
-int
-ifaddr_v4_add(struct ifdev * ifdev, const struct sockaddr_in * addr,
+int ifaddr_v4_add(struct ifdev * ifdev, const struct sockaddr_in * addr,
 	const struct sockaddr_in * mask, const struct sockaddr_in * bcast,
 	const struct sockaddr_in * dest, int flags)
 {
@@ -568,8 +558,7 @@ ifaddr_v4_add(struct ifdev * ifdev, const struct sockaddr_in * addr,
  * must have been obtained from ifaddr_v4_find() or ifaddr_v4_enum() on the
  * same interface just before.  This function always succeeds.
  */
-void
-ifaddr_v4_del(struct ifdev * ifdev, ifaddr_v4_num_t num)
+void ifaddr_v4_del(struct ifdev * ifdev, ifaddr_v4_num_t num)
 {
 	ip4_addr_t ip4zero;
 
@@ -594,8 +583,7 @@ ifaddr_v4_del(struct ifdev * ifdev, ifaddr_v4_num_t num)
  * Announce all IPv4 addresses associated with the given interface as deleted,
  * Used (only) right before the interface is destroyed.
  */
-void
-ifaddr_v4_clear(struct ifdev * ifdev)
+void ifaddr_v4_clear(struct ifdev * ifdev)
 {
 
 	if (ifdev->ifdev_v4set)
@@ -665,8 +653,7 @@ ifaddr_v4_map_by_subnet(const ip4_addr_t * ip4addr)
  * or deprecated), or FALSE if it is not (= tentative or duplicated).  The
  * address slot must be in use, that is, it must not be free (= invalid).
  */
-static int
-ifaddr_v6_isvalid(struct ifdev * ifdev, ifaddr_v6_num_t num)
+static int ifaddr_v6_isvalid(struct ifdev * ifdev, ifaddr_v6_num_t num)
 {
 	int state;
 
@@ -683,8 +670,7 @@ ifaddr_v6_isvalid(struct ifdev * ifdev, ifaddr_v6_num_t num)
  * IPv6 address.  Return TRUE if a match was found, with its number stored in
  * 'nump'.  Return FALSE if the address is not assigned to the interface.
  */
-static int
-ifaddr_v6_match(struct ifdev * ifdev, const ip_addr_t * ipaddr,
+static int ifaddr_v6_match(struct ifdev * ifdev, const ip_addr_t * ipaddr,
 	ifaddr_v6_num_t * nump)
 {
 	int8_t i;
@@ -706,8 +692,7 @@ ifaddr_v6_match(struct ifdev * ifdev, const ip_addr_t * ipaddr,
  * number stored in 'num'.  On failure, return a negative error code.  This
  * function also returns tentative and duplicated addresses.
  */
-int
-ifaddr_v6_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
+int ifaddr_v6_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
 	ifaddr_v6_num_t * nump)
 {
 	ip_addr_t ipaddr;
@@ -736,8 +721,7 @@ ifaddr_v6_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
  * FALSE if there are no more IPv6 addresses locally assigned to the interface.
  * This function also returns tentative and duplicated address entries.
  */
-int
-ifaddr_v6_enum(struct ifdev * ifdev, ifaddr_v6_num_t * nump)
+int ifaddr_v6_enum(struct ifdev * ifdev, ifaddr_v6_num_t * nump)
 {
 	ifaddr_v6_num_t num;
 
@@ -758,8 +742,7 @@ ifaddr_v6_enum(struct ifdev * ifdev, ifaddr_v6_num_t * nump)
  * The returned addresses use KAME-style embedding for zones.  This function
  * also returns tentative and duplicated addresses.  It always succeeds.
  */
-void
-ifaddr_v6_get(struct ifdev * ifdev, ifaddr_v6_num_t num,
+void ifaddr_v6_get(struct ifdev * ifdev, ifaddr_v6_num_t num,
 	struct sockaddr_in6 * addr6, struct sockaddr_in6 * mask6,
 	struct sockaddr_in6 * dest6)
 {
@@ -803,8 +786,7 @@ ifaddr_v6_get(struct ifdev * ifdev, ifaddr_v6_num_t num,
  * Obtain NetBSD-style state flags (IN6_IFF_) for the given local IPv6 address.
  * The given number must identify an existing address.  Return the flags.
  */
-int
-ifaddr_v6_get_flags(struct ifdev * ifdev, ifaddr_v6_num_t num)
+int ifaddr_v6_get_flags(struct ifdev * ifdev, ifaddr_v6_num_t num)
 {
 	int state, flags;
 
@@ -831,8 +813,7 @@ ifaddr_v6_get_flags(struct ifdev * ifdev, ifaddr_v6_num_t num)
  * Obtain lifetime information about the given local IPv6 address.  The given
  * 'lifetime' structure is filled as a result.  This function always succeeds.
  */
-void
-ifaddr_v6_get_lifetime(struct ifdev * ifdev, ifaddr_v6_num_t num,
+void ifaddr_v6_get_lifetime(struct ifdev * ifdev, ifaddr_v6_num_t num,
 	struct in6_addrlifetime * lifetime)
 {
 	struct netif *netif;
@@ -879,8 +860,7 @@ ifaddr_v6_get_lifetime(struct ifdev * ifdev, ifaddr_v6_num_t num,
  * address in 'netbase' and the number of prefix bits in 'prefixp'.  Return
  * FALSE if no subnet route should be added for the assigned address.
  */
-static unsigned int
-ifaddr_v6_netroute(struct ifdev * ifdev, ifaddr_v6_num_t num,
+static unsigned int ifaddr_v6_netroute(struct ifdev * ifdev, ifaddr_v6_num_t num,
 	ip_addr_t * netbase, unsigned int * prefixp)
 {
 	const ip_addr_t *ipaddr;
@@ -925,8 +905,7 @@ ifaddr_v6_netroute(struct ifdev * ifdev, ifaddr_v6_num_t num,
  * and thus supposedly collision-free).  For that reason, unlike for IPv4, this
  * function is only ever called indirectly, through the netif status callback.
  */
-static void
-ifaddr_v6_added(struct ifdev * ifdev, ifaddr_v6_num_t num)
+static void ifaddr_v6_added(struct ifdev * ifdev, ifaddr_v6_num_t num)
 {
 	const ip_addr_t *ipaddr;
 	ip_addr_t base;
@@ -983,8 +962,7 @@ ifaddr_v6_added(struct ifdev * ifdev, ifaddr_v6_num_t num)
  * (but didn't, as such duplicate routes can obviously not be added), and if
  * so, readd the route for that other address, possibly for the same interface.
  */
-static void
-ifaddr_v6_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
+static void ifaddr_v6_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
 	unsigned int oprefix)
 {
 	struct ifdev *ifdev;
@@ -1027,8 +1005,7 @@ ifaddr_v6_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
  * ifaddr_v6_added() was invoked on it before as well.  Unlike for IPv4, this
  * function is typically called indirectly, through the netif status callback.
  */
-static void
-ifaddr_v6_deleted(struct ifdev * ifdev, ifaddr_v6_num_t num)
+static void ifaddr_v6_deleted(struct ifdev * ifdev, ifaddr_v6_num_t num)
 {
 	struct route_entry *route;
 	const ip_addr_t *ipaddr;
@@ -1076,8 +1053,7 @@ ifaddr_v6_deleted(struct ifdev * ifdev, ifaddr_v6_num_t num)
  * the address was successfully added or updated, or a negative error code
  * otherwise.
  */
-int
-ifaddr_v6_add(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
+int ifaddr_v6_add(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
 	const struct sockaddr_in6 * mask6, const struct sockaddr_in6 * dest6,
 	int flags, const struct in6_addrlifetime * lifetime)
 {
@@ -1290,8 +1266,7 @@ ifaddr_v6_add(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
  * have been obtained through ifaddr_v6_find() or ifaddr_v6_enum().
  * This function always succeeds.
  */
-void
-ifaddr_v6_del(struct ifdev * ifdev, ifaddr_v6_num_t num)
+void ifaddr_v6_del(struct ifdev * ifdev, ifaddr_v6_num_t num)
 {
 
 	assert(num <= LWIP_IPV6_NUM_ADDRESSES);
@@ -1306,8 +1281,7 @@ ifaddr_v6_del(struct ifdev * ifdev, ifaddr_v6_num_t num)
  * Announce all IPv6 addresses associated with the given interface as deleted.
  * Used (only) right before the interface is destroyed.
  */
-void
-ifaddr_v6_clear(struct ifdev * ifdev)
+void ifaddr_v6_clear(struct ifdev * ifdev)
 {
 	ifaddr_v6_num_t num;
 
@@ -1321,8 +1295,7 @@ ifaddr_v6_clear(struct ifdev * ifdev)
  * Check state changes on local IPv6 addresses and update shadow state
  * accordingly.
  */
-void
-ifaddr_v6_check(struct ifdev * ifdev)
+void ifaddr_v6_check(struct ifdev * ifdev)
 {
 	struct netif *netif;
 	ifaddr_v6_num_t num;
@@ -1374,8 +1347,7 @@ ifaddr_v6_check(struct ifdev * ifdev)
  * dhcpcd(8) to function somewhat properly, but there is much more to be
  * decided and done when it comes to dealing with status changes..
  */
-void
-ifaddr_v6_set_up(struct ifdev * ifdev)
+void ifaddr_v6_set_up(struct ifdev * ifdev)
 {
 
 	if (!ifdev_is_loopback(ifdev) &&
@@ -1388,8 +1360,7 @@ ifaddr_v6_set_up(struct ifdev * ifdev)
  * Check whether all conditions are met for (re)assigning a link-local IPv6
  * address, and if so, do just that.
  */
-void
-ifaddr_v6_set_linklocal(struct ifdev * ifdev)
+void ifaddr_v6_set_linklocal(struct ifdev * ifdev)
 {
 
 	/*
@@ -1831,8 +1802,7 @@ ifaddr_select(const ip_addr_t * dst_addr, struct ifdev * ifdev,
  * incompatible with the interface, and thus must not be used in packets sent
  * to that interface.  Return FALSE if there is no such zone incompatibility.
  */
-int
-ifaddr_is_zone_mismatch(const ip6_addr_t * ipaddr, struct ifdev * ifdev)
+int ifaddr_is_zone_mismatch(const ip6_addr_t * ipaddr, struct ifdev * ifdev)
 {
 
 	/*
@@ -1860,8 +1830,7 @@ ifaddr_is_zone_mismatch(const ip6_addr_t * ipaddr, struct ifdev * ifdev)
  * provides a zero-length hardware address, always return successfully with 0
  * stored in 'nump'.  On failure, return a negative error code.
  */
-int
-ifaddr_dl_find(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
+int ifaddr_dl_find(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
 	socklen_t addr_len, ifaddr_dl_num_t * nump)
 {
 	uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
@@ -1906,8 +1875,7 @@ ifaddr_dl_find(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
  * 'nump' on return.  Return FALSE if there are no more data link addresses
  * locally assigned to the interface.
  */
-int
-ifaddr_dl_enum(struct ifdev * ifdev, ifaddr_dl_num_t * num)
+int ifaddr_dl_enum(struct ifdev * ifdev, ifaddr_dl_num_t * num)
 {
 
 	/*
@@ -1935,8 +1903,7 @@ ifaddr_dl_enum(struct ifdev * ifdev, ifaddr_dl_num_t * num)
  * pseudo-address of zero size will be returned.  The address will be stored in
  * 'addr'.  This function always succeeds.
  */
-void
-ifaddr_dl_get(struct ifdev * ifdev, ifaddr_dl_num_t num,
+void ifaddr_dl_get(struct ifdev * ifdev, ifaddr_dl_num_t num,
 	struct sockaddr_dlx * addr)
 {
 	const uint8_t *hwaddr;
@@ -1966,8 +1933,7 @@ ifaddr_dl_get(struct ifdev * ifdev, ifaddr_dl_num_t num,
  * be valid.  Otherwise, the given number must identify an existing address.
  * Return the flags, 0 if the slot was not valid.
  */
-int
-ifaddr_dl_get_flags(struct ifdev * ifdev, ifaddr_dl_num_t num)
+int ifaddr_dl_get_flags(struct ifdev * ifdev, ifaddr_dl_num_t num)
 {
 	int flags;
 
@@ -2015,8 +1981,7 @@ ifaddr_dl_scan(struct ifdev * ifdev, const uint8_t * hwaddr,
  * Set a hardware address entry in the hardware address list of the given
  * interface.
  */
-static void
-ifaddr_dl_set(struct ifdev * ifdev, ifaddr_dl_num_t num,
+static void ifaddr_dl_set(struct ifdev * ifdev, ifaddr_dl_num_t num,
 	const uint8_t * hwaddr, int is_factory)
 {
 
@@ -2035,8 +2000,7 @@ ifaddr_dl_set(struct ifdev * ifdev, ifaddr_dl_num_t num,
  * on the hardware and in local administration.  The active slot is always slot
  * zero, so swap slots if needed.
  */
-static void
-ifaddr_dl_activate(struct ifdev * ifdev, ifaddr_dl_num_t num)
+static void ifaddr_dl_activate(struct ifdev * ifdev, ifaddr_dl_num_t num)
 {
 	struct ifdev_hwaddr tmp;
 	struct netif *netif;
@@ -2068,8 +2032,7 @@ ifaddr_dl_activate(struct ifdev * ifdev, ifaddr_dl_num_t num)
  * Add a data link (hardware) address to an interface, or if it already exists,
  * update its associated flags (IFLR_).
  */
-int
-ifaddr_dl_add(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
+int ifaddr_dl_add(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
 	socklen_t addr_len, int flags)
 {
 	uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
@@ -2137,8 +2100,7 @@ ifaddr_dl_add(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
 /*
  * Delete a data link (hardware) address from an interface.
  */
-int
-ifaddr_dl_del(struct ifdev * ifdev, ifaddr_dl_num_t num)
+int ifaddr_dl_del(struct ifdev * ifdev, ifaddr_dl_num_t num)
 {
 
 	if (ifdev->ifdev_ops->iop_set_hwaddr == NULL)
@@ -2163,8 +2125,7 @@ ifaddr_dl_del(struct ifdev * ifdev, ifaddr_dl_num_t num)
  * interface as deleted, including the active address.  Used (only) right
  * before the interface is destroyed.
  */
-void
-ifaddr_dl_clear(struct ifdev * ifdev)
+void ifaddr_dl_clear(struct ifdev * ifdev)
 {
 	ifaddr_dl_num_t num;
 
@@ -2184,8 +2145,7 @@ ifaddr_dl_clear(struct ifdev * ifdev)
  * set, the address is the factory (driver-given) address.  This function may
  * only be called from ifdev_update_hwaddr().
  */
-void
-ifaddr_dl_update(struct ifdev * ifdev, const uint8_t * hwaddr, int is_factory)
+void ifaddr_dl_update(struct ifdev * ifdev, const uint8_t * hwaddr, int is_factory)
 {
 	ifaddr_dl_num_t found, avail;
 

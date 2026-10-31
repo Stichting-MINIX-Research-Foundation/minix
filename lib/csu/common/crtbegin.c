@@ -96,6 +96,24 @@ __do_global_ctors_aux(void)
 #endif
 }
 
+#if defined(HAVE_INITFINI_ARRAY)
+/*
+ * __do_global_ctors_aux registers this object's .eh_frame (needed for C++
+ * exception unwinding).  It is marked __constructor__ via crtbegin.h, but some
+ * compilers (e.g. the x86_64-minix clang) emit constructors into .ctors rather
+ * than .init_array, and the default linker script deliberately EXCLUDEs
+ * crtbegin.o's .ctors from .init_array (legacy CTOR-sentinel handling).  Since
+ * crt0 walks only .init_array under HAVE_INITFINI_ARRAY, that constructor would
+ * never run and exceptions would abort via std::terminate.  Place an explicit
+ * pointer into .init_array (which the linker keeps for crtbegin.o) so the frame
+ * is registered regardless of how the compiler lowers __constructor__.  The
+ * __initialized guard above makes a duplicate invocation harmless on targets
+ * where the attribute already lands in .init_array.
+ */
+__attribute__((__used__, __section__(".init_array"), __aligned__(sizeof(void *))))
+static void (* const __do_global_ctors_aux_ptr)(void) = &__do_global_ctors_aux;
+#endif
+
 #if !defined(__ARM_EABI__) || defined(SHARED) || defined(__ARM_DWARF_EH__)
 #if !defined(HAVE_INITFINI_ARRAY)
 __dso_hidden const fptr_t __aligned(sizeof(void *)) __DTOR_LIST__[] __section(".dtors") = {

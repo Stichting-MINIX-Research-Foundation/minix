@@ -1,0 +1,15 @@
+# $NetBSD: spec.inst,v 1.2 2014/09/13 10:18:24 roy Exp $
+./mnt2			type=dir mode=0755 uname=root gname=wheel
+./targetroot		type=dir mode=0755 uname=root gname=wheel
+
+./install.sh		type=file mode=0755 uname=root gname=wheel
+./sysinst		type=file mode=0755 uname=root gname=wheel
+./sysinstmsgs.de	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.es	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.fr	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.pl	type=file mode=0444 uname=root gname=wheel
+
+# for sysinst "install from local directory" default
+./release		type=link mode=0755 uname=root gname=wheel link=.
+
+# XXX what to do for files in ${RELEASEMACHINEDIR}?

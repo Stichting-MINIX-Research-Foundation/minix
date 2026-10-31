@@ -35,8 +35,7 @@ static int store_t(endpoint_t who_e, vir_bytes rtcdev_tm, struct tm *t);
 static void sef_local_startup(void);
 static int sef_cb_init(int type, sef_init_info_t * info);
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int r;
 	endpoint_t caller;
@@ -130,8 +129,7 @@ main(int argc, char **argv)
 	return 0;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -150,8 +148,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup()
+static void sef_local_startup()
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -164,27 +161,23 @@ sef_local_startup()
 	sef_startup();
 }
 
-int
-bcd_to_dec(int n)
+int bcd_to_dec(int n)
 {
 	return ((n >> 4) & 0x0F) * 10 + (n & 0x0F);
 }
 
-int
-dec_to_bcd(int n)
+int dec_to_bcd(int n)
 {
 	return ((n / 10) << 4) | (n % 10);
 }
 
-static int
-fetch_t(endpoint_t who_e, vir_bytes rtcdev_tm, struct tm *t)
+static int fetch_t(endpoint_t who_e, vir_bytes rtcdev_tm, struct tm *t)
 {
 	return sys_datacopy(who_e, rtcdev_tm, SELF, (vir_bytes) t,
 	    sizeof(struct tm));
 }
 
-static int
-store_t(endpoint_t who_e, vir_bytes rtcdev_tm, struct tm *t)
+static int store_t(endpoint_t who_e, vir_bytes rtcdev_tm, struct tm *t)
 {
 	return sys_datacopy(SELF, (vir_bytes) t, who_e, rtcdev_tm,
 	    sizeof(struct tm));

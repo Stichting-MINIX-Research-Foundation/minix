@@ -16,8 +16,7 @@
  * Create a single temporary buffer for the entire vector.  For writes, also
  * copy the actual data into the temporary buffer.
  */
-ssize_t
-_vectorio_setup(const struct iovec * iov, int iovcnt, char ** ptr, int op)
+ssize_t _vectorio_setup(const struct iovec * iov, int iovcnt, char ** ptr, int op)
 {
 	char *buffer;
 	ssize_t totallen, copied;
@@ -76,8 +75,7 @@ _vectorio_setup(const struct iovec * iov, int iovcnt, char ** ptr, int op)
  * Clean up the temporary buffer created for the vector.  For successful reads,
  * also copy out the retrieved buffer contents.
  */
-void
-_vectorio_cleanup(const struct iovec * iov, int iovcnt, char * buffer,
+void _vectorio_cleanup(const struct iovec * iov, int iovcnt, char * buffer,
 	ssize_t r, int op)
 {
 	int i, errno_saved;
@@ -115,8 +113,7 @@ _vectorio_cleanup(const struct iovec * iov, int iovcnt, char * buffer,
 /*
  * Read a vector.
  */
-ssize_t
-readv(int fd, const struct iovec * iov, int iovcnt)
+ssize_t readv(int fd, const struct iovec * iov, int iovcnt)
 {
 	char *ptr;
 	ssize_t r;
@@ -139,8 +136,7 @@ readv(int fd, const struct iovec * iov, int iovcnt)
 /*
  * Write a vector.
  */
-ssize_t
-writev(int fd, const struct iovec * iov, int iovcnt)
+ssize_t writev(int fd, const struct iovec * iov, int iovcnt)
 {
 	char *ptr;
 	ssize_t r;

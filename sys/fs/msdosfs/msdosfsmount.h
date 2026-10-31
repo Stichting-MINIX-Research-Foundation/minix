@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.20 2014/07/08 09:21:52 hannken Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.21 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -78,11 +78,12 @@ struct msdosfs_args {
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
 #define	MSDOSFSMNT_GEMDOSFS	8	/* This is a GEMDOS-flavour */
 #define MSDOSFSMNT_VERSIONED	16	/* Struct is versioned */
+#define MSDOSFSMNT_UTF8		32	/* Use UTF8 filenames */
 
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
 	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED)
+	 |MSDOSFSMNT_GEMDOSFS|MSDOSFSMNT_VERSIONED|MSDOSFSMNT_UTF8)
 
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
@@ -90,7 +91,7 @@ struct msdosfs_args {
 
 #define MSDOSFSMNT_BITS "\177\20" \
     "b\00shortname\0b\01longname\0b\02nowin95\0b\03gemdosfs\0b\04mntversioned\0" \
-    "b\037ronly\0b\036waitonfat\0b\035fatmirror\0"
+    "b\05utf8\0b\037ronly\0b\036waitonfat\0b\035fatmirror\0"
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>

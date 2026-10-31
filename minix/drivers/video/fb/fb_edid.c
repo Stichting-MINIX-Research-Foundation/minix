@@ -51,8 +51,7 @@ static char edid_providers[FB_DEV_NR][RS_MAX_LABEL_LEN+1];
  * driver, 1 is the i2c bus and 3470 is the slave address (the TDA19988 has 2
  * slave addresses 0x34 and 0x70).
  */
-int
-fb_edid_args_parse(void)
+int fb_edid_args_parse(void)
 {
 	int i;
 	int r;
@@ -82,8 +81,7 @@ fb_edid_args_parse(void)
 /*
  * Send a read request to the block driver at endpoint endpt.
  */
-static int
-do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
+static int do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 {
 	int r;
 	message m;
@@ -142,8 +140,7 @@ do_read(endpoint_t driver_endpt, uint8_t *buf, size_t bufsize)
 	return bufsize;
 }
 
-int
-fb_edid_read(int minor, struct edid_info *info)
+int fb_edid_read(int minor, struct edid_info *info)
 {
 
 	int r;

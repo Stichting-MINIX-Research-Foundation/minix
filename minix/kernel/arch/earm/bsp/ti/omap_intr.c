@@ -20,8 +20,7 @@ static struct omap_intr
 
 static kern_phys_map intr_phys_map;
 
-int
-intr_init(const int auto_eoi)
+int intr_init(const int auto_eoi)
 {
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		omap_intr.base = OMAP3_DM37XX_INTR_BASE;
@@ -40,8 +39,7 @@ intr_init(const int auto_eoi)
 	return 0;
 }
 
-void
-bsp_irq_handle(void)
+void bsp_irq_handle(void)
 {
 	/* Function called from assembly to handle interrupts */
 
@@ -57,15 +55,13 @@ bsp_irq_handle(void)
 	    OMAP3_INTR_NEWIRQAGR);
 }
 
-void
-bsp_irq_unmask(int irq)
+void bsp_irq_unmask(int irq)
 {
 	mmio_write(OMAP3_INTR_MIR_CLEAR(omap_intr.base, irq >> 5),
 	    1 << (irq & 0x1f));
 }
 
-void
-bsp_irq_mask(const int irq)
+void bsp_irq_mask(const int irq)
 {
 	mmio_write(OMAP3_INTR_MIR_SET(omap_intr.base, irq >> 5),
 	    1 << (irq & 0x1f));

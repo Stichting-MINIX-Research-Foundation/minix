@@ -72,11 +72,14 @@ ENTRY(__sigsetjmp14)
 	xorl	%edi,%edi
 	xorq	%rsi,%rsi
 
+	/* Realign %rsp to 16 before the call (see __setjmp14.S). */
+	subq	$8,%rsp
 #ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
+	addq	$8,%rsp
 2:	xorl	%eax,%eax
 	ret
 END(__sigsetjmp14)

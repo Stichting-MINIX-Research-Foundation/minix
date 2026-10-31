@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.h,v 1.1 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.3 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,15 +42,18 @@ struct bootcfg_def {
 	char *banner[BOOTCFG_MAXBANNER];	/* Banner text */
 	char *command[BOOTCFG_MAXMENU];		/* Menu commands per entry*/
 	char *consdev;				/* Console device */
+	char *root;				/* Root specification */
 	int def;				/* Default menu option */
 	char *desc[BOOTCFG_MAXMENU];		/* Menu text per entry */
 	int nummenu;				/* Number of menu items */
 	int timeout;		 		/* Timeout in seconds */
 	int menuformat;				/* Letters instead of numbers */
 	int clear;				/* Clear the screen? */
-} extern bootcfg_info;
+};
+extern struct bootcfg_def bootcfg_info;
 
-void perform_bootcfg(const char *, bootcfg_command, const off_t);
+int perform_bootcfg(const char *, bootcfg_command, const off_t);
 void bootcfg_do_noop(const char *, char *);
+void print_bootcfg_banner(const char *, const char *);
 
 #endif /* !_BOOTCFG_H */

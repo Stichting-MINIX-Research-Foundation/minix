@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.24 2013/06/19 17:51:25 dholland Exp $	*/
+/*	$NetBSD: pass1.c,v 1.26 2017/04/21 19:33:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.24 2013/06/19 17:51:25 dholland Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.26 2017/04/21 19:33:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * will detect any garbage after symlink string.
 		 */
 		if (inosize(dp) < EXT2_MAXSYMLINKLEN ||
-		    (EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
+		    (EXT2_MAXSYMLINKLEN == 0 && inonblock(dp) == 0)) {
 			ndb = howmany(inosize(dp), sizeof(u_int32_t));
 			if (ndb > EXT2FS_NDADDR) {
 				j = ndb - EXT2FS_NDADDR;

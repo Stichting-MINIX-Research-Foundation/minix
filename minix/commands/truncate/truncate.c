@@ -42,8 +42,7 @@ static int	do_relative;
 static int	do_refer;
 static int	got_size;
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	struct stat	sb;
 	mode_t	omode;
@@ -147,8 +146,7 @@ main(int argc, char **argv)
  * Return the numeric value of a string given in the form [+-][0-9]+[GMK]
  * or -1 on format error or overflow.
  */
-static off_t
-parselength(char *ls, off_t *sz)
+static off_t parselength(char *ls, off_t *sz)
 {
 	off_t	length, oflow;
 	int	lsign;
@@ -198,8 +196,7 @@ parselength(char *ls, off_t *sz)
 	return 0;
 }
 
-static void
-usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "%s\n%s\n",
 	    "usage: truncate [-c] -s [+|-]size[K|k|M|m|G|g] file ...",

@@ -187,8 +187,7 @@ static const int lnk_results[][__arraycount(rtlnk_states)] = {
  * pass it to socklib_sweep_call() along with local and remote addresses and
  * their lengths.
  */
-static int
-rtlnk_sweep(int domain, int type, int protocol, enum state state,
+static int rtlnk_sweep(int domain, int type, int protocol, enum state state,
 	enum call call)
 {
 	struct sockaddr sa;
@@ -219,8 +218,7 @@ rtlnk_sweep(int domain, int type, int protocol, enum state state,
  * Sweep test for socket calls versus socket states of routing and link
  * sockets.
  */
-static void
-test93a(void)
+static void test93a(void)
 {
 
 	subtest = 1;
@@ -243,8 +241,7 @@ test93a(void)
  * Attempt to destroy the test loopback interface.  Return 0 if destruction was
  * successful, or -1 if no such interface existed.
  */
-static int
-test93_destroy_if(void)
+static int test93_destroy_if(void)
 {
 	struct ifreq ifr;
 	int r, fd;
@@ -266,8 +263,7 @@ test93_destroy_if(void)
  * Destroy the test interface at exit.  It is always safe to do so as its name
  * is sufficiently unique, and we do not want to leave it around.
  */
-static void
-test93_destroy_if_atexit(void)
+static void test93_destroy_if_atexit(void)
 {
 	static int atexit_set = 0;
 
@@ -282,8 +278,7 @@ test93_destroy_if_atexit(void)
  * Attempt to create a test loopback interface.  Return 0 if creation was
  * successful, or -1 if no more interfaces could be created.
  */
-static int
-test93_create_if(void)
+static int test93_create_if(void)
 {
 	struct ifreq ifr;
 	int r, fd;
@@ -308,8 +303,7 @@ test93_create_if(void)
 /*
  * Set the interface-up value for an interface to the given boolean value.
  */
-static void
-test93_set_if_up(const char * ifname, int up)
+static void test93_set_if_up(const char * ifname, int up)
 {
 	struct ifreq ifr;
 	int fd;
@@ -334,8 +328,7 @@ test93_set_if_up(const char * ifname, int up)
 /*
  * Construct an IPv6 network mask for a certain prefix length.
  */
-static void
-test93_make_netmask6(struct sockaddr_in6 * sin6, unsigned int prefix)
+static void test93_make_netmask6(struct sockaddr_in6 * sin6, unsigned int prefix)
 {
 	unsigned int byte, bit;
 
@@ -359,8 +352,7 @@ test93_make_netmask6(struct sockaddr_in6 * sin6, unsigned int prefix)
  * optional depending on the command (and flags) being issued.  Return 0 on
  * success, and -1 with errno set on failure.
  */
-static int
-test93_route_cmd(int cmd, const struct sockaddr * dest, socklen_t dest_len,
+static int test93_route_cmd(int cmd, const struct sockaddr * dest, socklen_t dest_len,
 	unsigned int prefix, int flags, const char * ifname,
 	const struct sockaddr * gw, socklen_t gw_len)
 {
@@ -494,8 +486,7 @@ test93_route_cmd(int cmd, const struct sockaddr * dest, socklen_t dest_len,
  * address, and prefix length must always be given.  When adding, a set of
  * flags (IN6_IFF) and lifetimes must be given as well.
  */
-static void
-test93_ipv6_addr(int add, const char * ifname,
+static void test93_ipv6_addr(int add, const char * ifname,
 	const struct sockaddr_in6 * sin6, unsigned int prefix, int flags,
 	uint32_t valid_life, uint32_t pref_life)
 {
@@ -618,8 +609,7 @@ struct src_addr {
  * Test source address selection with a particular destination address and two
  * or three source addresses.
  */
-static void
-sub93b(int result, const struct sockaddr_in6 * dest, unsigned int ifindex,
+static void sub93b(int result, const struct sockaddr_in6 * dest, unsigned int ifindex,
 	const struct src_addr * src0, const struct src_addr * src1,
 	const struct src_addr * src2)
 {
@@ -707,8 +697,7 @@ sub93b(int result, const struct sockaddr_in6 * dest, unsigned int ifindex,
 /*
  * IPv6 source address selection algorithm test.
  */
-static void
-test93b(void)
+static void test93b(void)
 {
 	static const int order[][3] = {
 		{ 0, 1, 2 },
@@ -787,8 +776,7 @@ test93b(void)
 /*
  * Interface index number wrapping test.
  */
-static void
-test93c(void)
+static void test93c(void)
 {
 	unsigned int i;
 
@@ -816,8 +804,7 @@ test93c(void)
 /*
  * Test program for LWIP interface and routing management.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

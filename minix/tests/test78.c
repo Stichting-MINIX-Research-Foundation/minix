@@ -49,8 +49,7 @@ int seen[FILETYPES][LOOPS];
 	if(!(sb.st_mode & (modebit))) { e(4); }		\
 } while(0)
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, t;
 	DIR *dir;

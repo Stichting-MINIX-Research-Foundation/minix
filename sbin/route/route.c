@@ -47,7 +47,9 @@ __RCSID("$NetBSD: route.c,v 1.151 2015/03/23 18:33:17 roy Exp $");
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#ifndef __minix
 #include <sys/mbuf.h>
+#endif
 #include <sys/sysctl.h>
 
 #include <net/if.h>

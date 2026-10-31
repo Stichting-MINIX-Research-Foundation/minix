@@ -8,8 +8,7 @@
 /*
  * Implementation of CTL_VM VM_LOADAVG.
  */
-static ssize_t
-mib_vm_loadavg(struct mib_call * call __unused,
+static ssize_t mib_vm_loadavg(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -75,8 +74,7 @@ mib_vm_loadavg(struct mib_call * call __unused,
 /*
  * Implementation of CTL_VM VM_UVMEXP2.
  */
-static ssize_t
-mib_vm_uvmexp2(struct mib_call * call __unused,
+static ssize_t mib_vm_uvmexp2(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -146,8 +144,7 @@ static struct mib_node mib_vm_table[] = {
 /*
  * Initialize the CTL_VM subtree.
  */
-void
-mib_vm_init(struct mib_node * node)
+void mib_vm_init(struct mib_node * node)
 {
 
 	MIB_INIT_ENODE(node, mib_vm_table);

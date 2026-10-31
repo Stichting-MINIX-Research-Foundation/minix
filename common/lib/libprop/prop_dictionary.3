@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.18 2011/09/30 22:08:18 jym Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.20 2020/06/06 21:25:59 thorpej Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .Nm prop_dictionary_externalize_to_pref ,
 .Nm prop_dictionary_internalize_from_pref ,
 .Nm prop_dictionary_equals ,
-.Nm prop_dictionary_keysym_cstring_nocopy ,
+.Nm prop_dictionary_keysym_value ,
 .Nm prop_dictionary_keysym_equals
 .Nd dictionary property collection object
 .Sh LIBRARY
@@ -111,7 +111,7 @@
 .Fn prop_dictionary_equals "prop_dictionary_t dict1" "prop_dictionary_t dict2"
 .\"
 .Ft const char *
-.Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t sym"
+.Fn prop_dictionary_keysym_value "prop_dictionary_keysym_t sym"
 .\"
 .Ft bool
 .Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
@@ -137,7 +137,7 @@
 .\"
 .Sh DESCRIPTION
 The
-.Nm prop_dictionary
+.Nm
 family of functions operate on the dictionary property collection object type.
 A dictionary is an unordered set of objects stored as key-value pairs.
 .Bl -tag -width "xxxxx"
@@ -273,8 +273,8 @@ Returns
 if the two dictionaries are equivalent.
 Note: Objects contained in the dictionary are compared by value, not by
 reference.
-.It Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t keysym"
-Returns an immutable reference to the dictionary key symbol's string value.
+.It Fn prop_dictionary_keysym_value "prop_dictionary_keysym_t keysym"
+Returns an reference to the dictionary key symbol's string value.
 .It Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
     "prop_dictionary_keysym_t keysym2"
 Returns
@@ -348,6 +348,6 @@ if internalizing or writing the dictionary fails for any reason.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

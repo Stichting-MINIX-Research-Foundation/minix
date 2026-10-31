@@ -178,7 +178,7 @@ FILE *fout;
  * Routine to calculate the free bytes on the current file system
  *  ~0 means many free bytes (unknown)
  */
-long getfree()
+long getfree(void)
 {
 	return(~0L);	/* many free bytes ... */
 }
@@ -240,8 +240,7 @@ jmp_buf tohere;		/* For the interrupt on RX timeout */
 
 int tryzhdrtype=ZRINIT;	/* Header type to send corresponding to Last rx close */
 
-void alrm(sig)
-int sig;
+void alrm(int sig)
 {
 	longjmp(tohere, -1);
 }
@@ -373,7 +372,7 @@ int main(int argc, char *argv[])
 }
 
 
-int usage()
+int usage(void)
 {
 	cucheck();
 #ifdef vax11c
@@ -513,7 +512,7 @@ et_tu:
  * Jack M. Wierda and Roderick W. Hart
  */
 
-int wcrx()
+int wcrx(void)
 {
 	register int sectnum, sectcurr;
 	register char sendchar;
@@ -711,7 +710,7 @@ int readline(int timeout)
 /*
  * Purge the modem input queue of all characters
  */
-void purgeline()
+void purgeline(void)
 {
 	Lleft = 0;
 #ifdef USG
@@ -1032,7 +1031,7 @@ void zperr(char *s, char *p, char *u)
 }
 
 /* send cancel string to get the other end to shut up */
-void canit()
+void canit(void)
 {
 	static char canistr[] = {
 	 24,24,24,24,24,24,24,24,24,24,8,8,8,8,8,8,8,8,8,8,0
@@ -1113,7 +1112,7 @@ void checkpath(char *name)
  *  Return ZFILE if Zmodem filename received, -1 on error,
  *   ZCOMPL if transaction finished,  else 0
  */
-int tryz()
+int tryz(void)
 {
 	register int c, n;
 	register int cmdzack1flg;
@@ -1209,7 +1208,7 @@ again:
 /*
  * Receive 1 or more files with ZMODEM protocol
  */
-int rzfiles()
+int rzfiles(void)
 {
 	register int c;
 
@@ -1238,7 +1237,7 @@ int rzfiles()
  * Receive a file with ZMODEM protocol
  *  Assumes file name frame is in secbuf
  */
-int rzfile()
+int rzfile(void)
 {
 	register int c, n;
 	long rxbytes;
@@ -1437,7 +1436,7 @@ void zmputs(char *s)
 /*
  * Close the receive dataset, return OK or ERROR
  */
-int closeit()
+int closeit(void)
 {
 	time_t q;
 
@@ -1468,7 +1467,7 @@ int closeit()
 /*
  * Ack a ZFIN packet, let byegones be byegones
  */
-void ackbibi()
+void ackbibi(void)
 {
 	register int n;
 

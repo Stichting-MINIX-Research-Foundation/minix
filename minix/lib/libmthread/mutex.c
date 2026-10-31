@@ -27,8 +27,7 @@ void mthread_init_valid_mutexes(void)
  *				mthread_mutex_add			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-static void mthread_mutex_add(m) 
-mthread_mutex_t *m;
+static void mthread_mutex_add(mthread_mutex_t *m)
 {
 /* Add mutex to list of valid, initialized mutexes */
 
@@ -48,8 +47,7 @@ mthread_mutex_t *m;
 /*===========================================================================*
  *				mthread_mutex_destroy			     *
  *===========================================================================*/
-int mthread_mutex_destroy(mutex)
-mthread_mutex_t *mutex;
+int mthread_mutex_destroy(mthread_mutex_t *mutex)
 {
 /* Invalidate mutex and deallocate resources. */
 
@@ -85,14 +83,13 @@ mthread_mutex_t *mutex;
 /*===========================================================================*
  *				mthread_mutex_init			     *
  *===========================================================================*/
-int mthread_mutex_init(mutex, mattr)
-mthread_mutex_t *mutex;	/* Mutex that is to be initialized */
-mthread_mutexattr_t *mattr;	/* Mutex attribute */
+int mthread_mutex_init(mthread_mutex_t *mutex, mthread_mutexattr_t *mattr)
 {
 /* Initialize the mutex to a known state. Attributes are not supported */
 
   struct __mthread_mutex *m;
 
+  mthread_init();
   if (mutex == NULL)
   	return(EAGAIN);
   else if (mattr != NULL)
@@ -115,8 +112,7 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 /*===========================================================================*
  *				mthread_mutex_lock			     *
  *===========================================================================*/
-int mthread_mutex_lock(mutex)
-mthread_mutex_t *mutex;	/* Mutex that is to be locked */
+int mthread_mutex_lock(mthread_mutex_t *mutex)
 {
 /* Try to lock this mutex. If already locked, append the current thread to
  * FIFO queue associated with this mutex and suspend the thread. */
@@ -147,8 +143,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
  *				mthread_mutex_remove			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-static void mthread_mutex_remove(m)
-mthread_mutex_t *m;
+static void mthread_mutex_remove(mthread_mutex_t *m)
 {
 /* Remove mutex from list of valid, initialized mutexes */
 
@@ -167,8 +162,7 @@ mthread_mutex_t *m;
 /*===========================================================================*
  *				mthread_mutex_trylock			     *
  *===========================================================================*/
-int mthread_mutex_trylock(mutex)
-mthread_mutex_t *mutex;	/* Mutex that is to be locked */
+int mthread_mutex_trylock(mthread_mutex_t *mutex)
 {
 /* Try to lock this mutex and return OK. If already locked, return error. */
 
@@ -194,8 +188,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 /*===========================================================================*
  *				mthread_mutex_unlock			     *
  *===========================================================================*/
-int mthread_mutex_unlock(mutex)
-mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
+int mthread_mutex_unlock(mthread_mutex_t *mutex)
 {
 /* Unlock a previously locked mutex. If there is a pending lock for this mutex 
  * by another thread, mark that thread runnable. */
@@ -221,8 +214,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
  *				mthread_mutex_valid			     *
  *===========================================================================*/
 #ifdef MTHREAD_STRICT
-int mthread_mutex_valid(m)
-mthread_mutex_t *m;
+int mthread_mutex_valid(mthread_mutex_t *m)
 {
 /* Check to see if mutex is on the list of valid mutexes */
   struct __mthread_mutex *loopitem;

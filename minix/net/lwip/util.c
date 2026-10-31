@@ -14,8 +14,7 @@
  *
  * TODO: move this function into libsys and remove other redundant copies.
  */
-int
-util_timeval_to_ticks(const struct timeval * tv, clock_t * ticksp)
+int util_timeval_to_ticks(const struct timeval * tv, clock_t * ticksp)
 {
 	clock_t ticks;
 
@@ -36,8 +35,7 @@ util_timeval_to_ticks(const struct timeval * tv, clock_t * ticksp)
  * Convert the given number of clock ticks to a timeval structure.  This
  * function never fails.
  */
-void
-util_ticks_to_timeval(clock_t ticks, struct timeval * tv)
+void util_ticks_to_timeval(clock_t ticks, struct timeval * tv)
 {
 
 	memset(tv, 0, sizeof(*tv));
@@ -57,8 +55,7 @@ util_ticks_to_timeval(clock_t ticks, struct timeval * tv)
  * buffer on the chain.  Return OK on success, or a negative error code if the
  * copy operation failed.  This function is packet queue friendly.
  */
-int
-util_copy_data(const struct sockdriver_data * data, size_t len, size_t off,
+int util_copy_data(const struct sockdriver_data * data, size_t len, size_t off,
 	const struct pbuf * pbuf, size_t skip, int copy_in)
 {
 	iovec_t iov[SOCKDRIVER_IOV_MAX];
@@ -104,8 +101,7 @@ util_copy_data(const struct sockdriver_data * data, size_t len, size_t off,
  * the total number of copied bytes on success, or E2BIG if not all of the
  * results could be stored in the given bfufer.
  */
-ssize_t
-util_coalesce(char * ptr, size_t max, const iovec_t * iov, unsigned int iovcnt)
+ssize_t util_coalesce(char * ptr, size_t max, const iovec_t * iov, unsigned int iovcnt)
 {
 	size_t off, size;
 
@@ -125,8 +121,7 @@ util_coalesce(char * ptr, size_t max, const iovec_t * iov, unsigned int iovcnt)
 /*
  * Return TRUE if the given endpoint has superuser privileges, FALSE otherwise.
  */
-int
-util_is_root(endpoint_t endpt)
+int util_is_root(endpoint_t endpt)
 {
 
 	return (getnuid(endpt) == ROOT_EUID);
@@ -136,8 +131,7 @@ util_is_root(endpoint_t endpt)
  * Convert a lwIP-provided error code (of type err_t) to a negative MINIX 3
  * error code.
  */
-int
-util_convert_err(err_t err)
+int util_convert_err(err_t err)
 {
 
 	switch (err) {
@@ -169,8 +163,7 @@ util_convert_err(err_t err)
  * protocol.  The call may be used for requesting either IPv4 or IPv6 PCBs,
  * based on the path used to get here.  It is used for TCP, UDP, and RAW PCBs.
  */
-ssize_t
-util_pcblist(struct rmib_call * call, struct rmib_oldp * oldp,
+ssize_t util_pcblist(struct rmib_call * call, struct rmib_oldp * oldp,
 	const void *(*enum_proc)(const void *),
 	void (*get_info_proc)(struct kinfo_pcb *, const void *))
 {

@@ -29,5 +29,6 @@ void read_tsc_64(u64_t *t);
 #define FSVERSION_MFS3		0x00003
 #define FSVERSION_EXT2		0x10002
 #define FSVERSION_ISO9660	0x20001
+#define FSVERSION_FFS		0x30001
 
 #endif

@@ -55,9 +55,7 @@ int set(int how, int first, int last);
 int locked(int b);
 void sigfunc(int s);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 
   int i, m = 0xFFFF;
@@ -664,8 +662,7 @@ void cloexec_test()
   exit(0);
 }
 
-int set(how, first, last)
-int how, first, last;
+int set(int how, int first, int last)
 {
   int r;
   struct flock flock;
@@ -683,8 +680,7 @@ int how, first, last;
 	return(-1);
 }
 
-int locked(b)
-int b;
+int locked(int b)
 /* Test to see if byte b is locked.  Return L or U */
 {
   struct flock flock;
@@ -710,8 +706,7 @@ int b;
   return(WEXITSTATUS(status));
 }
 
-void sigfunc(s)
-int s;				/* for ANSI */
+void sigfunc(int s)
 {
 }
 

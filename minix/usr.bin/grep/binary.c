@@ -1,7 +1,7 @@
 /*	$OpenBSD: binary.c,v 1.18 2013/11/12 22:50:42 deraadt Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,12 @@
 
 #include "grep.h"
 
-static int
-isbinary(const char *buf, size_t n)
+static int isbinary(const char *buf, size_t n)
 {
 	return (memchr(buf, '\0', n) != NULL);
 }
 
-int
-bin_file(FILE *f)
+int bin_file(FILE *f)
 {
 	char		buf[BUFSIZ];
 	size_t		m;
@@ -61,8 +59,7 @@ bin_file(FILE *f)
 }
 
 #ifndef NOZ
-int
-gzbin_file(gzFile *f)
+int gzbin_file(gzFile *f)
 {
 	char		buf[BUFSIZ];
 	int		m;
@@ -84,8 +81,7 @@ gzbin_file(gzFile *f)
 #endif
 
 #ifndef SMALL
-int
-mmbin_file(mmf_t *f)
+int mmbin_file(mmf_t *f)
 {
 	/* XXX knows too much about mmf internals */
 	return isbinary(f->base, f->len < BUFSIZ ? f->len : BUFSIZ);

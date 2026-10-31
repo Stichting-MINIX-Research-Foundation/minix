@@ -6,8 +6,7 @@
 /*
  * Mount the file system.  Obtain the root inode and send back its details.
  */
-int
-fs_mount(dev_t __unused dev, unsigned int flags,
+int fs_mount(dev_t __unused dev, unsigned int flags,
 	struct fsdriver_node * root_node, unsigned int * res_flags)
 {
 	struct inode *root;
@@ -40,8 +39,7 @@ fs_mount(dev_t __unused dev, unsigned int flags,
 /*
  * Unmount the file system.
  */
-void
-fs_unmount(void)
+void fs_unmount(void)
 {
 	struct inode *root;
 

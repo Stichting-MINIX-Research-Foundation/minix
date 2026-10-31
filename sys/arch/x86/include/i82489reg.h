@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.13 2015/07/17 05:16:09 msaitoh Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.19 2019/06/14 05:59:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,34 +35,36 @@
  * "local" APIC.
  */
 
-#define	LAPIC_ID		0x020	/* ID. RW */
+#define	LAPIC_ID	0x020	/* ID. (xAPIC: RW, x2APIC: RO) */
 #	define LAPIC_ID_MASK		0xff000000
 #	define LAPIC_ID_SHIFT		24
 
-#define LAPIC_VERS		0x030	/* Version. R */
+#define LAPIC_VERS	0x030	/* Version. RO */
 #	define LAPIC_VERSION_MASK	0x000000ff
 #	define LAPIC_VERSION_LVT_MASK	0x00ff0000
 #	define LAPIC_VERSION_LVT_SHIFT	16
+#	define LAPIC_VERSION_DIRECTED_EOI 0x01000000
+#	define LAPIC_VERSION_EXTAPIC_SPACE 0x80000000
 
-#define LAPIC_TPRI		0x080	/* Task Prio. RW */
+#define LAPIC_TPRI	0x080	/* Task Prio. RW */
 #	define LAPIC_TPRI_MASK		0x000000ff
 #	define LAPIC_TPRI_INT_MASK	0x000000f0
 #	define LAPIC_TPRI_SUB_MASK	0x0000000f
 
-#define LAPIC_APRI		0x090	/* Arbitration prio R */
+#define LAPIC_APRI	0x090	/* Arbitration prio (xAPIC: RO, x2APIC: NA) */
 #	define LAPIC_APRI_MASK		0x000000ff
 
-#define LAPIC_PPRI		0x0a0	/* Processor prio. R */
-#define LAPIC_EOI		0x0b0	/* End Int. W */
-#define LAPIC_RRR		0x0c0	/* Remote read R */
-#define LAPIC_LDR		0x0d0	/* Logical dest. RW */
+#define LAPIC_PPRI	0x0a0	/* Processor prio. RO */
+#define LAPIC_EOI	0x0b0	/* End Int. W */
+#define LAPIC_RRR	0x0c0	/* Remote read (xAPIC: RO, x2APIC: NA) */
+#define LAPIC_LDR	0x0d0	/* Logical dest. (xAPIC: RW, x2APIC: RO) */
 
-#define LAPIC_DFR		0x0e0	/* Dest. format RW */
+#define LAPIC_DFR	0x0e0	/* Dest. format (xAPIC: RW, x2APIC: NA) */
 #	define LAPIC_DFR_MASK		0xf0000000
 #	define LAPIC_DFR_FLAT		0xf0000000
 #	define LAPIC_DFR_CLUSTER	0x00000000
 
-#define LAPIC_SVR		0x0f0	/* Spurious intvec RW */
+#define LAPIC_SVR	0x0f0	/* Spurious intvec RW */
 #	define LAPIC_SVR_VECTOR_MASK	0x000000ff
 #	define LAPIC_SVR_VEC_FIX	0x0000000f
 #	define LAPIC_SVR_VEC_PROG	0x000000f0
@@ -70,66 +72,71 @@
 #	define LAPIC_SVR_SWEN		0x00000100
 #	define LAPIC_SVR_FOCUS		0x00000200
 #	define LAPIC_SVR_FDIS		0x00000200
+#	define LAPIC_SVR_EOI_BC_DIS	0x00001000
 
-#define LAPIC_ISR	0x100		/* In-Service Status */
-#define LAPIC_TMR	0x180		/* Trigger Mode */
-#define LAPIC_IRR	0x200		/* Interrupt Req */
-#define LAPIC_ESR	0x280		/* Err status. R */
+#define LAPIC_ISR	0x100	/* In-Service Status RO */
+#define LAPIC_TMR	0x180	/* Trigger Mode RO */
+#define LAPIC_IRR	0x200	/* Interrupt Req RO */
+#define LAPIC_ESR	0x280	/* Err status. RW */
 
-#define LAPIC_ICRLO	0x300		/* Int. cmd. RW */
-#	define LAPIC_DLMODE_MASK	0x00000700
-#	define LAPIC_DLMODE_FIXED	0x00000000
-#	define LAPIC_DLMODE_LOW		0x00000100
-#	define LAPIC_DLMODE_SMI		0x00000200
-#	define LAPIC_DLMODE_NMI		0x00000400
-#	define LAPIC_DLMODE_INIT	0x00000500
-#	define LAPIC_DLMODE_STARTUP	0x00000600
-#	define LAPIC_DLMODE_EXTINT	0x00000700
+/* Common definitions for ICR, LVT and MSIDATA */
+#define LAPIC_VECTOR_MASK    __BITS(7, 0)
+#define LAPIC_DLMODE_MASK    __BITS(10, 8)	/* Delivery Mode */
+#define LAPIC_DLMODE_FIXED   __SHIFTIN(0, LAPIC_DLMODE_MASK)
+#define LAPIC_DLMODE_LOW     __SHIFTIN(1, LAPIC_DLMODE_MASK) /* NA in x2APIC */
+#define LAPIC_DLMODE_SMI     __SHIFTIN(2, LAPIC_DLMODE_MASK)
+#define LAPIC_DLMODE_NMI     __SHIFTIN(4, LAPIC_DLMODE_MASK)
+#define LAPIC_DLMODE_INIT    __SHIFTIN(5, LAPIC_DLMODE_MASK)
+#define LAPIC_DLMODE_STARTUP __SHIFTIN(6, LAPIC_DLMODE_MASK) /* NA in LVT,MSI*/
+#define LAPIC_DLMODE_EXTINT  __SHIFTIN(7, LAPIC_DLMODE_MASK) /* NA in x2APIC */
 
-#	define LAPIC_DSTMODE_PHYS	0x00000000
-#	define LAPIC_DSTMODE_LOG	0x00000800
+#define LAPIC_DLSTAT_BUSY    __BIT(12)	/* NA in x2APIC nor MSI */
+#define LAPIC_DLSTAT_IDLE    0x00000000
 
-#	define LAPIC_DLSTAT_BUSY	0x00001000
-#	define LAPIC_DLSTAT_IDLE	0x00000000
+#define LAPIC_LEVEL_MASK     __BIT(14)	/* LAPIC_LVT_LINT_RIRR in LVT LINT */
+#define LAPIC_LEVEL_ASSERT   LAPIC_LEVEL_MASK
+#define LAPIC_LEVEL_DEASSERT 0x00000000
 
-#	define LAPIC_LEVEL_MASK		0x00004000
-#	define LAPIC_LEVEL_ASSERT	0x00004000
-#	define LAPIC_LEVEL_DEASSERT	0x00000000
+#define LAPIC_TRIGMODE_MASK   __BIT(15)
+#define LAPIC_TRIGMODE_EDGE   0x00000000
+#define LAPIC_TRIGMODE_LEVEL  LAPIC_TRIGMODE_MASK
 
-#	define LAPIC_TRIGGER_MASK	0x00008000
-#	define LAPIC_TRIGGER_EDGE	0x00000000
-#	define LAPIC_TRIGGER_LEVEL	0x00008000
+/* Common definitions for LVT */
+#define LAPIC_LVT_MASKED     __BIT(16)
 
-#	define LAPIC_DEST_MASK		0x000c0000
-#	define LAPIC_DEST_DEFAULT	0x00000000
-#	define LAPIC_DEST_SELF		0x00040000
-#	define LAPIC_DEST_ALLINCL	0x00080000
-#	define LAPIC_DEST_ALLEXCL	0x000c0000
+#define LAPIC_LVT_CMCI	0x2f0	/* Loc.vec (CMCI) RW */
+#define LAPIC_ICRLO	0x300	/* Int. cmd. (xAPIC: RW, x2APIC: RW64) */
 
+#	define LAPIC_DSTMODE_MASK	__BIT(11)
+#	define LAPIC_DSTMODE_PHYS	__SHIFTIN(0, LAPIC_DSTMODE_MASK)
+#	define LAPIC_DSTMODE_LOG	__SHIFTIN(1, LAPIC_DSTMODE_MASK)
 
-#define LAPIC_ICRHI	0x310		/* Int. cmd. RW */
+#	define LAPIC_DEST_MASK		__BITS(19, 18)
+#	define LAPIC_DEST_DEFAULT	__SHIFTIN(0, LAPIC_DEST_MASK)
+#	define LAPIC_DEST_SELF		__SHIFTIN(1, LAPIC_DEST_MASK)
+#	define LAPIC_DEST_ALLINCL	__SHIFTIN(2, LAPIC_DEST_MASK)
+#	define LAPIC_DEST_ALLEXCL	__SHIFTIN(3, LAPIC_DEST_MASK)
 
-#define LAPIC_LVTT	0x320		/* Loc.vec.(timer) RW */
-#	define LAPIC_LVTT_VEC_MASK	0x000000ff
-#	define LAPIC_LVTT_DS		0x00001000
-#	define LAPIC_LVTT_M		0x00010000
-#	define LAPIC_LVTT_TM		0x00020000
+#define LAPIC_ICRHI	0x310	/* Int. cmd. (xAPIC: RW, x2APIC: NA) */
 
-#define LAPIC_TMINT	0x330		/* Loc.vec (Thermal) */
-#define LAPIC_PCINT	0x340		/* Loc.vec (Perf Mon) */
-#define LAPIC_LVINT0	0x350		/* Loc.vec (LINT0) RW */
-#	define LAPIC_LVT_MASKED		0x00010000
-#	define LAPIC_LVT_LEVTRIG	0x00008000
-#	define LAPIC_LVT_REMOTE_IRR	0x00004000
-#	define LAPIC_INP_POL		0x00002000
-#	define LAPIC_PEND_SEND		0x00001000
+#define LAPIC_LVT_TIMER	0x320	/* Loc.vec.(timer) RW */
+#	define LAPIC_LVT_TMM		__BITS(18, 17)
+#	define LAPIC_LVT_TMM_ONESHOT	__SHIFTIN(0, LAPIC_LVT_TMM)
+#	define LAPIC_LVT_TMM_PERIODIC	__SHIFTIN(1, LAPIC_LVT_TMM)
+#	define LAPIC_LVT_TMM_TSCDLT	__SHIFTIN(2, LAPIC_LVT_TMM)
 
-#define LAPIC_LVINT1	0x360		/* Loc.vec (LINT1) RW */
-#define LAPIC_LVERR	0x370		/* Loc.vec (ERROR) RW */
-#define LAPIC_ICR_TIMER	0x380		/* Initial count RW */
-#define LAPIC_CCR_TIMER	0x390		/* Current count RO */
+#define LAPIC_LVT_THERM	0x330	/* Loc.vec (Thermal) RW */
+#define LAPIC_LVT_PCINT	0x340	/* Loc.vec (Perf Mon) RW */
+#define LAPIC_LVT_LINT0	0x350	/* Loc.vec (LINT0) RW */
+#	define LAPIC_LVT_LINT_INP_POL	__BIT(13)
+#	define LAPIC_LVT_LINT_RIRR	__BIT(14)
 
-#define LAPIC_DCR_TIMER	0x3e0		/* Divisor config register */
+#define LAPIC_LVT_LINT1	0x360	/* Loc.vec (LINT1) RW */
+#define LAPIC_LVT_ERR	0x370	/* Loc.vec (ERROR) RW */
+#define LAPIC_ICR_TIMER	0x380	/* Initial count RW */
+#define LAPIC_CCR_TIMER	0x390	/* Current count RO */
+
+#define LAPIC_DCR_TIMER	0x3e0	/* Divisor config RW */
 #	define LAPIC_DCRT_DIV1		0x0b
 #	define LAPIC_DCRT_DIV2		0x00
 #	define LAPIC_DCRT_DIV4		0x01
@@ -139,31 +146,15 @@
 #	define LAPIC_DCRT_DIV64		0x09
 #	define LAPIC_DCRT_DIV128	0x0a
 
-#define LAPIC_MSIADDR_BASE		0xfee00000
+#define LAPIC_SELF_IPI	0x3f0	/* SELF IPI (xAPIC: NA, x2APIC: W) */
+#	define LAPIC_SELF_IPI_VEC_MASK	0x000000ff
+
+#define LAPIC_MSIADDR_BASE	0xfee00000
 #define	LAPIC_MSIADDR_DSTID_MASK	__BITS(19, 12)
 #define	LAPIC_MSIADDR_RSVD0_MASK	__BITS(11, 4)
 #define	LAPIC_MSIADDR_RH		__BIT(3)
 #define	LAPIC_MSIADDR_DM		__BIT(2)
 #define	LAPIC_MSIADDR_RSVD1_MASK	__BITS(1, 0)
-
-#define	LAPIC_MSIDATA_VECTOR_MASK	__BITS(7, 0)
-#define	LAPIC_MSIDATA_DM_MASK		__BITS(10, 8)
-#define	LAPIC_MSIDATA_DM_FIXED		__SHIFTIN(0, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_LOPRI		__SHIFTIN(1, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_SMI		__SHIFTIN(2, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_RSVD0		__SHIFTIN(3, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_NMI		__SHIFTIN(4, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_INIT		__SHIFTIN(5, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_RSVD1		__SHIFTIN(6, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_EXTINT		__SHIFTIN(7, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_RSVD0_MASK	__BITS(13, 11)
-#define	LAPIC_MSIDATA_LEVEL_MASK	__BIT(14)
-#define	LAPIC_MSIDATA_LEVEL_DEASSERT	__SHIFTIN(0, LAPIC_MSIDATA_LEVEL_MASK)
-#define	LAPIC_MSIDATA_LEVEL_ASSERT	__SHIFTIN(1, LAPIC_MSIDATA_LEVEL_MASK)
-#define	LAPIC_MSIDATA_TRGMODE_MASK	__BIT(15)
-#define	LAPIC_MSIDATA_TRGMODE_EDGE	__SHIFTIN(0,LAPIC_MSIDATA_TRGMODE_MASK)
-#define	LAPIC_MSIDATA_TRGMODE_LEVEL	__SHIFTIN(1,LAPIC_MSIDATA_TRGMODE_MASK)
-#define	LAPIC_MSIDATA_RSVD1_MASK	__BITS(31, 16)
 
 #define LAPIC_BASE		0xfee00000
 
@@ -210,14 +201,3 @@
 #	define LEAPIC_LVTR_DSTAT	__BIT(12)	/* delivery state RO */
 #	define LEAPIC_LVTR_MSGTYPE	__BITS(10,8)	/* Message type */
 #	define LEAPIC_LVTR_VEC		__BITS(7,0)	/* the intr. vector */
-
-/*
- * Model specific registers
- */
-
-#define	LAPIC_MSR	0x001b
-#	define	LAPIC_MSR_BSP		0x00000100	/* boot processor */
-#	define	LAPIC_MSR_ENABLE_x2	0x00000400	/* x2APIC mode */
-#	define	LAPIC_MSR_ENABLE	0x00000800	/* software enable */
-#	define	LAPIC_MSR_ADDR		0xfffff000	/* physical address */
-

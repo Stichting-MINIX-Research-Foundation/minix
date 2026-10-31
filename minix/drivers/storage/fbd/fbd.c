@@ -17,7 +17,7 @@
 /* Function declarations. */
 static int fbd_open(devminor_t minor, int access);
 static int fbd_close(devminor_t minor);
-static int fbd_transfer(devminor_t minor, int do_write, u64_t position,
+static ssize_t fbd_transfer(devminor_t minor, int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
 static int fbd_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, endpoint_t user_endpt);
@@ -289,7 +289,7 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 	assert(count > 0 && count <= SCPVEC_NR);
 
 	if (size > BUF_SIZE) {
-		printf("FBD: allocating memory for %d bytes\n", size);
+		printf("FBD: allocating memory for %zu bytes\n", size);
 
 		ptr = alloc_contig(size, 0, NULL);
 
@@ -393,7 +393,7 @@ static ssize_t fbd_transfer_copy(int do_write, u64_t position,
 /*===========================================================================*
  *				fbd_transfer				     *
  *===========================================================================*/
-static int fbd_transfer(devminor_t UNUSED(minor), int do_write, u64_t position,
+static ssize_t fbd_transfer(devminor_t UNUSED(minor), int do_write, u64_t position,
 	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags)
 {
 	/* Transfer data from or to the device. */

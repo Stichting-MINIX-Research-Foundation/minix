@@ -19,8 +19,7 @@
 static u8_t test_tcp_timer;
 
 /* our own version of tcp_tmr so we can reset fast/slow timer state */
-static void
-test_tcp_tmr(void)
+static void test_tcp_tmr(void)
 {
   tcp_fasttmr();
   if (++test_tcp_timer & 1) {
@@ -30,8 +29,7 @@ test_tcp_tmr(void)
 
 /* Setups/teardown functions */
 
-static void
-tcp_setup(void)
+static void tcp_setup(void)
 {
   /* reset iss to default (6510) */
   tcp_ticks = 0;
@@ -43,8 +41,7 @@ tcp_setup(void)
   tcp_remove_all();
 }
 
-static void
-tcp_teardown(void)
+static void tcp_teardown(void)
 {
   tcp_remove_all();
   netif_list = NULL;
@@ -366,8 +363,7 @@ END_TEST
 
 static u8_t tx_data[TCP_WND*2];
 
-static void
-check_seqnos(struct tcp_seg *segs, int num_expected, u32_t *seqnos_expected)
+static void check_seqnos(struct tcp_seg *segs, int num_expected, u32_t *seqnos_expected)
 {
   struct tcp_seg *s = segs;
   int i;

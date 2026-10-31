@@ -21,7 +21,7 @@ char *flt_malloc(size_t size, char *sbuf, size_t ssize)
 		return sbuf;
 
 	if(!(p = alloc_contig(size, 0, NULL)))
-		panic("out of memory: %d", size);
+		panic("out of memory: %zu", size);
 
 	return p;
 }

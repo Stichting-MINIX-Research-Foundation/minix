@@ -152,8 +152,7 @@ NewSet(void)
 	return(ds);
 }
 
-static void
-AddPoint(struct dataset *ds, double a)
+static void AddPoint(struct dataset *ds, double a)
 {
 	double *dp;
 
@@ -211,15 +210,13 @@ Stddev(struct dataset *ds)
 	return sqrt(Var(ds));
 }
 
-static void
-VitalsHead(void)
+static void VitalsHead(void)
 {
 
 	printf("    N               Min               Max            Median               Avg            Stddev\n");
 }
 
-static void
-Vitals(struct dataset *ds, int flag)
+static void Vitals(struct dataset *ds, int flag)
 {
 
 	printf("%c %3d %17.12g %17.12g %17.12g %17.12g %17.12g", symbol[flag],
@@ -227,8 +224,7 @@ Vitals(struct dataset *ds, int flag)
 	printf("\n");
 }
 
-static void
-Relative(struct dataset *ds, struct dataset *rs, int confidx)
+static void Relative(struct dataset *ds, struct dataset *rs, int confidx)
 {
 	double spool, s, d, e, t;
 	int i;
@@ -273,8 +269,7 @@ struct plot {
 
 static struct plot plot;
 
-static void
-SetupPlot(int width, int separate, int num_datasets)
+static void SetupPlot(int width, int separate, int num_datasets)
 {
 	struct plot *pl;
 
@@ -289,8 +284,7 @@ SetupPlot(int width, int separate, int num_datasets)
 	pl->max = -999e99;
 }
 
-static void
-AdjPlot(double a)
+static void AdjPlot(double a)
 {
 	struct plot *pl;
 
@@ -304,8 +298,7 @@ AdjPlot(double a)
 	pl->x0 = pl->min - .5 * pl->dx;
 }
 
-static void
-DimPlot(struct dataset *ds)
+static void DimPlot(struct dataset *ds)
 {
 	AdjPlot(Min(ds));
 	AdjPlot(Max(ds));
@@ -313,8 +306,7 @@ DimPlot(struct dataset *ds)
 	AdjPlot(Avg(ds) + Stddev(ds));
 }
 
-static void
-PlotSet(struct dataset *ds, int val)
+static void PlotSet(struct dataset *ds, int val)
 {
 	struct plot *pl;
 	int i, j, m, x;
@@ -386,8 +378,7 @@ PlotSet(struct dataset *ds, int val)
 	pl->bar[bar][x] = 'A';
 }
 
-static void
-DumpPlot(void)
+static void DumpPlot(void)
 {
 	struct plot *pl;
 	int i, j, k;
@@ -435,8 +426,7 @@ DumpPlot(void)
 	putchar('\n');
 }
 
-static int
-dbl_cmp(const void *a, const void *b)
+static int dbl_cmp(const void *a, const void *b)
 {
 	const double *aa = a;
 	const double *bb = b;
@@ -504,8 +494,7 @@ ReadSet(const char *n, int column, const char *delim)
 	return (s);
 }
 
-static void
-usage(char const *whine)
+static void usage(char const *whine)
 {
 	int i;
 
@@ -527,8 +516,7 @@ usage(char const *whine)
 	exit (2);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	struct dataset *ds[7];
 	int nds;

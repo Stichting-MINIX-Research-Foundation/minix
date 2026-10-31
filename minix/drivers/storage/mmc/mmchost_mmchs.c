@@ -78,29 +78,25 @@ static struct log log = {
 #define HSMMCSD_0_FREQ_25MHZ  25000000	/* 25MHz */
 #define HSMMCSD_0_FREQ_50MHZ  50000000	/* 50MHz */
 
-void
-mmc_set32(vir_bytes reg, u32_t mask, u32_t value)
+void mmc_set32(vir_bytes reg, u32_t mask, u32_t value)
 {
 	assert(reg >= 0 && reg <= mmchs->io_size);
 	set32(mmchs->io_base + reg, mask, value);
 }
 
-u32_t
-mmc_read32(vir_bytes reg)
+u32_t mmc_read32(vir_bytes reg)
 {
 	assert(reg >= 0 && reg <= mmchs->io_size);
 	return read32(mmchs->io_base + reg);
 }
 
-void
-mmc_write32(vir_bytes reg, u32_t value)
+void mmc_write32(vir_bytes reg, u32_t value)
 {
 	assert(reg >= 0 && reg <= mmchs->io_size);
 	write32(mmchs->io_base + reg, value);
 }
 
-void
-mmchs_set_bus_freq(u32_t freq)
+void mmchs_set_bus_freq(u32_t freq)
 {
 	u32_t freq_in = HSMMCSD_0_IN_FREQ;
 	u32_t freq_out = freq;
@@ -119,8 +115,7 @@ mmchs_set_bus_freq(u32_t freq)
  * instance. this driver only handles a single
  * mmchs controller at a given time.
  */
-int
-mmchs_init(uint32_t instance)
+int mmchs_init(uint32_t instance)
 {
 
 	uint32_t value;
@@ -308,8 +303,7 @@ mmchs_init(uint32_t instance)
 	return 0;
 }
 
-void
-intr_deassert(int mask)
+void intr_deassert(int mask)
 {
 	if (mmc_read32(mmchs->regs->SD_STAT) & 0x8000) {
 		log_warn(&log, "%s, error stat  %08x\n", __FUNCTION__,
@@ -325,8 +319,7 @@ intr_deassert(int mask)
 unsigned char *io_data;
 int io_len;
 
-void
-handle_bwr()
+void handle_bwr()
 {
 	/* handle buffer write ready interrupts. These happen in a non
 	 * predictable way (eg. we send a request but don't know if we are
@@ -355,8 +348,7 @@ handle_bwr()
 	io_data = NULL;
 }
 
-void
-handle_brr()
+void handle_brr()
 {
 	/* handle buffer read ready interrupts. genrally these happen afther
 	 * the data is read from the sd card. */
@@ -381,8 +373,7 @@ handle_brr()
 	io_data = NULL;
 }
 
-static void
-mmchs_hw_intr(unsigned int irqs)
+static void mmchs_hw_intr(unsigned int irqs)
 {
 	log_warn(&log, "Hardware interrupt left over (0x%08lx)\n",
 	    mmc_read32(mmchs->regs->SD_STAT));
@@ -397,8 +388,7 @@ mmchs_hw_intr(unsigned int irqs)
 /*===========================================================================*
  *				w_intr_wait				     *
  *===========================================================================*/
-static int
-intr_wait(int mask)
+static int intr_wait(int mask)
 {
 	long v;
 #ifdef USE_INTR
@@ -514,8 +504,7 @@ intr_wait(int mask)
 #endif /* USE_INTR */
 }
 
-int
-mmchs_send_cmd(uint32_t command, uint32_t arg)
+int mmchs_send_cmd(uint32_t command, uint32_t arg)
 {
 
 	/* Read current interrupt status and fail it an interrupt is already
@@ -549,8 +538,7 @@ mmchs_send_cmd(uint32_t command, uint32_t arg)
 	return 0;
 }
 
-int
-mmc_send_cmd(struct mmc_command *c)
+int mmc_send_cmd(struct mmc_command *c)
 {
 
 	/* convert the command to a hsmmc command */
@@ -676,8 +664,7 @@ mmc_send_cmd(struct mmc_command *c)
 	return ret;
 }
 
-int
-mmc_send_app_cmd(struct sd_card_regs *card, struct mmc_command *c)
+int mmc_send_app_cmd(struct sd_card_regs *card, struct mmc_command *c)
 {
 	struct mmc_command command;
 	command.cmd = MMC_APP_CMD;
@@ -690,8 +677,7 @@ mmc_send_app_cmd(struct sd_card_regs *card, struct mmc_command *c)
 	return mmc_send_cmd(c);
 }
 
-int
-card_goto_idle_state()
+int card_goto_idle_state()
 {
 	struct mmc_command command;
 	command.cmd = MMC_GO_IDLE_STATE;
@@ -705,8 +691,7 @@ card_goto_idle_state()
 	return 0;
 }
 
-int
-card_identification()
+int card_identification()
 {
 	struct mmc_command command;
 	command.cmd = SD_SEND_IF_COND;	/* Send CMD8 */
@@ -730,8 +715,7 @@ card_identification()
 	return 0;
 }
 
-int
-card_query_voltage_and_type(struct sd_card_regs *card)
+int card_query_voltage_and_type(struct sd_card_regs *card)
 {
 	struct mmc_command command;
 	spin_t spin;
@@ -783,8 +767,7 @@ card_query_voltage_and_type(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-card_identify(struct sd_card_regs *card)
+int card_identify(struct sd_card_regs *card)
 {
 	struct mmc_command command;
 	/* Send cmd 2 (all_send_cid) and expect 136 bits response */
@@ -820,8 +803,7 @@ card_identify(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-card_csd(struct sd_card_regs *card)
+int card_csd(struct sd_card_regs *card)
 {
 	/* Read the Card Specific Data register */
 	struct mmc_command command;
@@ -850,8 +832,7 @@ card_csd(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-select_card(struct sd_card_regs *card)
+int select_card(struct sd_card_regs *card)
 {
 	struct mmc_command command;
 
@@ -866,8 +847,7 @@ select_card(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-card_scr(struct sd_card_regs *card)
+int card_scr(struct sd_card_regs *card)
 {
 	uint8_t buffer[8];	/* 64 bits */
 	uint8_t *p;
@@ -912,8 +892,7 @@ card_scr(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-enable_4bit_mode(struct sd_card_regs *card)
+int enable_4bit_mode(struct sd_card_regs *card)
 {
 	struct mmc_command command;
 
@@ -938,8 +917,7 @@ enable_4bit_mode(struct sd_card_regs *card)
 				 * that doesn't support 4 bits mode */
 }
 
-void
-dump_char(char *out, char in)
+void dump_char(char *out, char in)
 {
 	int i;
 	memset(out, 0, 9);
@@ -949,8 +927,7 @@ dump_char(char *out, char in)
 
 }
 
-void
-dump(uint8_t * data, int len)
+void dump(uint8_t * data, int len)
 {
 	int c;
 	char digit[4][9];
@@ -971,8 +948,7 @@ dump(uint8_t * data, int len)
 	}
 }
 
-void
-mmc_switch(int function, int value, uint8_t * data)
+void mmc_switch(int function, int value, uint8_t * data)
 {
 	struct mmc_command command;
 
@@ -995,8 +971,7 @@ mmc_switch(int function, int value, uint8_t * data)
 	// dump(data,64);
 }
 
-int
-enable_high_speed_mode(struct sd_card_regs *card)
+int enable_high_speed_mode(struct sd_card_regs *card)
 {
 	/* MMC cards using version 4.0 or higher of the specs can work at
 	 * higher bus rates. After setting the bus width one can send the
@@ -1027,8 +1002,7 @@ enable_high_speed_mode(struct sd_card_regs *card)
 	return 0;
 }
 
-int
-read_single_block(struct sd_card_regs *card,
+int read_single_block(struct sd_card_regs *card,
     uint32_t blknr, unsigned char *buf)
 {
 	struct mmc_command command;
@@ -1048,8 +1022,7 @@ read_single_block(struct sd_card_regs *card,
 	return 0;
 }
 
-int
-write_single_block(struct sd_card_regs *card,
+int write_single_block(struct sd_card_regs *card,
     uint32_t blknr, unsigned char *buf)
 {
 	struct mmc_command command;
@@ -1070,23 +1043,20 @@ write_single_block(struct sd_card_regs *card,
 	return 0;
 }
 
-int
-mmchs_host_init(struct mmc_host *host)
+int mmchs_host_init(struct mmc_host *host)
 {
 	mmchs_init(1);
 	return 0;
 }
 
-void
-mmchs_set_log_level(int level)
+void mmchs_set_log_level(int level)
 {
 	if (level >= 0 && level <= 4) {
 		log.log_level = level;
 	}
 }
 
-int
-mmchs_host_set_instance(struct mmc_host *host, int instance)
+int mmchs_host_set_instance(struct mmc_host *host, int instance)
 {
 	log_info(&log, "Using instance number %d\n", instance);
 	if (instance != 0) {
@@ -1095,15 +1065,13 @@ mmchs_host_set_instance(struct mmc_host *host, int instance)
 	return OK;
 }
 
-int
-mmchs_host_reset(struct mmc_host *host)
+int mmchs_host_reset(struct mmc_host *host)
 {
 	// mmchs_init(1);
 	return 0;
 }
 
-int
-mmchs_card_detect(struct sd_slot *slot)
+int mmchs_card_detect(struct sd_slot *slot)
 {
 	/* @TODO implement proper card detect */
 	return 1;
@@ -1186,8 +1154,7 @@ mmchs_card_initialize(struct sd_slot *slot)
 }
 
 /* read count blocks into existing buf */
-static int
-mmchs_host_read(struct sd_card *card,
+static int mmchs_host_read(struct sd_card *card,
     uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	uint32_t i;
@@ -1200,8 +1167,7 @@ mmchs_host_read(struct sd_card *card,
 }
 
 /* write count blocks */
-static int
-mmchs_host_write(struct sd_card *card,
+static int mmchs_host_write(struct sd_card *card,
     uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	uint32_t i;
@@ -1215,8 +1181,7 @@ mmchs_host_write(struct sd_card *card,
 	return OK;
 }
 
-int
-mmchs_card_release(struct sd_card *card)
+int mmchs_card_release(struct sd_card *card)
 {
 	assert(card->open_ct == 1);
 	card->open_ct--;
@@ -1230,8 +1195,7 @@ mmchs_card_release(struct sd_card *card)
 	return OK;
 }
 
-void
-host_initialize_host_structure_mmchs(struct mmc_host *host)
+void host_initialize_host_structure_mmchs(struct mmc_host *host)
 {
 	/* Initialize the basic data structures host slots and cards */
 	int i;

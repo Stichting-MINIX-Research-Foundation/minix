@@ -69,8 +69,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiDsClearImplicitReturn (
+void AcpiDsClearImplicitReturn (
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_FUNCTION_NAME (DsClearImplicitReturn);
@@ -355,8 +354,7 @@ ResultNotUsed:
  *
  ******************************************************************************/
 
-void
-AcpiDsDeleteResultIfNotUsed (
+void AcpiDsDeleteResultIfNotUsed (
     ACPI_PARSE_OBJECT       *Op,
     ACPI_OPERAND_OBJECT     *ResultObj,
     ACPI_WALK_STATE         *WalkState)
@@ -449,8 +447,7 @@ AcpiDsResolveOperands (
  *
  ******************************************************************************/
 
-void
-AcpiDsClearOperands (
+void AcpiDsClearOperands (
     ACPI_WALK_STATE         *WalkState)
 {
     UINT32                  i;

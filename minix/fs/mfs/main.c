@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -91,8 +91,8 @@ static void cch_check(void)
 	    req_nr != REQ_PUTNODE && req_nr != REQ_READSUPER &&
 	    req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
 	    req_nr != REQ_SYNC && req_nr != REQ_LOOKUP) {
-		printf("MFS(%d) inode(%lu) cc: %d req_nr: %d\n", sef_self(),
-			inode[i].i_num, inode[i].i_count - cch[i], req_nr);
+		printf("MFS(%d) inode(%llu) cc: %d req_nr: %d\n", sef_self(),
+			(unsigned long long)inode[i].i_num, inode[i].i_count - cch[i], req_nr);
 	}
 	  
 	cch[i] = inode[i].i_count;

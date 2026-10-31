@@ -206,8 +206,7 @@ static u32_t sntp_last_timestamp_sent[2];
 /**
  * SNTP processing of received timestamp
  */
-static void
-sntp_process(u32_t *receive_timestamp)
+static void sntp_process(u32_t *receive_timestamp)
 {
   /* convert SNTP time (1900-based) to unix GMT time (1970-based)
    * if MSB is 0, SNTP time is 2036-based!
@@ -236,8 +235,7 @@ sntp_process(u32_t *receive_timestamp)
 /**
  * Initialize request struct to be sent to server.
  */
-static void
-sntp_initialize_request(struct sntp_msg *req)
+static void sntp_initialize_request(struct sntp_msg *req)
 {
   memset(req, 0, SNTP_MSG_LEN);
   req->li_vn_mode = SNTP_LI_NO_WARNING | SNTP_VERSION | SNTP_MODE_CLIENT;
@@ -261,8 +259,7 @@ sntp_initialize_request(struct sntp_msg *req)
  *
  * @param arg is unused (only necessary to conform to sys_timeout)
  */
-static void
-sntp_retry(void* arg)
+static void sntp_retry(void* arg)
 {
   LWIP_UNUSED_ARG(arg);
 
@@ -295,8 +292,7 @@ sntp_retry(void* arg)
  *
  * @param arg is unused (only necessary to conform to sys_timeout)
  */
-static void
-sntp_try_next_server(void* arg)
+static void sntp_try_next_server(void* arg)
 {
   u8_t old_server, i;
   LWIP_UNUSED_ARG(arg);
@@ -331,8 +327,7 @@ sntp_try_next_server(void* arg)
 #endif /* SNTP_SUPPORT_MULTIPLE_SERVERS */
 
 /** UDP recv callback for the sntp pcb */
-static void
-sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   u8_t mode;
   u8_t stratum;
@@ -432,8 +427,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
  *
  * @param server_addr resolved IP address of the SNTP server
  */
-static void
-sntp_send_request(const ip_addr_t *server_addr)
+static void sntp_send_request(const ip_addr_t *server_addr)
 {
   struct pbuf* p;
   p = pbuf_alloc(PBUF_TRANSPORT, SNTP_MSG_LEN, PBUF_RAM);
@@ -464,8 +458,7 @@ sntp_send_request(const ip_addr_t *server_addr)
 /**
  * DNS found callback when using DNS names as server address.
  */
-static void
-sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
+static void sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
 {
   LWIP_UNUSED_ARG(hostname);
   LWIP_UNUSED_ARG(arg);
@@ -487,8 +480,7 @@ sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
  *
  * @param arg is unused (only necessary to conform to sys_timeout)
  */
-static void
-sntp_request(void *arg)
+static void sntp_request(void *arg)
 {
   ip_addr_t sntp_server_address;
   err_t err;
@@ -532,8 +524,7 @@ sntp_request(void *arg)
  * Initialize this module.
  * Send out request instantly or after SNTP_STARTUP_DELAY(_FUNC).
  */
-void
-sntp_init(void)
+void sntp_init(void)
 {
 #ifdef SNTP_SERVER_ADDRESS
 #if SNTP_SERVER_DNS
@@ -568,8 +559,7 @@ sntp_init(void)
  * @ingroup sntp
  * Stop this module.
  */
-void
-sntp_stop(void)
+void sntp_stop(void)
 {
   if (sntp_pcb != NULL) {
     sys_untimeout(sntp_request, NULL);
@@ -593,8 +583,7 @@ u8_t sntp_enabled(void)
  * Sets the operating mode.
  * @param operating_mode one of the available operating modes
  */
-void
-sntp_setoperatingmode(u8_t operating_mode)
+void sntp_setoperatingmode(u8_t operating_mode)
 {
   LWIP_ASSERT("Invalid operating mode", operating_mode <= SNTP_OPMODE_LISTENONLY);
   LWIP_ASSERT("Operating mode must not be set while SNTP client is running", sntp_pcb == NULL);
@@ -605,8 +594,7 @@ sntp_setoperatingmode(u8_t operating_mode)
  * @ingroup sntp
  * Gets the operating mode.
  */
-u8_t
-sntp_getoperatingmode(void)
+u8_t sntp_getoperatingmode(void)
 {
   return sntp_opmode;
 }
@@ -616,8 +604,7 @@ sntp_getoperatingmode(void)
  * Config SNTP server handling by IP address, name, or DHCP; clear table
  * @param set_servers_from_dhcp enable or disable getting server addresses from dhcp
  */
-void
-sntp_servermode_dhcp(int set_servers_from_dhcp)
+void sntp_servermode_dhcp(int set_servers_from_dhcp)
 {
   u8_t new_mode = set_servers_from_dhcp ? 1 : 0;
   if (sntp_set_servers_from_dhcp != new_mode) {
@@ -633,8 +620,7 @@ sntp_servermode_dhcp(int set_servers_from_dhcp)
  * @param idx the index of the NTP server to set must be < SNTP_MAX_SERVERS
  * @param server IP address of the NTP server to set
  */
-void
-sntp_setserver(u8_t idx, const ip_addr_t *server)
+void sntp_setserver(u8_t idx, const ip_addr_t *server)
 {
   if (idx < SNTP_MAX_SERVERS) {
     if (server != NULL) {
@@ -655,8 +641,7 @@ sntp_setserver(u8_t idx, const ip_addr_t *server)
  * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
  * @param dnsserver IP address of the NTP server to set
  */
-void
-dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
+void dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
 {
   LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp: %s %u.%u.%u.%u as NTP server #%u via DHCP\n",
     (sntp_set_servers_from_dhcp ? "Got" : "Rejected"),
@@ -699,8 +684,7 @@ sntp_getserver(u8_t idx)
  * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
  * @param dnsserver DNS name of the NTP server to set, to be resolved at contact time
  */
-void
-sntp_setservername(u8_t idx, char *server)
+void sntp_setservername(u8_t idx, char *server)
 {
   if (idx < SNTP_MAX_SERVERS) {
     sntp_servers[idx].name = server;

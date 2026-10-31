@@ -25,9 +25,7 @@
 /*================================================================
  *                    minix_sizeup  -  determine device size
  *===============================================================*/
-int minix_sizeup(device, bytes)
-char *device;
-u64_t *bytes;
+int minix_sizeup(char *device, u64_t *bytes)
 {
   int fd;
   struct part_geom entry;

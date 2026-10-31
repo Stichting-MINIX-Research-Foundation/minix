@@ -59,8 +59,7 @@ static hcd_urb * hcd_get_urb(void);
 /*===========================================================================*
  *    usbd_init_scheduler                                                    *
  *===========================================================================*/
-int
-usbd_init_scheduler(void)
+int usbd_init_scheduler(void)
 {
 	DEBUG_DUMP;
 
@@ -95,8 +94,7 @@ usbd_init_scheduler(void)
 /*===========================================================================*
  *    usbd_deinit_scheduler                                                  *
  *===========================================================================*/
-void
-usbd_deinit_scheduler(void)
+void usbd_deinit_scheduler(void)
 {
 	DEBUG_DUMP;
 
@@ -111,8 +109,7 @@ usbd_deinit_scheduler(void)
 /*===========================================================================*
  *    hcd_schedule_external_urb                                              *
  *===========================================================================*/
-int
-hcd_schedule_external_urb(hcd_urb * urb)
+int hcd_schedule_external_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -123,8 +120,7 @@ hcd_schedule_external_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_schedule_internal_urb                                              *
  *===========================================================================*/
-int
-hcd_schedule_internal_urb(hcd_urb * urb)
+int hcd_schedule_internal_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -135,8 +131,7 @@ hcd_schedule_internal_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_schedule_urb                                                       *
  *===========================================================================*/
-static int
-hcd_schedule_urb(hcd_urb * urb)
+static int hcd_schedule_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -156,8 +151,7 @@ hcd_schedule_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_unschedule_urb                                                     *
  *===========================================================================*/
-static void
-hcd_unschedule_urb(hcd_urb * urb)
+static void hcd_unschedule_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -168,8 +162,7 @@ hcd_unschedule_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_urb_scheduler_task                                                 *
  *===========================================================================*/
-static void
-hcd_urb_scheduler_task(void * UNUSED(arg))
+static void hcd_urb_scheduler_task(void * UNUSED(arg))
 {
 	hcd_device_state * current_device;
 	hcd_urb * current_urb;
@@ -221,8 +214,7 @@ hcd_urb_scheduler_task(void * UNUSED(arg))
 /*===========================================================================*
  *    hcd_urb_handled                                                        *
  *===========================================================================*/
-static void
-hcd_urb_handled(hcd_urb * urb)
+static void hcd_urb_handled(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -237,8 +229,7 @@ hcd_urb_handled(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_store_urb                                                          *
  *===========================================================================*/
-static int
-hcd_store_urb(hcd_urb * urb)
+static int hcd_store_urb(hcd_urb * urb)
 {
 	int i;
 
@@ -260,8 +251,7 @@ hcd_store_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_remove_urb                                                         *
  *===========================================================================*/
-static void
-hcd_remove_urb(hcd_urb * urb)
+static void hcd_remove_urb(hcd_urb * urb)
 {
 	int i;
 

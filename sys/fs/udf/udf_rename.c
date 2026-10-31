@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.12 2014/11/10 19:44:08 riz Exp $ */
+/* $NetBSD: udf_rename.c,v 1.13 2020/01/17 20:08:08 ad Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.12 2014/11/10 19:44:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.13 2020/01/17 20:08:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -465,7 +465,7 @@ udf_gro_lookup(struct mount *mp, struct vnode *dvp,
 		return ENOENT;
 
 	DPRINTF(LOOKUP, ("udf_gro_lookup found '%s'\n", name));
-	error = udf_get_node(dir_node->ump, &icb_loc, &res_node);
+	error = udf_get_node(dir_node->ump, &icb_loc, &res_node, LK_EXCLUSIVE);
 	if (error)
 		return error;
 	*vp_ret = res_node->vnode;
@@ -598,7 +598,8 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		 */
 		DPRINTF(NODE, ("\tgetting the parent node\n"));
 		VOP_UNLOCK(vp);
-		error = udf_get_node(ump, &parent_loc, &parent_node);
+		error = udf_get_node(ump, &parent_loc, &parent_node,
+		    LK_EXCLUSIVE);
 		vrele(vp);
 		if (error) 
 			return error;

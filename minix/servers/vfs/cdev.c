@@ -32,8 +32,7 @@
  * check on the resulting device's major number, and return NO_DEV on failure.
  * This function is idempotent but not used that way.
  */
-dev_t
-cdev_map(dev_t dev, struct fproc * rfp)
+dev_t cdev_map(dev_t dev, struct fproc * rfp)
 {
 	devmajor_t major;
 
@@ -93,8 +92,7 @@ cdev_get(dev_t dev, devminor_t * minor_dev)
  * A new minor device number has been returned.  Request PFS to create a
  * temporary device file to hold it.
  */
-static int
-cdev_clone(int fd, dev_t dev, devminor_t new_minor)
+static int cdev_clone(int fd, dev_t dev, devminor_t new_minor)
 {
 	struct vnode *vp;
 	struct node_details res;
@@ -145,8 +143,7 @@ cdev_clone(int fd, dev_t dev, devminor_t new_minor)
  * 'flags' identifies a bitwise combination of R_BIT, W_BIT, and/or O_NOCTTY;
  * for CDEV_CLOSE, it too is ignored.
  */
-static int
-cdev_opcl(int op, dev_t dev, int fd, int flags)
+static int cdev_opcl(int op, dev_t dev, int fd, int flags)
 {
 	devminor_t minor_dev, new_minor;
 	struct dmap *dp;
@@ -250,8 +247,7 @@ cdev_opcl(int op, dev_t dev, int fd, int flags)
 /*
  * Open a character device.
  */
-int
-cdev_open(int fd, dev_t dev, int flags)
+int cdev_open(int fd, dev_t dev, int flags)
 {
 
 	return cdev_opcl(CDEV_OPEN, dev, fd, flags);
@@ -260,8 +256,7 @@ cdev_open(int fd, dev_t dev, int flags)
 /*
  * Close a character device.
  */
-int
-cdev_close(dev_t dev)
+int cdev_close(dev_t dev)
 {
 
 	return cdev_opcl(CDEV_CLOSE, dev, -1, 0);
@@ -276,8 +271,7 @@ cdev_close(dev_t dev)
  * buffer 'buf' if needed for the request at all ('pos' is ignored here).  The
  * 'flags' field contains file pointer flags, from which O_NONBLOCK is tested.
  */
-int
-cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
+int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	unsigned long bytes, int flags)
 {
 	devminor_t minor_dev;
@@ -346,8 +340,7 @@ cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
  * This function explicitly bypasses cdev_get() since it must not do CTTY
  * mapping, because a) the caller already has done that, b) "fp" may be wrong.
  */
-int
-cdev_select(dev_t dev, int ops)
+int cdev_select(dev_t dev, int ops)
 {
 	devmajor_t major;
 	message dev_mess;
@@ -377,8 +370,7 @@ cdev_select(dev_t dev, int ops)
 /*
  * Cancel an I/O request, blocking until it has been cancelled.
  */
-int
-cdev_cancel(dev_t dev, endpoint_t endpt __unused, cp_grant_id_t grant)
+int cdev_cancel(dev_t dev, endpoint_t endpt __unused, cp_grant_id_t grant)
 {
 	devminor_t minor_dev;
 	message dev_mess;
@@ -425,8 +417,7 @@ cdev_cancel(dev_t dev, endpoint_t endpt __unused, cp_grant_id_t grant)
  * cancel call.  If so, wake up that thread; if not, send a reply to the
  * requesting process. This function MUST NOT block its calling thread.
  */
-static void
-cdev_generic_reply(message * m_ptr)
+static void cdev_generic_reply(message * m_ptr)
 {
 	struct fproc *rfp;
 	struct worker_thread *wp;
@@ -477,8 +468,7 @@ cdev_generic_reply(message * m_ptr)
 /*
  * A character driver has results for us.
  */
-void
-cdev_reply(void)
+void cdev_reply(void)
 {
 
 	if (get_dmap_by_endpt(who_e) == NULL) {

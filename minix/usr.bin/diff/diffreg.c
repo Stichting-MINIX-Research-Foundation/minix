@@ -286,8 +286,7 @@ u_char cup2low[256] = {
 	0xfd, 0xfe, 0xff
 };
 
-int
-diffreg(char *file1, char *file2, int flags)
+int diffreg(char *file1, char *file2, int flags)
 {
 	FILE *f1, *f2;
 	int i, rval, ostdout = -1;
@@ -473,8 +472,7 @@ closem:
  * Returns 0 if they are the same, 1 if different, and -1 on error.
  * XXX - could use code from cmp(1) [faster]
  */
-static int
-files_differ(FILE *f1, FILE *f2, int flags)
+static int files_differ(FILE *f1, FILE *f2, int flags)
 {
 	char buf1[BUFSIZ], buf2[BUFSIZ];
 	size_t i, j;
@@ -554,8 +552,7 @@ splice(char *dir, char *file)
 	return (buf);
 }
 
-static void
-prepare(int i, FILE *fd, off_t filesize, int flags)
+static void prepare(int i, FILE *fd, off_t filesize, int flags)
 {
 	struct line *p;
 	int j, h;
@@ -579,8 +576,7 @@ prepare(int i, FILE *fd, off_t filesize, int flags)
 	file[i] = p;
 }
 
-static void
-prune(void)
+static void prune(void)
 {
 	int i, j;
 
@@ -600,8 +596,7 @@ prune(void)
 	}
 }
 
-static void
-equiv(struct line *a, int n, struct line *b, int m, int *c)
+static void equiv(struct line *a, int n, struct line *b, int m, int *c)
 {
 	int i, j;
 
@@ -629,8 +624,7 @@ equiv(struct line *a, int n, struct line *b, int m, int *c)
 }
 
 /* Code taken from ping.c */
-static int
-isqrt(int n)
+static int isqrt(int n)
 {
 	int y, x = 1;
 
@@ -647,8 +641,7 @@ isqrt(int n)
 	return (x);
 }
 
-static int
-stone(int *a, int n, int *b, int *c, int flags)
+static int stone(int *a, int n, int *b, int *c, int flags)
 {
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
@@ -692,8 +685,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 	return (k);
 }
 
-static int
-newcand(int x, int y, int pred)
+static int newcand(int x, int y, int pred)
 {
 	struct cand *q;
 
@@ -708,8 +700,7 @@ newcand(int x, int y, int pred)
 	return (clen++);
 }
 
-static int
-search(int *c, int k, int y)
+static int search(int *c, int k, int y)
 {
 	int i, j, l, t;
 
@@ -732,8 +723,7 @@ search(int *c, int k, int y)
 	return (l + 1);
 }
 
-static void
-unravel(int p)
+static void unravel(int p)
 {
 	struct cand *q;
 	int i;
@@ -751,8 +741,7 @@ unravel(int p)
  *	to confounding by hashing (which result in "jackpot")
  *  2.  collect random access indexes to the two files
  */
-static void
-check(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
+static void check(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 {
 	int i, j, jackpot, c, d;
 	long ctold, ctnew;
@@ -851,8 +840,7 @@ check(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 }
 
 /* shellsort CACM #201 */
-static void
-sort(struct line *a, int n)
+static void sort(struct line *a, int n)
 {
 	struct line *ai, *aim, w;
 	int j, m = 0, k;
@@ -883,8 +871,7 @@ sort(struct line *a, int n)
 	}
 }
 
-static void
-unsort(struct line *f, int l, int *b)
+static void unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
@@ -896,8 +883,7 @@ unsort(struct line *f, int l, int *b)
 	xfree(a);
 }
 
-static int
-skipline(FILE *f)
+static int skipline(FILE *f)
 {
 	int i, c;
 
@@ -906,8 +892,7 @@ skipline(FILE *f)
 	return (i);
 }
 
-static void
-output(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
+static void output(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 {
 	int m, i0, i1, j0, j1;
 
@@ -960,16 +945,14 @@ output(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 	}
 }
 
-static void
-range(int a, int b, char *separator)
+static void range(int a, int b, char *separator)
 {
 	printf("%d", a > b ? b : a);
 	if (a < b)
 		printf("%s%d", separator, b);
 }
 
-static void
-uni_range(int a, int b)
+static void uni_range(int a, int b)
 {
 	if (a < b)
 		printf("%d,%d", a, b - a + 1);
@@ -994,8 +977,7 @@ preadline(int fd, size_t rlen, off_t off)
 	return (line);
 }
 
-static int
-ignoreline(char *line)
+static int ignoreline(char *line)
 {
 	int ret;
 
@@ -1011,8 +993,7 @@ ignoreline(char *line)
  * lines appended (beginning at b).  If c is greater than d then there are
  * lines missing from the to file.
  */
-static void
-change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d,
+static void change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d,
     int *pflags)
 {
 	static size_t max_context = 64;
@@ -1144,8 +1125,7 @@ proceed:
 	}
 }
 
-static int
-fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile, int flags)
+static int fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile, int flags)
 {
 	int i, j, c, lastc, col, nc;
 
@@ -1223,8 +1203,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile, int flags)
 /*
  * Hash function taken from Robert Sedgewick, Algorithms in C, 3d ed., p 578.
  */
-static int
-readhash(FILE *f, int flags)
+static int readhash(FILE *f, int flags)
 {
 	int i, t, space;
 	int sum;
@@ -1285,8 +1264,7 @@ readhash(FILE *f, int flags)
 	return (sum == 0 ? 1 : sum);
 }
 
-static int
-asciifile(FILE *f)
+static int asciifile(FILE *f)
 {
 	unsigned char buf[BUFSIZ];
 	size_t i, cnt;
@@ -1348,8 +1326,7 @@ match_function(const long *f, int pos, FILE *fp)
 }
 
 /* dump accumulated "context" diff changes */
-static void
-dump_context_vec(FILE *f1, FILE *f2, int flags)
+static void dump_context_vec(FILE *f1, FILE *f2, int flags)
 {
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd, do_output;
@@ -1453,8 +1430,7 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 }
 
 /* dump accumulated "unified" diff changes */
-static void
-dump_unified_vec(FILE *f1, FILE *f2, int flags)
+static void dump_unified_vec(FILE *f1, FILE *f2, int flags)
 {
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd;
@@ -1527,8 +1503,7 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 	context_vec_ptr = context_vec_start - 1;
 }
 
-static void
-print_header(const char *file1, const char *file2)
+static void print_header(const char *file1, const char *file2)
 {
 	if (label[0] != NULL)
 		printf("%s %s\n", diff_format == D_CONTEXT ? "***" : "---",

@@ -92,15 +92,19 @@
 #include <sys/stat.h>
 #include <lib/libkern/libkern.h>
 
+#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
 void
 ls(const char *path)
-#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
 {
 	load_mods(path, NULL);
 }
 
 void
 load_mods(const char *path, void (*funcp)(char* arg))
+{
+#else
+void
+ls(const char *path)
 {
 #endif /* !defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 	int             fd;
@@ -110,7 +114,6 @@ load_mods(const char *path, void (*funcp)(char* arg))
 #else
 	size_t          size;
 #endif /* !defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
-
 	const char	*fname = 0;
 #if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
 	char		*p = NULL;

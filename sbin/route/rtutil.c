@@ -33,7 +33,9 @@
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#ifndef __minix
 #include <sys/mbuf.h>
+#endif
 #include <sys/sysctl.h>
 
 #include <net/if.h>

@@ -146,29 +146,26 @@ BOOL free_range(unsigned short *first, unsigned short *last);
 long lmin(long a, long b);
 
 
-void usage(prog_name)
-register char *prog_name;
+void usage(register char *prog_name)
 {
   fprintf (stderr, "Usage: %s [%s\n", prog_name,
 	     (dos_dir ? "-lr] drive [dir]" : "-a] drive file"));
   exit(1);
 }
 
-unsigned c2u2(ucarray)
-unsigned char *ucarray;
+unsigned c2u2(unsigned char *ucarray)
 {
   return ucarray[0] + (ucarray[1] << 8);	/* parens vital */
 }
 
-unsigned long c4u4(ucarray)
-unsigned char *ucarray;
+unsigned long c4u4(unsigned char *ucarray)
 {
   return ucarray[0] + ((unsigned long) ucarray[1] << 8) +
 		      ((unsigned long) ucarray[2] << 16) +
 		      ((unsigned long) ucarray[3] << 24);
 }
 
-void determine()
+void determine(void)
 {
   struct dosboot {
 	unsigned char cjump[2];	/* unsigneds avoid bugs */
@@ -292,9 +289,7 @@ void determine()
   }
 }
 
-int main(argc, argv)
-int argc;
-register char *argv[];
+int main(int argc, register char *argv[])
 {
   register char *arg_ptr = slash(argv[0]);
   DIRECTORY *entry;
@@ -438,11 +433,7 @@ register char *argv[];
  *	separated by slashes, but can be longer than than 
  *	8+3 characters (The rest is ignored).
  */
-DIRECTORY *directory(dir, entries, function, pathname)
-DIRECTORY *dir;
-int entries;
-int function;
-register char *pathname;
+DIRECTORY *directory(DIRECTORY *dir, int entries, int function, register char *pathname)
 {
   register DIRECTORY *dir_ptr = dir;
   DIRECTORY *mem = NULL;
@@ -564,8 +555,7 @@ register char *pathname;
   return NULL;
 }
 
-void extract(entry)
-register DIRECTORY *entry;
+void extract(register DIRECTORY *entry)
 {
   register unsigned short cl_no = entry->d_cluster;
   char buffer[MAX_CLUSTER_SIZE];
@@ -614,18 +604,14 @@ register DIRECTORY *entry;
 
 /* Minimum of two long values
  */
-long lmin (a, b)
-long a, b;
+long lmin (long a, long b)
 {
 	if (a < b) return a;
 	else return b;
 }
 
 
-void make_file(dir_ptr, entries, name)
-DIRECTORY *dir_ptr;
-int entries;
-char *name;
+void make_file(DIRECTORY *dir_ptr, int entries, char *name)
 {
   register DIRECTORY *entry = new_entry(dir_ptr, entries);
   register char *ptr;
@@ -693,8 +679,7 @@ done:
 
 unsigned short mon_len[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-void fill_date(entry)
-DIRECTORY *entry;
+void fill_date(DIRECTORY *entry)
 {
   register long cur_time = time(NULL) - DOS_TIME;
   unsigned short year = 0, month = 1, day, hour, minutes, seconds;
@@ -733,9 +718,7 @@ DIRECTORY *entry;
   entry->d_time = (hour << 11) | (minutes << 5) | seconds;
 }
 
-char *make_name(dir_ptr, dir_fl)
-register DIRECTORY *dir_ptr;
-short dir_fl;
+char *make_name(register DIRECTORY *dir_ptr, int dir_fl)
 {
   static char name_buf[14];
   register char *ptr = name_buf;
@@ -760,9 +743,7 @@ short dir_fl;
 }
 
 
-int fill(buffer, size)
-register char *buffer;
-size_t	size;
+int fill(register char *buffer, size_t size)
 {
   static BOOL nl_mark = FALSE;
   char *last = &buffer[size];
@@ -799,17 +780,14 @@ char *month[] = {
 	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-void xmodes(mode)
-int mode;
+void xmodes(int mode)
 {
   printf ( "\t%c%c%c%c%c", (mode & SUB_DIR) ? 'd' : '-',
 	     (mode & 02) ? 'h' : '-', (mode & 04) ? 's' : '-',
 	     (mode & 01) ? '-' : 'w', (mode & 0x20) ? 'a' : '-');
 }
 
-void show(dir_ptr, name)
-DIRECTORY *dir_ptr;
-char *name;
+void show(DIRECTORY *dir_ptr, char *name)
 {
   register unsigned short e_date = dir_ptr->d_date;
   register unsigned short e_time = dir_ptr->d_time;
@@ -837,7 +815,7 @@ char *name;
    month[((e_date & MONTH) >> 5) - 1], ((e_date & YEAR) >> 9) + 1980);
 }
 
-void free_blocks()
+void free_blocks(void)
 {
   register unsigned short cl_no;
   long nr_free = 0;
@@ -856,8 +834,7 @@ void free_blocks()
 }
 
 
-DIRECTORY *read_cluster(cluster)
-register unsigned int cluster;
+DIRECTORY *read_cluster(register unsigned int cluster)
 {
   register DIRECTORY *sub_dir;
 
@@ -879,8 +856,7 @@ static unsigned short cl_index = 2;
  * Warning: Assumes that all of the range is used before the next call
  *	to free_range or free_cluster.
  */
-BOOL free_range (first, last)
-unsigned short *first, *last;
+BOOL free_range (unsigned short *first, unsigned short *last)
 {
   while (cl_index < total_clusters && next_cluster(cl_index) != FREE)
 	cl_index++;
@@ -902,8 +878,7 @@ unsigned short *first, *last;
  * Warning: Assumes that the cluster is used before the next call
  *	to free_range or free_cluster.
  */
-unsigned short free_cluster(leave_fl)
-BOOL leave_fl;
+unsigned short free_cluster(BOOL leave_fl)
 {
   while (cl_index < total_clusters && next_cluster(cl_index) != FREE)
 	cl_index++;
@@ -918,8 +893,7 @@ BOOL leave_fl;
 
 /* read a portion of the fat containing |cl_no| into the cache
  */
-void read_fat (cl_no) 
-  unsigned int cl_no;
+void read_fat (unsigned int cl_no) 
 {
 
   if (!cooked_fat) {
@@ -999,7 +973,7 @@ void read_fat (cl_no)
 
 /* flush the fat cache out to disk
  */
-void flush_fat ()
+void flush_fat (void)
 {
   if (fat_16) {
 	if (big_endian) {
@@ -1037,9 +1011,7 @@ void flush_fat ()
 
 /* make cl_2 the successor of cl_1
  */
-void link_fat(cl_1, cl_2)
-unsigned int cl_1;
-unsigned int cl_2;
+void link_fat(unsigned int cl_1, unsigned int cl_2)
 {
   if (cl_1 < fat_low || cl_1 > fat_high) {
   	if (fat_dirty) flush_fat ();
@@ -1050,8 +1022,7 @@ unsigned int cl_2;
 }
 
 
-unsigned short next_cluster(cl_no)
-register unsigned int cl_no;
+unsigned short next_cluster(register unsigned int cl_no)
 {
   if (cl_no < fat_low || cl_no > fat_high) {
   	if (fat_dirty) flush_fat ();
@@ -1060,8 +1031,7 @@ register unsigned int cl_no;
   return cooked_fat [cl_no - fat_low];
 }
 
-char *slash(str)
-register char *str;
+char *slash(register char *str)
 {
   register char *result = str;
 
@@ -1071,9 +1041,7 @@ register char *str;
   return result;
 }
 
-void add_path(file, slash_fl)
-char *file;
-BOOL slash_fl;
+void add_path(char *file, BOOL slash_fl)
 {
   register char *ptr = path;
 
@@ -1091,11 +1059,7 @@ BOOL slash_fl;
 }
 
 
-void disk_io(op, seek, address, bytes)
-register BOOL op;
-unsigned long seek;
-void *address;
-register unsigned bytes;
+void disk_io(register BOOL op, unsigned long seek, void *address, register unsigned bytes)
 {
   unsigned int r;
 

@@ -31,7 +31,16 @@
 #define VIRTIO_STATUS_ACK			0x01
 #define VIRTIO_STATUS_DRV			0x02
 #define VIRTIO_STATUS_DRV_OK			0x04
+#define VIRTIO_STATUS_FEATURES_OK		0x08
 #define VIRTIO_STATUS_FAIL			0x80
+
+/*
+ * Transport feature bit common to all virtio devices. Bit 32 (>= 32 does not
+ * fit the per-feature u8_t bit field used for device features), so it is
+ * handled internally by libvirtio on the modern (virtio-1.0) path and is not
+ * exposed through struct virtio_feature.
+ */
+#define VIRTIO_F_VERSION_1			32
 
 
 /* Feature description */
@@ -80,6 +89,13 @@ void virtio_free_device(struct virtio_device *dev);
 /* Feature helpers */
 int virtio_guest_supports(struct virtio_device *dev, int bit);
 int virtio_host_supports(struct virtio_device *dev, int bit);
+
+/*
+ * Returns non-zero if the device was set up through the modern (virtio-1.0)
+ * PCI interface. Some device-specific structures (e.g. the virtio-net header)
+ * differ between the legacy and modern interfaces, so drivers may need this.
+ */
+int virtio_is_modern(struct virtio_device *dev);
 
 /*
  * Use num vumap_phys elements and chain these as vring_desc elements

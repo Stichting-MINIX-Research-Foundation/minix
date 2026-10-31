@@ -44,8 +44,7 @@ static int32_t adjtime_delta = 0;
 /*
  * Initialize the clock variables.
  */
-void
-init_clock(void)
+void init_clock(void)
 {
 	char *value;
 

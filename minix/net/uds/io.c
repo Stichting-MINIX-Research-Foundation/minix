@@ -98,8 +98,7 @@ static int uds_ctlfds[UDS_CTL_MAX / sizeof(int)];
 /*
  * Initialize the input/output part of the UDS service.
  */
-void
-uds_io_init(void)
+void uds_io_init(void)
 {
 	unsigned int slot;
 
@@ -114,8 +113,7 @@ uds_io_init(void)
  * allocated.  As part of this, allocate memory for the receive buffer of the
  * socket.  Return OK or a negative error code.
  */
-int
-uds_io_setup(struct udssock * uds)
+int uds_io_setup(struct udssock * uds)
 {
 
 	/* TODO: decide if we should preallocate the memory. */
@@ -137,8 +135,7 @@ uds_io_setup(struct udssock * uds)
  * freed.  As part of this, deallocate memory for the receive buffer and close
  * any file descriptors still in flight on the socket.
  */
-void
-uds_io_cleanup(struct udssock * uds)
+void uds_io_cleanup(struct udssock * uds)
 {
 
 	/* Close any in-flight file descriptors. */
@@ -154,8 +151,7 @@ uds_io_cleanup(struct udssock * uds)
  * in-flight file descriptors, theey will never be received anymore, so close
  * them now.
  */
-void
-uds_io_reset(struct udssock * uds)
+void uds_io_reset(struct udssock * uds)
 {
 	struct uds_fd *ufd;
 
@@ -192,8 +188,7 @@ uds_io_reset(struct udssock * uds)
  * Return the maximum usable part of the receive buffer, in bytes.  The return
  * value is used for the SO_SNDBUF and SO_RCVBUF socket options.
  */
-size_t
-uds_io_buflen(void)
+size_t uds_io_buflen(void)
 {
 
 	/*
@@ -211,8 +206,7 @@ uds_io_buflen(void)
  * Return the absolute position of the first byte after the fetched data in the
  * receive buffer.
  */
-static size_t
-uds_fetch(struct udssock * uds, size_t off, void * ptr, size_t len)
+static size_t uds_fetch(struct udssock * uds, size_t off, void * ptr, size_t len)
 {
 	size_t left;
 
@@ -239,8 +233,7 @@ uds_fetch(struct udssock * uds, size_t off, void * ptr, size_t len)
  * buffer.  Return the absolute position of the first byte after the stored
  * data in the receive buffer.
  */
-static size_t
-uds_store(struct udssock * uds, size_t off, const void * ptr, size_t len)
+static size_t uds_store(struct udssock * uds, size_t off, const void * ptr, size_t len)
 {
 	size_t left;
 
@@ -269,8 +262,7 @@ uds_store(struct udssock * uds, size_t off, const void * ptr, size_t len)
  * length of the data in the segment in 'datalen', and the segment flags in
  * 'segflags'.
  */
-static size_t
-uds_fetch_hdr(struct udssock * uds, size_t off, size_t * seglen,
+static size_t uds_fetch_hdr(struct udssock * uds, size_t off, size_t * seglen,
 	size_t * datalen, unsigned int * segflags)
 {
 	unsigned char hdr[UDS_HDRLEN];
@@ -296,8 +288,7 @@ uds_fetch_hdr(struct udssock * uds, size_t off, size_t * seglen,
  * 'datalen', and the segment flags 'segflags'.  Return the absolute receive
  * buffer position of the first data byte after the stored header.
  */
-static size_t
-uds_store_hdr(struct udssock * uds, size_t off, size_t seglen, size_t datalen,
+static size_t uds_store_hdr(struct udssock * uds, size_t off, size_t seglen, size_t datalen,
 	unsigned int segflags)
 {
 	unsigned char hdr[UDS_HDRLEN];
@@ -321,8 +312,7 @@ uds_store_hdr(struct udssock * uds, size_t off, size_t seglen, size_t datalen,
  * suspended.  Return OK if this send request is valid, or a negative error
  * code if it is not.
  */
-int
-uds_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
+int uds_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
 	const struct sockaddr * addr, socklen_t addr_len __unused,
 	endpoint_t user_endpt __unused, int flags)
 {
@@ -392,8 +382,7 @@ uds_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
  * the send request should be retried later.  Return an appropriate negative
  * error code if the send request should fail.
  */
-static int
-uds_send_test(struct udssock * uds, size_t len, socklen_t ctl_len, size_t min,
+static int uds_send_test(struct udssock * uds, size_t len, socklen_t ctl_len, size_t min,
 	int partial)
 {
 	struct udssock *conn;
@@ -490,8 +479,7 @@ uds_send_test(struct udssock * uds, size_t len, socklen_t ctl_len, size_t min,
  * performed first.  On success, return OK, with a pointer to the peer socket
  * stored in 'peerp'.  On failure, return an appropriate error code.
  */
-static int
-uds_send_peer(struct udssock * uds, const struct sockaddr * addr,
+static int uds_send_peer(struct udssock * uds, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt, struct udssock ** peerp)
 {
 	struct udssock *peer;
@@ -562,8 +550,7 @@ uds_send_peer(struct udssock * uds, const struct sockaddr * addr,
  * cut short and return zero to the caller as well.  On failure, return a
  * negative error code.
  */
-static int
-uds_send_data(struct udssock * uds, struct udssock * peer,
+static int uds_send_data(struct udssock * uds, struct udssock * peer,
 	const struct sockdriver_data * data, size_t len, size_t off,
 	endpoint_t user_endpt, unsigned int nfds, int * __restrict mergep,
 	size_t * __restrict datalenp, unsigned int * __restrict segflagsp)
@@ -752,8 +739,7 @@ uds_send_data(struct udssock * uds, struct udssock * peer,
  * from the request and stored in the temporary buffer.  On failure, return a
  * negative error code.
  */
-static int
-uds_send_ctl(const struct sockdriver_data * ctl, socklen_t ctl_len,
+static int uds_send_ctl(const struct sockdriver_data * ctl, socklen_t ctl_len,
 	endpoint_t user_endpt)
 {
 	struct msghdr msghdr;
@@ -847,8 +833,7 @@ uds_send_ctl(const struct sockdriver_data * ctl, socklen_t ctl_len,
  * the send request may no longer fail.  On failure, return a negative error
  * code, with any partial duplication undone.
  */
-static int
-uds_send_fds(struct udssock * peer, unsigned int nfds, endpoint_t user_endpt)
+static int uds_send_fds(struct udssock * peer, unsigned int nfds, endpoint_t user_endpt)
 {
 	SIMPLEQ_HEAD(, uds_fd) fds;
 	struct uds_fd *ufd;
@@ -917,8 +902,7 @@ uds_send_fds(struct udssock * peer, unsigned int nfds, endpoint_t user_endpt)
  * segment, update the header of the last segment.  Also wake up the receiving
  * side, because there will now be new data to receive.
  */
-static void
-uds_send_advance(struct udssock * uds, struct udssock * peer, size_t datalen,
+static void uds_send_advance(struct udssock * uds, struct udssock * peer, size_t datalen,
 	int merge, size_t seglen, unsigned int segflags)
 {
 	size_t pos, prevseglen, prevdatalen;
@@ -964,8 +948,7 @@ uds_send_advance(struct udssock * uds, struct udssock * peer, size_t datalen,
  * updated if any progress has been made; if either is non-zero, libsockevent
  * will return the partial progress rather than an error code.
  */
-int
-uds_send(struct sock * sock, const struct sockdriver_data * data, size_t len,
+int uds_send(struct sock * sock, const struct sockdriver_data * data, size_t len,
 	size_t * off, const struct sockdriver_data * ctl, socklen_t ctl_len,
 	socklen_t * ctl_off, const struct sockaddr * addr, socklen_t addr_len,
 	endpoint_t user_endpt, int flags __unused, size_t min)
@@ -1067,8 +1050,7 @@ uds_send(struct sock * sock, const struct sockdriver_data * data, size_t len,
  * (the low send watermark).  Return SUSPEND if the send request would block,
  * or any other error code if it would not.
  */
-int
-uds_test_send(struct sock * sock, size_t min)
+int uds_test_send(struct sock * sock, size_t min)
 {
 	struct udssock *uds = (struct udssock *)sock;
 
@@ -1080,8 +1062,7 @@ uds_test_send(struct sock * sock, size_t min)
  * suspended.  Return OK if this receive request is valid, or a negative error
  * code if it is not.
  */
-int
-uds_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
+int uds_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
 	int flags)
 {
 
@@ -1103,8 +1084,7 @@ uds_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
  * Return SUSPEND if the receive request should be retried later.  Return an
  * appropriate negative error code if the receive request should fail.
  */
-static int
-uds_recv_test(struct udssock * uds, size_t len, size_t min, int partial,
+static int uds_recv_test(struct udssock * uds, size_t len, size_t min, int partial,
 	int * may_block)
 {
 	size_t seglen, datalen;
@@ -1189,8 +1169,7 @@ uds_recv_test(struct udssock * uds, size_t len, size_t min, int partial,
  * partially successful (due to MSG_WAITALL) and can no longer make progress,
  * and thus should be ended.  Return a negative error code on failure.
  */
-static int
-uds_recv_data(struct udssock * uds, const struct sockdriver_data * data,
+static int uds_recv_data(struct udssock * uds, const struct sockdriver_data * data,
 	size_t len, size_t off, struct sockaddr * addr, socklen_t * addr_len,
 	int * __restrict rflags, size_t * __restrict datalen,
 	size_t * __restrict reslen, unsigned int * __restrict segflags,
@@ -1311,8 +1290,7 @@ uds_recv_data(struct udssock * uds, const struct sockdriver_data * data,
  * file descriptors fit in the receiver's buffer, or if any error occurs, no
  * file descriptors are copied out.
  */
-static int
-uds_recv_fds(struct udssock * uds, const struct sockdriver_data * ctl,
+static int uds_recv_fds(struct udssock * uds, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, socklen_t ctl_off, endpoint_t user_endpt, int flags)
 {
 	struct msghdr msghdr;
@@ -1413,8 +1391,7 @@ uds_recv_fds(struct udssock * uds, const struct sockdriver_data * ctl,
  * Return the aligned chunk size on success, or a negative error code on
  * failure.
  */
-static int
-uds_recv_cred(struct udssock * uds, const struct sockdriver_data * ctl,
+static int uds_recv_cred(struct udssock * uds, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, socklen_t ctl_off, size_t credpos)
 {
 	struct msghdr msghdr;
@@ -1464,8 +1441,7 @@ uds_recv_cred(struct udssock * uds, const struct sockdriver_data * ctl,
  * call may no longer fail.  'rflags' may be updated with additional result
  * flags.  Return a negative error code on failure.
  */
-static int
-uds_recv_ctl(struct udssock * uds, const struct sockdriver_data * ctl,
+static int uds_recv_ctl(struct udssock * uds, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, socklen_t * ctl_off, endpoint_t user_endpt,
 	int flags, unsigned int segflags, size_t credpos, int * rflags)
 {
@@ -1551,8 +1527,7 @@ uds_recv_ctl(struct udssock * uds, const struct sockdriver_data * ctl,
  * 'may_block' if we are now sure that the call may not block on MSG_WAITALL
  * after all.
  */
-static void
-uds_recv_advance(struct udssock * uds, size_t seglen, size_t datalen,
+static void uds_recv_advance(struct udssock * uds, size_t seglen, size_t datalen,
 	size_t reslen, unsigned int segflags, int * may_block)
 {
 	struct udssock *conn;
@@ -1685,8 +1660,7 @@ uds_recv_advance(struct udssock * uds, size_t seglen, size_t datalen,
  * has been made; if either is non-zero, libsockevent will return the partial
  * progress rather than an error code or EOF.
  */
-int
-uds_recv(struct sock * sock, const struct sockdriver_data * data, size_t len,
+int uds_recv(struct sock * sock, const struct sockdriver_data * data, size_t len,
 	size_t * off, const struct sockdriver_data * ctl, socklen_t ctl_len,
 	socklen_t * ctl_off, struct sockaddr * addr, socklen_t * addr_len,
 	endpoint_t user_endpt, int flags, size_t min, int * rflags)
@@ -1783,8 +1757,7 @@ uds_recv(struct sock * sock, const struct sockdriver_data * data, size_t len,
  * with the number of bytes available for receipt right now (if not zero).
  * Note that if 'size' is not NULL, 'min' will always be zero.
  */
-int
-uds_test_recv(struct sock * sock, size_t min, size_t * size)
+int uds_test_recv(struct sock * sock, size_t min, size_t * size)
 {
 	struct udssock *uds = (struct udssock *)sock;
 	size_t seglen;

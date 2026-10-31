@@ -5,6 +5,10 @@
 #include <machine/interrupt.h>
 #include <machine/memory.h>
 
+#ifndef CONFIG_MAX_CPUS
+#define CONFIG_MAX_CPUS	1
+#endif
+
 /* Constants for protected mode. */
 
 /* Table sizes. */

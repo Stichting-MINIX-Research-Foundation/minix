@@ -131,8 +131,19 @@ int minix_mount(char *special, char *name, int mountflags, int srvflags,
 		return -1;
 	}
 
+	/*
+	 * Start it with "don't restart" (-f).  A file system serves the one
+	 * mount it was started for, and VFS drops that mount the moment the
+	 * process dies -- so a replacement has nothing to serve and no way to
+	 * ask for the mount back.  Without -f, RS restarts the service anyway,
+	 * and the new instance sits there holding this label, which is derived
+	 * from the device: nothing can mount that device again, since RS
+	 * refuses a second service under a label already in use.  With -f, RS
+	 * unpublishes and reaps the service instead, and the label is free as
+	 * soon as it dies.
+	 */
 	sprintf(cmd, _PATH_MINIX_SERVICE
-		" %sup %s -label '%s' -args '%s %s %s%s'",
+		" %s-f up %s -label '%s' -args '%s %s %s%s'",
 		reuse ? "-r ": "", path, label, special, name,
 		args[0] ? "-o " : "", args);
 

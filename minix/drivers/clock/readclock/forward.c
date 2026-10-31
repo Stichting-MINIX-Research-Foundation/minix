@@ -42,15 +42,13 @@ static struct log log = {
  */
 static char *target_label;
 
-int
-fwd_set_label(char *label)
+int fwd_set_label(char *label)
 {
 	target_label = label;
 	return OK;
 }
 
-int
-fwd_init(void)
+int fwd_init(void)
 {
 	if (target_label == NULL) {
 		return EINVAL;
@@ -58,8 +56,7 @@ fwd_init(void)
 	return OK;
 }
 
-static int
-fwd_msg(int type, struct tm *t, int t_access, int flags)
+static int fwd_msg(int type, struct tm *t, int t_access, int flags)
 {
 	int r;
 	message m;
@@ -95,26 +92,22 @@ fwd_msg(int type, struct tm *t, int t_access, int flags)
 	return OK;
 }
 
-int
-fwd_get_time(struct tm *t, int flags)
+int fwd_get_time(struct tm *t, int flags)
 {
 	return fwd_msg(RTCDEV_GET_TIME_G, t, CPF_WRITE, flags);
 }
 
-int
-fwd_set_time(struct tm *t, int flags)
+int fwd_set_time(struct tm *t, int flags)
 {
 	return fwd_msg(RTCDEV_SET_TIME_G, t, CPF_READ, flags);
 }
 
-int
-fwd_pwr_off(void)
+int fwd_pwr_off(void)
 {
 	return fwd_msg(RTCDEV_PWR_OFF, NULL, 0, RTCDEV_NOFLAGS);
 }
 
-void
-fwd_exit(void)
+void fwd_exit(void)
 {
 	target_label = NULL;
 }

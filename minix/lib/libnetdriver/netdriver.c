@@ -54,8 +54,7 @@ static uint32_t device_media;
 /*
  * Announce we are up after a fresh start or restart.
  */
-static void
-netdriver_announce(void)
+static void netdriver_announce(void)
 {
 	const char *driver_prefix = "drv.net.";
 	char label[DS_MAX_KEYLEN];
@@ -76,8 +75,7 @@ netdriver_announce(void)
  * and an offset into that element.  Panic if the request does not fall
  * entirely within the vector.
  */
-size_t
-netdriver_prepare_copy(struct netdriver_data * data, size_t off, size_t size,
+size_t netdriver_prepare_copy(struct netdriver_data * data, size_t off, size_t size,
 	unsigned int * indexp)
 {
 	unsigned int i;
@@ -118,8 +116,7 @@ netdriver_prepare_copy(struct netdriver_data * data, size_t off, size_t size,
 /*
  * Copy in or out packet data from/to a vector of grants.
  */
-static void
-netdriver_copy(struct netdriver_data * data, size_t off, vir_bytes addr,
+static void netdriver_copy(struct netdriver_data * data, size_t off, vir_bytes addr,
 	size_t size, int copyin)
 {
 	struct vscp_vec vec[SCPVEC_NR];
@@ -184,8 +181,7 @@ netdriver_copy(struct netdriver_data * data, size_t off, vir_bytes addr,
 /*
  * Copy in packet data.
  */
-void
-netdriver_copyin(struct netdriver_data * __restrict data, size_t off,
+void netdriver_copyin(struct netdriver_data * __restrict data, size_t off,
 	void * __restrict ptr, size_t size)
 {
 
@@ -195,8 +191,7 @@ netdriver_copyin(struct netdriver_data * __restrict data, size_t off,
 /*
  * Copy out packet data.
  */
-void
-netdriver_copyout(struct netdriver_data * __restrict data, size_t off,
+void netdriver_copyout(struct netdriver_data * __restrict data, size_t off,
 	const void * __restrict ptr, size_t size)
 {
 
@@ -206,8 +201,7 @@ netdriver_copyout(struct netdriver_data * __restrict data, size_t off,
 /*
  * Send a reply to a request.
  */
-static void
-send_reply(endpoint_t endpt, message * m_ptr)
+static void send_reply(endpoint_t endpt, message * m_ptr)
 {
 	int r;
 
@@ -218,8 +212,7 @@ send_reply(endpoint_t endpt, message * m_ptr)
 /*
  * A packet receive request has finished.  Send a reply and clean up.
  */
-static void
-finish_recv(int32_t result)
+static void finish_recv(int32_t result)
 {
 	struct netdriver_data *data;
 	message m;
@@ -245,8 +238,7 @@ finish_recv(int32_t result)
  * call the driver's receive function.  If the call is successful, send a reply
  * to the requesting party.
  */
-void
-netdriver_recv(void)
+void netdriver_recv(void)
 {
 	struct netdriver_data *data;
 	ssize_t r;
@@ -285,7 +277,7 @@ netdriver_recv(void)
 			break;
 
 		if (r < 0)
-			panic("netdriver: driver reported receive failure: %d",
+			panic("netdriver: driver reported receive failure: %zd",
 			    r);
 
 		assert(r >= NDEV_ETH_PACKET_MIN && (size_t)r <= data->size);
@@ -297,8 +289,7 @@ netdriver_recv(void)
 /*
  * A packet send request has finished.  Send a reply and clean up.
  */
-static void
-finish_send(int32_t result)
+static void finish_send(int32_t result)
 {
 	struct netdriver_data *data;
 	message m;
@@ -325,8 +316,7 @@ finish_send(int32_t result)
  * no more.  For each successful request is successful, send a reply to the
  * requesting party.
  */
-void
-netdriver_send(void)
+void netdriver_send(void)
 {
 	struct netdriver_data *data;
 	int r;
@@ -352,8 +342,7 @@ netdriver_send(void)
 /*
  * Process a request to send or receive a packet.
  */
-static void
-do_transfer(const struct netdriver * __restrict ndp, const message * m_ptr,
+static void do_transfer(const struct netdriver * __restrict ndp, const message * m_ptr,
 	int do_write)
 {
 	struct netdriver_data *data;
@@ -430,8 +419,7 @@ do_transfer(const struct netdriver * __restrict ndp, const message * m_ptr,
 /*
  * Process a request to (re)configure the driver.
  */
-static void
-do_conf(const struct netdriver * __restrict ndp,
+static void do_conf(const struct netdriver * __restrict ndp,
 	const message * __restrict m_ptr)
 {
 	netdriver_addr_t mcast_list[NETDRIVER_MCAST_MAX];
@@ -529,8 +517,7 @@ do_conf(const struct netdriver * __restrict ndp,
  * Request an update of the link state and active media of the device.  This
  * routine may be called both from the driver and internally.
  */
-static void
-update_link(void)
+static void update_link(void)
 {
 
 	if (netdriver_table->ndr_get_link != NULL)
@@ -543,8 +530,7 @@ update_link(void)
  * Attempt to send a status update to the endpoint registered to receive status
  * updates, if any.
  */
-static void
-send_status(void)
+static void send_status(void)
 {
 	message m;
 	int r;
@@ -594,8 +580,7 @@ send_status(void)
 /*
  * Process a reply to a status update that we sent earlier on (supposedly).
  */
-static void
-do_status_reply(const struct netdriver * __restrict ndp __unused,
+static void do_status_reply(const struct netdriver * __restrict ndp __unused,
 	const message * __restrict m_ptr)
 {
 
@@ -620,8 +605,7 @@ do_status_reply(const struct netdriver * __restrict ndp __unused,
  * When convenient, request the new state from the driver and send a status
  * message to the TCP/IP stack.
  */
-void
-netdriver_link(void)
+void netdriver_link(void)
 {
 
 	pending_link = TRUE;
@@ -633,8 +617,7 @@ netdriver_link(void)
  * The driver reports that a number of output errors have occurred.  Update
  * statistics accordingly.
  */
-void
-netdriver_stat_oerror(uint32_t count)
+void netdriver_stat_oerror(uint32_t count)
 {
 
 	if (count == 0)
@@ -650,8 +633,7 @@ netdriver_stat_oerror(uint32_t count)
  * The driver reports that one or more packet collisions have occurred.  Update
  * statistics accordingly.
  */
-void
-netdriver_stat_coll(uint32_t count)
+void netdriver_stat_coll(uint32_t count)
 {
 
 	if (count == 0)
@@ -667,8 +649,7 @@ netdriver_stat_coll(uint32_t count)
  * The driver reports that a number of input errors have occurred.  Adjust
  * statistics accordingly.
  */
-void
-netdriver_stat_ierror(uint32_t count)
+void netdriver_stat_ierror(uint32_t count)
 {
 
 	if (count == 0)
@@ -684,8 +665,7 @@ netdriver_stat_ierror(uint32_t count)
  * The driver reports that a number of input queue drops have occurred.  Update
  * statistics accordingly.
  */
-void
-netdriver_stat_iqdrop(uint32_t count)
+void netdriver_stat_iqdrop(uint32_t count)
 {
 
 	if (count == 0)
@@ -703,8 +683,7 @@ netdriver_stat_iqdrop(uint32_t count)
  * caller (the TCP/IP stack) has crashed and restarted, we will get another
  * initialization request message, so keep the information up-to-date.
  */
-static void
-do_init(const struct netdriver * __restrict ndp,
+static void do_init(const struct netdriver * __restrict ndp,
 	const message * __restrict m_ptr)
 {
 	message m;
@@ -759,8 +738,7 @@ do_init(const struct netdriver * __restrict ndp,
 /*
  * Process an incoming message, and send a reply.
  */
-void
-netdriver_process(const struct netdriver * __restrict ndp,
+void netdriver_process(const struct netdriver * __restrict ndp,
 	const message * __restrict m_ptr, int ipc_status)
 {
 
@@ -835,8 +813,7 @@ netdriver_process(const struct netdriver * __restrict ndp,
  * Set a name for the device, based on the base name 'base' and the instance
  * number 'instance'.
  */
-static void
-netdriver_set_name(const char * base, unsigned int instance)
+static void netdriver_set_name(const char * base, unsigned int instance)
 {
 	size_t len;
 
@@ -867,8 +844,7 @@ netdriver_name(void)
 /*
  * Perform initialization.  Return OK or an error code.
  */
-int
-netdriver_init(const struct netdriver * ndp)
+int netdriver_init(const struct netdriver * ndp)
 {
 	unsigned int instance;
 	long v;
@@ -925,8 +901,7 @@ netdriver_init(const struct netdriver * ndp)
 /*
  * Perform SEF initialization.
  */
-static int
-local_init(int type __unused, sef_init_info_t * info __unused)
+static int local_init(int type __unused, sef_init_info_t * info __unused)
 {
 
 	assert(netdriver_table != NULL);
@@ -937,8 +912,7 @@ local_init(int type __unused, sef_init_info_t * info __unused)
 /*
  * Break out of the main loop after finishing the current request.
  */
-void
-netdriver_terminate(void)
+void netdriver_terminate(void)
 {
 
 	if (netdriver_table != NULL && netdriver_table->ndr_stop != NULL)
@@ -952,8 +926,7 @@ netdriver_terminate(void)
 /*
  * The process has received a signal.  See if we have to terminate.
  */
-static void
-got_signal(int sig)
+static void got_signal(int sig)
 {
 
 	if (sig != SIGTERM)
@@ -965,8 +938,7 @@ got_signal(int sig)
 /*
  * Main program of any network driver.
  */
-void
-netdriver_task(const struct netdriver * ndp)
+void netdriver_task(const struct netdriver * ndp)
 {
 	message mess;
 	int r, ipc_status;

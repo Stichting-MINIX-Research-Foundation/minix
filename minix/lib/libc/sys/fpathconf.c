@@ -10,9 +10,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-long fpathconf(fd, name)
-int fd;				/* file descriptor being interrogated */
-int name;			/* property being inspected */
+long fpathconf(int fd, int name)
 {
 /* POSIX allows some of the values in <limits.h> to be increased at
  * run time.  The pathconf and fpathconf functions allow these values

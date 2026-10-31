@@ -101,7 +101,8 @@ _libc_init(void)
 	__libc_atomic_init();
 #endif /* defined(__minix) && defined(_REENTRANT) */
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if (defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)) && \
+    !defined(__minix)
 	/* Initialize TLS for statically linked programs. */
 	__libc_static_tls_setup();
 #endif

@@ -729,8 +729,7 @@ AcpiDsRestartControlMethod (
  *
  ******************************************************************************/
 
-void
-AcpiDsTerminateControlMethod (
+void AcpiDsTerminateControlMethod (
     ACPI_OPERAND_OBJECT     *MethodDesc,
     ACPI_WALK_STATE         *WalkState)
 {

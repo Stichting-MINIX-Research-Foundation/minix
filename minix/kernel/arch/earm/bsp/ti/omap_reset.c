@@ -37,8 +37,7 @@ static struct omap_reset omap_reset;
 
 static kern_phys_map reset_phys_map;
 
-void
-bsp_reset_init(void)
+void bsp_reset_init(void)
 {
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		omap_reset.base = DM37XX_CM_BASE;
@@ -53,8 +52,7 @@ bsp_reset_init(void)
 	    &reset_phys_map, (vir_bytes) & omap_reset.base);
 }
 
-void
-bsp_reset(void)
+void bsp_reset(void)
 {
 	if (BOARD_IS_BBXM(machine.board_id)) {
 		mmio_set((omap_reset.base + DM37XX_PRM_RSTCTRL_REG),
@@ -66,8 +64,7 @@ bsp_reset(void)
 	}
 }
 
-void
-bsp_poweroff(void)
+void bsp_poweroff(void)
 {
 
 /*

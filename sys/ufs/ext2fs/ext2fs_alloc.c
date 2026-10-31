@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.52 2017/05/28 16:38:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.52 2017/05/28 16:38:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+
+#include <lib/libkern/crc16.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -88,6 +90,9 @@ static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
 		    daddr_t (*)(struct inode *, int, daddr_t, int));
 static daddr_t	ext2fs_nodealloccg(struct inode *, int, daddr_t, int);
 static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
+static __inline void	ext2fs_cg_update(struct m_ext2fs *, int, struct ext2_gd *, int, int, int, daddr_t);
+static uint16_t 	ext2fs_cg_get_csum(struct m_ext2fs *, int, struct ext2_gd *);
+static void		ext2fs_init_bb(struct m_ext2fs *, int, struct ext2_gd *, char *);
 
 /*
  * Allocate a block in the file system.
@@ -138,12 +143,12 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 		ext2fs_setnblock(ip, ext2fs_nblock(ip) + btodb(fs->e2fs_bsize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
-		return (0);
+		return 0;
 	}
 nospace:
 	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->e2fs_fsmnt);
-	return (ENOSPC);
+	return ENOSPC;
 }
 
 /*
@@ -162,16 +167,13 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
-    struct vnode **vpp)
+ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, ino_t *inop)
 {
 	struct inode *pip;
 	struct m_ext2fs *fs;
-	struct inode *ip;
 	ino_t ino, ipref;
-	int cg, error;
+	int cg;
 
-	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if (fs->e2fs.e2fs_ficount == 0)
@@ -185,32 +187,14 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, vpp);
-	if (error) {
-		ext2fs_vfree(pvp, ino, mode);
-		return (error);
-	}
-	ip = VTOI(*vpp);
-	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
-		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
-		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
-		    (unsigned long long)ip->i_number, fs->e2fs_fsmnt);
-		panic("ext2fs_valloc: dup alloc");
-	}
 
-	memset(ip->i_din.e2fs_din, 0, sizeof(struct ext2fs_dinode));
+	*inop = ino;
+	return 0;
 
-	/*
-	 * Set up a new generation number for this inode.
-	 */
-	if (++ext2gennumber < time_second)
-		ext2gennumber = time_second;
-	ip->i_e2fs_gen = ext2gennumber;
-	return (0);
 noinodes:
 	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
-	return (ENOSPC);
+	return ENOSPC;
 }
 
 /*
@@ -229,10 +213,10 @@ ext2fs_dirpref(struct m_ext2fs *fs)
 	maxspace = 0;
 	mincg = -1;
 	for (cg = 0; cg < fs->e2fs_ncg; cg++)
-		if ( fs->e2fs_gd[cg].ext2bgd_nifree >= avgifree) {
-			if (mincg == -1 || fs->e2fs_gd[cg].ext2bgd_nbfree > maxspace) {
+		if (fs2h16(fs->e2fs_gd[cg].ext2bgd_nifree) >= avgifree) {
+			if (mincg == -1 || fs2h16(fs->e2fs_gd[cg].ext2bgd_nbfree) > maxspace) {
 				mincg = cg;
-				maxspace = fs->e2fs_gd[cg].ext2bgd_nbfree;
+				maxspace = fs2h16(fs->e2fs_gd[cg].ext2bgd_nbfree);
 			}
 		}
 	return mincg;
@@ -307,7 +291,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 	 */
 	result = (*allocator)(ip, cg, pref, size);
 	if (result)
-		return (result);
+		return result;
 	/*
 	 * 2: quadratic rehash
 	 */
@@ -317,7 +301,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 			cg -= fs->e2fs_ncg;
 		result = (*allocator)(ip, cg, 0, size);
 		if (result)
-			return (result);
+			return result;
 	}
 	/*
 	 * 3: brute force search
@@ -328,12 +312,12 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 	for (i = 2; i < fs->e2fs_ncg; i++) {
 		result = (*allocator)(ip, cg, 0, size);
 		if (result)
-			return (result);
+			return result;
 		cg++;
 		if (cg == fs->e2fs_ncg)
 			cg = 0;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -354,17 +338,25 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
-		return (0);
+		return 0;
 	error = bread(ip->i_devvp, EXT2_FSBTODB(fs,
-		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+		fs2h32(fs->e2fs_gd[cg].ext2bgd_b_bitmap)),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	bbp = (char *)bp->b_data;
 
 	if (dtog(fs, bpref) != cg)
 		bpref = 0;
+
+	/* initialize block bitmap now if uninit */
+	if (__predict_false(E2FS_HAS_GD_CSUM(fs) &&
+	    (fs->e2fs_gd[cg].ext2bgd_flags & h2fs16(E2FS_BG_BLOCK_UNINIT)))) {
+		ext2fs_init_bb(fs, cg, &fs->e2fs_gd[cg], bbp);
+		fs->e2fs_gd[cg].ext2bgd_flags &= h2fs16(~E2FS_BG_BLOCK_UNINIT);
+	}
+
 	if (bpref != 0) {
 		bpref = dtogd(fs, bpref);
 		/*
@@ -400,8 +392,14 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	}
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
+#if 0
+	/*
+	 * XXX jdolecek mapsearch actually never fails, it panics instead.
+	 * If re-enabling, make sure to brele() before returning.
+	 */
 	if (bno < 0)
-		return (0);
+		return 0;
+#endif
 gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, (daddr_t)bno)) {
@@ -412,10 +410,10 @@ gotit:
 #endif
 	setbit(bbp, (daddr_t)bno);
 	fs->e2fs.e2fs_fbcount--;
-	fs->e2fs_gd[cg].ext2bgd_nbfree--;
+	ext2fs_cg_update(fs, cg, &fs->e2fs_gd[cg], -1, 0, 0, 0);
 	fs->e2fs_fmod = 1;
 	bdwrite(bp);
-	return (cg * fs->e2fs.e2fs_fpg + fs->e2fs.e2fs_first_dblock + bno);
+	return cg * fs->e2fs.e2fs_fpg + fs->e2fs.e2fs_first_dblock + bno;
 }
 
 /*
@@ -440,14 +438,25 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		ipref = 0;
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
-		return (0);
+		return 0;
 	error = bread(ip->i_devvp, EXT2_FSBTODB(fs,
-		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+		fs2h32(fs->e2fs_gd[cg].ext2bgd_i_bitmap)),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	ibp = (char *)bp->b_data;
+
+	KASSERT(!E2FS_HAS_GD_CSUM(fs) || (fs->e2fs_gd[cg].ext2bgd_flags & h2fs16(E2FS_BG_INODE_ZEROED)) != 0);
+
+	/* initialize inode bitmap now if uninit */
+	if (__predict_false(E2FS_HAS_GD_CSUM(fs) &&
+	    (fs->e2fs_gd[cg].ext2bgd_flags & h2fs16(E2FS_BG_INODE_UNINIT)))) {
+		KASSERT(fs2h16(fs->e2fs_gd[cg].ext2bgd_nifree) == fs->e2fs.e2fs_ipg);
+		memset(ibp, 0, fs->e2fs_bsize);
+		fs->e2fs_gd[cg].ext2bgd_flags &= h2fs16(~E2FS_BG_INODE_UNINIT);
+	}
+
 	if (ipref) {
 		ipref %= fs->e2fs.e2fs_ipg;
 		if (isclr(ibp, ipref))
@@ -471,19 +480,17 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	map = ibp[i] ^ 0xff;
 	if (map == 0) {
 		printf("fs = %s\n", fs->e2fs_fsmnt);
-		panic("ext2fs_nodealloccg: block not in map");
+		panic("ext2fs_nodealloccg: inode not in map");
 	}
 	ipref = i * NBBY + ffs(map) - 1;
 gotit:
 	setbit(ibp, ipref);
 	fs->e2fs.e2fs_ficount--;
-	fs->e2fs_gd[cg].ext2bgd_nifree--;
+	ext2fs_cg_update(fs, cg, &fs->e2fs_gd[cg],
+		0, -1, ((mode & IFMT) == IFDIR) ? 1 : 0, ipref);
 	fs->e2fs_fmod = 1;
-	if ((mode & IFMT) == IFDIR) {
-		fs->e2fs_gd[cg].ext2bgd_ndirs++;
-	}
 	bdwrite(bp);
-	return (cg * fs->e2fs.e2fs_ipg + ipref +1);
+	return cg * fs->e2fs.e2fs_ipg + ipref + 1;
 }
 
 /*
@@ -502,6 +509,9 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 
 	fs = ip->i_e2fs;
 	cg = dtog(fs, bno);
+
+	KASSERT(!E2FS_HAS_GD_CSUM(fs) || (fs->e2fs_gd[cg].ext2bgd_flags & h2fs16(E2FS_BG_BLOCK_UNINIT)) == 0);
+
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
 		printf("bad block %lld, ino %llu\n", (long long)bno,
 		    (unsigned long long)ip->i_number);
@@ -509,7 +519,7 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 		return;
 	}
 	error = bread(ip->i_devvp,
-		EXT2_FSBTODB(fs, fs->e2fs_gd[cg].ext2bgd_b_bitmap),
+		EXT2_FSBTODB(fs, fs2h32(fs->e2fs_gd[cg].ext2bgd_b_bitmap)),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
 		return;
@@ -524,8 +534,7 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 	}
 	clrbit(bbp, bno);
 	fs->e2fs.e2fs_fbcount++;
-	fs->e2fs_gd[cg].ext2bgd_nbfree++;
-
+	ext2fs_cg_update(fs, cg, &fs->e2fs_gd[cg], 1, 0, 0, 0);
 	fs->e2fs_fmod = 1;
 	bdwrite(bp);
 }
@@ -546,16 +555,21 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
+
 	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
 		    (unsigned long long)pip->i_dev, (unsigned long long)ino,
 		    fs->e2fs_fsmnt);
+
 	cg = ino_to_cg(fs, ino);
+
+	KASSERT(!E2FS_HAS_GD_CSUM(fs) || (fs->e2fs_gd[cg].ext2bgd_flags & h2fs16(E2FS_BG_INODE_UNINIT)) == 0);
+
 	error = bread(pip->i_devvp,
-		EXT2_FSBTODB(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
+		EXT2_FSBTODB(fs, fs2h32(fs->e2fs_gd[cg].ext2bgd_i_bitmap)),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	ibp = (char *)bp->b_data;
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
@@ -568,13 +582,11 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	}
 	clrbit(ibp, ino);
 	fs->e2fs.e2fs_ficount++;
-	fs->e2fs_gd[cg].ext2bgd_nifree++;
-	if ((mode & IFMT) == IFDIR) {
-		fs->e2fs_gd[cg].ext2bgd_ndirs--;
-	}
+	ext2fs_cg_update(fs, cg, &fs->e2fs_gd[cg],
+		0, 1, ((mode & IFMT) == IFDIR) ? -1 : 0, 0);
 	fs->e2fs_fmod = 1;
 	bdwrite(bp);
-	return (0);
+	return 0;
 }
 
 /*
@@ -630,4 +642,151 @@ ext2fs_fserr(struct m_ext2fs *fs, u_int uid, const char *cp)
 {
 
 	log(LOG_ERR, "uid %d on %s: %s\n", uid, fs->e2fs_fsmnt, cp);
+}
+
+static __inline void
+ext2fs_cg_update(struct m_ext2fs *fs, int cg, struct ext2_gd *gd, int nbfree, int nifree, int ndirs, daddr_t ioff)
+{
+	/* XXX disk32 */
+	if (nifree) {
+		gd->ext2bgd_nifree = h2fs16(fs2h16(gd->ext2bgd_nifree) + nifree);
+		/*
+		 * If we allocated inode on bigger offset than what was
+		 * ever used before, bump the itable_unused count. This
+		 * member only ever grows, and is used only for initialization
+		 * !INODE_ZEROED groups with used inodes. Of course, by the
+		 * time we get here the itables are already zeroed, but
+		 * e2fstools fsck.ext4 still checks this.
+		 */
+		if (E2FS_HAS_GD_CSUM(fs) && nifree < 0 && (ioff+1) >= (fs->e2fs.e2fs_ipg - fs2h16(gd->ext2bgd_itable_unused_lo))) {
+			gd->ext2bgd_itable_unused_lo = h2fs16(fs->e2fs.e2fs_ipg - (ioff + 1));
+		}
+
+		KASSERT(!E2FS_HAS_GD_CSUM(fs) || gd->ext2bgd_itable_unused_lo <= gd->ext2bgd_nifree);
+	}
+
+
+	if (nbfree)
+		gd->ext2bgd_nbfree = h2fs16(fs2h16(gd->ext2bgd_nbfree) + nbfree);
+
+	if (ndirs)
+		gd->ext2bgd_ndirs = h2fs16(fs2h16(gd->ext2bgd_ndirs) + ndirs);
+
+	if (E2FS_HAS_GD_CSUM(fs))
+		gd->ext2bgd_checksum = ext2fs_cg_get_csum(fs, cg, gd);
+}
+
+/*
+ * Compute group description csum. Structure data must be LE (not host).
+ * Returned as LE (disk encoding).
+ */
+static uint16_t
+ext2fs_cg_get_csum(struct m_ext2fs *fs, int cg, struct ext2_gd *gd)
+{
+	uint16_t crc;
+	uint32_t cg_bswapped = h2fs32((uint32_t)cg);
+	size_t off;
+
+	if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_GDT_CSUM))
+		return 0;
+
+	off = offsetof(struct ext2_gd, ext2bgd_checksum);
+
+	crc = crc16(~0, (uint8_t *)fs->e2fs.e2fs_uuid, sizeof(fs->e2fs.e2fs_uuid));
+	crc = crc16(crc, (uint8_t *)&cg_bswapped, sizeof(cg_bswapped));
+	crc = crc16(crc, (uint8_t *)gd, off);
+	/* XXX ondisk32 */
+
+	return h2fs16(crc);
+}
+
+static void
+ext2fs_init_bb(struct m_ext2fs *fs, int cg, struct ext2_gd *gd, char *bbp)
+{
+	int i;
+
+	memset(bbp, 0, fs->e2fs_bsize);
+
+	/*
+	 * No block was ever allocated on this cg before, so the only used
+	 * blocks are metadata blocks on start of the group. We could optimize
+	 * this to set by bytes, but since this is done once per the group
+	 * in lifetime of filesystem, it really is not worth it.
+	 */
+	for(i=0; i < fs->e2fs.e2fs_bpg - fs2h16(gd->ext2bgd_nbfree); i++)
+		setbit(bbp, i);
+}
+
+/*
+ * Verify csum and initialize itable if not done already
+ */
+int
+ext2fs_cg_verify_and_initialize(struct vnode *devvp, struct m_ext2fs *fs, int ronly)
+{
+	/* XXX disk32 */
+	struct ext2_gd *gd;
+	ino_t ioff;
+	size_t boff;
+	struct buf *bp;
+	int cg, i, error;
+
+	if (!E2FS_HAS_GD_CSUM(fs))
+		return 0;
+
+	for(cg=0; cg < fs->e2fs_ncg; cg++) {
+		gd = &fs->e2fs_gd[cg];
+
+		/* Verify checksum */
+		if (gd->ext2bgd_checksum != ext2fs_cg_get_csum(fs, cg, gd)) {
+			printf("ext2fs_cg_verify_and_initialize: group %d invalid csum\n", cg);
+			return EINVAL;
+		}
+
+		/* if mounting read-write, zero itable if not already done */
+		if (ronly || (gd->ext2bgd_flags & h2fs16(E2FS_BG_INODE_ZEROED)) != 0)
+			continue;
+
+		/*
+		 * We are skipping already used inodes, zero rest of itable
+		 * blocks. First block to zero could be only partial wipe, all
+		 * others are wiped completely. This might take a while,
+		 * there could be many inode table blocks. We use
+		 * delayed writes, so this shouldn't block for very
+		 * long.
+		 */
+		ioff = fs->e2fs.e2fs_ipg - fs2h16(gd->ext2bgd_itable_unused_lo);
+		boff = (ioff % fs->e2fs_ipb) * EXT2_DINODE_SIZE(fs);
+
+		for(i = ioff / fs->e2fs_ipb; i < fs->e2fs_itpg; i++) {
+			if (boff) {
+				/* partial wipe, must read old data */
+				error = bread(devvp,
+					EXT2_FSBTODB(fs, fs2h32(gd->ext2bgd_i_tables) + i),
+					(int)fs->e2fs_bsize, B_MODIFY, &bp);
+				if (error) {
+					printf("ext2fs_cg_verify_and_initialize: can't read itable block");
+					return error;
+				}
+				memset((char *)bp->b_data + boff, 0, fs->e2fs_bsize - boff);
+				boff = 0;
+			} else {
+				/*
+				 * Complete wipe, don't need to read data. This
+				 * assumes nothing else is changing the data.
+				 */
+				bp = getblk(devvp,
+					EXT2_FSBTODB(fs, fs2h32(gd->ext2bgd_i_tables) + i),
+					(int)fs->e2fs_bsize, 0, 0);
+				clrbuf(bp);
+			}
+	
+			bdwrite(bp);
+		}
+
+		gd->ext2bgd_flags |= h2fs16(E2FS_BG_INODE_ZEROED);
+		gd->ext2bgd_checksum = ext2fs_cg_get_csum(fs, cg, gd);
+		fs->e2fs_fmod = 1;
+	}
+
+	return 0;
 }

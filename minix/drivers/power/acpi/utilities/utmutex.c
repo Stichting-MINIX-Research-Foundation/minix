@@ -53,8 +53,7 @@ static ACPI_STATUS
 AcpiUtCreateMutex (
     ACPI_MUTEX_HANDLE       MutexId);
 
-static void
-AcpiUtDeleteMutex (
+static void AcpiUtDeleteMutex (
     ACPI_MUTEX_HANDLE       MutexId);
 
 
@@ -141,8 +140,7 @@ AcpiUtMutexInitialize (
  *
  ******************************************************************************/
 
-void
-AcpiUtMutexTerminate (
+void AcpiUtMutexTerminate (
     void)
 {
     UINT32                  i;
@@ -218,8 +216,7 @@ AcpiUtCreateMutex (
  *
  ******************************************************************************/
 
-static void
-AcpiUtDeleteMutex (
+static void AcpiUtDeleteMutex (
     ACPI_MUTEX_HANDLE       MutexId)
 {
 

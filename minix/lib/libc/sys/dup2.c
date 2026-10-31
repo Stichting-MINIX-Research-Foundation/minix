@@ -5,8 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-int dup2(fd, fd2)
-int fd, fd2;
+int dup2(int fd, int fd2)
 {
 /* The behavior of dup2 is defined by POSIX in 6.2.1.2 as almost, but not
  * quite the same as fcntl.

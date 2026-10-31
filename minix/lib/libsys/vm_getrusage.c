@@ -3,8 +3,7 @@
 #include <string.h>
 #include <minix/vm.h>
 
-int
-vm_getrusage(endpoint_t endpt, void * addr, int children)
+int vm_getrusage(endpoint_t endpt, void * addr, int children)
 {
 	message m;
 

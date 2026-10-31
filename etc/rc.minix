@@ -19,8 +19,8 @@ RC_TZ=/etc/rc.timezone
 # Are we booting from CD?
 bootcd="`/bin/sysenv bootcd`"
 
-# Set TERM to minix if not present.
-TERM="${TERM-minix}"
+# Set TERM to wsvt25 if not present.
+TERM="${TERM-wsvt25}"
 
 export TERM PATH
 

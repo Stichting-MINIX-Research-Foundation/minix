@@ -336,16 +336,14 @@ char *http_cgi_param_vals[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Values for each ext
     running out of memory */
 static struct http_state *http_connections;
 
-static void
-http_add_connection(struct http_state *hs)
+static void http_add_connection(struct http_state *hs)
 {
   /* add the connection to the list */
   hs->next = http_connections;
   http_connections = hs;
 }
 
-static void
-http_remove_connection(struct http_state *hs)
+static void http_remove_connection(struct http_state *hs)
 {
   /* take the connection off the list */
   if (http_connections) {
@@ -363,8 +361,7 @@ http_remove_connection(struct http_state *hs)
   }
 }
 
-static void
-http_kill_oldest_connection(u8_t ssi_required)
+static void http_kill_oldest_connection(u8_t ssi_required)
 {
   struct http_state *hs = http_connections;
   struct http_state *hs_free_next = NULL;
@@ -417,8 +414,7 @@ http_ssi_state_alloc(void)
 }
 
 /** Free a struct http_ssi_state. */
-static void
-http_ssi_state_free(struct http_ssi_state *ssi)
+static void http_ssi_state_free(struct http_ssi_state *ssi)
 {
   if (ssi != NULL) {
     HTTP_FREE_SSI_STATE(ssi);
@@ -428,8 +424,7 @@ http_ssi_state_free(struct http_ssi_state *ssi)
 
 /** Initialize a struct http_state.
  */
-static void
-http_state_init(struct http_state* hs)
+static void http_state_init(struct http_state* hs)
 {
   /* Initialize the structure. */
   memset(hs, 0, sizeof(struct http_state));
@@ -460,8 +455,7 @@ http_state_alloc(void)
 /** Free a struct http_state.
  * Also frees the file data if dynamic.
  */
-static void
-http_state_eof(struct http_state *hs)
+static void http_state_eof(struct http_state *hs)
 {
   if(hs->handle) {
 #if LWIP_HTTPD_TIMING
@@ -496,8 +490,7 @@ http_state_eof(struct http_state *hs)
 /** Free a struct http_state.
  * Also frees the file data if dynamic.
  */
-static void
-http_state_free(struct http_state *hs)
+static void http_state_free(struct http_state *hs)
 {
   if (hs != NULL) {
     http_state_eof(hs);
@@ -637,8 +630,7 @@ http_close_conn(struct tcp_pcb *pcb, struct http_state *hs)
 /** End of file: either close the connection (Connection: close) or
  * close the file (Connection: keep-alive)
  */
-static void
-http_eof(struct tcp_pcb *pcb, struct http_state *hs)
+static void http_eof(struct tcp_pcb *pcb, struct http_state *hs)
 {
   /* HTTP/1.1 persistent connection? (Not supported for SSI) */
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
@@ -670,8 +662,7 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
  * @param params pointer to the NULL-terminated parameter string from the URI
  * @return number of parameters extracted
  */
-static int
-extract_uri_parameters(struct http_state *hs, char *params)
+static int extract_uri_parameters(struct http_state *hs, char *params)
 {
   char *pair;
   char *equals;
@@ -741,8 +732,7 @@ extract_uri_parameters(struct http_state *hs, char *params)
  *
  * @param hs http connection state
  */
-static void
-get_tag_insert(struct http_state *hs)
+static void get_tag_insert(struct http_state *hs)
 {
 #if LWIP_HTTPD_SSI_RAW
   const char* tag;
@@ -824,8 +814,7 @@ get_tag_insert(struct http_state *hs)
  * Generate the relevant HTTP headers for the given filename and write
  * them into the supplied buffer.
  */
-static void
-get_http_headers(struct http_state *hs, const char *uri)
+static void get_http_headers(struct http_state *hs, const char *uri)
 {
   size_t content_type;
   char *tmp;
@@ -972,8 +961,7 @@ get_http_headers(struct http_state *hs, const char *uri)
  *           - HTTP_DATA_TO_SEND_BREAK: data has been enqueued, headers pending,
  *                                      so don't send HTTP body yet
  */
-static u8_t
-http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
+static u8_t http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
 {
   err_t err;
   u16_t len;
@@ -1058,8 +1046,7 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
  * @returns: 0 if the file is finished or no data has been read
  *           1 if the file is not finished and data has been read
  */
-static u8_t
-http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
+static u8_t http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
 {
   int bytes_left;
 #if LWIP_HTTPD_DYNAMIC_FILE_READ
@@ -1157,8 +1144,7 @@ http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
  * @returns: - 1: data has been written (so call tcp_ouput)
  *           - 0: no data has been written (no need to call tcp_output)
  */
-static u8_t
-http_send_data_nonssi(struct tcp_pcb *pcb, struct http_state *hs)
+static u8_t http_send_data_nonssi(struct tcp_pcb *pcb, struct http_state *hs)
 {
   err_t err;
   u16_t len;
@@ -1184,8 +1170,7 @@ http_send_data_nonssi(struct tcp_pcb *pcb, struct http_state *hs)
  * @returns: - 1: data has been written (so call tcp_ouput)
  *           - 0: no data has been written (no need to call tcp_output)
  */
-static u8_t
-http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
+static u8_t http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
 {
   err_t err = ERR_OK;
   u16_t len;
@@ -1508,8 +1493,7 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
  * @param pcb the pcb to send data
  * @param hs connection state
  */
-static u8_t
-http_send(struct tcp_pcb *pcb, struct http_state *hs)
+static u8_t http_send(struct tcp_pcb *pcb, struct http_state *hs)
 {
   u8_t data_to_send = HTTP_NO_DATA_TO_SEND;
 
@@ -1868,8 +1852,7 @@ void httpd_post_data_recved(void *connection, u16_t recved_len)
 /** Try to send more data if file has been blocked before
  * This is a callback function passed to fs_read_async().
  */
-static void
-http_continue(void *connection)
+static void http_continue(void *connection)
 {
   struct http_state *hs = (struct http_state*)connection;
   if (hs && (hs->pcb) && (hs->handle)) {
@@ -2335,8 +2318,7 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
  * The pcb had an error and is already deallocated.
  * The argument might still be valid (if != NULL).
  */
-static void
-http_err(void *arg, err_t err)
+static void http_err(void *arg, err_t err)
 {
   struct http_state *hs = (struct http_state *)arg;
   LWIP_UNUSED_ARG(err);
@@ -2553,8 +2535,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
  * @ingroup httpd
  * Initialize the httpd: set up a listening PCB and bind it to the defined port
  */
-void
-httpd_init(void)
+void httpd_init(void)
 {
   struct tcp_pcb *pcb;
   err_t err;
@@ -2587,8 +2568,7 @@ httpd_init(void)
  * @param tags an array of SSI tag strings to search for in SSI-enabled files
  * @param num_tags number of tags in the 'tags' array
  */
-void
-http_set_ssi_handler(tSSIHandler ssi_handler, const char **tags, int num_tags)
+void http_set_ssi_handler(tSSIHandler ssi_handler, const char **tags, int num_tags)
 {
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_set_ssi_handler\n"));
 
@@ -2615,8 +2595,7 @@ http_set_ssi_handler(tSSIHandler ssi_handler, const char **tags, int num_tags)
  * @param cgis an array of CGI filenames/handler functions
  * @param num_handlers number of elements in the 'cgis' array
  */
-void
-http_set_cgi_handlers(const tCGI *cgis, int num_handlers)
+void http_set_cgi_handlers(const tCGI *cgis, int num_handlers)
 {
   LWIP_ASSERT("no cgis given", cgis != NULL);
   LWIP_ASSERT("invalid number of handlers", num_handlers > 0);

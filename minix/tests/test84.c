@@ -47,8 +47,7 @@
 
 /* reroute stdout to /dev/null while returning another fd for the old stdout */
 /* this is just for aesthetics: we don't want to see the output of 'ls' */
-static int
-sink_stdout(void)
+static int sink_stdout(void)
 {
 	int fd, fd2;
 
@@ -69,8 +68,7 @@ sink_stdout(void)
 }
 
 /* restore stdout */
-static void
-restore_stdout(int fd)
+static void restore_stdout(int fd)
 {
 
 	dup2(fd, 1);
@@ -78,8 +76,7 @@ restore_stdout(int fd)
 }
 
 /* tests a simple posix_spawn executing /bin/ls */
-static void
-test_posix_spawn_ls(void)
+static void test_posix_spawn_ls(void)
 {
 	char * const args[] = { "ls", "-la", NULL };
 	int err;
@@ -90,8 +87,7 @@ test_posix_spawn_ls(void)
 }
 
 /* tests a simple posix_spawnp executing ls via $PATH */
-static void
-test_posix_spawnp_ls(void)
+static void test_posix_spawnp_ls(void)
 {
 	char * const args[] = { "ls", "-la", NULL };
 	int err;
@@ -102,8 +98,7 @@ test_posix_spawnp_ls(void)
 }
 
 /* posix_spawn a non existant binary */
-static void
-test_posix_spawn_missing(void)
+static void test_posix_spawn_missing(void)
 {
 	char * const args[] = { "t84_h_nonexist", NULL };
 	int err;
@@ -114,8 +109,7 @@ test_posix_spawn_missing(void)
 }
 
 /* posix_spawn a script with non existing interpreter */
-static void
-test_posix_spawn_nonexec(void)
+static void test_posix_spawn_nonexec(void)
 {
 	char * const args[] = { "t84_h_nonexec", NULL };
 	int err;
@@ -126,8 +120,7 @@ test_posix_spawn_nonexec(void)
 }
 
 /* posix_spawn a child and get it's return code */
-static void
-test_posix_spawn_child(void)
+static void test_posix_spawn_child(void)
 {
 	char * const args0[] = { "t84_h_spawn", "0", NULL };
 	char * const args1[] = { "t84_h_spawn", "1", NULL };
@@ -158,8 +151,7 @@ test_posix_spawn_child(void)
 }
 
 /* test spawn attributes */
-static void
-test_posix_spawnattr(void)
+static void test_posix_spawnattr(void)
 {
 	int pid, status, err, pfd[2];
 	char helper_arg[128];
@@ -210,8 +202,7 @@ test_posix_spawnattr(void)
 }
 
 /* tests a simple posix_spawn executing /bin/ls with file actions */
-static void
-test_posix_spawn_file_actions(void)
+static void test_posix_spawn_file_actions(void)
 {
 	char * const args[] = { "ls", "-la", NULL };
 	int err;
@@ -247,8 +238,7 @@ test_posix_spawn_file_actions(void)
 }
 
 /* tests failures with file actions */
-static void
-test_posix_spawn_file_actions_failures(void)
+static void test_posix_spawn_file_actions_failures(void)
 {
 	char * const args[] = { "ls", "-la", NULL };
 	int err, i;
@@ -298,8 +288,7 @@ test_posix_spawn_file_actions_failures(void)
 		e(9);
 }
 
-int
-main(void)
+int main(void)
 {
 	int fd;
 

@@ -25,8 +25,7 @@
 		em(1, #field " of " #rusage1 " doesn't equal to " \
 			#field " of " #rusage2);
 
-static void
-spin(void)
+static void spin(void)
 {
 	struct timeval start_time;
 	struct timeval end_time;
@@ -43,8 +42,7 @@ spin(void)
 /*
  * Test getrusage(2).
  */
-static void
-test75a(void)
+static void test75a(void)
 {
 	struct rusage r_usage1;
 	struct rusage r_usage2;
@@ -89,8 +87,7 @@ test75a(void)
  * - mode 1: parent blocks waiting for child, using a bad rusage pointer;
  * - mode 2: parent blocks waiting for child, using a good rusage pointer.
  */
-static void
-sub75b(int mode, void * bad_ptr)
+static void sub75b(int mode, void * bad_ptr)
 {
 	struct rusage r_usage;
 	pid_t pid;
@@ -138,8 +135,7 @@ sub75b(int mode, void * bad_ptr)
 /*
  * Test wait4().
  */
-static void
-test75b(void)
+static void test75b(void)
 {
 	void *ptr;
 
@@ -153,8 +149,7 @@ test75b(void)
 	sub75b(2, NULL);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
 	start(75);

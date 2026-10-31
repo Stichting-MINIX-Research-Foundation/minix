@@ -17,9 +17,7 @@ void skipline(void);
 int backslash(void);
 void usage(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 
   int c;
@@ -66,7 +64,7 @@ char *argv[];
 }
 
 
-void skipline()
+void skipline(void)
 {
   char c;
 
@@ -74,7 +72,7 @@ void skipline()
 }
 
 
-int backslash()
+int backslash(void)
 {
 /* A backslash has been seen.  Eat troff stuff. */
 
@@ -129,7 +127,7 @@ int backslash()
   }
 }
 
-void usage()
+void usage(void)
 {
   printf("Usage: prep [file]\n");
   exit(1);

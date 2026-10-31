@@ -82,8 +82,7 @@ void ddekit_minix_deregister_msg_q(struct ddekit_minix_msg_q *mq)
 /*****************************************************************************
  *     _ddekit_minix_queue_msg                                               *
  ****************************************************************************/
-static void
-_ddekit_minix_queue_msg (
+static void _ddekit_minix_queue_msg (
 	struct ddekit_minix_msg_q *mq,
 	message *m,
 	int ipc_status

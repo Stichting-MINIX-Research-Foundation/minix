@@ -39,8 +39,7 @@ static struct priv kernel_priv;
  * have attached to a process.  Return TRUE if everything seems alright; FALSE
  * otherwise.
  */
-int
-kernel_check(pid_t pid)
+int kernel_check(pid_t pid)
 {
 
 	if (mem_get_user(pid, offsetof(struct proc, p_magic),
@@ -57,8 +56,7 @@ kernel_check(pid_t pid)
  * name may contain any suffixes as set by the kernel.  Return -1 on failure,
  * with errno set as appropriate.
  */
-int
-kernel_get_name(pid_t pid, char * name, size_t size)
+int kernel_get_name(pid_t pid, char * name, size_t size)
 {
 
 	if (mem_get_user(pid, offsetof(struct proc, p_name),
@@ -77,8 +75,7 @@ kernel_get_name(pid_t pid, char * name, size_t size)
  * result, because the given process may actually be VFS or ProcFS itself!
  * Return TRUE if the given process is a system service; FALSE if not.
  */
-int
-kernel_is_service(pid_t pid)
+int kernel_is_service(pid_t pid)
 {
 	size_t align, off;
 
@@ -102,8 +99,7 @@ kernel_is_service(pid_t pid)
  * retrieve the three register values describing the system call.  Return 0 on
  * success, or -1 on failure with errno set as appropriate.
  */
-int
-kernel_get_syscall(pid_t pid, reg_t reg[3])
+int kernel_get_syscall(pid_t pid, reg_t reg[3])
 {
 
 	assert(sizeof(kernel_proc.p_defer) == sizeof(reg_t) * 3);
@@ -124,8 +120,7 @@ kernel_get_syscall(pid_t pid, reg_t reg[3])
  * IPC-level result of the system call.  Return 0 on success, or -1 on failure
  * with errno set as appropriate.
  */
-int
-kernel_get_retreg(pid_t pid, reg_t * retreg)
+int kernel_get_retreg(pid_t pid, reg_t * retreg)
 {
 	size_t off;
 
@@ -149,8 +144,7 @@ kernel_get_retreg(pid_t pid, reg_t * retreg)
  * the supplied frame contains pointers prepared for the new location of the
  * frame, which is at the stack top of the process after the execve().
  */
-vir_bytes
-kernel_get_stacktop(void)
+vir_bytes kernel_get_stacktop(void)
 {
 
 	return minix_get_user_sp();
@@ -167,8 +161,7 @@ kernel_get_stacktop(void)
  * on some platforms, a zero (= invalid) frame pointer may be returned on
  * success, indicating that obtaining frame pointers is not supported.
  */
-int
-kernel_get_context(pid_t pid, reg_t * pc, reg_t * sp, reg_t * fp)
+int kernel_get_context(pid_t pid, reg_t * pc, reg_t * sp, reg_t * fp)
 {
 	size_t off;
 
@@ -222,8 +215,7 @@ kernel_get_context(pid_t pid, reg_t * pc, reg_t * sp, reg_t * fp)
  * supported on all platforms.  Thus, on some platforms, this function may
  * always fail.
  */
-static int
-kernel_get_nextframe(pid_t pid, reg_t fp, reg_t * next_pc, reg_t * next_fp)
+static int kernel_get_nextframe(pid_t pid, reg_t fp, reg_t * next_pc, reg_t * next_fp)
 {
 #if defined(__i386__)
 	void *p[2];
@@ -252,8 +244,7 @@ kernel_get_nextframe(pid_t pid, reg_t fp, reg_t * next_pc, reg_t * next_fp)
  * so that we cannot reliably determine the binary being executed: not for
  * processes being attached to, and not for exec calls using a relative path.
  */
-void
-kernel_put_stacktrace(struct trace_proc * procp)
+void kernel_put_stacktrace(struct trace_proc * procp)
 {
 	unsigned int count, max;
 	reg_t pc, sp, fp, low, high;
@@ -275,7 +266,7 @@ kernel_put_stacktrace(struct trace_proc * procp)
 	 * the lines straight into tools such as addr2line.
 	 */
 	put_newline();
-	put_fmt(procp, "  0x%x", pc);
+	put_fmt(procp, "  0x%lx", (unsigned long)pc);
 
 	low = high = fp;
 
@@ -283,7 +274,7 @@ kernel_put_stacktrace(struct trace_proc * procp)
 		if (kernel_get_nextframe(procp->pid, fp, &pc, &fp) < 0)
 			break;
 
-		put_fmt(procp, " 0x%x", pc);
+		put_fmt(procp, " 0x%lx", (unsigned long)pc);
 
 		/*
 		 * Stop if we see a frame pointer that falls within the range

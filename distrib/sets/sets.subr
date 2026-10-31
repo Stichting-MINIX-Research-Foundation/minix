@@ -163,7 +163,12 @@ if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
 # LSC for Minix
-nlists="minix-base minix-comp minix-games minix-kernel minix-man $testset $debugset"
+if [ "${MKLLVM}" = "no" ]; then
+	compset="minix-comp-gcc"
+else
+	compset="minix-comp"
+fi
+nlists="minix-base $compset minix-games minix-kernel minix-man $testset $debugset"
 #nlists="base comp $debugset etc games man misc $modset $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"

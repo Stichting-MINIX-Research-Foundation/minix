@@ -64,22 +64,19 @@ init_dummy_sdcard(struct sd_slot *slot)
 	return card;
 }
 
-int
-dummy_host_init(struct mmc_host *host)
+int dummy_host_init(struct mmc_host *host)
 {
 	return 0;
 }
 
-void
-dummy_set_log_level(int level)
+void dummy_set_log_level(int level)
 {
 	if (level >= 0 && level <= 4) {
 		log.log_level = level;
 	}
 }
 
-int
-dummy_host_set_instance(struct mmc_host *host, int instance)
+int dummy_host_set_instance(struct mmc_host *host, int instance)
 {
 	log_info(&log, "Using instance number %d\n", instance);
 	if (instance != 0) {
@@ -88,14 +85,12 @@ dummy_host_set_instance(struct mmc_host *host, int instance)
 	return OK;
 }
 
-int
-dummy_host_reset(struct mmc_host *host)
+int dummy_host_reset(struct mmc_host *host)
 {
 	return 0;
 }
 
-int
-dummy_card_detect(struct sd_slot *slot)
+int dummy_card_detect(struct sd_slot *slot)
 {
 	return 1;
 }
@@ -114,8 +109,7 @@ dummy_card_initialize(struct sd_slot *slot)
 	return &slot->card;
 }
 
-int
-dummy_card_release(struct sd_card *card)
+int dummy_card_release(struct sd_card *card)
 {
 	assert(card->open_ct == 1);
 	card->open_ct--;
@@ -125,8 +119,7 @@ dummy_card_release(struct sd_card *card)
 }
 
 /* read count blocks into existing buf */
-int
-dummy_host_read(struct sd_card *card,
+int dummy_host_read(struct sd_card *card,
     uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	memcpy(buf, &dummy_data[blknr * DUMMY_BLOCK_SIZE],
@@ -135,8 +128,7 @@ dummy_host_read(struct sd_card *card,
 }
 
 /* write count blocks */
-int
-dummy_host_write(struct sd_card *card,
+int dummy_host_write(struct sd_card *card,
     uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	memcpy(&dummy_data[blknr * DUMMY_BLOCK_SIZE], buf,
@@ -144,8 +136,7 @@ dummy_host_write(struct sd_card *card,
 	return OK;
 }
 
-void
-host_initialize_host_structure_dummy(struct mmc_host *host)
+void host_initialize_host_structure_dummy(struct mmc_host *host)
 {
 	/* Initialize the basic data structures host slots and cards */
 	int i;

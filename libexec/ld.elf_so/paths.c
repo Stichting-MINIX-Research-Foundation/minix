@@ -49,7 +49,9 @@ __RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
+#ifndef __minix
 #include <sys/mbuf.h>
+#endif
 #include <sys/resource.h>
 #include <machine/cpu.h>
 

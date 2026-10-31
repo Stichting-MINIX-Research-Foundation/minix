@@ -8,9 +8,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-long pathconf(path, name)
-const char *path;		/* name of file being interrogated */
-int name;			/* property being inspected */
+long pathconf(const char *path, int name)
 {
 /* POSIX allows some of the values in <limits.h> to be increased at
  * run time.  The pathconf and fpathconf functions allow these values

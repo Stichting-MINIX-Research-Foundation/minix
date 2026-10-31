@@ -306,8 +306,7 @@ slipif_rxbyte(struct netif *netif, u8_t c)
  * @param netif The lwip network interface structure for this slipif
  * @param c received character
  */
-static void
-slipif_rxbyte_input(struct netif *netif, u8_t c)
+static void slipif_rxbyte_input(struct netif *netif, u8_t c)
 {
   struct pbuf *p;
   p = slipif_rxbyte(netif, c);
@@ -326,8 +325,7 @@ slipif_rxbyte_input(struct netif *netif, u8_t c)
  *
  * @param nf the lwip network interface structure for this slipif
  */
-static void
-slipif_loop_thread(void *nf)
+static void slipif_loop_thread(void *nf)
 {
   u8_t c;
   struct netif *netif = (struct netif *)nf;
@@ -418,8 +416,7 @@ slipif_init(struct netif *netif)
  *
  * @param netif The lwip network interface structure for this slipif
  */
-void
-slipif_poll(struct netif *netif)
+void slipif_poll(struct netif *netif)
 {
   u8_t c;
   struct slipif_priv *priv;
@@ -440,8 +437,7 @@ slipif_poll(struct netif *netif)
  *
  * @param netif The lwip network interface structure for this slipif
  */
-void
-slipif_process_rxqueue(struct netif *netif)
+void slipif_process_rxqueue(struct netif *netif)
 {
   struct slipif_priv *priv;
   SYS_ARCH_DECL_PROTECT(old_level);
@@ -478,8 +474,7 @@ slipif_process_rxqueue(struct netif *netif)
  * @param netif The lwip network interface structure for this slipif
  * @param data Received serial byte
  */
-static void
-slipif_rxbyte_enqueue(struct netif *netif, u8_t data)
+static void slipif_rxbyte_enqueue(struct netif *netif, u8_t data)
 {
   struct pbuf *p;
   struct slipif_priv *priv = (struct slipif_priv *)netif->state;
@@ -517,8 +512,7 @@ slipif_rxbyte_enqueue(struct netif *netif, u8_t data)
  * @param netif The lwip network interface structure for this slipif
  * @param data received character
  */
-void
-slipif_received_byte(struct netif *netif, u8_t data)
+void slipif_received_byte(struct netif *netif, u8_t data)
 {
   LWIP_ASSERT("netif != NULL", (netif != NULL));
   LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
@@ -535,8 +529,7 @@ slipif_received_byte(struct netif *netif, u8_t data)
  * @param data received character
  * @param len Number of received characters
  */
-void
-slipif_received_bytes(struct netif *netif, u8_t *data, u8_t len)
+void slipif_received_bytes(struct netif *netif, u8_t *data, u8_t len)
 {
   u8_t i;
   u8_t *rxdata = data;

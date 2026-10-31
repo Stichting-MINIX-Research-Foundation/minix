@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh 
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
+#include <sys/dirent.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -306,7 +307,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * We shall need to temporarily bump the link count, so make
 	 * sure there is room to do so.
 	 */
-	if ((nlink_t)VTOI(fvp)->i_e2fs_nlink >= LINK_MAX)
+	if ((nlink_t)VTOI(fvp)->i_e2fs_nlink >= EXT2FS_LINK_MAX)
 		return EMLINK;
 
 	directory_p = (fvp->v_type == VDIR);
@@ -329,7 +330,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 *    may be wrong, but correctable.
 	 */
 
-	KASSERT((nlink_t)VTOI(fvp)->i_e2fs_nlink < LINK_MAX);
+	KASSERT((nlink_t)VTOI(fvp)->i_e2fs_nlink < EXT2FS_LINK_MAX);
 	VTOI(fvp)->i_e2fs_nlink++;
 	VTOI(fvp)->i_flag |= IN_CHANGE;
 	error = ext2fs_update(fvp, NULL, NULL, UPDATE_WAIT);
@@ -351,11 +352,11 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 * parent we don't fool with the link count.
 		 */
 		if (directory_p && reparent_p) {
-			if ((nlink_t)VTOI(tdvp)->i_e2fs_nlink >= LINK_MAX) {
+			if ((nlink_t)VTOI(tdvp)->i_e2fs_nlink >= EXT2FS_LINK_MAX) {
 				error = EMLINK;
 				goto whymustithurtsomuch;
 			}
-			KASSERT((nlink_t)VTOI(tdvp)->i_e2fs_nlink < LINK_MAX);
+			KASSERT((nlink_t)VTOI(tdvp)->i_e2fs_nlink < EXT2FS_LINK_MAX);
 			VTOI(tdvp)->i_e2fs_nlink++;
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
 			error = ext2fs_update(tdvp, NULL, NULL, UPDATE_WAIT);
@@ -780,7 +781,7 @@ ext2fs_rmdired_p(struct vnode *vp)
 	KASSERT(vp->v_type == VDIR);
 
 	/* XXX Is this correct?  */
-	return (ext2fs_size(VTOI(vp)) == 0);
+	return ext2fs_size(VTOI(vp)) == 0;
 }
 
 /*

@@ -171,8 +171,7 @@ int system_type = 0;
 
 int get_system_type(int fd);
 
-ssize_t
-Write(int fd, void *buf, ssize_t len)
+ssize_t Write(int fd, void *buf, ssize_t len)
 {
 	ssize_t r;
 	if((r=write(fd, buf, len)) != len) {
@@ -183,8 +182,7 @@ Write(int fd, void *buf, ssize_t len)
 	return len;
 }
 
-off_t
-Lseek(int fd, off_t pos, int rel)
+off_t Lseek(int fd, off_t pos, int rel)
 {
 	off_t r;
 
@@ -197,30 +195,26 @@ Lseek(int fd, off_t pos, int rel)
 	return r;
 }
 
-void
-writesector(int fd, char *block, int *currentsector)
+void writesector(int fd, char *block, int *currentsector)
 {
 	Write(fd, block, ISO_SECTOR);
 	(*currentsector)++;
 	return;
 }
 
-void
-seeksector(int fd, int sector, int *currentsector)
+void seeksector(int fd, int sector, int *currentsector)
 {
 	Lseek(fd, sector*ISO_SECTOR, SEEK_SET);
 	*currentsector = sector;
 }
 
-void
-seekwritesector(int fd, int sector, char *block, int *currentsector)
+void seekwritesector(int fd, int sector, char *block, int *currentsector)
 {
 	seeksector(fd, sector, currentsector);
 	writesector(fd, block, currentsector);
 }
 
-ssize_t
-Read(int fd, void *buf, ssize_t len)
+ssize_t Read(int fd, void *buf, ssize_t len)
 {
 	ssize_t r;
 	if((r=read(fd, buf, len)) != len) {
@@ -278,8 +272,7 @@ static int cmpf(const void *v1, const void *v2)
 	return -strcmp(f1, f2);
 }
 
-void
-maketree(struct node *thisdir, char *name, int level)
+void maketree(struct node *thisdir, char *name, int level)
 {
 	DIR *dir;
 	struct dirent *e;
@@ -394,8 +387,7 @@ maketree(struct node *thisdir, char *name, int level)
 
 }
 
-void
-little32(unsigned char *dest, u_int32_t src)
+void little32(unsigned char *dest, u_int32_t src)
 {
 	dest[0] = ((src >>  0) & 0xFF);
 	dest[1] = ((src >>  8) & 0xFF);
@@ -405,8 +397,7 @@ little32(unsigned char *dest, u_int32_t src)
 	return;
 }
 
-void
-little16(unsigned char *dest, u_int16_t src)
+void little16(unsigned char *dest, u_int16_t src)
 {
 	dest[0] = ((src >>  0) & 0xFF);
 	dest[1] = ((src >>  8) & 0xFF);
@@ -414,8 +405,7 @@ little16(unsigned char *dest, u_int16_t src)
 	return;
 }
 
-void
-big32(unsigned char *dest, u_int32_t src)
+void big32(unsigned char *dest, u_int32_t src)
 {
 	dest[3] = ((src >>  0) & 0xFF);
 	dest[2] = ((src >>  8) & 0xFF);
@@ -424,8 +414,7 @@ big32(unsigned char *dest, u_int32_t src)
 	return;
 }
 
-void
-big16(unsigned char *dest, u_int16_t src)
+void big16(unsigned char *dest, u_int16_t src)
 {
 	dest[1] = ((src >>  0) & 0xFF);
 	dest[0] = ((src >>  8) & 0xFF);
@@ -433,8 +422,7 @@ big16(unsigned char *dest, u_int16_t src)
 }
 
 
-void
-traversetree(struct node *root, int level, int littleendian,
+void traversetree(struct node *root, int level, int littleendian,
 	int maxlevel, int *bytes, int fd, int parentrecord, int *recordno)
 {
 	struct node *child;
@@ -492,8 +480,7 @@ traversetree(struct node *root, int level, int littleendian,
 	return;
 }
 
-int
-makepathtables(struct node *root, int littleendian, int *bytes, int fd)
+int makepathtables(struct node *root, int littleendian, int *bytes, int fd)
 {
 	int level;
 	static char block[ISO_SECTOR];
@@ -516,8 +503,7 @@ makepathtables(struct node *root, int littleendian, int *bytes, int fd)
 	return *bytes/ISO_SECTOR;
 }
 
-ssize_t
-write_direntry(struct node * n, char *origname, int fd)
+ssize_t write_direntry(struct node * n, char *origname, int fd)
 {
 	int namelen, total = 0;
 	struct dir entry;
@@ -603,8 +589,7 @@ write_direntry(struct node * n, char *origname, int fd)
 	return entry.recordsize;
 }
 
-void
-writedata(struct node *parent, struct node *root,
+void writedata(struct node *parent, struct node *root,
 	int fd, int *currentsector, int dirs, struct dir *rootentry,
 	int rootsize, int remove_after)
 {
@@ -716,8 +701,7 @@ writedata(struct node *parent, struct node *root,
 	*currentsector += written/ISO_SECTOR;
 }
 
-void
-writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
+void writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 {
 	static char buf[ISO_SECTOR];
 	struct bc_validation validate;
@@ -775,8 +759,7 @@ writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 	return;
 }
 
-int
-writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
+int writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 	char *appendsectorinfo, struct node *root)
 {
 	static unsigned char buf[1024*64], *addr;
@@ -863,8 +846,7 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 	return virtuals;
 }
 
-void
-writebootrecord(int fd, int *currentsector, int bootcatalogsector)
+void writebootrecord(int fd, int *currentsector, int bootcatalogsector)
 {
 	int i;
 	static struct bootrecord bootrecord;
@@ -901,8 +883,7 @@ writebootrecord(int fd, int *currentsector, int bootcatalogsector)
 	(*currentsector)++;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int currentsector = 0;
 	int imagesector, imagesectors;

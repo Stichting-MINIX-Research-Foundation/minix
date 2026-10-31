@@ -1,0 +1,68 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./etc/system.conf.d/3c90x                               minix-base
+./etc/system.conf.d/als4000                             minix-base
+./etc/system.conf.d/amddev                              minix-base
+./etc/system.conf.d/atl2                                minix-base
+./etc/system.conf.d/cmi8738                             minix-base
+./etc/system.conf.d/cs4281                              minix-base
+./etc/system.conf.d/dec21140A                           minix-base
+./etc/system.conf.d/dp8390                              minix-base
+./etc/system.conf.d/dpeth                               minix-base
+./etc/system.conf.d/e1000                               minix-base
+./etc/system.conf.d/es1370                              minix-base
+./etc/system.conf.d/es1371                              minix-base
+./etc/system.conf.d/fxp                                 minix-base
+./etc/system.conf.d/ip1000                              minix-base
+./etc/system.conf.d/lance                               minix-base
+./etc/system.conf.d/printer                             minix-base
+./etc/system.conf.d/rtl8139                             minix-base
+./etc/system.conf.d/rtl8169                             minix-base
+./etc/system.conf.d/ti1225                              minix-base
+./etc/system.conf.d/trident                             minix-base
+./etc/system.conf.d/virtio_net                          minix-base
+./etc/system.conf.d/vt6105                              minix-base
+./service/3c90x                                         minix-base
+./service/acpi                                          minix-base
+./service/ahci                                          minix-base
+./service/als4000                                       minix-base
+./service/amddev                                        minix-base
+./service/at_wini                                       minix-base
+./service/atl2                                          minix-base
+./service/cmi8738                                       minix-base
+./service/cs4281                                        minix-base
+./service/dec21140A                                     minix-base
+./service/dp8390                                        minix-base
+./service/dpeth                                         minix-base
+./service/e1000                                         minix-base
+./service/es1370                                        minix-base
+./service/es1371                                        minix-base
+./service/fbd                                           minix-base
+./service/filter                                        minix-base
+./service/floppy                                        minix-base
+./service/fxp                                           minix-base
+./service/ip1000                                        minix-base
+./service/lance                                         minix-base
+./service/pci                                           minix-base
+./service/pckbd                                         minix-base
+./service/printer                                       minix-base
+./service/random                                        minix-base
+./service/rtl8139                                       minix-base
+./service/rtl8169                                       minix-base
+./service/sb16                                          minix-base
+./service/ti1225                                        minix-base
+./service/trident                                       minix-base
+./service/virtio_blk                                    minix-base
+./service/virtio_net                                    minix-base
+./service/vt6105                                        minix-base
+./usr/lib/libacpi.a                                     minix-base
+./usr/lib/libacpi_pic.a                                 minix-base
+./usr/lib/libvirtio.a                                   minix-base
+./usr/lib/libvirtio_pic.a                               minix-base
+./usr/mdec                                              minix-base
+./usr/mdec/bootx64.efi                                  minix-base

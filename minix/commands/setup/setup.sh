@@ -73,7 +73,7 @@ check_mbr()
 			read ok
 			if [ "$ok" = Y -o "$ok" = y -o "$ok" = "" ]
 			then
-				installboot_nbsd -m "$disk" /usr/mdec/mbr >/dev/null
+				installboot -m "$disk" /usr/mdec/mbr >/dev/null
 			fi
 		fi
 		rm temp_mbr_netbsd
@@ -547,7 +547,7 @@ test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
 # XXX we have to use "-f" here, because installboot worries about BPB, which
 # we don't have...
-installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
+installboot -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
 # give the install the boot loader
 cp /usr/mdec/boot_monitor /mnt/
 minixdir=/mnt/boot/minix_default

@@ -21,8 +21,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static int
-open_dev(const char * dev, int flags)
+static int open_dev(const char * dev, int flags)
 {
 	int fd;
 
@@ -37,8 +36,7 @@ open_dev(const char * dev, int flags)
 	return fd;
 }
 
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int fd, val;
 

@@ -41,11 +41,12 @@ int do_exec(struct proc * caller, message * m_ptr)
 
   name[sizeof(name)-1] = '\0';
 
-  /* Set process state. */
+  /* Set process state.  ip/stack/ps_str are full 64-bit virtual addresses on
+   * x86_64; do NOT truncate to u32_t (latent LP64 bug if user space > 4 GB). */
   arch_proc_init(rp,
-	(u32_t) m_ptr->m_lsys_krn_sys_exec.ip,
-	(u32_t) m_ptr->m_lsys_krn_sys_exec.stack,
-	(u32_t) m_ptr->m_lsys_krn_sys_exec.ps_str, name);
+	(vir_bytes) m_ptr->m_lsys_krn_sys_exec.ip,
+	(vir_bytes) m_ptr->m_lsys_krn_sys_exec.stack,
+	(vir_bytes) m_ptr->m_lsys_krn_sys_exec.ps_str, name);
 
   /* No reply to EXEC call */
   RTS_UNSET(rp, RTS_RECEIVING);

@@ -69,6 +69,15 @@ __RCSID("$NetBSD: kvm_x86_64.c,v 1.10 2014/02/19 20:21:22 dsl Exp $");
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
+/* amd64 pte.h uses PTE_* names; map the PG_* aliases expected here. */
+#ifndef PG_V
+#define PG_V		PTE_P
+#define PG_PS		PTE_PS
+#define PG_FRAME	PTE_FRAME
+#define PG_2MFRAME	PTE_2MFRAME
+#define PG_1GFRAME	PTE_1GFRAME
+#endif
+
 void
 _kvm_freevtop(kvm_t *kd)
 {

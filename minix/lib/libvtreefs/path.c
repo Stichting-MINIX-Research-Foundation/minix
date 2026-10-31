@@ -5,8 +5,7 @@
 /*
  * Resolve a path string to an inode.
  */
-int
-fs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node_details,
+int fs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node_details,
 	int * is_mountpt)
 {
 	struct inode *node, *child;

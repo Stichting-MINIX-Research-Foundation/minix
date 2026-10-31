@@ -6,10 +6,7 @@
 #include <lib.h>
 #include <minix/syslib.h>
 
-int _taskcall(who, syscallnr, msgptr)
-endpoint_t who;
-int syscallnr;
-register message *msgptr;
+int _taskcall(endpoint_t who, int syscallnr, message *msgptr)
 {
   int status;
 

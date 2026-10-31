@@ -147,6 +147,7 @@
 
 /* Host Bus Adapter (HBA) constants. */
 #define AHCI_HBA_CAP	0		/* Host Capabilities */
+#define 	AHCI_HBA_CAP_S64A	(1L << 31)	/* 64-bit Addressing */
 #define 	AHCI_HBA_CAP_SNCQ	(1L << 30)	/* Native Cmd Queuing */
 #define 	AHCI_HBA_CAP_SCLO	(1L << 24)	/* Cmd List Override */
 #define 	AHCI_HBA_CAP_NCS_SHIFT	8		/* Nr of Cmd Slots */

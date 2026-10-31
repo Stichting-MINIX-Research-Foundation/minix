@@ -99,8 +99,7 @@ AcpiUtCreatePkgStateAndPush (
  *
  ******************************************************************************/
 
-void
-AcpiUtPushGenericState (
+void AcpiUtPushGenericState (
     ACPI_GENERIC_STATE      **ListHead,
     ACPI_GENERIC_STATE      *State)
 {
@@ -372,8 +371,7 @@ AcpiUtCreateControlState (
  *
  ******************************************************************************/
 
-void
-AcpiUtDeleteGenericState (
+void AcpiUtDeleteGenericState (
     ACPI_GENERIC_STATE      *State)
 {
     ACPI_FUNCTION_ENTRY ();

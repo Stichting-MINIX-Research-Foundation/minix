@@ -85,8 +85,7 @@ static int arch_set_time(struct tm *t, int flags);
 static int arch_pwr_off(void);
 static void arch_exit(void);
 
-int
-arch_setup(struct rtc *r)
+int arch_setup(struct rtc *r)
 {
 	r->init = arch_init;
 	r->get_time = arch_get_time;
@@ -97,24 +96,9 @@ arch_setup(struct rtc *r)
 	return OK;
 }
 
-static int
-arch_init(void)
+static int arch_init(void)
 {
-	int s;
-	unsigned char mach_id, cmos_state;
-
-	if ((s = sys_readbios(MACH_ID_ADDR, &mach_id, sizeof(mach_id))) != OK) {
-		log_warn(&log, "sys_readbios failed: %d.\n", s);
-
-		return -1;
-	}
-
-	if (mach_id != PS_386 && mach_id != PC_AT) {
-		log_warn(&log, "Machine ID unknown.");
-		log_warn(&log, "Machine ID byte = %02x\n", mach_id);
-
-		return -1;
-	}
+	unsigned char cmos_state;
 
 	cmos_state = read_register(CMOS_STATUS);
 
@@ -147,8 +131,7 @@ arch_init(void)
 /*                                                                     */
 /***********************************************************************/
 
-static int
-arch_get_time(struct tm *t, int flags)
+static int arch_get_time(struct tm *t, int flags)
 {
 	int osec, n;
 
@@ -210,8 +193,7 @@ arch_get_time(struct tm *t, int flags)
 	return OK;
 }
 
-static int
-read_register(int reg_addr)
+static int read_register(int reg_addr)
 {
 	u32_t r;
 
@@ -235,8 +217,7 @@ read_register(int reg_addr)
 /*                                                                     */
 /***********************************************************************/
 
-static int
-arch_set_time(struct tm *t, int flags)
+static int arch_set_time(struct tm *t, int flags)
 {
 	int regA, regB;
 
@@ -288,8 +269,7 @@ arch_set_time(struct tm *t, int flags)
 	return OK;
 }
 
-static int
-write_register(int reg_addr, int value)
+static int write_register(int reg_addr, int value)
 {
 	if (sys_outb(RTC_INDEX, reg_addr) != OK) {
 		log_warn(&log, "outb failed of %x\n", RTC_INDEX);
@@ -304,15 +284,13 @@ write_register(int reg_addr, int value)
 	return OK;
 }
 
-static int
-arch_pwr_off(void)
+static int arch_pwr_off(void)
 {
 	/* Not Implemented */
 	return ENOSYS;
 }
 
-static void
-arch_exit(void)
+static void arch_exit(void)
 {
 	/* Nothing to clean up here */
 	log_debug(&log, "Exiting...");

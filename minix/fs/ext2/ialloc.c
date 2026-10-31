@@ -119,11 +119,13 @@ static int find_group_orlov(struct super_block *sp, struct inode
 
 /*===========================================================================*
  *                              alloc_inode_bit                              *
+ *                              sp: the filesystem to allocate from			 *
+ *                              parent: parent of newly allocated inode		 *
+ *                              is_dir: inode will be a directory if it is	 *
+ *                              		TRUE								 *
  *===========================================================================*/
-static bit_t alloc_inode_bit(sp, parent, is_dir)
-struct super_block *sp;         /* the filesystem to allocate from */
-struct inode *parent;		/* parent of newly allocated inode */
-int is_dir;			/* inode will be a directory if it is TRUE */
+static bit_t alloc_inode_bit(struct super_block *sp, struct inode *parent,
+							 int is_dir)
 {
   int group;
   ino_t inumber = NO_BIT;

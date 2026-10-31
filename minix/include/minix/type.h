@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 
-#include <machine/multiboot.h>
+//#include <machine/multiboot.h>
 
 #ifndef _MINIX_SYS_CONFIG_H
 #include <minix/sys_config.h>

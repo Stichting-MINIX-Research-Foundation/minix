@@ -79,9 +79,7 @@ int fi_service(struct rproc *rp)
 /*===========================================================================*
  *			      fill_send_mask                                 *
  *===========================================================================*/
-void fill_send_mask(send_mask, set_bits)
-sys_map_t *send_mask;		/* the send mask to fill in */
-int set_bits;			/* TRUE sets all bits, FALSE clears all bits */
+void fill_send_mask(sys_map_t *send_mask, int set_bits)
 {
 /* Fill in a send mask. */
   int i;
@@ -97,12 +95,7 @@ int set_bits;			/* TRUE sets all bits, FALSE clears all bits */
 /*===========================================================================*
  *			      fill_call_mask                                 *
  *===========================================================================*/
-void fill_call_mask(calls, tot_nr_calls, call_mask, call_base, is_init)
-int *calls;                     /* the unordered set of calls */
-int tot_nr_calls;               /* the total number of calls */
-bitchunk_t *call_mask;          /* the call mask to fill in */
-int call_base;                  /* the base offset for the calls */
-int is_init;                    /* set when initializing a call mask */
+void fill_call_mask(int *calls, int tot_nr_calls, bitchunk_t *call_mask, int call_base, int is_init)
 {
 /* Fill a call mask from an unordered set of calls. */
   int i;
@@ -306,10 +299,7 @@ int rs_receive_ticks(endpoint_t src, message *m_ptr,
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-void reply(who, rp, m_ptr)
-endpoint_t who;                        	/* replyee */
-struct rproc *rp;                       /* replyee slot (if any) */
-message *m_ptr;                         /* reply message */
+void reply(endpoint_t who, struct rproc *rp, message *m_ptr)
 {
   int r;				/* send status */
 
@@ -329,9 +319,7 @@ message *m_ptr;                         /* reply message */
 /*===========================================================================*
  *			      late_reply				     *
  *===========================================================================*/
-void late_reply(rp, code)
-struct rproc *rp;				/* pointer to process slot */
-int code;					/* status code */
+void late_reply(struct rproc *rp, int code)
 {
 /* If a caller is waiting for a reply, unblock it. */
   if(rp->r_flags & RS_LATEREPLY) {

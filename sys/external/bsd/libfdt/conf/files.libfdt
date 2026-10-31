@@ -1,0 +1,11 @@
+define		libfdt
+makeoptions	libfdt	CPPFLAGS+="-I$S/external/bsd/libfdt/dist"
+
+file	external/bsd/libfdt/dist/fdt.c			libfdt
+file	external/bsd/libfdt/dist/fdt_addresses.c	libfdt
+file	external/bsd/libfdt/dist/fdt_empty_tree.c	libfdt
+file	external/bsd/libfdt/dist/fdt_ro.c		libfdt
+file	external/bsd/libfdt/dist/fdt_rw.c		libfdt
+file	external/bsd/libfdt/dist/fdt_strerror.c		libfdt
+file	external/bsd/libfdt/dist/fdt_sw.c		libfdt
+file	external/bsd/libfdt/dist/fdt_wip.c		libfdt

@@ -1,7 +1,7 @@
 /*	$OpenBSD: queue.c,v 1.6 2011/07/08 01:20:24 tedu Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,20 +48,17 @@ static int	 count;
 
 static queue_t	*dequeue(void);
 
-void
-initqueue(void)
+void initqueue(void)
 {
 	q_head = q_tail = NULL;
 }
 
-static void
-free_item(queue_t *item)
+static void free_item(queue_t *item)
 {
 	free(item);
 }
 
-void
-enqueue(str_t *x)
+void enqueue(str_t *x)
 {
 	queue_t	*item;
 
@@ -101,8 +98,7 @@ dequeue(void)
 	return item;
 }
 
-void
-printqueue(void)
+void printqueue(void)
 {
 	queue_t *item;
 
@@ -112,8 +108,7 @@ printqueue(void)
 	}
 }
 
-void
-clearqueue(void)
+void clearqueue(void)
 {
 	queue_t	*item;
 

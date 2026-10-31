@@ -1,4 +1,4 @@
-/* $NetBSD: ip.c,v 1.2 2011/05/13 23:35:09 nakayama Exp $ */
+/* $NetBSD: ip.c,v 1.4 2019/03/31 20:08:45 christos Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -36,7 +36,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
@@ -60,10 +59,10 @@
 #include "net.h"
 
 /*
- * sends an IP packet, if it's alredy constructed
+ * sends an IP packet, if it's already constructed
 */
 static ssize_t
-_sendip(struct iodesc * d, struct ip * ip, size_t len)
+_sendip(struct iodesc *d, struct ip *ip, size_t len)
 {
 	u_char *ea;
 
@@ -82,15 +81,15 @@ _sendip(struct iodesc * d, struct ip * ip, size_t len)
  * Caller must leave room for ethernet, ip and udp headers in front!
 */
 ssize_t
-sendip(struct iodesc * d, void *pkt, size_t len, u_int8_t proto)
+sendip(struct iodesc *d, void *pkt, size_t len, u_int8_t proto)
 {
 	ssize_t cc;
 	struct ip *ip;
 
-	ip = (struct ip *) pkt - 1;
+	ip = (struct ip *)pkt - 1;
 	len += sizeof(*ip);
 
-	(void) memset(ip, 0, sizeof(*ip));
+	memset(ip, 0, sizeof(*ip));
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
@@ -105,8 +104,8 @@ sendip(struct iodesc * d, void *pkt, size_t len, u_int8_t proto)
 
 	if (cc == -1)
 		return -1;
-	if ((size_t) cc != len)
-		panic("sendip: bad write (%zd != %zu)", cc, len);
+	if ((size_t)cc != len)
+		panic("%s: bad write (%zd != %zu)", __func__, cc, len);
 	return (cc - (sizeof(*ip)));
 }
 
@@ -119,28 +118,30 @@ sendip(struct iodesc * d, void *pkt, size_t len, u_int8_t proto)
  * The size returned is the size indicated in the header.
  */
 ssize_t
-readip(struct iodesc * d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
+readip(struct iodesc *d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
 {
 	ssize_t n;
 	size_t hlen;
 	struct ip *ip;
 	u_int16_t etype;
 
-	ip = (struct ip *) pkt - 1;
+	ip = (struct ip *)pkt - 1;
 
 	n = readether(d, ip, len + sizeof(*ip), tleft, &etype);
-	if (n == -1 || (size_t) n < sizeof(*ip))
+	if (n == -1 || (size_t)n < sizeof(*ip))
 		return -1;
 
 	if (etype == ETHERTYPE_ARP) {
-		struct arphdr *ah = (void *) ip;
+		struct arphdr *ah = (void *)ip;
+		if (n < (ssize_t)(sizeof(*ah) + 2 * (ah->ar_hln + ah->ar_pln))) {
+			return -1;
+		}
 		if (ah->ar_op == htons(ARPOP_REQUEST)) {
 			/* Send ARP reply */
 			arp_reply(d, ah);
 		}
 		return -1;
 	}
-
 	if (etype != ETHERTYPE_IP) {
 #ifdef NET_DEBUG
 		if (debug)
@@ -150,8 +151,7 @@ readip(struct iodesc * d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
 	}
 
 	/* Check ip header */
-	if (ip->ip_v != IPVERSION ||
-	    ip->ip_p != proto) { /* half char */
+	if (ip->ip_v != IPVERSION || ip->ip_p != proto) {
 #ifdef NET_DEBUG
 		if (debug) {
 			printf("readip: wrong IP version or wrong proto "
@@ -162,19 +162,22 @@ readip(struct iodesc * d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
 	}
 
 	hlen = ip->ip_hl << 2;
-	if (hlen < sizeof(*ip) || ip_cksum(ip, hlen) != 0) {
+	if (hlen != sizeof(*ip) || ip_cksum(ip, hlen) != 0) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readip: short hdr or bad cksum.\n");
 #endif
 		return -1;
 	}
-	if (n < ntohs(ip->ip_len)) {
+	if (ntohs(ip->ip_len) < hlen) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readip: bad length %d < %d.\n",
 			       (int) n, ntohs(ip->ip_len));
 #endif
+		return -1;
+	}
+	if (n < ntohs(ip->ip_len)) {
 		return -1;
 	}
 	if (d->myip.s_addr && ip->ip_dst.s_addr != d->myip.s_addr) {
@@ -186,5 +189,6 @@ readip(struct iodesc * d, void *pkt, size_t len, time_t tleft, u_int8_t proto)
 #endif
 		return -1;
 	}
-	return (ntohs(ip->ip_len) - 20);
+
+	return (ntohs(ip->ip_len) - hlen);
 }

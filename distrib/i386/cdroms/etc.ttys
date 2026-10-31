@@ -1,0 +1,7 @@
+# $NetBSD: etc.ttys,v 1.1 2010/04/19 04:41:36 martin Exp $
+#
+# re-launch the sysinst wrapper script on console
+#
+# name	getty				type	status		comments
+#
+console	"/usr/libexec/getty sysinst"	wsvt25	on secure

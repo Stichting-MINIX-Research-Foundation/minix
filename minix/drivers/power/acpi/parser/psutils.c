@@ -93,8 +93,7 @@ AcpiPsCreateScopeOp (
  *
  ******************************************************************************/
 
-void
-AcpiPsInitOp (
+void AcpiPsInitOp (
     ACPI_PARSE_OBJECT       *Op,
     UINT16                  Opcode)
 {
@@ -193,8 +192,7 @@ AcpiPsAllocOp (
  *
  ******************************************************************************/
 
-void
-AcpiPsFreeOp (
+void AcpiPsFreeOp (
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_FUNCTION_NAME (PsFreeOp);
@@ -260,8 +258,7 @@ AcpiPsGetName (
 /*
  * Set op's name
  */
-void
-AcpiPsSetName (
+void AcpiPsSetName (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  name)
 {

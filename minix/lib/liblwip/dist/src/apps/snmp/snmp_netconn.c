@@ -44,8 +44,7 @@
 #include "lwip/sys.h"
 
 /** SNMP netconn API worker thread */
-static void
-snmp_netconn_thread(void *arg)
+static void snmp_netconn_thread(void *arg)
 {
   struct netconn *conn;
   struct netbuf *buf;
@@ -90,8 +89,7 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
   return result;
 }
 
-u8_t
-snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
+u8_t snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 {
   struct netconn* conn = (struct netconn*)handle;
   struct netif *dst_if;
@@ -112,8 +110,7 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 /**
  * Starts SNMP Agent.
  */
-void
-snmp_init(void)
+void snmp_init(void)
 {
   sys_thread_new("snmp_netconn", snmp_netconn_thread, NULL, SNMP_STACK_SIZE, SNMP_THREAD_PRIO);
 }

@@ -1,9 +1,9 @@
-/* $NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $ */
+/* $NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,14 +23,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $");
 #include <err.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -201,7 +202,7 @@ udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 	case 0x10:	/* DVDROM */
 	case 0x40:	/* BDROM */
 		req_enable |= FORMAT_READONLY;
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case 0x01:	/* disc */
 		/* set up a disc info profile for partitions/files */
 		di->mmc_class	= MMC_CLASS_DISC;
@@ -290,9 +291,6 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 void
 udf_prep_opts(fsinfo_t *fsopts)
 {
-	struct tm *tm;
-	time_t now;
-
 	const option_t udf_options[] = {
 		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,"
 			"dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
@@ -330,13 +328,16 @@ udf_prep_opts(fsinfo_t *fsopts)
 	context.max_udf = 0x201;	/* 0x250 and 0x260 are not ready */
 
 	/* use user's time zone as default */
-	(void)time(&now);
-	tm = localtime(&now);
 #ifdef HAVE_STRUCT_TM_TM_GMTOFF
-	context.gmtoff = tm->tm_gmtoff;
-#else
-	context.gmtoff = 0;
+	if (!stampst.st_ino)  {
+		struct tm tm;
+		time_t now;
+		(void)time(&now);
+		(void)localtime_r(&now, &tm);
+		context.gmtoff = tm.tm_gmtoff;
+	} else
 #endif
+		context.gmtoff = 0;
 
 	/* return info */
 	fsopts->fs_specific = NULL;
@@ -514,6 +515,7 @@ static uint32_t
 udf_datablocks(off_t sz)
 {
 	/* predictor if it can be written inside the node */
+	/* XXX the predictor assumes NO extended attributes in the node */
 	if (sz < context.sector_size - UDF_EXTFENTRY_SIZE - 16)
 		return 0;
 
@@ -561,7 +563,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	struct extfile_entry *efe;
 	uint64_t inf_len, obj_size;
 	uint32_t l_ea, l_ad;
-	uint32_t free_space, desc_size;
 	uint16_t crclen;
 	uint8_t *data, *pos;
 
@@ -575,7 +576,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &fe->icbtag;
 		inf_len   = udf_rw64(fe->inf_len);
 		obj_size  = 0;
-		desc_size = sizeof(struct file_entry);
 	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
 		efe       = &dscr->efe;
 		data      = efe->data;
@@ -584,39 +584,22 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &efe->icbtag;
 		inf_len   = udf_rw64(efe->inf_len);
 		obj_size  = udf_rw64(efe->obj_size);
-		desc_size = sizeof(struct extfile_entry);
 	} else {
 		errx(1, "Bad tag passed to udf_file_inject_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
 
-	/* calculate free space */
-	free_space = context.sector_size - (l_ea + l_ad) - desc_size;
+	/* check if it will fit internally */
 	if (udf_datablocks(size)) {
-#if !defined(NDEBUG) && defined(__minix)
-		assert(free_space < size);
-#else
-		if (!(free_space < size)) {
-		    printf("%s:%d not enough free space\n", __FILE__, __LINE__);
-		    abort();
-		}
-#endif /* !defined(NDEBUG) && defined(__minix) */
+		/* the predictor tells it won't fit internally */
 		return 1;
 	}
 
 	/* going internal */
 	assert(l_ad == 0);
-#if !defined(NDEBUG) && defined(__minix)
 	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
 			UDF_ICB_INTERN_ALLOC);
-#else
-	if (!((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) == UDF_ICB_INTERN_ALLOC)) {
-		printf("%s:%d: allocation flags mismatch\n", __FILE__, __LINE__);
-		abort();
-	}
-#endif /* !defined(NDEBUG) && defined(__minix) */
 
-	// assert(free_space >= size);
 	pos = data + l_ea + l_ad;
 	memcpy(pos, blob, size);
 	l_ad   += size;
@@ -704,14 +687,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	last_long     = NULL;
 	if (l_ad != 0) {
 		if (use_shorts) {
-#if !defined(NDEBUG) && defined(__minix)
 			assert(cur_alloc == UDF_ICB_SHORT_ALLOC);
-#else
-			if (!(cur_alloc == UDF_ICB_SHORT_ALLOC)) {
-			    printf("%s:%d: Expecting UDF_ICB_SHORT_ALLOC allocation\n", __FILE__, __LINE__);
-			    abort();
-			}
-#endif /* !defined(NDEBUG) && defined(__minix) */
 			pos += l_ad - short_len;
 			last_short   = (struct short_ad *) pos;
 			last_lb_num  = udf_rw32(last_short->lb_num);
@@ -719,14 +695,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 			last_len     = UDF_EXT_LEN(udf_rw32(last_short->len));
 			last_flags   = UDF_EXT_FLAGS(udf_rw32(last_short->len));
 		} else {
-#if !defined(NDEBUG) && defined(__minix)
 			assert(cur_alloc == UDF_ICB_LONG_ALLOC);
-#else
-			if (!(cur_alloc == UDF_ICB_LONG_ALLOC)) {
-			    printf("%s:%d: Expecting UDF_ICB_LONG_ALLOC allocation\n", __FILE__, __LINE__);
-			    abort();
-			}
-#endif /* !defined(NDEBUG) && defined(__minix) */
 			pos += l_ad - long_len;
 			last_long    = (struct long_ad *) pos;
 			last_lb_num  = udf_rw32(last_long->loc.lb_num);
@@ -906,6 +875,7 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		case S_IFDIR:
 			if (strcmp(cur->name, ".") == 0)
 				continue;
+			/* FALLTHROUGH */
 		case S_IFLNK:
 		case S_IFREG:
 			/* create dummy FID to see how long name will become */

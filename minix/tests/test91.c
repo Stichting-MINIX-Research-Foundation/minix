@@ -345,8 +345,7 @@ static const int tcp_results[][__arraycount(tcp_states)] = {
  * Set up a TCP socket file descriptor in the requested state and pass it to
  * socklib_sweep_call() along with local and remote addresses and their length.
  */
-static int
-tcp_sweep(int domain, int type, int protocol, enum state state, enum call call)
+static int tcp_sweep(int domain, int type, int protocol, enum state state, enum call call)
 {
 	struct sockaddr_in sinA, sinB, sinC, sinD;
 	struct sockaddr_in6 sin6A, sin6B, sin6C, sin6D;
@@ -843,8 +842,7 @@ static const int udp_results[][__arraycount(udp_states)] = {
  * Set up a UDP socket file descriptor in the requested state and pass it to
  * socklib_sweep_call() along with local and remote addresses and their length.
  */
-static int
-udp_sweep(int domain, int type, int protocol, enum state state, enum call call)
+static int udp_sweep(int domain, int type, int protocol, enum state state, enum call call)
 {
 	struct sockaddr_in sinA, sinB;
 	struct sockaddr_in6 sin6A, sin6B;
@@ -981,8 +979,7 @@ udp_sweep(int domain, int type, int protocol, enum state state, enum call call)
 /*
  * Sweep test for socket calls versus socket states of TCP and UDP sockets.
  */
-static void
-test91a(void)
+static void test91a(void)
 {
 
 	subtest = 1;
@@ -1052,8 +1049,7 @@ static const struct {
 /*
  * Test binding sockets of a particular type to various addresses.
  */
-static void
-sub91b(int type)
+static void sub91b(int type)
 {
 	struct sockaddr_in sin, lsin;
 	struct sockaddr_in6 sin6, lsin6;
@@ -1224,8 +1220,7 @@ sub91b(int type)
 /*
  * Test binding sockets to various addresses.
  */
-static void
-test91b(void)
+static void test91b(void)
 {
 
 	subtest = 2;
@@ -1240,8 +1235,7 @@ test91b(void)
  * because we do not actually want this test to generate outgoing traffic.  In
  * effect, we test calls that should fail only.
  */
-static void
-sub91c_tcp(void)
+static void sub91c_tcp(void)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -1328,8 +1322,7 @@ sub91c_tcp(void)
 /*
  * Test connecting UDP sockets to various addresses.
  */
-static void
-sub91c_udp(void)
+static void sub91c_udp(void)
 {
 	struct sockaddr_in sin, rsin;
 	struct sockaddr_in6 sin6, rsin6;
@@ -1508,8 +1501,7 @@ sub91c_udp(void)
 /*
  * Test connecting sockets to various addresses.
  */
-static void
-test91c(void)
+static void test91c(void)
 {
 
 	subtest = 3;
@@ -1522,8 +1514,7 @@ test91c(void)
 /*
  * Test binding with IPv4/IPv6 on the same port for the given socket type.
  */
-static void
-sub91d(int type)
+static void sub91d(int type)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -1615,8 +1606,7 @@ sub91d(int type)
 /*
  * Test binding with IPv4/IPv6 on the same port, and IPV6_V6ONLY.
  */
-static void
-test91d(void)
+static void test91d(void)
 {
 
 	subtest = 4;
@@ -1629,8 +1619,7 @@ test91d(void)
 /*
  * Test sending large and small UDP packets.
  */
-static void
-test91e(void)
+static void test91e(void)
 {
 	struct sockaddr_in sin;
 	struct msghdr msg;
@@ -1807,8 +1796,7 @@ test91e(void)
  * TCP sockets, we cannot test whether they are actually applied, but for UDP
  * sockets, we do a more complete test later on.
  */
-static void
-sub91f(int type)
+static void sub91f(int type)
 {
 	socklen_t len;
 	int fd, val, def;
@@ -1972,8 +1960,7 @@ sub91f(int type)
 /*
  * Test setting and retrieving IP-level options.
  */
-static void
-test91f(void)
+static void test91f(void)
 {
 
 	subtest = 6;
@@ -1991,8 +1978,7 @@ test91f(void)
  * be added to this subtest as well.  The control data handling code is shared
  * between UDP and RAW, so there is no need to repeat this test for the latter.
  */
-static void
-test91g(void)
+static void test91g(void)
 {
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in sin;
@@ -2339,8 +2325,7 @@ test91g(void)
 /*
  * Test receiving IPv4 packets on IPv6 sockets.
  */
-static void
-test91h(void)
+static void test91h(void)
 {
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in sin;
@@ -2438,8 +2423,7 @@ test91h(void)
  * Test that binding a socket of the given type to a privileged port is
  * disallowed.
  */
-static void
-sub91i(int type)
+static void sub91i(int type)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -2503,8 +2487,7 @@ sub91i(int type)
  * is not to be run by root, but for convenience we first try to drop
  * privileges for the duration of the test anyway.
  */
-static void
-test91i(void)
+static void test91i(void)
 {
 	int i;
 
@@ -2529,8 +2512,7 @@ test91i(void)
 /*
  * Test setting and getting basic UDP/RAW multicast transmission options.
  */
-static void
-test91j(void)
+static void test91j(void)
 {
 
 	subtest = 10;
@@ -2542,8 +2524,7 @@ test91j(void)
  * Test TCP socket state changes related to the listen queue.  This test is
  * derived from test90y, but sufficiently different to be its own copy.
  */
-static void
-test91k(void)
+static void test91k(void)
 {
 	struct sockaddr_in6 sin6A, sin6B, sin6C;
 	socklen_t len;
@@ -2836,8 +2817,7 @@ test91k(void)
 /*
  * Obtain a pair of connected TCP socket.
  */
-static int
-get_tcp_pair(int domain, int type, int protocol, int fd[2])
+static int get_tcp_pair(int domain, int type, int protocol, int fd[2])
 {
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in sin;
@@ -2897,8 +2877,7 @@ get_tcp_pair(int domain, int type, int protocol, int fd[2])
 /*
  * Test large transfers and MSG_WAITALL.
  */
-static void
-test91l(void)
+static void test91l(void)
 {
 	int fd[2];
 
@@ -2918,8 +2897,7 @@ test91l(void)
  * we also perform very basic bulk functionality tests of FIONREAD, MSG_PEEK,
  * MSG_DONTWAIT, and MSG_WAITALL.
  */
-static void
-test91m(void)
+static void test91m(void)
 {
 	int fd[2];
 
@@ -2939,8 +2917,7 @@ test91m(void)
  * aborted in a protocol-specific way.  Return -1 to indicate that the given
  * file descriptor has been closed.
  */
-static int
-test91_reset(int fd, const char * data __unused, size_t len __unused)
+static int test91_reset(int fd, const char * data __unused, size_t len __unused)
 {
 	struct linger l;
 
@@ -2957,8 +2934,7 @@ test91_reset(int fd, const char * data __unused, size_t len __unused)
  * Test for receiving on stream sockets.  In particular, test SO_RCVLOWAT,
  * MSG_PEEK, MSG_DONTWAIT, and MSG_WAITALL.
  */
-static void
-test91n(void)
+static void test91n(void)
 {
 
 	subtest = 14;
@@ -2972,8 +2948,7 @@ test91n(void)
  * two individual values are stored in 'sndbuf' and 'rcvbuf', for each that is
  * not NULL, and the sum is returned from the call.
  */
-static int
-get_buf_sizes(int type, int * sndbufp, int * rcvbufp)
+static int get_buf_sizes(int type, int * sndbufp, int * rcvbufp)
 {
 	socklen_t len;
 	int fd, sndbuf, rcvbuf;
@@ -3015,8 +2990,7 @@ get_buf_sizes(int type, int * sndbufp, int * rcvbufp)
  * a non-zero value indicating how many bytes extra (delta > 0) or fewer
  * (delta < 0) should be sent compared to the receive queue size.
  */
-static void
-fill_tcp_bufs(int sfd, int rfd, int fill_send, int delta)
+static void fill_tcp_bufs(int sfd, int rfd, int fill_send, int delta)
 {
 	unsigned char buf[CHUNK], c;
 	socklen_t len;
@@ -3091,8 +3065,7 @@ fill_tcp_bufs(int sfd, int rfd, int fill_send, int delta)
  * Signal handler which just needs to exist, so that invoking it will interrupt
  * an ongoing system call.
  */
-static void
-test91_got_signal(int sig __unused)
+static void test91_got_signal(int sig __unused)
 {
 
 	/* Nothing. */
@@ -3117,8 +3090,7 @@ test91_got_signal(int sig __unused)
  * only somewhat less effective but also a bit more reliant on specific (TCP)
  * settings, although the whole test is still way too useful to skip at all.
  */
-static void
-sub91o(int iroom, int istate, int slowat, int len, int bits, int act)
+static void sub91o(int iroom, int istate, int slowat, int len, int bits, int act)
 {
 	struct sigaction sa;
 	struct timeval tv;
@@ -3342,8 +3314,7 @@ cleanup:
  * Test for sending on stream sockets.  In particular, test SO_SNDLOWAT and
  * MSG_DONTWAIT.
  */
-static void
-test91o(void)
+static void test91o(void)
 {
 	int iroom, istate, slowat, len, bits, act;
 
@@ -3367,8 +3338,7 @@ test91o(void)
  * Test filling up the TCP receive queue.  In particular, verify that one bug I
  * ran into (lwIP bug #49128) is resolved.
  */
-static void
-test91p(void)
+static void test91p(void)
 {
 	char buf[CHUNK];
 	size_t total, left;
@@ -3447,8 +3417,7 @@ test91p(void)
  * requests, but at least trying should not cause any problems, like the one I
  * filed as lwIP bug #49218.
  */
-static void
-test91q(void)
+static void test91q(void)
 {
 	ssize_t res;
 	size_t count;
@@ -3482,8 +3451,7 @@ test91q(void)
 /*
  * Test that SO_RCVLOWAT is limited to the size of the receive buffer.
  */
-static void
-sub91r_recv(int fill_delta, int rlowat_delta, int exp_delta)
+static void sub91r_recv(int fill_delta, int rlowat_delta, int exp_delta)
 {
 	char *buf;
 	size_t buflen;
@@ -3524,8 +3492,7 @@ sub91r_recv(int fill_delta, int rlowat_delta, int exp_delta)
 /*
  * Test that SO_SNDLOWAT is limited to the size of the send buffer.
  */
-static void
-sub91r_send(int fill, int slowat_delta, int exp_delta)
+static void sub91r_send(int fill, int slowat_delta, int exp_delta)
 {
 	char *buf;
 	size_t buflen;
@@ -3575,8 +3542,7 @@ sub91r_send(int fill, int slowat_delta, int exp_delta)
  * their respective buffer sizes.  This test is derived from test90w, but
  * merging the two into socklib would get too messy unfortunately.
  */
-static void
-test91r(void)
+static void test91r(void)
 {
 
 	subtest = 18;
@@ -3617,8 +3583,7 @@ test91r(void)
 /*
  * Test sending and receiving with bad pointers on a TCP socket.
  */
-static void
-sub91s_tcp(char * ptr)
+static void sub91s_tcp(char * ptr)
 {
 	int fd[2];
 
@@ -3650,8 +3615,7 @@ sub91s_tcp(char * ptr)
 /*
  * Test sending and receiving with bad pointers on a UDP socket.
  */
-static void
-sub91s_udp(char * ptr)
+static void sub91s_udp(char * ptr)
 {
 	struct sockaddr_in6 sin6;
 	int i, fd;
@@ -3692,8 +3656,7 @@ sub91s_udp(char * ptr)
 /*
  * Test sending and receiving with bad pointers.
  */
-static void
-test91s(void)
+static void test91s(void)
 {
 	char *ptr;
 
@@ -3713,8 +3676,7 @@ test91s(void)
 /*
  * Test closing TCP sockets and SO_LINGER.
  */
-static void
-test91t(void)
+static void test91t(void)
 {
 	char buf[CHUNK];
 	size_t total, left;
@@ -3796,8 +3758,7 @@ test91t(void)
 /*
  * Test closing a socket with a particular SO_LINGER setting.
  */
-static void
-sub91u(int nb, int mode, int intr, int onoff, int linger)
+static void sub91u(int nb, int mode, int intr, int onoff, int linger)
 {
 	char buf[CHUNK];
 	struct timeval tv1, tv2;
@@ -3986,8 +3947,7 @@ sub91u(int nb, int mode, int intr, int onoff, int linger)
  * behavior here, as above all else the aim is to make sure that the service
  * code works as expected.
  */
-static void
-test91u(void)
+static void test91u(void)
 {
 	int nb, mode;
 
@@ -4036,8 +3996,7 @@ test91u(void)
 /*
  * Test shutdown on listening TCP sockets.
  */
-static void
-sub91v(int how)
+static void sub91v(int how)
 {
 	struct sockaddr_in sin;
 	socklen_t len;
@@ -4095,8 +4054,7 @@ sub91v(int how)
 /*
  * Test shutdown on listening TCP sockets.  This test is derived from test90x.
  */
-static void
-test91v(void)
+static void test91v(void)
 {
 	const int hows[] = { SHUT_RD, SHUT_WR, SHUT_RDWR };
 	int i;
@@ -4110,8 +4068,7 @@ test91v(void)
 /*
  * Test basic sysctl(2) socket enumeration support.
  */
-static void
-test91w(void)
+static void test91w(void)
 {
 	struct kinfo_pcb ki;
 	struct sockaddr_in lsin, rsin;
@@ -4459,8 +4416,7 @@ test91w(void)
 /*
  * Test socket enumeration of sockets using IPv4-mapped IPv6 addresses.
  */
-static void
-test91x(void)
+static void test91x(void)
 {
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in sin;
@@ -4879,8 +4835,7 @@ test91x(void)
  * Test local and remote IPv6 address handling.  In particular, test scope IDs
  * and IPv4-mapped IPv6 addresses.
  */
-static void
-test91y(void)
+static void test91y(void)
 {
 
 	subtest = 25;
@@ -4893,8 +4848,7 @@ test91y(void)
 /*
  * Test low-memory conditions for TCP.
  */
-static void
-test91z(void)
+static void test91z(void)
 {
 	struct sockaddr_in6 sin6;
 	socklen_t len;
@@ -5230,8 +5184,7 @@ test91z(void)
 /*
  * Test multicast support.
  */
-static void
-test91aa(void)
+static void test91aa(void)
 {
 
 	subtest = 27;
@@ -5243,8 +5196,7 @@ test91aa(void)
  * Test that putting an unbound TCP socket in listening mode will bind the
  * socket to a port.
  */
-static void
-test91ab(void)
+static void test91ab(void)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -5289,8 +5241,7 @@ test91ab(void)
  * TIME_WAIT state left behind from the first connection, but this previously
  * caused an infinite loop instead.  lwIP bug #50498.
  */
-static void
-test91ac(void)
+static void test91ac(void)
 {
 	struct sockaddr_in6 lsin6, rsin6;
 	socklen_t len;
@@ -5346,8 +5297,7 @@ test91ac(void)
 /*
  * Test program for LWIP TCP/UDP sockets.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	unsigned int m;
 	int i;

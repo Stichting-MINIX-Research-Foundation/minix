@@ -19,7 +19,7 @@ static void anon_contig_split(struct vmproc *vmp, struct vir_region *vr,
                         struct vir_region *r1, struct vir_region *r2);
 static int anon_contig_resize(struct vmproc *vmp, struct vir_region *vr, vir_bytes l);
 static int anon_contig_new(struct vir_region *vr);
-static int anon_contig_pt_flags(struct vir_region *vr);
+static u64_t anon_contig_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_anon_contig = {
 	.name = "anonymous memory (physically contiguous)",
@@ -34,7 +34,7 @@ struct mem_type mem_type_anon_contig = {
 	.pt_flags = anon_contig_pt_flags,
 };
 
-static int anon_contig_pt_flags(struct vir_region *vr){
+static u64_t anon_contig_pt_flags(struct vir_region *vr){
 #if defined(__arm__)
 	return  ARM_VM_PTE_DEVICE;
 #else

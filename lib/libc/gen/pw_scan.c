@@ -32,6 +32,7 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #include "compat_pwd.h"
+#include <err.h>
 
 #else
 #include <sys/cdefs.h>

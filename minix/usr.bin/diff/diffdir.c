@@ -56,8 +56,7 @@ static void diffit(struct diffdirent *, char *, size_t, char *, size_t, int);
 /*
  * Diff directory traversal. Will be called recursively if -r was specified.
  */
-void
-diffdir(char *p1, char *p2, int flags)
+void diffdir(char *p1, char *p2, int flags)
 {
 	struct diffdirent **dirp1, **dirp2, **dp1, **dp2;
 	struct diffdirent *dent1, *dent2;
@@ -163,8 +162,7 @@ diffdir(char *p1, char *p2, int flags)
 	}
 }
 
-static int
-getdiffdirentries(int fd, char *buf, int nbytes)
+static int getdiffdirentries(int fd, char *buf, int nbytes)
 {
 	char *read_de;
 	int dentsbytes_actual;
@@ -314,8 +312,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 /*
  * Compare d_name in two dirent structures; for qsort(3).
  */
-static int
-dircompare(const void *vp1, const void *vp2)
+static int dircompare(const void *vp1, const void *vp2)
 {
 	struct diffdirent *dp1 = *((struct diffdirent **) vp1);
 	struct diffdirent *dp2 = *((struct diffdirent **) vp2);
@@ -326,8 +323,7 @@ dircompare(const void *vp1, const void *vp2)
 /*
  * Do the actual diff by calling either diffreg() or diffdir().
  */
-static void
-diffit(struct diffdirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
+static void diffit(struct diffdirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
     int flags)
 {
 	flags |= D_HEADER;
@@ -377,8 +373,7 @@ diffit(struct diffdirent *dp, char *path1, size_t plen1, char *path2, size_t ple
 /*
  * Exclude the given directory entry?
  */
-static int
-excluded(const char *entry)
+static int excluded(const char *entry)
 {
 	struct excludes *excl;
 

@@ -1,0 +1,223 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./usr/include/clang-3.6/__wmmintrin_aes.h               minix-comp      llvmcmds
+./usr/include/clang-3.6/__wmmintrin_pclmul.h            minix-comp      llvmcmds
+./usr/include/clang-3.6/adxintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/ammintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/avx2intrin.h                    minix-comp      llvmcmds
+./usr/include/clang-3.6/avx512bwintrin.h                minix-comp      llvmcmds
+./usr/include/clang-3.6/avx512erintrin.h                minix-comp      llvmcmds
+./usr/include/clang-3.6/avx512fintrin.h                 minix-comp      llvmcmds
+./usr/include/clang-3.6/avx512vlbwintrin.h              minix-comp      llvmcmds
+./usr/include/clang-3.6/avx512vlintrin.h                minix-comp      llvmcmds
+./usr/include/clang-3.6/avxintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/bmi2intrin.h                    minix-comp      llvmcmds
+./usr/include/clang-3.6/bmiintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/cpuid.h                         minix-comp      llvmcmds
+./usr/include/clang-3.6/emmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/f16cintrin.h                    minix-comp      llvmcmds
+./usr/include/clang-3.6/fma4intrin.h                    minix-comp      llvmcmds
+./usr/include/clang-3.6/fmaintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/ia32intrin.h                    minix-comp      llvmcmds
+./usr/include/clang-3.6/immintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/lzcntintrin.h                   minix-comp      llvmcmds
+./usr/include/clang-3.6/mm3dnow.h                       minix-comp      llvmcmds
+./usr/include/clang-3.6/mm_malloc.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/mmintrin.h                      minix-comp      llvmcmds
+./usr/include/clang-3.6/nmmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/pmmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/popcntintrin.h                  minix-comp      llvmcmds
+./usr/include/clang-3.6/prfchwintrin.h                  minix-comp      llvmcmds
+./usr/include/clang-3.6/rdseedintrin.h                  minix-comp      llvmcmds
+./usr/include/clang-3.6/rtmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/shaintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/smmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/stdatomic.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/tbmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/tmmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/wmmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/x86intrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/xmmintrin.h                     minix-comp      llvmcmds
+./usr/include/clang-3.6/xopintrin.h                     minix-comp      llvmcmds
+./usr/include/amd64                                    minix-comp
+./usr/include/amd64/ansi.h                              minix-comp
+./usr/include/amd64/aout_machdep.h                      minix-comp
+./usr/include/amd64/archconst.h                         minix-comp
+./usr/include/amd64/archtypes.h                         minix-comp
+./usr/include/amd64/asm.h                               minix-comp
+./usr/include/amd64/bios.h                              minix-comp
+./usr/include/amd64/bootinfo.h                          minix-comp
+./usr/include/amd64/bswap.h                             minix-comp
+./usr/include/amd64/byte_swap.h                         minix-comp
+./usr/include/amd64/cdefs.h                             minix-comp
+./usr/include/amd64/cmos.h                              minix-comp
+./usr/include/amd64/cpu.h                               minix-comp
+./usr/include/amd64/cpu_rng.h                           minix-comp
+./usr/include/amd64/disklabel.h                         minix-comp
+./usr/include/amd64/diskparm.h                          minix-comp
+./usr/include/amd64/elf.h                               minix-comp
+./usr/include/amd64/elf_machdep.h                       minix-comp
+./usr/include/amd64/endian.h                            minix-comp
+./usr/include/amd64/endian_machdep.h                    minix-comp
+./usr/include/amd64/fenv.h                              minix-comp
+./usr/include/amd64/float.h                             minix-comp
+./usr/include/amd64/fpu.h                               minix-comp
+./usr/include/amd64/frame.h                             minix-comp
+./usr/include/amd64/frame_regs.h                        minix-comp
+./usr/include/amd64/gdt.h                               minix-comp
+./usr/include/amd64/ieeefp.h                            minix-comp
+./usr/include/amd64/ieee.h                              minix-comp
+./usr/include/amd64/int_const.h                         minix-comp
+./usr/include/amd64/interrupt.h                         minix-comp
+./usr/include/amd64/int_fmtio.h                         minix-comp
+./usr/include/amd64/int_limits.h                        minix-comp
+./usr/include/amd64/int_mwgwtypes.h                     minix-comp
+./usr/include/amd64/intrdefs.h                          minix-comp
+./usr/include/amd64/intr.h                              minix-comp
+./usr/include/amd64/int_types.h                         minix-comp
+./usr/include/amd64/ipcconst.h                          minix-comp
+./usr/include/amd64/joystick.h                          minix-comp
+./usr/include/amd64/kcore.h                             minix-comp
+./usr/include/amd64/limits.h                            minix-comp
+./usr/include/amd64/linux32_machdep.h                   minix-comp
+./usr/include/amd64/lock.h                              minix-comp
+./usr/include/amd64/math.h                              minix-comp
+./usr/include/amd64/mcontext.h                          minix-comp
+./usr/include/amd64/memory.h                            minix-comp
+./usr/include/amd64/mtrr.h                              minix-comp
+./usr/include/amd64/multiboot2.h                        minix-comp
+./usr/include/amd64/mutex.h                             minix-comp
+./usr/include/amd64/netbsd32_machdep.h                  minix-comp
+./usr/include/amd64/param.h                             minix-comp
+./usr/include/amd64/partition.h                         minix-comp
+./usr/include/amd64/pcb.h                               minix-comp
+./usr/include/amd64/pci_amd.h                           minix-comp
+./usr/include/amd64/pci.h                               minix-comp
+./usr/include/amd64/pci_intel.h                         minix-comp
+./usr/include/amd64/pci_machdep.h                       minix-comp
+./usr/include/amd64/pci_sis.h                           minix-comp
+./usr/include/amd64/pci_via.h                           minix-comp
+./usr/include/amd64/pio.h                               minix-comp
+./usr/include/amd64/pmap.h                              minix-comp
+./usr/include/amd64/ports.h                             minix-comp
+./usr/include/amd64/proc.h                              minix-comp
+./usr/include/amd64/profile.h                           minix-comp
+./usr/include/amd64/psl.h                               minix-comp
+./usr/include/amd64/pte.h                               minix-comp
+./usr/include/amd64/ptrace.h                            minix-comp
+./usr/include/amd64/reg.h                               minix-comp
+./usr/include/amd64/rwlock.h                            minix-comp
+./usr/include/amd64/segments.h                          minix-comp
+./usr/include/amd64/setjmp.h                            minix-comp
+./usr/include/amd64/signal.h                            minix-comp
+./usr/include/amd64/sljit_machdep.h                     minix-comp
+./usr/include/amd64/specialreg.h                        minix-comp
+./usr/include/amd64/stackframe.h                        minix-comp
+./usr/include/amd64/sysarch.h                           minix-comp
+./usr/include/amd64/trap.h                              minix-comp
+./usr/include/amd64/tss.h                               minix-comp
+./usr/include/amd64/types.h                             minix-comp
+./usr/include/amd64/userret.h                           minix-comp
+./usr/include/amd64/vm.h                                minix-comp
+./usr/include/amd64/vmparam.h                           minix-comp
+./usr/include/amd64/wchar_limits.h                      minix-comp
+./usr/include/x86                                      minix-comp
+./usr/include/x86/aout_machdep.h                        minix-comp
+./usr/include/x86/bootinfo.h                            minix-comp
+./usr/include/x86/cacheinfo.h                           minix-comp
+./usr/include/x86/cpu_extended_state.h                  minix-comp
+./usr/include/x86/cpu.h                                 minix-comp
+./usr/include/x86/cputypes.h                            minix-comp
+./usr/include/x86/cpu_ucode.h                           minix-comp
+./usr/include/x86/cpuvar.h                              minix-comp
+./usr/include/x86/float.h                               minix-comp
+./usr/include/x86/fpu.h                                 minix-comp
+./usr/include/x86/ieeefp.h                              minix-comp
+./usr/include/x86/ieee.h                                minix-comp
+./usr/include/x86/intrdefs.h                            minix-comp
+./usr/include/x86/intr.h                                minix-comp
+./usr/include/x86/lock.h                                minix-comp
+./usr/include/x86/math.h                                minix-comp
+./usr/include/x86/mtrr.h                                minix-comp
+./usr/include/x86/mutex.h                               minix-comp
+./usr/include/x86/pio.h                                 minix-comp
+./usr/include/x86/pmap.h                                minix-comp
+./usr/include/x86/pmap_pv.h                             minix-comp
+./usr/include/x86/psl.h                                 minix-comp
+./usr/include/x86/pte.h                                 minix-comp
+./usr/include/x86/rwlock.h                              minix-comp
+./usr/include/x86/specialreg.h                          minix-comp
+./usr/include/x86/sysarch.h                             minix-comp
+./usr/include/x86/trap.h                                minix-comp
+./usr/include/x86/via_padlock.h                         minix-comp
+./usr/libdata/ldscripts                                minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.x                      minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xbn                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xc                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xd                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xdc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xdw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xn                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xr                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xs                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xsc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xsw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xu                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_i386.xw                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.x                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xbn                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xd                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xdc                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xdw                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xn                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xr                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xs                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xsc                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xsw                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xu                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_iamcu.xw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.x                      minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xbn                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xc                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xd                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xdc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xdw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xn                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xr                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xs                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xsc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xsw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xu                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_k1om.xw                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.x                      minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xbn                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xc                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xd                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xdc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xdw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xn                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xr                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xs                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xsc                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xsw                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xu                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_l1om.xw                     minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.x                    minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xbn                  minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xc                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xd                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xdc                  minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xdw                  minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xn                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xr                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xs                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xsc                  minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xsw                  minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xu                   minix-comp      binutils
+./usr/libdata/ldscripts/elf_x86_64.xw                   minix-comp      binutils

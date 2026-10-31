@@ -81,6 +81,7 @@
 ./usr/lib/libvirtio_pic.a                               minix-base
 ./usr/mdec                                              minix-base
 ./usr/mdec/boot_monitor                                 minix-base
+./usr/mdec/bootia32.efi	                                minix-base
 ./usr/mdec/bootxx_cd9660                                minix-base
 ./usr/mdec/bootxx_ext2fs                                minix-base
 ./usr/mdec/bootxx_ffsv1                                 minix-base
@@ -91,3 +92,4 @@
 ./usr/mdec/mbr_com0                                     minix-base
 ./usr/mdec/mbr_com0_9600                                minix-base
 ./usr/mdec/mbr_ext                                      minix-base
+./usr/mdec/mbr_gpt                                      minix-base

@@ -36,8 +36,7 @@ static int we_ultra(dpeth_t *dep);
 /*===========================================================================*
  *				wdeth_probe				     *
  *===========================================================================*/
-int wdeth_probe(dep)
-dpeth_t *dep;
+int wdeth_probe(dpeth_t *dep)
 {
 	int sum;
 
@@ -60,8 +59,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_init					     *
  *===========================================================================*/
-static void we_init(dep)
-dpeth_t *dep;
+static void we_init(dpeth_t *dep)
 {
 	int i, int_indx, int_nr;
 	int tlb, rambit, revision;
@@ -250,8 +248,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_stop					     *
  *===========================================================================*/
-static void we_stop(dep)
-dpeth_t *dep;
+static void we_stop(dpeth_t *dep)
 {
 	if (dep->de_16bit)
 		outb_we(dep, EPL_LAAR, E_LAAR_A19 | E_LAAR_LAN16E);
@@ -262,8 +259,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_aliasing				     *
  *===========================================================================*/
-static int we_aliasing(dep)
-dpeth_t *dep;
+static int we_aliasing(dpeth_t *dep)
 {
 /* Determine whether wd8003 hardware performs register aliasing. This implies 
  * an old WD8003E board. */
@@ -284,8 +280,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_interface_chip			     *
  *===========================================================================*/
-static int we_interface_chip(dep)
-dpeth_t *dep;
+static int we_interface_chip(dpeth_t *dep)
 {
 /* Determine if the board has an interface chip. */
 
@@ -301,8 +296,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_16bitboard				     *
  *===========================================================================*/
-static int we_16bitboard(dep)
-dpeth_t *dep;
+static int we_16bitboard(dpeth_t *dep)
 {
 /* Determine whether the board is capable of doing 16 bit memory moves.
  * If the 16 bit enable bit is unchangable by software we'll assume an 
@@ -331,8 +325,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_16bitslot				     *
  *===========================================================================*/
-static int we_16bitslot(dep)
-dpeth_t *dep;
+static int we_16bitslot(dpeth_t *dep)
 {
 /* Determine if the 16 bit board in plugged into a 16 bit slot.  */
 	return !!(inb_we(dep, EPL_ICR) & E_ICR_16BIT);
@@ -341,8 +334,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				we_ultra				     *
  *===========================================================================*/
-static int we_ultra(dep)
-dpeth_t *dep;
+static int we_ultra(dpeth_t *dep)
 {
 /* Determine if we has an '790 chip.  */
 	u8_t tlb;

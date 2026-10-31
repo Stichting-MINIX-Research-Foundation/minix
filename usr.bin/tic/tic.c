@@ -56,6 +56,7 @@ __RCSID("$NetBSD: tic.c,v 1.24 2014/07/20 20:20:16 christos Exp $");
 #include <term_private.h>
 #include <term.h>
 #include <util.h>
+#include <unistd.h>
 
 #define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 

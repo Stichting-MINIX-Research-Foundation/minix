@@ -1,7 +1,7 @@
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -159,8 +159,7 @@ grep_open(const char *path, const char *mode)
 	return NULL;
 }
 
-int
-grep_bin_file(file_t *f)
+int grep_bin_file(file_t *f)
 {
 	if (f->noseek)
 		return 0;
@@ -202,8 +201,7 @@ grep_fgetln(file_t *f, size_t *l)
 	}
 }
 
-void
-grep_close(file_t *f)
+void grep_close(file_t *f)
 {
 	switch (f->type) {
 	case FILE_STDIO:

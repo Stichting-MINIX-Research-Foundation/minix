@@ -22,8 +22,7 @@ static char *s_flags_str(int flags, int sys_flags);
 /*===========================================================================*
  *				rproc_dmp				     *
  *===========================================================================*/
-void
-rproc_dmp(void)
+void rproc_dmp(void)
 {
   struct rproc *rp;
   struct rprocpub *rpub;

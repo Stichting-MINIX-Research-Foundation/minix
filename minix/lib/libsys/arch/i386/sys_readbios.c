@@ -1,9 +1,6 @@
 #include "syslib.h"
 
-int sys_readbios(address, buf, size)
-phys_bytes address;		/* Absolute memory address */
-void *buf;			/* Buffer to store the results */
-size_t size;			/* Amount of data to read */
+int sys_readbios(phys_bytes address, void *buf, size_t size)
 {
 /* Read data from BIOS locations */
   message m;

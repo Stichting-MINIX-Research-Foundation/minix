@@ -104,7 +104,7 @@ int main (int argc, char *argv[])
   return(EXIT_FAILURE);
 }
 
-static void usage()
+static void usage(void)
 {
   fprintf(stderr, "Usage:\n");
   fprintf(stderr, "  %s <vfs|pm> set <request> <value>\n", bin_name);

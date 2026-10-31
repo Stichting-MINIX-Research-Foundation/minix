@@ -74,8 +74,7 @@
  *
  ******************************************************************************/
 
-int
-AcpiUtMemcmp (
+int AcpiUtMemcmp (
     const char              *Buffer1,
     const char              *Buffer2,
     ACPI_SIZE               Count)
@@ -286,8 +285,7 @@ AcpiUtStrncpy (
  *
  ******************************************************************************/
 
-int
-AcpiUtStrcmp (
+int AcpiUtStrcmp (
     const char              *String1,
     const char              *String2)
 {
@@ -351,8 +349,7 @@ AcpiUtStrchr (
  *
  ******************************************************************************/
 
-int
-AcpiUtStrncmp (
+int AcpiUtStrncmp (
     const char              *String1,
     const char              *String2,
     ACPI_SIZE               Count)
@@ -701,8 +698,7 @@ done:
  *
  ******************************************************************************/
 
-int
-AcpiUtToUpper (
+int AcpiUtToUpper (
     int                     c)
 {
 
@@ -722,8 +718,7 @@ AcpiUtToUpper (
  *
  ******************************************************************************/
 
-int
-AcpiUtToLower (
+int AcpiUtToLower (
     int                     c)
 {
 

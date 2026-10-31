@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile.prog,v 1.9 2013/08/06 05:35:57 matt Exp $
+#	$NetBSD: Makefile.prog,v 1.10 2016/01/26 19:37:47 christos Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
 
-.include <bsd.own.mk>
-
 BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}
 
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
+.include <bsd.init.mk>
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
@@ -20,7 +19,6 @@ SRCS=		${G_${BUPROG}_OBJECTS:.o=.c} \
 		${G_${BUPROG}_DEPENDENCIES:M*.o:.o=.c}
 MAN=		${G_man_MANS:M${PROG}.1}
 
-CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
 PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes

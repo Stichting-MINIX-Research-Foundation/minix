@@ -190,8 +190,7 @@ int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb)
 /*****************************************************************************
  *         ddekit_usb_info                                                   *
  *****************************************************************************/
-long
-ddekit_usb_info(struct ddekit_usb_dev * UNUSED(dev), long type, long value)
+long ddekit_usb_info(struct ddekit_usb_dev * UNUSED(dev), long type, long value)
 {
 	return usb_send_info(type, value);
 }

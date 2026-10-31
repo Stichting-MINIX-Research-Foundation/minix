@@ -109,8 +109,7 @@ static int intr_enable(void);
 static int intr_handler(void);
 static void do_shutdown(int how);
 
-static int
-check_revision(void)
+static int check_revision(void)
 {
 	int r;
 	uint8_t chipid;
@@ -142,8 +141,7 @@ check_revision(void)
 	return OK;
 }
 
-static int
-enable_pwr_off(void)
+static int enable_pwr_off(void)
 {
 	int r;
 
@@ -161,8 +159,7 @@ enable_pwr_off(void)
 	return r;
 }
 
-static int
-intr_enable(void)
+static int intr_enable(void)
 {
 	int r;
 	uint8_t val;
@@ -207,8 +204,7 @@ intr_enable(void)
 	return OK;
 }
 
-static int
-intr_handler(void)
+static int intr_handler(void)
 {
 	int r;
 	uint8_t val;
@@ -237,16 +233,14 @@ intr_handler(void)
 	return OK;
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -262,8 +256,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -321,8 +314,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -340,8 +332,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 	message m;

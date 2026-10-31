@@ -1,0 +1,48 @@
+insmod serial
+insmod part_gpt
+insmod minix3
+insmod gzio
+#insmod efi_uga
+#insmod video_fb
+insmod all_video
+
+set timeout=15
+set default=0
+
+set gfxmode=text
+
+menuentry "Minix @@VERSION@@ Boot" {
+        set root=(hd0,gpt2)
+        insmod minix3
+        multiboot2 /boot/minix_default/kernel rootdevname=c0d0p0
+        module /boot/minix_default/mod01_ds
+        module /boot/minix_default/mod02_rs
+        module /boot/minix_default/mod03_pm
+        module /boot/minix_default/mod04_sched
+        module /boot/minix_default/mod05_vfs
+        module /boot/minix_default/mod06_memory
+        module /boot/minix_default/mod07_tty
+        module /boot/minix_default/mod08_mib
+        module /boot/minix_default/mod09_vm
+        module /boot/minix_default/mod10_pfs
+        module /boot/minix_default/mod11_mfs
+        module /boot/minix_default/mod12_init
+}
+
+menuentry "Minix @@VERSION@@ Boot (serial)" {
+        set root=(hd0,gpt2)
+        insmod minix3
+        multiboot2 /boot/minix_default/kernel rootdevname=c0d0p0 cttyline=0 ttybaud=115200 console=tty00 consdev=com0
+        module /boot/minix_default/mod01_ds
+        module /boot/minix_default/mod02_rs
+        module /boot/minix_default/mod03_pm
+        module /boot/minix_default/mod04_sched
+        module /boot/minix_default/mod05_vfs
+        module /boot/minix_default/mod06_memory
+        module /boot/minix_default/mod07_tty
+        module /boot/minix_default/mod08_mib
+        module /boot/minix_default/mod09_vm
+        module /boot/minix_default/mod10_pfs
+        module /boot/minix_default/mod11_mfs
+        module /boot/minix_default/mod12_init
+}

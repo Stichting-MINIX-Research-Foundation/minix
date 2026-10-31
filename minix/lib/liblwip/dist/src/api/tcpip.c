@@ -83,8 +83,7 @@ sys_mutex_t lock_tcpip_core;
  *
  * @param arg unused argument
  */
-static void
-tcpip_thread(void *arg)
+static void tcpip_thread(void *arg)
 {
   struct tcpip_msg *msg;
   LWIP_UNUSED_ARG(arg);
@@ -429,8 +428,7 @@ tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx)
  *
  * @param msg the message to free
  */
-void
-tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
+void tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
 {
   memp_free(MEMP_TCPIP_MSG_API, msg);
 }
@@ -458,8 +456,7 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
  * @param initfunc a function to call when tcpip_thread is running and finished initializing
  * @param arg argument to pass to initfunc
  */
-void
-tcpip_init(tcpip_init_done_fn initfunc, void *arg)
+void tcpip_init(tcpip_init_done_fn initfunc, void *arg)
 {
   lwip_init();
 
@@ -483,8 +480,7 @@ tcpip_init(tcpip_init_done_fn initfunc, void *arg)
  *
  * @param p The pbuf (chain) to be dereferenced.
  */
-static void
-pbuf_free_int(void *p)
+static void pbuf_free_int(void *p)
 {
   struct pbuf *q = (struct pbuf *)p;
   pbuf_free(q);

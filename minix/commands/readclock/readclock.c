@@ -23,8 +23,7 @@ void usage(void);
 
 int quiet = 0;
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int flags = RTCDEV_NOFLAGS;
 	int nflag = 0;	/* Tell what, but don't do it. */
@@ -125,8 +124,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
-errmsg(char *s)
+void errmsg(char *s)
 {
 	static char *prompt = "readclock: ";
 
@@ -134,8 +132,7 @@ errmsg(char *s)
 	prompt = "";
 }
 
-static void
-readclock(int type, struct tm *t, int flags)
+static void readclock(int type, struct tm *t, int flags)
 {
 	int r;
 	message m;
@@ -158,8 +155,7 @@ readclock(int type, struct tm *t, int flags)
 	}
 }
 
-void
-usage(void)
+void usage(void)
 {
 	if (!quiet) printf("Usage: readclock [-nqwW2]\n");
 	exit(1);

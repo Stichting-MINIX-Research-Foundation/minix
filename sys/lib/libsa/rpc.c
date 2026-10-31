@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.29 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: rpc.c,v 1.31 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -127,7 +127,7 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc,
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("rpc_call: prog=0x%x vers=%d proc=%d\n",
+		printf("%s: prog=0x%x vers=%d proc=%d\n", __func__,
 		    prog, vers, proc);
 #endif
 
@@ -188,7 +188,7 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc,
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("callrpc: cc=%ld rlen=%lu\n", (long)cc, (u_long)rlen);
+		printf("%s: cc=%zd rlen=%zu\n", __func__, cc, rlen);
 #endif
 	if (cc == -1)
 		return -1;
@@ -210,14 +210,14 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc,
 	if (x != 0) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("callrpc: reply auth != NULL\n");
+			printf("%s: reply auth != NULL\n", __func__);
 #endif
 		errno = EBADRPC;
 		return -1;
 	}
 	x = ntohl(reply->rp_u.rpu_rok.rok_status);
 	if (x != 0) {
-		printf("callrpc: error = %d\n", x);
+		printf("%s: error = %d\n", __func__, x);
 		errno = EBADRPC;
 		return -1;
 	}
@@ -241,7 +241,7 @@ recvrpc(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	errno = 0;
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("recvrpc: called len=%lu\n", (u_long)len);
+		printf("%s: called len=%zu\n", __func__, len);
 #endif
 
 	n = readudp(d, pkt, len, tleft);
@@ -254,7 +254,8 @@ recvrpc(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (x != rpc_xid) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_xid %d != xid %d\n", x, rpc_xid);
+			printf("%s: rp_xid %d != xid %d\n",
+			    __func__, x, rpc_xid);
 #endif
 		return -1;
 	}
@@ -263,7 +264,7 @@ recvrpc(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (x != RPC_REPLY) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_direction %d != REPLY\n", x);
+			printf("%s: rp_direction %d != REPLY\n", __func__, x);
 #endif
 		return -1;
 	}
@@ -271,7 +272,7 @@ recvrpc(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	x = ntohl(reply->rp_astatus);
 	if (x != RPC_MSGACCEPTED) {
 		errno = ntohl(reply->rp_u.rpu_errno);
-		printf("recvrpc: reject, astat=%d, errno=%d\n", x, errno);
+		printf("%s: reject, astat=%d, errno=%d\n", __func__, x, errno);
 		return -1;
 	}
 
@@ -361,7 +362,7 @@ rpc_pmap_putcache(struct in_addr addr, u_int prog, u_int vers, int port)
 		/* ... just re-use the last entry. */
 		rpc_pmap_num = PMAP_NUM - 1;
 #ifdef	RPC_DEBUG
-		printf("rpc_pmap_putcache: cache overflow\n");
+		printf("%s: cache overflow\n", __func__);
 #endif
 	}
 
@@ -407,7 +408,7 @@ rpc_getport(struct iodesc *d, n_long prog, n_long vers)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("getport: prog=0x%x vers=%d\n", prog, vers);
+		printf("%s: prog=0x%x vers=%d\n", __func__, prog, vers);
 #endif
 
 	/* This one is fixed forever. */
@@ -429,7 +430,7 @@ rpc_getport(struct iodesc *d, n_long prog, n_long vers)
 	cc = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
 		args, sizeof(*args), res, sizeof(*res));
 	if ((size_t)cc < sizeof(*res)) {
-		printf("getport: %s", strerror(errno));
+		printf("%s: %s", __func__, strerror(errno));
 		errno = EBADRPC;
 		return -1;
 	}

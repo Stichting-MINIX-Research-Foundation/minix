@@ -1,0 +1,440 @@
+.\"	$NetBSD: ppath.3,v 1.5 2017/10/23 00:59:44 wiz Exp $
+.\"
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by David Young <dyoung@NetBSD.org>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL David Young BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 24, 2011
+.Dt PPATH 3
+.Os
+.Sh NAME
+.Nm ppath ,
+.Nm ppath_idx ,
+.Nm ppath_key ,
+.\" ,
+.Nm ppath_component_retain ,
+.Nm ppath_component_release ,
+.\" ,
+.Nm ppath_create ,
+.Nm ppath_length ,
+.Nm ppath_component_idx ,
+.Nm ppath_component_key ,
+.Nm ppath_pop ,
+.Nm ppath_push ,
+.Nm ppath_component_at ,
+.Nm ppath_subpath ,
+.Nm ppath_push_idx ,
+.Nm ppath_push_key ,
+.Nm ppath_replace_idx ,
+.Nm ppath_replace_key ,
+.\" ,
+.Nm ppath_copy ,
+.Nm ppath_retain ,
+.Nm ppath_release ,
+.\" ,
+.Nm ppath_lookup
+.\" ,
+.Nd property container path library
+.Sh LIBRARY
+.Lb libppath
+.Sh SYNOPSIS
+.In ppath/ppath.h
+.\"
+.Ft "ppath_component_t *"
+.Fn ppath_idx "unsigned int index"
+.Ft "ppath_component_t *"
+.Fn ppath_key "const char *key"
+.\"
+.Ft "ppath_component_t *"
+.Fn ppath_component_retain "ppath_component_t *pc"
+.Ft void
+.Fn ppath_component_release "ppath_component_t *pc"
+.\"
+.Ft "ppath_t *"
+.Fn ppath_create "void"
+.Ft "unsigned int"
+.Fn ppath_length "const ppath_t *p"
+.Ft int
+.Fn ppath_component_idx "const ppath_component_t *"
+.Ft const char *
+.Fn ppath_component_key "const ppath_component_t *"
+.Ft "ppath_t *"
+.Fn ppath_pop "ppath_t *" "ppath_component_t **"
+.Ft ppath_t *
+.Fn ppath_push "ppath_t *" "ppath_component_t *"
+.Ft ppath_component_t *
+.Fn ppath_component_at "const ppath_t *" "unsigned int"
+.Ft ppath_t *
+.Fn ppath_subpath "const ppath_t *" "unsigned int" "unsigned int"
+.Ft ppath_t *
+.Fn ppath_push_idx "ppath_t *" "unsigned int"
+.Ft ppath_t *
+.Fn ppath_push_key "ppath_t *" "const char *"
+.Ft ppath_t *
+.Fn ppath_replace_idx "ppath_t *" "unsigned int"
+.Ft ppath_t *
+.Fn ppath_replace_key "ppath_t *" "const char *"
+.\"
+.Ft ppath_t *
+.Fn ppath_copy "const ppath_t *"
+.Ft ppath_t *
+.Fn ppath_retain "ppath_t *"
+.Ft void
+.Fn ppath_release "ppath_t *"
+.\"
+.Ft prop_object_t
+.Fn ppath_lookup "prop_object_t" "const ppath_t *"
+.\"
+.Sh DESCRIPTION
+The
+.Nm
+library provides functions to read, write, or delete objects in a
+property list.
+A property-list
+.Dq path
+names the object in a property list to read, write, or delete.
+.Pp
+A property-list path is an ordered array of zero or more array
+indices and dictionary keys that names at most one
+.Vt prop_object_t
+in a property list.
+The abstract function
+.Fn E
+evaluates
+a property-list path against a
+.Vt prop_object_t ,
+.Va o ,
+to yield a
+.Vt prop_object_t
+result according to the following recursive definition, where
+.Fa empty
+indicates the empty
+.Pq zero-length
+path and the operator
+.Dq |
+indicates the concatenation of the path on the left-hand side with
+the key or index on the right-hand side:
+.Bl -tag -width "E(o, p | index)"
+.It Fn E "o" "empty"
+Evaluates to
+.Fa o .
+.It Fn E "o" "p | index"
+If
+.Fn E "o" "p"
+evaluates to a
+.Vt prop_array_t ,
+then
+.Fn E "o" "p | index"
+evaluates to the
+.Fa index 'th
+element of that array.
+Otherwise, an error occurs.
+.It Fn E "o" "p | key"
+If
+.Fn E "o" "p"
+evaluates to a
+.Vt prop_dictionary_t ,
+then
+.Fn E "o" "p | key"
+evaluates to the dictionary value stored under
+.Fa key .
+Otherwise, an error occurs.
+.El
+.Pp
+The programmer may think of property-list paths as working similarly
+to paths in a file system, where property arrays and dictionaries
+correspond to directories, and all other property types correspond
+to files.
+.Sh DATA TYPES
+.Nm
+provides two opaque types:
+.Bl -tag -width ppath_component
+.It Vt ppath_component_t
+A property-list path component: a single key or index.
+.Nm
+counts references to a
+.Vt ppath_component_t
+and reclaims its storage when there are no more references.
+.It Vt ppath_t
+An array of zero or more property-list path components.
+.Nm
+counts references to a
+.Vt ppath_t
+and reclaims its storage when there are no more references.
+.El
+.Sh FUNCTIONS
+.Nm
+provides these functions for manipulating property-list paths
+and their components:
+.Bl -tag -width ppath
+.It Fn ppath_idx "unsigned int index"
+Allocate a new
+.Vt ppath_component_t
+for the given array index and return it.
+Its reference count is initially one.
+.Pp
+If there is not sufficient memory to complete the request, return
+.Dv NULL .
+.It Fn ppath_key "const char *key"
+Allocate a new
+.Vt ppath_component_t
+for the given dictionary key and return it.
+Its reference count is initially one.
+.Pp
+If there is not sufficient memory to complete the request, return
+.Dv NULL .
+.\"
+.It Fn ppath_component_retain "ppath_component_t *pc"
+Increase the reference count on
+.Fa pc
+by one.
+.It Fn ppath_component_release "ppath_component_t *pc"
+Decrease the reference count on
+.Fa pc
+by one.
+If the reference count reaches zero, reclaim the storage
+for
+.Fa pc .
+.\"
+.It Fn ppath_create "void"
+Create a new property-list path and return it.
+Its reference count is initially one.
+The path's length is initially zero.
+.Pp
+If there is not sufficient memory to complete the request, return
+.Dv NULL .
+.It Fn ppath_length "const ppath_t *p"
+Return the number of components in path
+.Fa p .
+.It Fn ppath_component_idx "const ppath_component_t *pc"
+Return the array index represented by the component
+.Fa pc ,
+or \-1 if
+.Fa pc
+does not represent an array index.
+.It Fn ppath_component_key "const ppath_component_t *pc"
+Return the dictionary key represented by the component
+.Fa pc ,
+or
+.Dv NULL
+if
+.Fa pc
+does not represent a dictionary key.
+.It Fn ppath_pop "ppath_t *p" "ppath_component_t **pcp"
+If
+.Fa p
+is the empty path or
+.Dv NULL ,
+return
+.Dv NULL .
+Otherwise, remove the last component from
+.Fa p
+and return
+.Fa p ,
+and if
+.Fa pcp
+is not
+.Dv NULL ,
+write the removed component to
+.Fa "*pcp" .
+.It Fn ppath_push "ppath_t *p" "ppath_component_t *pc"
+If
+either
+.Fa p
+is
+.Dv NULL
+or no more components can be added to
+.Fa p ,
+return
+.Dv NULL .
+Otherwise, append
+.Fa pc
+to the end of the component array
+.Fa p
+and return
+.Fa p .
+.It Fn ppath_component_at "const ppath_t *p" "unsigned int i"
+If
+either
+.Fa p
+is
+.Dv NULL
+or there is no
+.Fa ith
+component to
+.Fa p ,
+return
+.Dv NULL .
+Otherwise, return the
+.Fa ith
+component of
+.Fa p .
+Before returning a component,
+.Fn ppath_component_at
+increases its reference count.
+(The first component is 0.)
+.It Fn ppath_subpath "const ppath_t *p" "unsigned int first" "unsigned int exclast"
+Create a new
+.Vt ppath_t
+and fill it with components
+.Fa first
+to
+.Fa exclast
+.Pq exclusive
+of
+.Fa p .
+If there are no such components as those in
+.Fa p ,
+.Fn ppath_subpath
+returns an empty
+.Vt ppath_t .
+If there is insufficient memory to create the new path, or if
+.Fa p
+is
+.Dv NULL ,
+return
+.Dv NULL .
+Otherwise, return the new path.
+.It Fn ppath_push_idx "ppath_t *p" "unsigned int idx"
+Append an array index,
+.Fa idx ,
+to the end of path
+.Fa p .
+If
+.Fa p
+is
+.Dv NULL ,
+or if there is insufficient memory to complete the operation,
+return
+.Dv NULL .
+Otherwise, return
+.Fa p .
+.It Fn ppath_push_key "ppath_t *" "const char *key"
+Append a dictionary key,
+.Fa key ,
+to the end of path
+.Fa p .
+If
+.Fa p
+is
+.Dv NULL ,
+or if there is insufficient memory to complete the operation,
+return
+.Dv NULL .
+Otherwise, return
+.Fa p .
+.It Fn ppath_replace_idx "ppath_t *p" "unsigned int idx"
+Replace the array index at the end of path
+.Fa p
+with the array index
+.Fa idx .
+If
+.Fa p
+is
+.Dv NULL ,
+if the last component of
+.Fa p
+is not an array index,
+or if there is insufficient memory to complete the operation,
+return
+.Dv NULL .
+Otherwise, return
+.Fa p .
+.It Fn ppath_replace_key "ppath_t *p" "const char *key"
+Replace the dictionary key at the end of path
+.Fa p
+with the dictionary key
+.Fa idx .
+If
+.Fa p
+is
+.Dv NULL ,
+if the last component of
+.Fa p
+is not a dictionary key,
+or if there is insufficient memory to complete the operation,
+return
+.Dv NULL .
+Otherwise, return
+.Fa p .
+.\"
+.It Fn ppath_copy "const ppath_t *p"
+Create a copy of path
+.Fa p .
+If
+.Fa p
+is
+.Dv NULL ,
+or if there is insufficient memory to complete the operation,
+return
+.Dv NULL .
+Otherwise, return the copy, whose reference count will be one.
+.It Fn ppath_retain "ppath_t *p"
+Increase the reference count on
+.Fa p
+and return
+.Fa p .
+.It Fn ppath_release "ppath_t *p"
+Decrease the reference count on
+.Fa p .
+Reclaim the storage for
+.Fa p
+if the reference count reaches zero.
+.\"
+.It Fn ppath_lookup "prop_object_t o" "const ppath_t *p"
+Return the
+.Vt prop_object_t
+under
+.Fa o
+named by
+.Fa p ,
+or return
+.Dv NULL
+if no such
+.Vt prop_object_t
+is under
+.Fa o .
+.El
+.Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.Xr ppath_bool 3 ,
+.\" .Xr ppath_data 3 ,
+.Xr ppath_number 3 ,
+.Xr ppath_object 3 ,
+.\" .Xr ppath_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm
+property container path library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An David Young
+.Aq dyoung@pobox.com
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS

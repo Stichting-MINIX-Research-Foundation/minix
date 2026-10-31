@@ -1,0 +1,20 @@
+#
+#	from: @(#)ttys	5.1 (Berkeley) 4/17/89
+#	$NetBSD: ttys,v 1.7 2019/09/25 23:09:19 abs Exp $
+#
+# name	getty				type	status		comments
+#
+console	"/usr/libexec/getty Pc"		vt100	off secure
+constty	"/usr/libexec/getty Pc"		vt100	on secure
+ttyE0	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE1	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE2	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE3	"/usr/libexec/getty Pc"		wsvt25	off secure
+tty00	"/usr/libexec/getty std.9600"	unknown off secure
+tty01	"/usr/libexec/getty std.9600"	unknown off secure
+tty02	"/usr/libexec/getty std.9600"	unknown off secure
+tty03	"/usr/libexec/getty std.9600"	unknown off secure
+tty04	"/usr/libexec/getty std.9600"	unknown off secure
+tty05	"/usr/libexec/getty std.9600"	unknown off secure
+tty06	"/usr/libexec/getty std.9600"	unknown off secure
+tty07	"/usr/libexec/getty std.9600"	unknown off secure

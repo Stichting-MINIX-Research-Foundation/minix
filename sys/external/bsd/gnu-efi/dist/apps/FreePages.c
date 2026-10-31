@@ -1,0 +1,147 @@
+/*	$NetBSD: FreePages.c,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+
+
+
+/*
+ * Copyright (C) 2013 Jerry Hoemann <jerry.hoemann@hp.com>
+ *
+ * Application to allocate memory at EFI.  Syntax of command
+ * mimics the EFI Boot Service "FreePages."
+ *
+ * See UEFI spec 2.3, Section 6.2.
+ *
+
+Example freeing a 5 page BS_Code setment at address: 0000000020000000 (hex)
+
+
+FS1:\> memmap
+Type      Start            End              #pages             Attributes
+BS_Code   0000000000000000-0000000000000FFF 0000000000000001 000000000000000F
+Available 0000000000001000-000000000008DFFF 000000000000008D 000000000000000F
+Reserved  000000000008E000-000000000008FFFF 0000000000000002 000000000000000F
+Available 0000000000090000-000000000009FFFF 0000000000000010 000000000000000F
+Available 0000000000100000-000000000FFFFFFF 000000000000FF00 000000000000000F
+BS_Code   0000000010000000-0000000010061FFF 0000000000000062 000000000000000F
+Available 0000000010062000-000000001FFFFFFF 000000000000FF9E 000000000000000F
+BS_Code   0000000020000000-0000000020004FFF 0000000000000005 000000000000000F
+Available 0000000020005000-000000005DDFFFFF 000000000003DDFB 000000000000000F
+BS_Data   000000005DE00000-000000005DFFFFFF 0000000000000200 000000000000000F
+Available 000000005E000000-000000006DE7CFFF 000000000000FE7D 000000000000000F
+ACPI_NVS  000000006DE7D000-000000006EE7CFFF 0000000000001000 000000000000000F
+BS_Data   000000006EE7D000-00000000709FBFFF 0000000000001B7F 000000000000000F
+Available 00000000709FC000-00000000710E3FFF 00000000000006E8 000000000000000F
+
+
+FS1:\> FreePages 0000000020000000 5
+FreePages: __PhysAddr__ __PgCnt__
+__PhysAddr__   0... 3FFFFFFFFFFF
+__PgCnt__     [0..F000000]
+All numbers hex w/ no leading 0x
+
+FreePages(20000000,5)
+
+
+
+FS1:\> memmap
+Type      Start            End              #pages             Attributes
+BS_Code   0000000000000000-0000000000000FFF 0000000000000001 000000000000000F
+Available 0000000000001000-000000000008DFFF 000000000000008D 000000000000000F
+Reserved  000000000008E000-000000000008FFFF 0000000000000002 000000000000000F
+Available 0000000000090000-000000000009FFFF 0000000000000010 000000000000000F
+Available 0000000000100000-000000000FFFFFFF 000000000000FF00 000000000000000F
+BS_Code   0000000010000000-0000000010061FFF 0000000000000062 000000000000000F
+Available 0000000010062000-000000005DDFFFFF 000000000004DD9E 000000000000000F
+BS_Data   000000005DE00000-000000005DFFFFFF 0000000000000200 000000000000000F
+Available 000000005E000000-000000006DE7CFFF 000000000000FE7D 000000000000000F
+ACPI_NVS  000000006DE7D000-000000006EE7CFFF 0000000000001000 000000000000000F
+BS_Data   000000006EE7D000-00000000709FBFFF 0000000000001B7F 000000000000000F
+Available 00000000709FC000-00000000710E3FFF 00000000000006E8 000000000000000F
+
+
+ */
+
+#include <efi.h>
+#include <efilib.h>
+
+/*
+ * FreePages:  __PhysAddr__ __PgCnt__
+ *
+ */
+
+#define MAX_NUM_PAGES 0x000000000F000000
+
+#define MAX_ADDR ((1ULL << 46) - 1)
+
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#define DEBUG 0
+
+
+EFI_STATUS
+efi_main (EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
+{
+
+	EFI_STATUS efi_status;
+	CHAR16 **argv;
+	INTN argc = 0;
+#if DEBUG
+	INTN c = 0;
+#endif
+	INTN err = 0;
+
+	INTN PgCnt = -1;
+	EFI_PHYSICAL_ADDRESS PhysAddr = 0;
+
+	InitializeLib(image, systab);
+
+	Print(L"FreePages: __PhysAddr__ __PgCnt__\n");
+	Print(L"__PhysAddr__   0... %llx\n", MAX_ADDR);
+	Print(L"__PgCnt__     [0..%lx]\n", MAX_NUM_PAGES);
+	Print(L"All numbers hex w/ no leading 0x\n");
+	Print(L"\n");
+
+#if DEBUG
+	Print(L"Now parse argc/argv\n");
+#endif
+	argc = GetShellArgcArgv(image, &argv);
+#if DEBUG
+	Print(L"argc = %d\n", argc);
+#endif
+
+#if DEBUG
+	for (c = 0;  c < argc;  c++ ) {
+		Print(L"argv[%d] = <%s>\n", c, argv[c]);
+	}
+#endif
+	if (argc != 3) {
+		Print(L"Invalid argument count\n");
+		return EFI_SUCCESS;
+	}
+
+	PhysAddr = xtoi(argv[1]);
+	PgCnt	 = xtoi(argv[2]);
+
+	if ( (PgCnt < 0) || (PgCnt > MAX_NUM_PAGES) ) {
+		Print(L"Inavlid PgCnt\n");
+		err++;
+	}
+	if ( PhysAddr > MAX_ADDR ) {
+		Print(L"Inavlid Address\n");
+		err++;
+	}
+	if ( err ) {
+		return EFI_SUCCESS;
+	}
+
+	Print(L"FreePages(%lx,%d)\n", PhysAddr, PgCnt);
+
+	efi_status = uefi_call_wrapper(BS->FreePages, 2, PhysAddr, PgCnt);
+
+	if ( EFI_ERROR(efi_status) ) {
+		Print(L"Free Pages Failed: %d\n", efi_status);
+		return efi_status;
+	}
+
+	return EFI_SUCCESS;
+}

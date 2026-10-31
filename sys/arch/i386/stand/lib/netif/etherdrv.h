@@ -1,4 +1,4 @@
-/*	$NetBSD: etherdrv.h,v 1.9 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: etherdrv.h,v 1.10 2016/01/17 14:57:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -32,6 +32,7 @@ int EtherReceive(char *, int);
 void EtherStop(void);
 
 extern unsigned ether_medium;
+#define ETHERMEDIUM_BAD ((unsigned)-1)
 #define ETHERMEDIUM_BNC 0
 #define ETHERMEDIUM_UTP 1
 #define ETHERMEDIUM_AUI 2

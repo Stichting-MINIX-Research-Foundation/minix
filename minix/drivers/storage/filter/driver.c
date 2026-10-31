@@ -773,7 +773,7 @@ static int paired_sendrec(message *m1, message *m2, int both)
 	int r;
 
 #if DEBUG2
-	printf("paired_sendrec(%d) - <%d,%llx,%d> - %x,%x\n",
+	printf("paired_sendrec(%d) - <%d,%"PRIx64",%d> - %x,%x\n",
 		both, m1->m_type, m1->m_lbdev_lblockdriver_msg.pos,
 		m1->m_lbdev_lblockdriver_msg.count, m1->m_lbdev_lblockdriver_msg.grant, m2->m_lbdev_lblockdriver_msg.grant);
 #endif

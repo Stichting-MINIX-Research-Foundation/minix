@@ -153,6 +153,7 @@
 ./usr/include/i386/memory.h                             minix-comp
 ./usr/include/i386/mtrr.h                               minix-comp
 ./usr/include/i386/multiboot.h                          minix-comp
+./usr/include/i386/multiboot2.h                         minix-comp
 ./usr/include/i386/mutex.h                              minix-comp
 ./usr/include/i386/npx.h                                minix-comp      obsolete
 ./usr/include/i386/param.h                              minix-comp

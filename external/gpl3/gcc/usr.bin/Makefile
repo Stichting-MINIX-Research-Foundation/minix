@@ -8,6 +8,8 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 
+.if ${MKGCCCMDS} != "no" || make(includes)
+
 # We keep libcpp here since it depends upon frontend.
 
 SUBDIR+=	host-libiberty .WAIT \

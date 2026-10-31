@@ -1,0 +1,74 @@
+#
+# Minix Device majors for i386
+#
+
+#device-major	cons	char 0
+device-major	mem 	char 1  block 1 mem
+device-major	fd		char 2  block 2 fd
+device-major	c0		char 3  block 3	c0
+device-major	cons	char 4
+device-major	log	    char 4          
+device-major	video	char 4          
+device-major	tty		char 5			
+device-major	lp		char 6			lp
+device-major	bpf		char 7          bpf
+device-major	c1		char 8   block 8	c1
+device-major	ptmx	char 9      	ptmx
+device-major	c2		char 10  block 10	c2
+device-major	filter	char 11  block 11	filter
+device-major	c3		char 12  block 12	c3
+device-major	audio	char 13         audio
+device-major	fbd		char 14  block 14	fbd
+device-major	klog	char 15     	klog
+device-major	random	char 16			random
+device-major	hello	char 17			hello
+#device-major	ccd		char 18  block 16	ccd
+device-major	fb		char 19			fb
+device-major	i2c-1	char 20			i2c-1
+device-major	i2c-2	char 21			i2c-2
+device-major	i2c-3	char 22			i2c-3
+#device-major	bpf		char 23			bpfilter  vector=8,linkzero
+#device-major	md		char 24  block 17	md	vector=4:8
+
+#device-major	joy		char 26			joy
+#device-major	obsolete	char 27			obsolete (spkr)
+#device-major	obsolete	char 28			obsolete (lkm)
+
+#device-major	obsolete	char 35			obsolete (omms)
+#device-major	obsolete	char 36			obsolete (olms)
+#device-major	obsolete	char 37			obsolete (opms)
+#device-major	cy		char 38			cy
+#device-major	mcd		char 39  block 7	mcd
+#device-major	tun		char 40			tun
+#device-major	vnd		char 41  block 14	vnd	vector=8:8
+device-major	audio		char 42			audio
+#device-major	obsolete	char 43			obsolete (compat_svr4)
+#device-major	ipl		char 44			ipfilter
+#device-major	obsolete	char 45			obsolete (satlink)
+#device-major	rnd		char 46			rnd
+device-major	tsl2550b1s39	char 47			tsl2550b1s39
+device-major	tsl2550b2s39	char 48			tsl2550b2s39
+device-major	tsl2550b3s39	char 49			tsl2550b3s39
+device-major	sht21b1s40	char 50			sht21b1s40
+device-major	sht21b2s40	char 51			sht21b2s40
+device-major	sht21b3s40	char 52			sht21b3s40
+device-major	bmp085b1s77	char 53	    		bmp085b1s77
+device-major	bmp085b2s77	char 54	    		bmp085b2s77
+device-major	bmp085b3s77	char 55	    		bmp085b3s77
+device-major	vnd0	    char 56  block 56   vnd0
+device-major	vnd1	    char 57  block 57   vnd1
+device-major	vnd2	    char 58  block 58   vnd2
+device-major	vnd3	    char 59  block 59   vnd3
+#device-major	vcoda		char 60			vcoda
+#device-major	scsibus		char 61			scsibus
+#device-major	raid		char 62  block 18	raid
+#device-major	esh		char 63			esh
+device-major	kbd		    char 64			kbd
+device-major	kbd0		char 64			kbd0
+device-major	kbd1		char 65			kbd1
+device-major	kbd2		char 66			kbd2
+device-major	kbd3		char 67			kbd3
+
+
+device-major	pci		char 134		pci
+

@@ -1,6 +1,6 @@
-.\"	$NetBSD: prop_dictionary_util.3,v 1.8 2011/10/17 09:24:54 wiz Exp $
+.\"	$NetBSD: prop_dictionary_util.3,v 1.10 2020/06/06 21:25:59 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2011
+.Dd June 2, 2020
 .Dt PROP_DICTIONARY_UTIL 3
 .Os
 .Sh NAME
@@ -35,6 +35,30 @@
 .Nm prop_dictionary_get_dict ,
 .Nm prop_dictionary_get_bool ,
 .Nm prop_dictionary_set_bool ,
+.Nm prop_dictionary_get_schar ,
+.Nm prop_dictionary_get_uchar ,
+.Nm prop_dictionary_set_schar ,
+.Nm prop_dictionary_set_uchar ,
+.Nm prop_dictionary_get_short ,
+.Nm prop_dictionary_get_ushort ,
+.Nm prop_dictionary_set_short ,
+.Nm prop_dictionary_set_ushort ,
+.Nm prop_dictionary_get_int ,
+.Nm prop_dictionary_get_uint ,
+.Nm prop_dictionary_set_int ,
+.Nm prop_dictionary_set_uint ,
+.Nm prop_dictionary_get_long ,
+.Nm prop_dictionary_get_ulong ,
+.Nm prop_dictionary_set_long ,
+.Nm prop_dictionary_set_ulong ,
+.Nm prop_dictionary_get_longlong ,
+.Nm prop_dictionary_get_ulonglong ,
+.Nm prop_dictionary_set_longlong ,
+.Nm prop_dictionary_set_ulonglong ,
+.Nm prop_dictionary_get_intptr ,
+.Nm prop_dictionary_get_uintptr ,
+.Nm prop_dictionary_set_intptr ,
+.Nm prop_dictionary_set_uintptr ,
 .Nm prop_dictionary_get_int8 ,
 .Nm prop_dictionary_get_uint8 ,
 .Nm prop_dictionary_set_int8 ,
@@ -51,10 +75,12 @@
 .Nm prop_dictionary_get_uint64 ,
 .Nm prop_dictionary_set_int64 ,
 .Nm prop_dictionary_set_uint64 ,
-.Nm prop_dictionary_get_cstring ,
-.Nm prop_dictionary_set_cstring ,
-.Nm prop_dictionary_get_cstring_nocopy ,
-.Nm prop_dictionary_set_cstring_nocopy ,
+.Nm prop_dictionary_get_data ,
+.Nm prop_dictionary_set_data ,
+.Nm prop_dictionary_set_data_nocopy ,
+.Nm prop_dictionary_get_string ,
+.Nm prop_dictionary_set_string ,
+.Nm prop_dictionary_set_string_nocopy ,
 .Nm prop_dictionary_set_and_rel
 .Nd dictionary property collection object utility functions
 .Sh LIBRARY
@@ -71,6 +97,84 @@
 .Ft bool
 .Fn prop_dictionary_set_bool "prop_dictionary_t dict" "const char *key" \
     "bool val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_schar "prop_dictionary_t dict" "const char *key" \
+    "signed char *valp"
+.Ft bool
+.Fn prop_dictionary_get_uchar "prop_dictionary_t dict" "const char *key" \
+    "unsigned char *valp"
+.Ft bool
+.Fn prop_dictionary_set_schar "prop_dictionary_t dict" "const char *key" \
+    "signed char val"
+.Ft bool
+.Fn prop_dictionary_set_uchar "prop_dictionary_t dict" "const char *key" \
+    "unsigned char val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_short "prop_dictionary_t dict" "const char *key" \
+    "short *valp"
+.Ft bool
+.Fn prop_dictionary_get_ushort "prop_dictionary_t dict" "const char *key" \
+    "unsigned short *valp"
+.Ft bool
+.Fn prop_dictionary_set_short "prop_dictionary_t dict" "const char *key" \
+    "short val"
+.Ft bool
+.Fn prop_dictionary_set_ushort "prop_dictionary_t dict" "const char *key" \
+    "unsigned short val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_int "prop_dictionary_t dict" "const char *key" \
+    "int *valp"
+.Ft bool
+.Fn prop_dictionary_get_uint "prop_dictionary_t dict" "const char *key" \
+    "unsigned int *valp"
+.Ft bool
+.Fn prop_dictionary_set_int "prop_dictionary_t dict" "const char *key" \
+    "int val"
+.Ft bool
+.Fn prop_dictionary_set_uint "prop_dictionary_t dict" "const char *key" \
+    "unsigned int val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_long "prop_dictionary_t dict" "const char *key" \
+    "long *valp"
+.Ft bool
+.Fn prop_dictionary_get_ulong "prop_dictionary_t dict" "const char *key" \
+    "unsigned long *valp"
+.Ft bool
+.Fn prop_dictionary_set_long "prop_dictionary_t dict" "const char *key" \
+    "long val"
+.Ft bool
+.Fn prop_dictionary_set_ulong "prop_dictionary_t dict" "const char *key" \
+    "unsigned long val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_longlong "prop_dictionary_t dict" "const char *key" \
+    "long long *valp"
+.Ft bool
+.Fn prop_dictionary_get_ulonglong "prop_dictionary_t dict" "const char *key" \
+    "unsigned long long *valp"
+.Ft bool
+.Fn prop_dictionary_set_longlong "prop_dictionary_t dict" "const char *key" \
+    "long long val"
+.Ft bool
+.Fn prop_dictionary_set_ulonglong "prop_dictionary_t dict" "const char *key" \
+    "unsigned long long val"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_intptr "prop_dictionary_t dict" "const char *key" \
+    "intptr_t *valp"
+.Ft bool
+.Fn prop_dictionary_get_uintptr "prop_dictionary_t dict" "const char *key" \
+    "uintptr_t *valp"
+.Ft bool
+.Fn prop_dictionary_set_intptr "prop_dictionary_t dict" "const char *key" \
+    "intptr_t val"
+.Ft bool
+.Fn prop_dictionary_set_uintptr "prop_dictionary_t dict" "const char *key" \
+    "uintptr_t val"
 .\"
 .Ft bool
 .Fn prop_dictionary_get_int8 "prop_dictionary_t dict" "const char *key" \
@@ -132,17 +236,31 @@
     "const char *str"
 .\"
 .Ft bool
-.Fn prop_dictionary_get_cstring_nocopy "prop_dictionary_t dict" \
+.Fn prop_dictionary_get_data "prop_dictionary_t dict" \
+    "const char *key" "const void **datap" "size_t *sizep"
+.Ft bool
+.Fn prop_dictionary_set_data "prop_dictionary_t dict" \
+    "const char *key" "const void *data" "size_t len"
+.Ft bool
+.Fn prop_dictionary_set_data_nocopy "prop_dictionary_t dict" \
+    "const char *key" "const void *data" "size_t len"
+.\"
+.Ft bool
+.Fn prop_dictionary_get_string "prop_dictionary_t dict" \
     "const char *key" "const char **strp"
 .Ft bool
-.Fn prop_dictionary_set_cstring_nocopy "prop_dictionary_t dict" \
+.Fn prop_dictionary_set_string "prop_dictionary_t dict" \
     "const char *key" "const char *strp"
+.Ft bool
+.Fn prop_dictionary_set_string_nocopy "prop_dictionary_t dict" \
+    "const char *key" "const char *strp"
+.\"
 .Ft bool
 .Fn prop_dictionary_set_and_rel "prop_dictionary_t dict" \
     "const char *key" "prop_object_t obj"
 .Sh DESCRIPTION
 The
-.Nm prop_dictionary_util
+.Nm
 family of functions are provided to make getting and setting values in
 dictionaries more convenient in some applications.
 .Pp
@@ -152,17 +270,27 @@ value type.
 .Pp
 The setters handle object creation and release for the caller.
 .Pp
+If the
+.Fa sizep
+argument to
+.Fn prop_dictionary_get_data
+is not
+.Dv NULL ,
+then it will be set to the size of the returned data.
+.Pp
 The
-.Fn prop_dictionary_get_cstring
-function returns dynamically allocated memory.
+.Fn prop_dictionary_get_data
+and
+.Fn prop_dictionary_set_data_nocopy
+functions do not copy the data that is set or returned.
 See
-.Xr prop_string 3
+.Xr prop_data 3
 for more information.
 .Pp
 The
-.Fn prop_dictionary_get_cstring_nocopy
+.Fn prop_dictionary_get_string
 and
-.Fn prop_dictionary_set_cstring_nocopy
+.Fn prop_dictionary_set_string_nocopy
 functions do not copy the string that is set or returned.
 See
 .Xr prop_string 3
@@ -171,10 +299,10 @@ for more information.
 The
 .Fn prop_dictionary_set_and_rel
 function adds the object to the dictionary and releases it.
-The object is also released on failure.
+The object is always released, even if adding it to the dictionary fails.
 .Sh RETURN VALUES
 The
-.Nm prop_dictionary_util
+.Nm
 getter functions return
 .Dv true
 if the object exists in the dictionary and the value is in-range, or
@@ -182,7 +310,7 @@ if the object exists in the dictionary and the value is in-range, or
 otherwise.
 .Pp
 The
-.Nm prop_dictionary_util
+.Nm
 setter functions return
 .Dv true
 if creating the object and storing it in the dictionary is successful, or
@@ -190,11 +318,13 @@ if creating the object and storing it in the dictionary is successful, or
 otherwise.
 .Sh SEE ALSO
 .Xr prop_bool 3 ,
+.Xr prop_data 3 ,
 .Xr prop_dictionary 3 ,
 .Xr prop_number 3 ,
+.Xr prop_string 3 ,
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

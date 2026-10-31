@@ -5,8 +5,7 @@
 
 #include <stdio.h>
 
-void
-long_running_thread()
+void long_running_thread()
 {
 	int x=10;
 	do {
@@ -16,8 +15,7 @@ long_running_thread()
 	} while(x >0);
 }
 
-void
-short_running_thread()
+void short_running_thread()
 {
 	int x=15;
 	do {
@@ -34,8 +32,7 @@ void ddekit_minix_wait_exit(void);	/* import from dde-minix */
 ucontext_t ctx;
 #endif
 
-int
-main(void)
+int main(void)
 {
 
 #if 0

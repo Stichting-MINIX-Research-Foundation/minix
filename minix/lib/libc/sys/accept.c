@@ -28,8 +28,7 @@ static int _uds_accept(int sock, struct sockaddr *__restrict address,
 /*
  * Accept a connection on a listening socket, creating a new socket.
  */
-static int
-__accept(int fd, struct sockaddr * __restrict address,
+static int __accept(int fd, struct sockaddr * __restrict address,
 	socklen_t * __restrict address_len)
 {
 	message m;

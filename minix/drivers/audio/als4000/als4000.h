@@ -102,13 +102,13 @@ typedef struct DEV_STRUCT {
 	u16_t vid;
 	u16_t did;
 	u32_t devind;
-	u32_t base[6];
+	vir_bytes base[6];
 	char irq;
 	char revision;
 	u32_t intr_status;
 } DEV_STRUCT;
 
-void dev_mixer_write(u32_t *base, u32_t reg, u32_t val);
-u32_t dev_mixer_read(u32_t *base, u32_t reg);
+void dev_mixer_write(vir_bytes *base, u32_t reg, u32_t val);
+u32_t dev_mixer_read(vir_bytes *base, u32_t reg);
 
 #endif

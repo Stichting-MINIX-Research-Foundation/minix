@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.7 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.8 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -122,6 +122,7 @@
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else
+#include <stddef.h>
 #include <string.h>
 #endif
 
@@ -341,7 +342,7 @@ buf_read_file(struct open_file *f, void *v, size_t *size_p)
 	long off;
 	block_t file_block;
 	block_t disk_block = 0;	/* XXX: gcc */
-	size_t block_size;
+	size_t block_size, nsz;
 	int rc;
 
 	off = mfs_blkoff(fs, fp->f_seekp);
@@ -379,8 +380,9 @@ buf_read_file(struct open_file *f, void *v, size_t *size_p)
 	/*
 	 * But truncate buffer at end of file.
 	 */
-	if (*size_p > fp->f_di.mdi_size - fp->f_seekp)
-		*size_p = fp->f_di.mdi_size - fp->f_seekp;
+	nsz = (size_t)(fp->f_di.mdi_size - fp->f_seekp);
+	if (*size_p > nsz)
+		*size_p = nsz;
 
 	return 0;
 }
@@ -455,7 +457,7 @@ read_sblock(struct open_file *f, struct mfs_sblock *fs)
 		return EINVAL;
 
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    SUPER_BLOCK_OFF / DEV_BSIZE, MINBSIZE, sbbuf, &buf_size);
+	    SUPER_BLOCK_OFF / GETSECSIZE(f), MINBSIZE, sbbuf, &buf_size);
 	if (rc)
 		return rc;
 

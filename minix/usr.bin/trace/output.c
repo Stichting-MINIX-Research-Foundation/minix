@@ -29,8 +29,7 @@ static int add_space;
  * given file string is not NULL, it is the path to a file that is to be used
  * to write output to.  If it is NULL, output is written to standard error.
  */
-int
-output_init(const char * file)
+int output_init(const char * file)
 {
 
 	/* Initialize state. */
@@ -77,8 +76,7 @@ output_init(const char * file)
  * Write the given data to the given file descriptor, taking into account the
  * possibility of partial writes and write errors.
  */
-static void
-write_fd(int fd, const char *buf, size_t len)
+static void write_fd(int fd, const char *buf, size_t len)
 {
 	ssize_t r;
 
@@ -110,8 +108,7 @@ write_fd(int fd, const char *buf, size_t len)
 /*
  * Return TRUE iff an output error occurred and the program should terminate.
  */
-int
-output_error(void)
+int output_error(void)
 {
 
 	return out_err;
@@ -123,8 +120,7 @@ output_error(void)
  * number may end up being different from the number of bytes given to print,
  * due to multibyte encoding or colors or whatnot.
  */
-static unsigned int
-output_write(const char * text)
+static unsigned int output_write(const char * text)
 {
 	size_t len;
 
@@ -153,8 +149,7 @@ output_write(const char * text)
 /*
  * Flush any pending output to the output channel.
  */
-void
-output_flush(void)
+void output_flush(void)
 {
 
 	if (out_len > 0) {
@@ -191,8 +186,7 @@ output_flush(void)
  *   exit(0)
  *   Process exited normally with code 0
  */
-static void
-put_prefix(struct trace_proc * proc, int resuming)
+static void put_prefix(struct trace_proc * proc, int resuming)
 {
 	struct timeval tv;
 	struct tm *tm;
@@ -254,8 +248,7 @@ put_prefix(struct trace_proc * proc, int resuming)
  * Add a string to the end of the text recording for the given process.
  * This is used only to record the call-enter output of system calls.
  */
-static void
-record_add(struct trace_proc * proc, const char * text)
+static void record_add(struct trace_proc * proc, const char * text)
 {
 	size_t len;
 
@@ -280,8 +273,7 @@ record_add(struct trace_proc * proc, const char * text)
  * Start recording text for the given process.  Since this marks the start of
  * a call, remember to print a preemption marker when the call gets preempted.
  */
-void
-record_start(struct trace_proc * proc)
+void record_start(struct trace_proc * proc)
 {
 
 	proc->recording = TRUE;
@@ -292,8 +284,7 @@ record_start(struct trace_proc * proc)
 /*
  * Stop recording text for the given process.
  */
-void
-record_stop(struct trace_proc * proc)
+void record_stop(struct trace_proc * proc)
 {
 
 	proc->recording = FALSE;
@@ -303,8 +294,7 @@ record_stop(struct trace_proc * proc)
  * Clear recorded text for the given process.  Since this also marks the end of
  * the entire call, no longer print a supension marker before the next newline.
  */
-void
-record_clear(struct trace_proc * proc)
+void record_clear(struct trace_proc * proc)
 {
 
 	assert(!proc->recording);
@@ -320,8 +310,7 @@ record_clear(struct trace_proc * proc)
  * If the process has no recorded output, just start a new line.  Return TRUE
  * iff the caller must print its own replay text due to a recording overflow.
  */
-int
-record_replay(struct trace_proc * proc)
+int record_replay(struct trace_proc * proc)
 {
 	int space;
 
@@ -394,8 +383,7 @@ record_replay(struct trace_proc * proc)
  * the output so far may have to be marked as preempted with the "<..>"
  * preemption marker.
  */
-void
-put_newline(void)
+void put_newline(void)
 {
 
 	if (line_off == 0)
@@ -431,8 +419,7 @@ put_newline(void)
  * requested, the text may also be recorded for the process, for later replay.
  * As an exception, proc may be NULL when printing general information lines.
  */
-void
-put_text(struct trace_proc * proc, const char * text)
+void put_text(struct trace_proc * proc, const char * text)
 {
 
 	if (line_off > 0 && (proc == NULL || proc->pid != last_pid)) {
@@ -491,8 +478,7 @@ put_text(struct trace_proc * proc, const char * text)
  * the [B] line, the space between the closing parenthesis and the equals sign
  * is the result of the space being recorded.
  */
-void
-put_space(struct trace_proc * proc)
+void put_space(struct trace_proc * proc)
 {
 
 	/* This call must only be used after output for the given process. */

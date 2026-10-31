@@ -28,8 +28,7 @@
 static u32_t calib_mhz, Hz = 0;
 static int calibrated = 0;
 
-int
-tsc_calibrate(void)
+int tsc_calibrate(void)
 {
 	struct cpu_info cpu_info[CONFIG_MAX_CPUS];
 
@@ -52,8 +51,7 @@ tsc_calibrate(void)
 	return OK;
 }
 
-int
-micro_delay(u32_t micros)
+int micro_delay(u32_t micros)
 {
 	u64_t now, end;
 

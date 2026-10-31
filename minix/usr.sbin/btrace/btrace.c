@@ -24,8 +24,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static void
-btrace_start(char * device, int nr_entries)
+static void btrace_start(char * device, int nr_entries)
 {
 	int r, ctl, devfd;
 	size_t size;
@@ -54,8 +53,7 @@ btrace_start(char * device, int nr_entries)
 	close(devfd);
 }
 
-static void
-btrace_stop(char * device, char * file)
+static void btrace_stop(char * device, char * file)
 {
 	int r, ctl, devfd, outfd;
 	size_t size;
@@ -102,8 +100,7 @@ btrace_stop(char * device, char * file)
 	close(devfd);
 }
 
-static void
-btrace_reset(char * device)
+static void btrace_reset(char * device)
 {
 	size_t size;
 	int r, ctl, devfd;
@@ -125,8 +122,7 @@ btrace_reset(char * device)
 	close(devfd);
 }
 
-static void
-dump_entry(btrace_entry * entry)
+static void dump_entry(btrace_entry * entry)
 {
 	switch (entry->request) {
 	case BTREQ_OPEN: printf("OPEN"); break;
@@ -167,8 +163,7 @@ dump_entry(btrace_entry * entry)
 	printf("\n");
 }
 
-static void
-btrace_dump(char * file)
+static void btrace_dump(char * file)
 {
 	int i, r, infd;
 

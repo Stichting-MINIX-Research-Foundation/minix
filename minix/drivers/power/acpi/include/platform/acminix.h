@@ -133,10 +133,18 @@
 
 #define ACPI_FLUSH_CPU_CACHE()
 
+#ifdef __x86_64__
+#define ACPI_MACHINE_WIDTH          64
+#else
 #define ACPI_MACHINE_WIDTH          32
+#endif
 #define COMPILER_DEPENDENT_INT64    long long
 #define COMPILER_DEPENDENT_UINT64   unsigned long long
 
+#ifndef __x86_64__
+/* On i386 the compiler cannot do 64/32 division natively; provide asm helpers.
+ * On x86_64 these are never called because ACPI_MACHINE_WIDTH == 64 means
+ * ACPI_INTEGER is 64-bit and the compiler handles division directly. */
 #ifdef ACPI_LIBRARY
 
 static inline void minix_div_64_by_32(unsigned int h,
@@ -171,10 +179,11 @@ static inline void minix_shr_64(unsigned int *h,
 		"=m"(h), "=m"(l)
 		);
 }
-#endif
+#endif /* ACPI_LIBRARY */
 
 #define ACPI_DIV_64_BY_32(h, l, d, q, r) minix_div_64_by_32(h, l, d, &(q), &(r))
 #define ACPI_SHIFT_RIGHT_64(h, l) minix_shr_64(&(h), &(l))
+#endif /* !__x86_64__ */
 
 
 #ifndef __cdecl

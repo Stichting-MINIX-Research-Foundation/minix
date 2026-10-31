@@ -29,9 +29,7 @@ void test16g(void);
 void test16h(void);
 void get_times(char *name, time_t *a, time_t *c, time_t *m);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m;
 
@@ -361,9 +359,7 @@ void test16h()
   if (unlink("T16.q") != 0) e(113);
 }
 
-void get_times(name, a, c, m)
-char *name;
-time_t *a, *c, *m;
+void get_times(char *name, time_t *a, time_t *c, time_t *m)
 {
   struct stat s;
 

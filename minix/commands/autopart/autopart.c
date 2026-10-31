@@ -1813,8 +1813,7 @@ prettysizeprint(int kb)
 	return str;
 }
 
-void
-printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_regions, int p_nr_regions, int numbers)
+void printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_regions, int p_nr_regions, int numbers)
 {
 	int r, nofree = 0;
 	region_t *reg;
@@ -1858,8 +1857,7 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 #define IS_YES   3
 #define IS_NO    4
 #define IS_OTHER 5
-int
-is_sure(char *fmt, ...)
+int is_sure(char *fmt, ...)
 {
 	char yesno[10];
 	va_list ap;
@@ -1880,8 +1878,7 @@ void warn(char *message)
 	printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b ! %s\n",message);
 }
 
-int
-may_kill_region(void)
+int may_kill_region(void)
 {
         int confirmation;
 	char line[100];
@@ -2089,8 +2086,7 @@ select_disk(void)
 	return devices[choice].dev;
 }
 
-int
-scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
+int scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 {
 	int ex, changed = 0, i;
 	struct part_entry *newpart;
@@ -2121,8 +2117,7 @@ scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 	return changed;
 }
 
-int
-sanitycheck_failed(char *dev, struct part_entry *pe)
+int sanitycheck_failed(char *dev, struct part_entry *pe)
 {
 	struct part_geom part;
 	int fd;
@@ -2162,8 +2157,7 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	return 0;
 }
 
-int
-do_autopart(int resultfd)
+int do_autopart(int resultfd)
 {
 	int confirmation;
 	region_t *r;

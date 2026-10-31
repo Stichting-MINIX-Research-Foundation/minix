@@ -1,4 +1,4 @@
-/*	$NetBSD: menuutils.c,v 1.4 2014/04/06 19:11:26 jakllsch Exp $	*/
+/*	$NetBSD: menuutils.c,v 1.6 2016/06/11 06:20:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -187,7 +187,7 @@ prompt(int allowreturn)
 		input[0] = '\0';
 		printf("> ");
 #if !defined(__minix)
-		gets(input);
+		kgets(input, sizeof(input));
 #else
 		editline(input, sizeof(input), NULL);
 #endif /* !defined(__minix) */

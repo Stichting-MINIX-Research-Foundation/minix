@@ -23,8 +23,7 @@
 #include "direct_utils.h"
 #include <machine/multiboot.h>
 
-void
-halt_cpu(void)
+void halt_cpu(void)
 {
 	asm volatile("dsb");
 	asm volatile("cpsie i");
@@ -32,16 +31,14 @@ halt_cpu(void)
 	asm volatile("cpsid i");
 }
 
-void
-reset(void)
+void reset(void)
 {
 	bsp_reset(); /* should not exit */
 	direct_print("Reset not supported.");
 	while (1);
 }
 
-void
-poweroff(void)
+void poweroff(void)
 {
 	bsp_poweroff();
 	/* fallback option: hang */
@@ -73,8 +70,7 @@ arch_shutdown(int how)
 }
 
 #ifdef DEBUG_SERIAL
-void
-ser_putc(char c)
+void ser_putc(char c)
 {
 	bsp_ser_putc(c);
 }

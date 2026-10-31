@@ -2,8 +2,7 @@
 
 #include <string.h>
 
-int
-srv_kill(pid_t pid, int sig)
+int srv_kill(pid_t pid, int sig)
 {
 	message m;
 

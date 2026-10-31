@@ -89,8 +89,7 @@ sem_find_id(int id)
 /*
  * Implementation of the semget(2) system call.
  */
-int
-do_semget(message * m)
+int do_semget(message * m)
 {
 	struct sem_struct *sem;
 	unsigned int i, seq;
@@ -159,8 +158,7 @@ do_semget(message * m)
  * Increase the proper suspension count (semncnt or semzcnt) of the semaphore
  * on which the given process is blocked.
  */
-static void
-inc_susp_count(struct iproc * ip)
+static void inc_susp_count(struct iproc * ip)
 {
 	struct sembuf *blkop;
 	struct semaphore *sp;
@@ -181,8 +179,7 @@ inc_susp_count(struct iproc * ip)
  * Decrease the proper suspension count (semncnt or semzcnt) of the semaphore
  * on which the given process is blocked.
  */
-static void
-dec_susp_count(struct iproc * ip)
+static void dec_susp_count(struct iproc * ip)
 {
 	struct sembuf *blkop;
 	struct semaphore *sp;
@@ -203,8 +200,7 @@ dec_susp_count(struct iproc * ip)
  * Send a reply for a semop(2) call suspended earlier, thus waking up the
  * process.
  */
-static void
-send_reply(endpoint_t who, int ret)
+static void send_reply(endpoint_t who, int ret)
 {
 	message m;
 
@@ -219,8 +215,7 @@ send_reply(endpoint_t who, int ret)
  * and send the given reply code (OK or a negative error code) to wake it up,
  * unless the given code is EDONTREPLY.
  */
-static void
-complete_semop(struct iproc * ip, int code)
+static void complete_semop(struct iproc * ip, int code)
 {
 	struct sem_struct *sem;
 
@@ -247,8 +242,7 @@ complete_semop(struct iproc * ip, int code)
  * Free up the given semaphore set.  This includes cancelling any blocking
  * semop(2) calls on any of its semaphores.
  */
-static void
-remove_set(struct sem_struct * sem)
+static void remove_set(struct sem_struct * sem)
 {
 	struct iproc *ip;
 
@@ -290,8 +284,7 @@ remove_set(struct sem_struct * sem)
  * be set to a pointer to the operation causing the call to block.  Return an
  * error code if the call failed altogether.
  */
-static int
-try_semop(struct sem_struct *sem, struct sembuf *sops, unsigned int nsops,
+static int try_semop(struct sem_struct *sem, struct sembuf *sops, unsigned int nsops,
 	pid_t pid, struct sembuf ** blkop)
 {
 	struct semaphore *sp;
@@ -377,8 +370,7 @@ try_semop(struct sem_struct *sem, struct sembuf *sops, unsigned int nsops,
  * semaphores in the given semaphore set.  Do this repeatedly as necessary, as
  * any unblocked operation may in turn allow other operations to be resumed.
  */
-static void
-check_set(struct sem_struct * sem)
+static void check_set(struct sem_struct * sem)
 {
 	struct iproc *ip, *nextip;
 	struct sembuf *blkop;
@@ -426,8 +418,7 @@ check_set(struct sem_struct * sem)
  * Fill a seminfo structure with actual information.  The information returned
  * depends on the given command, which may be either IPC_INFO or SEM_INFO.
  */
-static void
-fill_seminfo(struct seminfo * sinfo, int cmd)
+static void fill_seminfo(struct seminfo * sinfo, int cmd)
 {
 	unsigned int i;
 
@@ -465,8 +456,7 @@ fill_seminfo(struct seminfo * sinfo, int cmd)
 /*
  * Implementation of the semctl(2) system call.
  */
-int
-do_semctl(message * m)
+int do_semctl(message * m)
 {
 	static unsigned short valbuf[SEMMSL];
 	unsigned int i;
@@ -650,8 +640,7 @@ do_semctl(message * m)
 /*
  * Implementation of the semop(2) system call.
  */
-int
-do_semop(message * m)
+int do_semop(message * m)
 {
 	unsigned int i, mask, slot;
 	int id, r;
@@ -783,8 +772,7 @@ out_free:
  * in the kern.ipc subtree.  The particular semantics of this call are tightly
  * coupled to the implementation of the ipcs(1) userland utility.
  */
-ssize_t
-get_sem_mib_info(struct rmib_oldp * oldp)
+ssize_t get_sem_mib_info(struct rmib_oldp * oldp)
 {
 	struct sem_sysctl_info semsi;
 	struct semid_ds *semds;
@@ -850,8 +838,7 @@ get_sem_mib_info(struct rmib_oldp * oldp)
 /*
  * Return TRUE iff no semaphore sets are allocated.
  */
-int
-is_sem_nil(void)
+int is_sem_nil(void)
 {
 
 	return (sem_list_nr == 0);
@@ -862,8 +849,7 @@ is_sem_nil(void)
  * the call, because either it is interrupted by a signal or the process was
  * killed.  In the former case, unblock the process by replying with EINTR.
  */
-void
-sem_process_event(endpoint_t endpt, int has_exited)
+void sem_process_event(endpoint_t endpt, int has_exited)
 {
 	unsigned int slot;
 	struct iproc *ip;

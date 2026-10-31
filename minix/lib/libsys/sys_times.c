@@ -1,13 +1,7 @@
 #include "syslib.h"
 
-int sys_times(proc_ep, user_time, sys_time, uptime, boottime)
-endpoint_t proc_ep;		/* proc_ep whose times are needed */
-clock_t *user_time;		/* time spend in the process itself */
-clock_t *sys_time;		/* time spend in system on behalf of the
-				 * process
-				 */
-clock_t *uptime;		/* time the system is running */
-time_t *boottime;		/* boot time */
+int sys_times(endpoint_t proc_ep, clock_t *user_time, clock_t *sys_time,
+	clock_t *uptime, time_t *boottime)
 {
 /* Fetch the accounting info for a proc_ep. */
   message m;

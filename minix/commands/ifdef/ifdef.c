@@ -66,13 +66,11 @@ void gettable(void);
 void parse(void);
 void usage(void);
 
-#ifdef __STDC__
+
+/* Get next arg from file into cbuf, */
+/* returning the character that      */
+/* terminated it. Cbuf returns 0     */
 char fgetarg ( FILE *stream , char *cbuf )
-#else
-char fgetarg(stream, cbuf)	/* Get next arg from file into cbuf, */
-FILE *stream;			/* returning the character that      */
-char *cbuf;			/* terminated it. Cbuf returns 0     */
-#endif
 {				/* if no arg. EOF is returned if no  */
   int ch;			/* args left in file.                */
   int i;
@@ -95,12 +93,7 @@ char *cbuf;			/* terminated it. Cbuf returns 0     */
 }
 
 
-#ifdef __STDC__
 int find ( char *sym )
-#else
-int find(sym)
-char *sym;
-#endif
 {				/* Return DEF if defined else UNDEF */
 
   deftemp = defptr;
@@ -118,14 +111,10 @@ char *sym;
 #define Undefine(x,y)	defit(x,y,UNDEF)
 #define Ignore(x,y)	defit(x,y,IGN)
 
-#ifdef __STDC__
+/* Add symbol to the define list */
+/* Mode: MUTABLE etc      */
+/* Type: DEF, UNDEF, IGN  */
 void defit ( char *sym , int redef , int type )
-#else
-void defit(sym, redef, type)	/* Add symbol to the define list */
-char *sym;
-char redef;			/* Mode: MUTABLE etc      */
-char type;			/* Type: DEF, UNDEF, IGN  */
-#endif
 {
   struct DEFINE *temp;
   char c;
@@ -167,11 +156,7 @@ char type;			/* Type: DEF, UNDEF, IGN  */
 
 
 
-#ifdef __STDC__
 void stop ( void )
-#else
-void stop()
-#endif
 {				/* Stop: Tidy up at EOF */
   if (table) printtable();
   (void)fclose(zin);
@@ -181,23 +166,16 @@ void stop()
 #define Goto	{ line++; if (ch!='\n') gotoeoln(); }
 #define Print	{ line++; if (ch!='\n') prteoln();  }
 
-#ifdef __STDC__
+/* Go to the end of the line */
 void gotoeoln ( void )
-#else
-void gotoeoln()			/* Go to the end of the line */
-#endif
 {
   int ch;
   while ((ch = fgetc(zin)) != '\n')
 	if (ch == EOF) stop();
 }
 
-
-#ifdef __STDC__
+/* Print to the end of the line */
 void prteoln ( void )
-#else
-void prteoln()			/* Print to the end of the line */
-#endif
 {
   int ch;
   while ((ch = fgetc(zin)) != '\n')
@@ -209,11 +187,8 @@ void prteoln()			/* Print to the end of the line */
 }
 
 
-#ifdef __STDC__
+/* Print the defines in the SLL */
 void printtable ( void )
-#else
-void printtable()		/* Print the defines in the SLL */
-#endif
 {
   struct DEFINE *temp;
 
@@ -234,11 +209,7 @@ void printtable()		/* Print the defines in the SLL */
   }
 }
 
-#ifdef __STDC__
 char getendif ( void )
-#else
-char getendif()
-#endif
 {				/* Find matching endif when ignoring */
   char word[80];		/* Buffer for symbols */
   int ch;
@@ -268,11 +239,8 @@ char getendif()
 }
 
 
-#ifdef __STDC__
+/* Get & print a table of defines etc.  */
 void gettable ( void )
-#else
-void gettable()			/* Get & print a table of defines etc.  */
-#endif
 {
 
   char word[80];		/* Buffer for symbols */
@@ -313,11 +281,7 @@ void gettable()			/* Get & print a table of defines etc.  */
 
 
 
-#ifdef __STDC__
 void parse ( void )
-#else
-void parse()
-#endif
 {				/* Parse & remove ifdefs from C source */
   char word[80];		/* Buffer for symbols */
   int ch;
@@ -435,24 +399,14 @@ void parse()
 }
 
 
-#ifdef __STDC__
 void usage ( void )
-#else
-void usage()
-#endif
 {
   (void)fprintf(stderr, "Usage: ifdef [-t] [-Dsymbol] [-dsymbol] [-Usymbol] [-Isymbol] <file>\n");
   exit(0);
 }
 
 
-#ifdef __STDC__
 int main(int argc , char *argv [])
-#else
-int main(argc, argv)
-int argc;
-char *argv[];
-#endif
 {
   char sym[80];			/* Temp symbol storage */
   int c;

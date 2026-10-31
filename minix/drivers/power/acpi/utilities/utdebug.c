@@ -75,8 +75,7 @@ AcpiUtTrimFunctionName (
  *
  ******************************************************************************/
 
-void
-AcpiUtInitStackPtrTrace (
+void AcpiUtInitStackPtrTrace (
     void)
 {
     ACPI_SIZE               CurrentSp;
@@ -98,8 +97,7 @@ AcpiUtInitStackPtrTrace (
  *
  ******************************************************************************/
 
-void
-AcpiUtTrackStackPtr (
+void AcpiUtTrackStackPtr (
     void)
 {
     ACPI_SIZE               CurrentSp;
@@ -307,8 +305,7 @@ ACPI_EXPORT_SYMBOL (AcpiDebugPrintRaw)
  *
  ******************************************************************************/
 
-void
-AcpiUtTrace (
+void AcpiUtTrace (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -348,8 +345,7 @@ ACPI_EXPORT_SYMBOL (AcpiUtTrace)
  *
  ******************************************************************************/
 
-void
-AcpiUtTracePtr (
+void AcpiUtTracePtr (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -388,8 +384,7 @@ AcpiUtTracePtr (
  *
  ******************************************************************************/
 
-void
-AcpiUtTraceStr (
+void AcpiUtTraceStr (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -428,8 +423,7 @@ AcpiUtTraceStr (
  *
  ******************************************************************************/
 
-void
-AcpiUtTraceU32 (
+void AcpiUtTraceU32 (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -467,8 +461,7 @@ AcpiUtTraceU32 (
  *
  ******************************************************************************/
 
-void
-AcpiUtExit (
+void AcpiUtExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -510,8 +503,7 @@ ACPI_EXPORT_SYMBOL (AcpiUtExit)
  *
  ******************************************************************************/
 
-void
-AcpiUtStatusExit (
+void AcpiUtStatusExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -565,8 +557,7 @@ ACPI_EXPORT_SYMBOL (AcpiUtStatusExit)
  *
  ******************************************************************************/
 
-void
-AcpiUtValueExit (
+void AcpiUtValueExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,
@@ -610,8 +601,7 @@ ACPI_EXPORT_SYMBOL (AcpiUtValueExit)
  *
  ******************************************************************************/
 
-void
-AcpiUtPtrExit (
+void AcpiUtPtrExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
     const char              *ModuleName,

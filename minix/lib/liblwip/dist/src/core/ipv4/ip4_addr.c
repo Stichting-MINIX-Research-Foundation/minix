@@ -54,8 +54,7 @@ const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  */
-u8_t
-ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
+u8_t ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
 {
   ip4_addr_t ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
@@ -89,8 +88,7 @@ ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
  * @param netmask the IPv4 netmask to check (in network byte order!)
  * @return 1 if the netmask is valid, 0 if it is not
  */
-u8_t
-ip4_addr_netmask_valid(u32_t netmask)
+u8_t ip4_addr_netmask_valid(u32_t netmask)
 {
   u32_t mask;
   u32_t nm_hostorder = lwip_htonl(netmask);
@@ -129,8 +127,7 @@ ip4_addr_netmask_valid(u32_t netmask)
  * @param cp IP address in ascii representation (e.g. "127.0.0.1")
  * @return ip address in network order
  */
-u32_t
-ipaddr_addr(const char *cp)
+u32_t ipaddr_addr(const char *cp)
 {
   ip4_addr_t val;
 
@@ -151,8 +148,7 @@ ipaddr_addr(const char *cp)
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
-int
-ip4addr_aton(const char *cp, ip4_addr_t *addr)
+int ip4addr_aton(const char *cp, ip4_addr_t *addr)
 {
   u32_t val;
   u8_t base;

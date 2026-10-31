@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.36 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.37 2016/08/04 17:43:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.36 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.37 2016/08/04 17:43:47 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ inosize(struct ext2fs_dinode *dp)
 	u_int64_t size = fs2h32(dp->e2di_size);
 
 	if ((fs2h16(dp->e2di_mode) & IFMT) == IFREG)
-		size |= (u_int64_t)fs2h32(dp->e2di_dacl) << 32;
+		size |= (u_int64_t)fs2h32(dp->e2di_size_high) << 32;
 	if (size > INT32_MAX)
 		(void)setlarge();
 	return size;
@@ -151,7 +151,7 @@ void
 inossize(struct ext2fs_dinode *dp, u_int64_t size)
 {
 	if ((fs2h16(dp->e2di_mode) & IFMT) == IFREG) {
-		dp->e2di_dacl = h2fs32(size >> 32);
+		dp->e2di_size_high = h2fs32(size >> 32);
 		if (size > INT32_MAX)
 			if (!setlarge())
 				return;

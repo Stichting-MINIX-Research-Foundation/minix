@@ -6,8 +6,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 
-int
-getrusage(int who, struct rusage * r_usage)
+int getrusage(int who, struct rusage * r_usage)
 {
 	message m;
 

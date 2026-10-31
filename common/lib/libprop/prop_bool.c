@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.17 2009/01/03 18:31:33 pooka Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.19 2020/06/06 21:25:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <prop/prop_bool.h>
 #include "prop_object_impl.h"
+#include <prop/prop_bool.h>
 
 struct _prop_bool {
 	struct _prop_object	pb_obj;
@@ -167,17 +167,27 @@ prop_bool_copy(prop_bool_t opb)
 }
 
 /*
- * prop_bool_true --
+ * prop_bool_value --
  *	Get the value of a prop_bool_t.
  */
 bool
-prop_bool_true(prop_bool_t pb)
+prop_bool_value(prop_bool_t pb)
 {
 
 	if (! prop_object_is_bool(pb))
 		return (false);
 
 	return (pb->pb_value);
+}
+
+/*
+ * prop_bool_true --
+ *	Historical alias for prop_bool_value().
+ */
+bool
+prop_bool_true(prop_bool_t pb)
+{
+	return prop_bool_value(pb);
 }
 
 /*

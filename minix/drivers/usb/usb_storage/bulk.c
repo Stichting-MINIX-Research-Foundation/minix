@@ -11,8 +11,7 @@
 /*===========================================================================*
  *    init_cbw                                                               *
  *===========================================================================*/
-void
-init_cbw(mass_storage_cbw * cbw, unsigned int tag)
+void init_cbw(mass_storage_cbw * cbw, unsigned int tag)
 {
 	assert(NULL != cbw);
 
@@ -29,8 +28,7 @@ init_cbw(mass_storage_cbw * cbw, unsigned int tag)
 /*===========================================================================*
  *    init_csw                                                               *
  *===========================================================================*/
-void
-init_csw(mass_storage_csw * csw)
+void init_csw(mass_storage_csw * csw)
 {
 	assert(NULL != csw);
 

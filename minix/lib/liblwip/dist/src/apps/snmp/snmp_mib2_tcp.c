@@ -58,8 +58,7 @@
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
 
-static s16_t
-tcp_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t tcp_get_value(struct snmp_node_instance* instance, void* value)
 {
   u32_t *uint_ptr = (u32_t*)value;
   s32_t *sint_ptr = (s32_t*)value;

@@ -104,3 +104,12 @@ EXTERN struct mproc {
 #define EVENT_CALL	0x80000	/* waiting for process event subscriber */
 
 #define MP_MAGIC	0xC0FFEE0
+
+/* A slot still names a process only until its parent has collected the exit
+ * status.  From the wait4(2) that reaped it, the pid is gone as far as the
+ * rest of the world is concerned -- it cannot be found, signalled or waited
+ * for again -- but the slot itself has to linger until VFS is done with the
+ * exit, which is a later and unrelated moment.  Every lookup by pid has to
+ * ask this rather than IN_USE alone.
+ */
+#define LIVE_PROC(rmp)	(((rmp)->mp_flags & (IN_USE | TOLD_PARENT)) == IN_USE)

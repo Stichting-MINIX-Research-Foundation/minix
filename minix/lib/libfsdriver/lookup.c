@@ -5,8 +5,7 @@
  * Check whether the given node may be accessed as directory.
  * Return OK or an appropriate error code.
  */
-static int
-access_as_dir(struct fsdriver_node * __restrict node,
+static int access_as_dir(struct fsdriver_node * __restrict node,
 	vfs_ucred_t * __restrict ucred)
 {
 	mode_t mask;
@@ -40,8 +39,7 @@ access_as_dir(struct fsdriver_node * __restrict node,
  * Get the next path component from a path.  Return the start and end of the
  * component into the path, and store its name in a null-terminated buffer.
  */
-static int
-next_name(char ** ptr, char ** start, char * __restrict name, size_t namesize)
+static int next_name(char ** ptr, char ** start, char * __restrict name, size_t namesize)
 {
 	char *p;
 	unsigned int i;
@@ -80,8 +78,7 @@ next_name(char ** ptr, char ** start, char * __restrict name, size_t namesize)
  * by the remaining part of the path that has not yet been resolved (the tail).
  * Note that the tail points into the given destination buffer.
  */
-static int
-resolve_link(const struct fsdriver * __restrict fdp, ino_t ino_nr, char * pptr,
+static int resolve_link(const struct fsdriver * __restrict fdp, ino_t ino_nr, char * pptr,
 	size_t size, char * tail)
 {
 	struct fsdriver_data data;
@@ -114,8 +111,7 @@ resolve_link(const struct fsdriver * __restrict fdp, ino_t ino_nr, char * pptr,
 /*
  * Process a LOOKUP request from VFS.
  */
-int
-fsdriver_lookup(const struct fsdriver * __restrict fdp,
+int fsdriver_lookup(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	ino_t dir_ino_nr, root_ino_nr;

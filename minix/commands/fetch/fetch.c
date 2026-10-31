@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 2000-2004 Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,8 +126,7 @@ char	*buf;		/* transfer buffer */
 /*
  * Signal handler
  */
-static void
-sig_handler(int sig)
+static void sig_handler(int sig)
 {
 	switch (sig) {
 	case SIGALRM:
@@ -219,8 +218,7 @@ stat_bps(struct xferstat *xs)
 /*
  * Update the stats display
  */
-static void
-stat_display(struct xferstat *xs, int force)
+static void stat_display(struct xferstat *xs, int force)
 {
 	struct timeval now;
 #if !defined(__minix)
@@ -266,8 +264,7 @@ stat_display(struct xferstat *xs, int force)
 /*
  * Initialize the transfer statistics
  */
-static void
-stat_start(struct xferstat *xs, const char *name, off_t size, off_t offset)
+static void stat_start(struct xferstat *xs, const char *name, off_t size, off_t offset)
 {
 	snprintf(xs->name, sizeof xs->name, "%s", name);
 	gettimeofday(&xs->start, NULL);
@@ -284,8 +281,7 @@ stat_start(struct xferstat *xs, const char *name, off_t size, off_t offset)
 /*
  * Update the transfer statistics
  */
-static void
-stat_update(struct xferstat *xs, off_t rcvd)
+static void stat_update(struct xferstat *xs, off_t rcvd)
 {
 	xs->rcvd = rcvd;
 	if (v_tty && v_level > 0)
@@ -295,8 +291,7 @@ stat_update(struct xferstat *xs, off_t rcvd)
 /*
  * Finalize the transfer statistics
  */
-static void
-stat_end(struct xferstat *xs)
+static void stat_end(struct xferstat *xs)
 {
 	gettimeofday(&xs->last, NULL);
 	if (v_tty && v_level > 0) {
@@ -309,8 +304,7 @@ stat_end(struct xferstat *xs)
 }
 
 #if HAVE_TERMIOS_H && !defined(PREFER_GETPASS)
-static int
-read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
+static int read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 {
 	struct termios tios;
 	tcflag_t saved_flags;
@@ -339,8 +333,7 @@ read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 	return nopwd;
 }
 #elif HAVE_GETPASSPHRASE || HAVE_GETPASS
-static int
-read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
+static int read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 {
 	char *pass;
 
@@ -355,8 +348,7 @@ read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 	return 0;
 }
 #else
-static int
-read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
+static int read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 {
 
 	fprintf(stderr, prompt);
@@ -367,8 +359,7 @@ read_password(const char *prompt, char *pwbuf, size_t pwbuf_len)
 /*
  * Ask the user for authentication details
  */
-static int
-query_auth(struct url *URL)
+static int query_auth(struct url *URL)
 {
 	int i, nopwd;
 
@@ -396,8 +387,7 @@ query_auth(struct url *URL)
 /*
  * Fetch a file
  */
-static int
-fetch(char *URL, const char *path)
+static int fetch(char *URL, const char *path)
 {
 	struct url *url;
 	struct url_stat us;
@@ -855,8 +845,7 @@ fetch(char *URL, const char *path)
 	return (r);
 }
 
-static void
-usage(void)
+static void usage(void)
 {
 #ifndef __minix
 	fprintf(stderr, "%s\n%s\n%s\n",
@@ -875,8 +864,7 @@ usage(void)
 /*
  * Entry point
  */
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct stat sb;
 	struct sigaction sa;

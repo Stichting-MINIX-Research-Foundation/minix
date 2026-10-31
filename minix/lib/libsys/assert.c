@@ -9,10 +9,7 @@
 #include <stdlib.h>
 #include <minix/sysutil.h>
 
-void
-__assert13(file, line, function, failedexpr)
-	const char *file, *function, *failedexpr;
-	int line;
+void __assert13(const char *file, int line, const char *function, const char *failedexpr)
 {
 	(void)printf("%s:%d: assert \"%s\" failed", file, line, failedexpr);
 	if(function) printf(", function \"%s\"", function);
@@ -21,10 +18,7 @@ __assert13(file, line, function, failedexpr)
 	/* NOTREACHED */
 }
 
-void
-__assert(file, line, failedexpr)
-	const char *file, *failedexpr;
-	int line;
+void __assert(const char *file, int line, const char *failedexpr)
 {
 
 	__assert13(file, line, NULL, failedexpr);

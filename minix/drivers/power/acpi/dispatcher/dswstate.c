@@ -437,8 +437,7 @@ AcpiDsObjStackPop (
  *
  ******************************************************************************/
 
-void
-AcpiDsObjStackPopAndDelete (
+void AcpiDsObjStackPopAndDelete (
     UINT32                  PopCount,
     ACPI_WALK_STATE         *WalkState)
 {
@@ -522,8 +521,7 @@ AcpiDsGetCurrentWalkState (
  *
  ******************************************************************************/
 
-void
-AcpiDsPushWalkState (
+void AcpiDsPushWalkState (
     ACPI_WALK_STATE         *WalkState,
     ACPI_THREAD_STATE       *Thread)
 {
@@ -775,8 +773,7 @@ AcpiDsInitAmlWalk (
  *
  ******************************************************************************/
 
-void
-AcpiDsDeleteWalkState (
+void AcpiDsDeleteWalkState (
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_GENERIC_STATE      *State;

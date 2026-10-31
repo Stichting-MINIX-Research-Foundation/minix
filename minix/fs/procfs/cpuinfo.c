@@ -4,13 +4,15 @@
 
 #if defined(__i386__)
 #include "../../kernel/arch/i386/include/archconst.h"
+#elif defined(__x86_64__)
+#include "../../kernel/arch/x86_64/include/archconst.h"
 #endif
 
 #ifndef CONFIG_MAX_CPUS
 #define CONFIG_MAX_CPUS	1
 #endif
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 static const char * x86_flag[] = {
 	"fpu",
 	"vme",
@@ -81,8 +83,7 @@ static const char * x86_flag[] = {
 /*
  * Output a space-separated list of supported CPU flags.  x86 only.
  */
-static void
-print_x86_cpu_flags(u32_t * flags)
+static void print_x86_cpu_flags(u32_t * flags)
 {
 	int i, j;
 
@@ -94,18 +95,17 @@ print_x86_cpu_flags(u32_t * flags)
 	}
 	buf_printf("\n");
 }
-#endif
+#endif /* __i386__ || __x86_64__ */
 
 /*
  * Print information for a single CPU.
  */
-static void
-print_cpu(struct cpu_info * cpu_info, unsigned id)
+static void print_cpu(struct cpu_info * cpu_info, unsigned id)
 {
 
 	buf_printf("%-16s: %d\n", "processor", id);
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 	switch (cpu_info->vendor) {
 	case CPU_VENDOR_INTEL:
 		buf_printf("%-16s: %s\n", "vendor_id", "GenuineIntel");
@@ -132,8 +132,7 @@ print_cpu(struct cpu_info * cpu_info, unsigned id)
 /*
  * Generate the contents of /proc/cpuinfo.
  */
-void
-root_cpuinfo(void)
+void root_cpuinfo(void)
 {
 	struct cpu_info cpu_info[CONFIG_MAX_CPUS];
 	struct machine machine;

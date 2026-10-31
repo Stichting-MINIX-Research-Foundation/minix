@@ -29,7 +29,7 @@ int do_fork(struct proc * caller, message * m_ptr)
  * m_lsys_krn_sys_fork.endpt has forked.
  * The child is m_lsys_krn_sys_fork.slot.
  */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
   char *old_fpu_save_area_p;
 #endif
   register struct proc *rpc;		/* child process pointer */
@@ -57,11 +57,16 @@ int do_fork(struct proc * caller, message * m_ptr)
   save_fpu(rpp);
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
   gen = _ENDPOINT_G(rpc->p_endpoint);
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
   old_fpu_save_area_p = rpc->p_seg.fpu_state;
 #endif
   *rpc = *rpp;				/* copy 'proc' struct */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
+  /* The 'proc' struct copy above clobbered the child's own FPU save area
+   * pointer with the parent's; restore it and copy the FPU contents into
+   * the child's own buffer.  Without this the child shares the parent's
+   * fpu_state buffer and its lazy-FPU save corrupts the parent's XMM/x87
+   * state (and vice versa) across context switches. */
   rpc->p_seg.fpu_state = old_fpu_save_area_p;
   if(proc_used_fpu(rpp))
 	memcpy(rpc->p_seg.fpu_state, rpp->p_seg.fpu_state, FPU_XFP_SIZE);

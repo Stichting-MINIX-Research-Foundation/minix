@@ -1,0 +1,401 @@
+#	$NetBSD: genassym.cf,v 1.89.4.1 2025/03/29 10:32:43 martin Exp $
+
+#
+# Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Charles M. Hannum, and by Andrew Doran.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# Copyright (c) 1982, 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# William Jolitz.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	5.11 (Berkeley) 5/10/91
+#
+
+if defined(_KERNEL_OPT)
+include "opt_compat_netbsd32.h"
+include "opt_compat_linux32.h"
+include "opt_xen.h"
+endif
+
+quote #define __MUTEX_PRIVATE
+quote #define __RWLOCK_PRIVATE
+
+include <sys/param.h>
+include <sys/proc.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/mbuf.h>
+include <sys/mutex.h>
+include <sys/rwlock.h>
+include <sys/cpu_data.h>
+include <sys/evcnt.h>
+include <sys/cpu.h>
+include <sys/acl.h>
+
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip_var.h>
+
+include <uvm/uvm.h>
+
+include <machine/trap.h>
+include <machine/pmap.h>
+include <machine/pmap_private.h>
+include <machine/vmparam.h>
+include <machine/intr.h>
+include <machine/types.h>
+include <machine/cpufunc.h>
+
+if defined(COMPAT_NETBSD32)
+include <machine/netbsd32_machdep.h>
+endif
+
+if defined(COMPAT_LINUX32)
+include <machine/linux32_machdep.h>
+endif
+
+if defined(_KERNEL) && defined(_KERNEL_OPT)
+include "isa.h"
+include "ioapic.h"
+endif
+if NISA > 0
+include <machine/isa_machdep.h>
+endif
+
+if NIOAPIC > 0
+include <machine/i82093reg.h>
+include <machine/i82093var.h>
+endif
+
+ifdef XEN
+include <xen/include/public/xen.h>
+include <xen/include/public/arch-x86/hvm/start_info.h>
+endif  
+
+include <sys/bus.h>
+
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+
+define	KERNBASE_LO		KERNBASE_LO
+define	KERNBASE_HI		KERNBASE_HI
+define	KERNBASE		KERNBASE
+define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
+define	KERNTEXTOFF		KERNTEXTOFF
+
+define	NBPG			NBPG
+
+define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
+define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
+define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
+define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
+
+define	PDE_SIZE		sizeof(pd_entry_t)
+
+define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
+
+define	L_PCB			offsetof(struct lwp, l_addr)
+define	L_FLAG			offsetof(struct lwp, l_flag)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_NCSW			offsetof(struct lwp, l_ncsw)
+define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
+define	L_DOPREEMPT		offsetof(struct lwp, l_dopreempt)
+define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_KPRIORITY		offsetof(struct lwp, l_kpriority)
+define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
+
+define	PAGE_SIZE		PAGE_SIZE
+
+define	MDL_IRET		MDL_IRET
+define	MDL_COMPAT32		MDL_COMPAT32
+define	MDL_FPU_IN_CPU		MDL_FPU_IN_CPU
+
+define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+
+define	LW_SYSTEM		LW_SYSTEM
+
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
+
+define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
+define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
+define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
+define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
+define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
+define	PCB_COMPAT32		PCB_COMPAT32
+define	PCB_FS			offsetof(struct pcb, pcb_fs)
+define	PCB_GS			offsetof(struct pcb, pcb_gs)
+define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
+
+define	TF_RDI			offsetof(struct trapframe, tf_rdi)
+define	TF_RSI			offsetof(struct trapframe, tf_rsi)
+define	TF_RDX			offsetof(struct trapframe, tf_rdx)
+define	TF_RCX			offsetof(struct trapframe, tf_rcx)
+define	TF_R8			offsetof(struct trapframe, tf_r8)
+define	TF_R9			offsetof(struct trapframe, tf_r9)
+define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_R11			offsetof(struct trapframe, tf_r11)
+define	TF_R12			offsetof(struct trapframe, tf_r12)
+define	TF_R13			offsetof(struct trapframe, tf_r13)
+define	TF_R14			offsetof(struct trapframe, tf_r14)
+define	TF_R15			offsetof(struct trapframe, tf_r15)
+define	TF_RBP			offsetof(struct trapframe, tf_rbp)
+define	TF_RBX			offsetof(struct trapframe, tf_rbx)
+define	TF_RAX			offsetof(struct trapframe, tf_rax)
+define	TF_GS			offsetof(struct trapframe, tf_gs)
+define	TF_FS			offsetof(struct trapframe, tf_fs)
+define	TF_ES			offsetof(struct trapframe, tf_es)
+define	TF_DS			offsetof(struct trapframe, tf_ds)
+define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
+define	TF_ERR			offsetof(struct trapframe, tf_err)
+define	TF_RIP			offsetof(struct trapframe, tf_rip)
+define	TF_CS			offsetof(struct trapframe, tf_cs)
+define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
+define	TF_RSP			offsetof(struct trapframe, tf_rsp)
+define	TF_SS			offsetof(struct trapframe, tf_ss)
+
+# Size of stack area needed for saving registers
+define	TF_REGSIZE		offsetof(struct trapframe, tf_trapno)
+# Total size includes registers pushed by hardware
+define	FRAMESIZE		sizeof(struct trapframe)
+
+define	TSS_RSP0		offsetof(struct cpu_tss, tss.tss_rsp0)
+
+define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
+define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
+define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
+define	TLBSTATE_VALID		TLBSTATE_VALID
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
+define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
+define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
+ifdef SVS
+define	CPU_INFO_UPDIRPA	offsetof(struct cpu_info, ci_svs_updirpa)
+define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_svs_rsp0)
+define	CPU_INFO_URSP0		offsetof(struct cpu_info, ci_svs_ursp0)
+define	CPU_INFO_KRSP0		offsetof(struct cpu_info, ci_svs_krsp0)
+endif
+define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
+define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+
+define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+define	CPU_INFO_ILEVEL		(offsetof(struct cpu_info, ci_istate) + 7)
+define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_istate)
+define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
+define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
+define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
+define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
+define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
+
+define	ACPI_SUSPEND_GDT	offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT	offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR		offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT	offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS		offsetof(struct cpu_info, ci_suspend_fs)
+define	ACPI_SUSPEND_GS		offsetof(struct cpu_info, ci_suspend_gs)
+define	ACPI_SUSPEND_KGS	offsetof(struct cpu_info, ci_suspend_kgs)
+define	ACPI_SUSPEND_EFER	offsetof(struct cpu_info, ci_suspend_efer)
+define	ACPI_SUSPEND_REG	offsetof(struct cpu_info, ci_suspend_reg)
+define	ACPI_SUSPEND_CR0	offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2	offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3	offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4	offsetof(struct cpu_info, ci_suspend_cr4)
+define	ACPI_SUSPEND_CR8	offsetof(struct cpu_info, ci_suspend_cr8)
+
+define	INVPCID_ADDRESS		INVPCID_ADDRESS
+define	INVPCID_CONTEXT		INVPCID_CONTEXT
+define	INVPCID_ALL		INVPCID_ALL
+define	INVPCID_ALL_NONGLOBAL	INVPCID_ALL_NONGLOBAL
+
+define	PMAP_PCID_USER		PMAP_PCID_USER
+define	PMAP_PCID_KERN		PMAP_PCID_KERN
+
+if NIOAPIC > 0
+define		PIC_IOAPIC		offsetof(struct pic, pic_ioapic)
+define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
+define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
+define		PIC_LOCK		offsetof(struct pic, pic_lock)
+endif
+
+define	IH_FUN			offsetof(struct intrhand, ih_fun)
+define	IH_ARG			offsetof(struct intrhand, ih_arg)
+define  IH_LEVEL		offsetof(struct intrhand, ih_level)
+define	IH_NEXT			offsetof(struct intrhand, ih_next)
+
+ifdef COMPAT_NETBSD32
+define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
+define	SC_GS32			offsetof(struct netbsd32_sigcontext, sc_gs)
+endif
+
+ifdef COMPAT_LINUX32
+define  LINUX32_SF_HANDLER	offsetof(struct linux32_sigframe, sf_handler)
+define  LINUX32_SF_SC		offsetof(struct linux32_sigframe, sf_sc)
+define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
+define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
+define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
+define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
+define  LINUX32_SYS_exit		LINUX32_SYS_exit
+endif
+
+define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
+define	IS_RESUME	offsetof(struct intrsource, is_resume)
+define	IS_EVCNT	offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_HANDLERS	offsetof(struct intrsource, is_handlers)
+define	IS_PIC		offsetof(struct intrsource, is_pic)
+define	IS_FLAGS	offsetof(struct intrsource, is_flags)
+define	IS_PIN		offsetof(struct intrsource, is_pin)
+define	IS_TYPE		offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define	IS_LWP		offsetof(struct intrsource, is_lwp)
+define	IS_MASK_COUNT	offsetof(struct intrsource, is_mask_count)
+
+define	IPL_NONE		IPL_NONE
+define	IPL_PREEMPT		IPL_PREEMPT
+define	IPL_NET			IPL_NET
+define	IPL_CLOCK		IPL_CLOCK
+define	IPL_VM			IPL_VM
+define	IPL_SCHED		IPL_SCHED
+define	IPL_HIGH		IPL_HIGH
+
+define	LIR_IPI			LIR_IPI
+define	LIR_TIMER		LIR_TIMER
+define	LIR_HV			LIR_HV
+
+define	SIR_NET			SIR_NET
+define	SIR_CLOCK		SIR_CLOCK
+define	SIR_SERIAL		SIR_SERIAL	
+
+define	IREENT_MAGIC		IREENT_MAGIC
+
+define	PSL_MBO			PSL_MBO
+
+define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
+define	MTX_LOCK		offsetof(struct kmutex, u.s.mtxs_lock)
+define	MTX_OWNER		offsetof(struct kmutex, u.mtxa_owner)
+
+define	RW_OWNER		offsetof(struct krwlock, rw_owner)
+define	RW_WRITE_LOCKED		RW_WRITE_LOCKED
+define	RW_WRITE_WANTED		RW_WRITE_WANTED
+define	RW_READ_INCR		RW_READ_INCR
+define	RW_HAS_WAITERS		RW_HAS_WAITERS
+define	RW_THREAD		RW_THREAD
+define	RW_READER		RW_READER
+define	RW_WRITER		RW_WRITER
+
+define	EV_COUNT		offsetof(struct evcnt, ev_count)
+
+define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
+
+define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
+
+define	VM_GUEST_XENPV		VM_GUEST_XENPV
+define	VM_GUEST_XENPVH		VM_GUEST_XENPVH
+define	VM_GUEST_GENPVH		VM_GUEST_GENPVH
+
+ifdef XEN
+define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
+define IH_PENDING		offsetof(struct intrhand, ih_pending)
+define SIR_XENIPL_VM		SIR_XENIPL_VM
+define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
+define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
+define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+define HVM_START_INFO_SIZE	sizeof(struct hvm_start_info)
+define START_INFO_VERSION	offsetof(struct hvm_start_info, version)
+define MMAP_PADDR		offsetof(struct hvm_start_info, memmap_paddr)
+define MMAP_ENTRIES		offsetof(struct hvm_start_info, memmap_entries)
+define MMAP_ENTRY_SIZE		sizeof(struct hvm_memmap_table_entry)
+define CMDLINE_PADDR		offsetof(struct hvm_start_info, cmdline_paddr)
+ifdef XENPV
+define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
+define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
+define __HYPERVISOR_iret	__HYPERVISOR_iret
+define CPU_INFO_XEN_CLOCKF_USERMODE offsetof(struct cpu_info, ci_xen_clockf_usermode)
+define CPU_INFO_XEN_CLOCKF_PC	offsetof(struct cpu_info, ci_xen_clockf_pc)
+endif /* XENPV */
+endif /* XEN */
+
+define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
+define	NKL3_KIMG_ENTRIES	NKL3_KIMG_ENTRIES
+define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
+
+define	PGOFSET			PGOFSET
+define	PGSHIFT			PGSHIFT
+
+define	VM_SPACE_SEP_HIGH32	(0xFFFF800000000000 >> 32)
+
+define	SEL_RPL_MASK		SEL_RPL

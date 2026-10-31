@@ -109,8 +109,7 @@ static void ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr);
 static void ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed);
 #endif /* IP_REASS_FREE_OLDEST */
 
-void
-ip6_reass_tmr(void)
+void ip6_reass_tmr(void)
 {
   struct ip6_reassdata *r, *tmp;
 
@@ -144,8 +143,7 @@ ip6_reass_tmr(void)
  *
  * @param ipr datagram to free
  */
-static void
-ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
+static void ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
 {
   struct ip6_reassdata *prev;
   u16_t pbufs_freed = 0;
@@ -232,8 +230,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
  * @param pbufs_needed number of pbufs needed to enqueue
  *        (used for freeing other datagrams if not enough space)
  */
-static void
-ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
+static void ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
 {
   struct ip6_reassdata *r, *oldest;
 
@@ -671,8 +668,7 @@ ip6_frag_alloc_pbuf_custom_ref(void)
 }
 
 /** Free a struct pbuf_custom_ref */
-static void
-ip6_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
+static void ip6_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
 {
   LWIP_ASSERT("p != NULL", p != NULL);
   memp_free(MEMP_FRAG_PBUF, p);
@@ -680,8 +676,7 @@ ip6_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
 
 /** Free-callback function to free a 'struct pbuf_custom_ref', called by
  * pbuf_free. */
-static void
-ip6_frag_free_pbuf_custom(struct pbuf *p)
+static void ip6_frag_free_pbuf_custom(struct pbuf *p)
 {
   struct pbuf_custom_ref *pcr = (struct pbuf_custom_ref*)p;
   LWIP_ASSERT("pcr != NULL", pcr != NULL);

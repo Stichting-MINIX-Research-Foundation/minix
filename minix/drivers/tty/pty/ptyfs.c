@@ -12,8 +12,7 @@
  * userland.  The function must always fail when PTYFS is not available for any
  * reason.  Return OK on success, or an IPC-level error on failure.
  */
-static int
-ptyfs_sendrec(message * m_ptr)
+static int ptyfs_sendrec(message * m_ptr)
 {
 	endpoint_t endpt;
 
@@ -35,8 +34,7 @@ ptyfs_sendrec(message * m_ptr)
  * Return OK on success, or an error code on failure.  Errors may include
  * communication failures and out-of-memory conditions.
  */
-int
-ptyfs_set(unsigned int index, mode_t mode, uid_t uid, gid_t gid, dev_t dev)
+int ptyfs_set(unsigned int index, mode_t mode, uid_t uid, gid_t gid, dev_t dev)
 {
 	message m;
 	int r;
@@ -60,8 +58,7 @@ ptyfs_set(unsigned int index, mode_t mode, uid_t uid, gid_t gid, dev_t dev)
  * Remove a node from PTYFS.  Return OK on success, or an error code on
  * failure.  The function succeeds even if no node existed for the given index.
  */
-int
-ptyfs_clear(unsigned int index)
+int ptyfs_clear(unsigned int index)
 {
 	message m;
 	int r;
@@ -85,8 +82,7 @@ ptyfs_clear(unsigned int index)
  * error code.  Among other reasons, the function fails if no node is allocated
  * for the given index, and if the name does not fit in the given buffer.
  */
-int
-ptyfs_name(unsigned int index, char * name, size_t size)
+int ptyfs_name(unsigned int index, char * name, size_t size)
 {
 	message m;
 	int r;

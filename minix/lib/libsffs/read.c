@@ -83,7 +83,7 @@ ssize_t do_getdents(ino_t ino_nr, struct fsdriver_data *data, size_t bytes,
 
   if (!IS_DIR(ino)) return ENOTDIR;
 
-  if (*posp < 0 || *posp >= ULONG_MAX) return EINVAL;
+  if (*posp < 0 || (uint64_t)*posp >= (uint64_t)ULONG_MAX) return EINVAL;
 
   /* We are going to need at least one free inode to store children in. */
   if (!have_free_inode()) return ENFILE;

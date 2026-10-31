@@ -48,6 +48,9 @@ __RCSID("$NetBSD: cdbw.c,v 1.5 2012/07/21 22:49:37 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "mi_vector_hash.h"
+#endif
 
 #ifdef __weak_alias
 __weak_alias(cdbw_close,_cdbw_close)

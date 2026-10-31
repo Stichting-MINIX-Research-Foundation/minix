@@ -25,3 +25,10 @@ void ser_putc(char c)
         }
         sys_outb(thr, c);
 }
+
+void ser_puts(char *p)
+{
+	while(*p != 0)
+		ser_putc(*p++);
+}
+

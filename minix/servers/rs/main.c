@@ -31,6 +31,7 @@ static int sef_cb_lu_response(message *m_ptr);
 static void sef_cb_signal_handler(int signo);
 static int sef_cb_signal_manager(endpoint_t target, int signo);
 
+extern void __minix_init(void);
 
 /*===========================================================================*
  *				main                                         *
@@ -47,6 +48,8 @@ int main(void)
   int result;                 			/* result to return */
   int s;
 
+  DEBUGBASIC(("rs server: started.\n"));
+  __minix_init();
   /* SEF local startup. */
   sef_local_startup();
   
@@ -706,13 +709,7 @@ static int sef_cb_signal_manager(endpoint_t target, int signo)
 /*===========================================================================*
  *                         boot_image_info_lookup                            *
  *===========================================================================*/
-static void boot_image_info_lookup(endpoint, image, ip, pp, sp, dp)
-endpoint_t endpoint;
-struct boot_image *image;
-struct boot_image **ip;
-struct boot_image_priv **pp;
-struct boot_image_sys **sp;
-struct boot_image_dev **dp;
+static void boot_image_info_lookup(endpoint_t endpoint, struct boot_image *image, struct boot_image **ip, struct boot_image_priv **pp, struct boot_image_sys **sp, struct boot_image_dev **dp)
 {
 /* Lookup entries in boot image tables. */
   int i;
@@ -781,8 +778,7 @@ struct boot_image_dev **dp;
 /*===========================================================================*
  *			      catch_boot_init_ready                          *
  *===========================================================================*/
-static void catch_boot_init_ready(endpoint)
-endpoint_t endpoint;
+static void catch_boot_init_ready(endpoint_t endpoint)
 {
 /* Block and catch an init ready message from the given source. */
   int r;
@@ -823,9 +819,7 @@ endpoint_t endpoint;
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-static void get_work(m_ptr, status_ptr)
-message *m_ptr;				/* pointer to message */
-int *status_ptr;			/* pointer to status */
+static void get_work(message *m_ptr, int *status_ptr)
 {
     int r;
     if (OK != (r=sef_receive_status(ANY, m_ptr, status_ptr)))

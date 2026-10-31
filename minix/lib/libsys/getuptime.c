@@ -5,8 +5,7 @@
  * real time (corrected number of clock ticks since system boot), and
  * boot time (in number of seconds since the UNIX epoch).
  */
-int
-getuptime(clock_t * uptime, clock_t * realtime, time_t * boottime)
+int getuptime(clock_t * uptime, clock_t * realtime, time_t * boottime)
 {
 	struct minix_kerninfo *minix_kerninfo;
 

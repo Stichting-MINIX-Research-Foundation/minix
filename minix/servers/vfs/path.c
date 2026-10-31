@@ -380,8 +380,7 @@ last_dir(struct lookup *resolve, struct fproc *rfp)
 /*===========================================================================*
  *				lookup					     *
  *===========================================================================*/
-static int
-lookup(struct vnode *start_node, struct lookup *resolve, node_details_t *result_node, struct fproc *rfp)
+static int lookup(struct vnode *start_node, struct lookup *resolve, node_details_t *result_node, struct fproc *rfp)
 {
 /* Resolve a path name relative to start_node. */
 
@@ -571,8 +570,7 @@ lookup(struct vnode *start_node, struct lookup *resolve, node_details_t *result_
 /*===========================================================================*
  *				lookup_init				     *
  *===========================================================================*/
-void
-lookup_init(struct lookup *resolve, char *path, int flags, struct vmnt **vmp, struct vnode **vp)
+void lookup_init(struct lookup *resolve, char *path, int flags, struct vmnt **vmp, struct vnode **vp)
 {
   assert(vmp != NULL);
   assert(vp != NULL);
@@ -590,8 +588,7 @@ lookup_init(struct lookup *resolve, char *path, int flags, struct vmnt **vmp, st
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-int
-get_name(struct vnode *dirp, struct vnode *entry, char ename[NAME_MAX + 1])
+int get_name(struct vnode *dirp, struct vnode *entry, char ename[NAME_MAX + 1])
 {
 #define DIR_ENTRIES 8
 #define DIR_ENTRY_SIZE (sizeof(struct dirent) + NAME_MAX)
@@ -644,8 +641,7 @@ get_name(struct vnode *dirp, struct vnode *entry, char ename[NAME_MAX + 1])
 /*===========================================================================*
  *				canonical_path				     *
  *===========================================================================*/
-int
-canonical_path(char orig_path[PATH_MAX], struct fproc *rfp)
+int canonical_path(char orig_path[PATH_MAX], struct fproc *rfp)
 {
 /* Find canonical path of a given path */
   int len = 0;

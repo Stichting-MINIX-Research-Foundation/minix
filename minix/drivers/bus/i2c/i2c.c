@@ -76,8 +76,7 @@ static struct chardriver i2c_tab = {
 	.cdr_other	= i2c_other
 };
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	int r;
 	char key[DS_MAX_KEYLEN];
@@ -102,8 +101,7 @@ sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
  * shuts down unexpectedly and starts up with a new endpt and wants to reserve
  * the same device it reserved before.
  */
-static int
-do_reserve(endpoint_t endpt, int slave_addr)
+static int do_reserve(endpoint_t endpt, int slave_addr)
 {
 	int r;
 	char key[DS_MAX_KEYLEN];
@@ -154,8 +152,7 @@ do_reserve(endpoint_t endpt, int slave_addr)
  * device that another driver has reserved (not even other instances of the
  * same driver).
  */
-static int
-check_reservation(endpoint_t endpt, int slave_addr)
+static int check_reservation(endpoint_t endpt, int slave_addr)
 {
 	if (slave_addr < 0 || slave_addr >= NR_I2CDEV) {
 		log_debug(&log,
@@ -187,8 +184,7 @@ check_reservation(endpoint_t endpt, int slave_addr)
  * When a driver comes back up with the same label, the endpt associated
  * with the reservation needs to be updated. This function does the updating.
  */
-static void
-update_reservation(endpoint_t endpt, char *key)
+static void update_reservation(endpoint_t endpt, char *key)
 {
 	int i;
 
@@ -210,8 +206,7 @@ update_reservation(endpoint_t endpt, char *key)
 /*
  * Checks a minix_i2c_ioctl_exec_t to see if the fields make sense.
  */
-static int
-validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
+static int validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
 {
 	i2c_op_t op;
 	i2c_addr_t addr;
@@ -253,8 +248,7 @@ validate_ioctl_exec(minix_i2c_ioctl_exec_t * ioctl_exec)
 /*
  * Performs the action in minix_i2c_ioctl_exec_t.
  */
-static int
-do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
+static int do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
 {
 	int r;
 	minix_i2c_ioctl_exec_t ioctl_exec;
@@ -299,8 +293,7 @@ do_i2c_ioctl_exec(endpoint_t caller, cp_grant_id_t grant_nr)
 	return OK;
 }
 
-static int
-i2c_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
+static int i2c_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int UNUSED(flags), endpoint_t UNUSED(user_endpt),
 	cdev_id_t UNUSED(id))
 {
@@ -319,8 +312,7 @@ i2c_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
 	return r;
 }
 
-static void
-i2c_other(message * m, int ipc_status)
+static void i2c_other(message * m, int ipc_status)
 {
 	message m_reply;
 	int r;
@@ -364,8 +356,7 @@ i2c_other(message * m, int ipc_status)
  * function updates the reservation table with the device driver's new
  * endpoint.
  */
-static void
-ds_event(void)
+static void ds_event(void)
 {
 	char key[DS_MAX_KEYLEN];
 	u32_t value;
@@ -393,8 +384,7 @@ ds_event(void)
 	}
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	int r;
 	char key[DS_MAX_KEYLEN];
@@ -418,8 +408,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 	char regex[DS_MAX_KEYLEN];
@@ -465,8 +454,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup()
+static void sef_local_startup()
 {
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init);
@@ -480,8 +468,7 @@ sef_local_startup()
 	sef_startup();
 }
 
-static int
-env_parse_instance(void)
+static int env_parse_instance(void)
 {
 	int r;
 	long instance;
@@ -501,8 +488,7 @@ env_parse_instance(void)
 	return OK;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

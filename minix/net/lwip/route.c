@@ -150,8 +150,7 @@ static struct route_entry *rtcache_v6route;
  * Initialize the routing cache.  There are a lot of trivial functions here,
  * but this is designed to be extended in the future.
  */
-static void
-rtcache_init(void)
+static void rtcache_init(void)
 {
 
 	rtcache_v4set = FALSE;
@@ -164,8 +163,7 @@ rtcache_init(void)
  * negative result was cached.  Return FALSE if the routing cache does not
  * cache the given IPv4 address.
  */
-static inline int
-rtcache_lookup_v4(const ip4_addr_t * ipaddr, struct route_entry ** route)
+static inline int rtcache_lookup_v4(const ip4_addr_t * ipaddr, struct route_entry ** route)
 {
 
 	if (rtcache_v4set && ip4_addr_cmp(&rtcache_v4addr, ipaddr)) {
@@ -180,8 +178,7 @@ rtcache_lookup_v4(const ip4_addr_t * ipaddr, struct route_entry ** route)
  * Add the given IPv4 address and the given routing entry (NULL for negative
  * caching) to the routing cache.
  */
-static inline void
-rtcache_add_v4(const ip4_addr_t * ipaddr, struct route_entry * route)
+static inline void rtcache_add_v4(const ip4_addr_t * ipaddr, struct route_entry * route)
 {
 
 	rtcache_v4addr = *ipaddr;
@@ -192,8 +189,7 @@ rtcache_add_v4(const ip4_addr_t * ipaddr, struct route_entry * route)
 /*
  * Reset the IPv4 routing cache.
  */
-static void
-rtcache_reset_v4(void)
+static void rtcache_reset_v4(void)
 {
 
 	rtcache_v4set = FALSE;
@@ -205,8 +201,7 @@ rtcache_reset_v4(void)
  * negative result was cached.  Return FALSE if the routing cache does not
  * cache the given IPv6 address.
  */
-static inline int
-rtcache_lookup_v6(const ip6_addr_t * ipaddr, struct route_entry ** route)
+static inline int rtcache_lookup_v6(const ip6_addr_t * ipaddr, struct route_entry ** route)
 {
 
 	if (rtcache_v6set && ip6_addr_cmp(&rtcache_v6addr, ipaddr)) {
@@ -222,8 +217,7 @@ rtcache_lookup_v6(const ip6_addr_t * ipaddr, struct route_entry ** route)
  * caching) to the routing cache.  Caching of scoped addresses without zones is
  * not supported.
  */
-static inline void
-rtcache_add_v6(const ip6_addr_t * ipaddr, struct route_entry * route)
+static inline void rtcache_add_v6(const ip6_addr_t * ipaddr, struct route_entry * route)
 {
 
 	rtcache_v6addr = *ipaddr;
@@ -234,8 +228,7 @@ rtcache_add_v6(const ip6_addr_t * ipaddr, struct route_entry * route)
 /*
  * Reset the IPv6 routing cache.
  */
-static void
-rtcache_reset_v6(void)
+static void rtcache_reset_v6(void)
 {
 
 	rtcache_v6set = FALSE;
@@ -244,8 +237,7 @@ rtcache_reset_v6(void)
 /*
  * Initialize the routing module.
  */
-void
-route_init(void)
+void route_init(void)
 {
 	unsigned int slot;
 
@@ -268,8 +260,7 @@ route_init(void)
  * Prepare for a routing tree operation by converting the given IPv4 address
  * into a raw address that can be used in that routing tree operation.
  */
-static inline void
-route_prepare_v4(const ip4_addr_t * ip4addr, uint8_t rtaddr[ROUTE_ADDR_MAX])
+static inline void route_prepare_v4(const ip4_addr_t * ip4addr, uint8_t rtaddr[ROUTE_ADDR_MAX])
 {
 	uint32_t val;
 
@@ -283,8 +274,7 @@ route_prepare_v4(const ip4_addr_t * ip4addr, uint8_t rtaddr[ROUTE_ADDR_MAX])
  * into a raw address that can be used in that routing tree operation.  If the
  * given prefix length allows for it, also incorporate the address zone.
  */
-static inline void
-route_prepare_v6(const ip6_addr_t * ip6addr, unsigned int prefix,
+static inline void route_prepare_v6(const ip6_addr_t * ip6addr, unsigned int prefix,
 	uint8_t rtaddr[ROUTE_ADDR_MAX])
 {
 
@@ -316,8 +306,7 @@ route_prepare_v6(const ip6_addr_t * ip6addr, unsigned int prefix,
  * applicable and if the given prefix length allows for it.  Return the index
  * of the routing tree to use (ROUTE_TREE_V4 or ROUTE_TREE_V6).
  */
-static unsigned int
-route_prepare(const ip_addr_t * ipaddr, unsigned int prefix,
+static unsigned int route_prepare(const ip_addr_t * ipaddr, unsigned int prefix,
 	uint8_t rtaddr[ROUTE_ADDR_MAX])
 {
 
@@ -342,8 +331,7 @@ route_prepare(const ip_addr_t * ipaddr, unsigned int prefix,
  * Invalidate any cache entries that may now have become stale, both locally
  * and in lwIP.
  */
-static void
-route_updated(unsigned int tree)
+static void route_updated(unsigned int tree)
 {
 
 	if (tree == ROUTE_TREE_V6) {
@@ -367,8 +355,7 @@ route_updated(unsigned int tree)
  * field does not contain unsupported flags.  On success, return OK, and also
  * also announce the addition.  On failure, return a negative error code.
  */
-int
-route_add(const ip_addr_t * addr, unsigned int prefix,
+int route_add(const ip_addr_t * addr, unsigned int prefix,
 	const ip_addr_t * gateway, struct ifdev * ifdev, unsigned int flags,
 	const struct rtsock_request * rtr)
 {
@@ -477,8 +464,7 @@ route_add(const ip_addr_t * addr, unsigned int prefix,
  * valid).  Return TRUE if adding the route is guaranteed to succeed, or FALSE
  * if creating a route for the given destination would fail.
  */
-int
-route_can_add(const ip_addr_t * addr, unsigned int prefix,
+int route_can_add(const ip_addr_t * addr, unsigned int prefix,
 	int is_host __unused)
 {
 	uint8_t rtaddr[ROUTE_ADDR_MAX];
@@ -533,8 +519,7 @@ route_find(const ip_addr_t * addr, unsigned int prefix, int is_host)
  * A route lookup failed for the given IP address.  Generate an RTM_MISS
  * message on routing sockets.
  */
-static void
-route_miss(const ip_addr_t * ipaddr)
+static void route_miss(const ip_addr_t * ipaddr)
 {
 	union sockaddr_any addr;
 	socklen_t addr_len;
@@ -550,8 +535,7 @@ route_miss(const ip_addr_t * ipaddr)
  * A route lookup failed for the given IPv4 address.  Generate an RTM_MISS
  * message on routing sockets.
  */
-static void
-route_miss_v4(const ip4_addr_t * ip4addr)
+static void route_miss_v4(const ip4_addr_t * ip4addr)
 {
 	ip_addr_t ipaddr;
 
@@ -564,8 +548,7 @@ route_miss_v4(const ip4_addr_t * ip4addr)
  * A route lookup failed for the given IPv6 address.  Generate an RTM_MISS
  * message on routing sockets.
  */
-static void
-route_miss_v6(const ip6_addr_t * ip6addr)
+static void route_miss_v6(const ip6_addr_t * ip6addr)
 {
 	ip_addr_t ipaddr;
 
@@ -662,8 +645,7 @@ route_lookup(const ip_addr_t * addr)
  * route's destination address.  On success, return OK, and also announce the
  * change.  On failure, return a negative error code.
  */
-static int
-route_change(struct route_entry * route, const ip_addr_t * gateway,
+static int route_change(struct route_entry * route, const ip_addr_t * gateway,
 	struct ifdev * ifdev, unsigned int flags,
 	const struct rtsock_request * rtr)
 {
@@ -711,8 +693,7 @@ route_change(struct route_entry * route, const ip_addr_t * gateway,
 /*
  * Delete the given route, and announce its deletion.
  */
-void
-route_delete(struct route_entry * route, const struct rtsock_request * rtr)
+void route_delete(struct route_entry * route, const struct rtsock_request * rtr)
 {
 	unsigned int tree;
 
@@ -734,8 +715,7 @@ route_delete(struct route_entry * route, const struct rtsock_request * rtr)
  * Delete all routes associated with the given interface, typically as part of
  * destroying the interface.
  */
-void
-route_clear(struct ifdev * ifdev)
+void route_clear(struct ifdev * ifdev)
 {
 	struct rttree_entry *entry, *parent;
 	struct route_entry *route;
@@ -776,8 +756,7 @@ route_clear(struct ifdev * ifdev)
  * that do not apply to IPv4/IPv6 routes.  Return OK or a negative error code,
  * following the same semantics as route_process().
  */
-static int
-route_process_inet(unsigned int type, const ip_addr_t * dst_addr,
+static int route_process_inet(unsigned int type, const ip_addr_t * dst_addr,
 	const struct sockaddr * mask, const struct sockaddr * gateway,
 	struct ifdev * ifdev, unsigned int flags,
 	const struct rtsock_request * rtr)
@@ -958,8 +937,7 @@ route_process_inet(unsigned int type, const ip_addr_t * dst_addr,
  * On failure, return a negative error code; in that case, the caller will send
  * a failure response on the original routing socket itself.
  */
-int
-route_process(unsigned int type, const struct sockaddr * dst,
+int route_process(unsigned int type, const struct sockaddr * dst,
 	const struct sockaddr * mask, const struct sockaddr * gateway,
 	const struct sockaddr * ifp, const struct sockaddr * ifa,
 	unsigned int flags, unsigned long inits,
@@ -1111,8 +1089,7 @@ route_process(unsigned int type, const struct sockaddr * dst,
  * Return the routing flags (RTF_) for the given routing entry.  Strip out any
  * internal flags.
  */
-unsigned int
-route_get_flags(const struct route_entry * route)
+unsigned int route_get_flags(const struct route_entry * route)
 {
 
 	return route->re_flags & ~RTF_IPV6;
@@ -1122,8 +1099,7 @@ route_get_flags(const struct route_entry * route)
  * Return TRUE if the given routing entry is for the IPv6 address family, or
  * FALSE if it is for IPv4.
  */
-int
-route_is_ipv6(const struct route_entry * route)
+int route_is_ipv6(const struct route_entry * route)
 {
 
 	return !!(route->re_flags & RTF_IPV6);
@@ -1145,8 +1121,7 @@ route_get_ifdev(const struct route_entry * route)
  * lwIP-style IP address 'ipaddr' of type 'type', which must by IPADDR_TYPE_V4
  * or IPADDR_TYPE_V6.
  */
-static void
-route_get_addr(ip_addr_t * ipaddr, const uint8_t * rtaddr, uint8_t type)
+static void route_get_addr(ip_addr_t * ipaddr, const uint8_t * rtaddr, uint8_t type)
 {
 	ip6_addr_t *ip6addr;
 	uint32_t val, zone;
@@ -1193,8 +1168,7 @@ route_get_addr(ip_addr_t * ipaddr, const uint8_t * rtaddr, uint8_t type)
  * interface in 'ifdevp', the routing entry's flags in 'flags', and the route's
  * usage count in 'use'.
  */
-void
-route_get(const struct route_entry * route, union sockaddr_any * addr,
+void route_get(const struct route_entry * route, union sockaddr_any * addr,
 	union sockaddr_any * mask, union sockaddr_any * gateway,
 	union sockaddr_any * ifp, union sockaddr_any * ifa,
 	struct ifdev ** ifdevp, unsigned int * flags, unsigned int * use)
@@ -1599,8 +1573,7 @@ lwip_hook_nd6_get_gw(struct netif * netif, const ip6_addr_t * ip6addr)
  * Return TRUE if the packet should be sent.  Return FALSE if the packet should
  * be rejected or discarded, with 'err' set to the error to return to lwIP.
  */
-int
-route_output_v4(struct ifdev * ifdev, const ip4_addr_t * ipaddr, err_t * err)
+int route_output_v4(struct ifdev * ifdev, const ip4_addr_t * ipaddr, err_t * err)
 {
 	const struct route_entry *route;
 
@@ -1625,8 +1598,7 @@ route_output_v4(struct ifdev * ifdev, const ip4_addr_t * ipaddr, err_t * err)
  * Return TRUE if the packet should be sent.  Return FALSE if the packet should
  * be rejected or discarded, with 'err' set to the error to return to lwIP.
  */
-int
-route_output_v6(struct ifdev * ifdev, const ip6_addr_t * ipaddr, err_t * err)
+int route_output_v6(struct ifdev * ifdev, const ip6_addr_t * ipaddr, err_t * err)
 {
 	const struct route_entry *route;
 

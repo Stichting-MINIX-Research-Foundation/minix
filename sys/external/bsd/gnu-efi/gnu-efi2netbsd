@@ -1,0 +1,88 @@
+#! /bin/sh
+#
+#	$NetBSD: gnu-efi2netbsd,v 1.1 2014/04/01 16:10:56 jakllsch Exp $
+#
+# Copyright (c) 2011 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# gnu-efi2netbsd:  convert an gnu-efi source tree into a
+# NetBSD gnu-efi source tree, under src/sys/external/bsd,
+#
+# Rough instructions for importing new gnu-efi release:
+#
+#	$ cd /some/where/temporary
+#	$ tar xpfz /new/gnu-efi/release/tar/file
+#	$ sh /usr/src/sys/external/bsd/gnu-efi/gnu-efi2netbsd gnu-efi-x.y
+#	$ cd gnu-efi-x.y
+#	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import gnu-efi-x.yz" src/sys/external/bsd/gnu-efi/dist GNU_EFI gnu-efi-x_y_z
+#	- check makefiles to see if any extra sources have been added.
+#	- update distrib/sets if necessary.
+
+if [ $# -ne 1 ]; then echo "gnu-efi2netbsd src"; exit 1; fi
+
+r=$1
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+cd $r
+
+### Remove GPL components
+rm -r $r/debian
+rm $r/gnuefi/setjmp_*.S
+
+### Remove the $'s around RCS tags
+cleantags $r
+
+### Add our NetBSD RCS Id
+find $r -type f -and \( -name '*.[Sch]' -or -name '*.lds' \) -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/gnu-efi2n$$
+echo "" >>/tmp/gnu-efi2n$$
+cat $c  >> /tmp/gnu-efi2n$$
+touch -r $c /tmp/gnu-efi2n$$
+mv /tmp/gnu-efi2n$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+echo done
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+find $r -type d -name "CVS" -print | xargs rm -r
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	find $r -type f -print | xargs chmod u+rw,go+r
+	find $r -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.15 2013/10/21 15:37:46 christos Exp $	*/
+/*	$NetBSD: pmax.c,v 1.16 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.15 2013/10/21 15:37:46 christos Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.16 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -121,9 +121,13 @@ static int	load_bootstrap(ib_params *, char **,
 static int pmax_clearboot(ib_params *);
 static int pmax_setboot(ib_params *);
 
-struct ib_mach ib_mach_pmax =
-	{ "pmax", pmax_setboot, pmax_clearboot, no_editboot,
-		IB_STAGE1START | IB_APPEND | IB_SUNSUM };
+struct ib_mach ib_mach_pmax = {
+	.name		=	"pmax",
+	.setboot	=	pmax_setboot,
+	.clearboot	=	pmax_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_STAGE1START | IB_APPEND | IB_SUNSUM,
+};
 
 
 static int

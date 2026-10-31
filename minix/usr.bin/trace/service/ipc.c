@@ -6,8 +6,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 
-static void
-put_key(struct trace_proc * proc, const char * name, key_t key)
+static void put_key(struct trace_proc * proc, const char * name, key_t key)
 {
 
 	if (!valuesonly && key == IPC_PRIVATE)
@@ -21,8 +20,7 @@ static const struct flags ipcget_flags[] = {
 	FLAG(IPC_EXCL),
 };
 
-static int
-ipc_shmget_out(struct trace_proc * proc, const message * m_out)
+static int ipc_shmget_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_key(proc, "key", m_out->m_lc_ipc_shmget.key);
@@ -33,8 +31,7 @@ ipc_shmget_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-ipc_shmget_in(struct trace_proc * proc, const message * __unused m_out,
+static void ipc_shmget_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -49,8 +46,7 @@ static const struct flags shmat_flags[] = {
 	FLAG(SHM_RND),
 };
 
-static int
-ipc_shmat_out(struct trace_proc * proc, const message * m_out)
+static int ipc_shmat_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "shmid", "%d", m_out->m_lc_ipc_shmat.id);
@@ -61,8 +57,7 @@ ipc_shmat_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-ipc_shmat_in(struct trace_proc * proc, const message * __unused m_out,
+static void ipc_shmat_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -72,8 +67,7 @@ ipc_shmat_in(struct trace_proc * proc, const message * __unused m_out,
 		put_result(proc);
 }
 
-static int
-ipc_shmdt_out(struct trace_proc * proc, const message * m_out)
+static int ipc_shmdt_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ptr(proc, "shmaddr", (vir_bytes)m_out->m_lc_ipc_shmdt.addr);
@@ -81,8 +75,7 @@ ipc_shmdt_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_shmctl_cmd(struct trace_proc * proc, const char * name, int cmd)
+static void put_shmctl_cmd(struct trace_proc * proc, const char * name, int cmd)
 {
 	const char *text = NULL;
 
@@ -108,8 +101,7 @@ static const struct flags shm_mode_flags[] = {
 	FLAG(SHM_LOCKED),
 };
 
-static void
-put_struct_shmid_ds(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_shmid_ds(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct shmid_ds buf;
@@ -149,8 +141,7 @@ put_struct_shmid_ds(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, set || verbose > 0);
 }
 
-static int
-ipc_shmctl_out(struct trace_proc * proc, const message * m_out)
+static int ipc_shmctl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "shmid", "%d", m_out->m_lc_ipc_shmctl.id);
@@ -175,8 +166,7 @@ ipc_shmctl_out(struct trace_proc * proc, const message * m_out)
 	}
 }
 
-static void
-ipc_shmctl_in(struct trace_proc * proc, const message * m_out,
+static void ipc_shmctl_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -204,8 +194,7 @@ ipc_shmctl_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-ipc_semget_out(struct trace_proc * proc, const message * m_out)
+static int ipc_semget_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_key(proc, "key", m_out->m_lc_ipc_semget.key);
@@ -216,8 +205,7 @@ ipc_semget_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-ipc_semget_in(struct trace_proc * proc, const message * __unused m_out,
+static void ipc_semget_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -227,8 +215,7 @@ ipc_semget_in(struct trace_proc * proc, const message * __unused m_out,
 		put_result(proc);
 }
 
-static void
-put_semctl_cmd(struct trace_proc * proc, const char * name, int cmd)
+static void put_semctl_cmd(struct trace_proc * proc, const char * name, int cmd)
 {
 	const char *text = NULL;
 
@@ -256,8 +243,7 @@ put_semctl_cmd(struct trace_proc * proc, const char * name, int cmd)
 		put_value(proc, name, "%d", cmd);
 }
 
-static void
-put_struct_semid_ds(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_semid_ds(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct semid_ds buf;
@@ -293,8 +279,7 @@ put_struct_semid_ds(struct trace_proc * proc, const char * name, int flags,
 }
 
 
-static int
-ipc_semctl_out(struct trace_proc * proc, const message * m_out)
+static int ipc_semctl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "semid", "%d", m_out->m_lc_ipc_semctl.id);
@@ -335,8 +320,7 @@ ipc_semctl_out(struct trace_proc * proc, const message * m_out)
 	}
 }
 
-static void
-ipc_semctl_in(struct trace_proc * proc, const message * m_out,
+static void ipc_semctl_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -371,8 +355,7 @@ static const struct flags sem_flags[] = {
 	FLAG(SEM_UNDO),
 };
 
-static void
-put_struct_sembuf(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_sembuf(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct sembuf buf;
@@ -393,8 +376,7 @@ put_struct_sembuf(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, all);
 }
 
-static void
-put_sembuf_array(struct trace_proc * proc, const char * name, vir_bytes addr,
+static void put_sembuf_array(struct trace_proc * proc, const char * name, vir_bytes addr,
 	size_t count)
 {
 	struct sembuf buf[SEMOPM]; /* about 600 bytes, so OK for the stack */
@@ -413,8 +395,7 @@ put_sembuf_array(struct trace_proc * proc, const char * name, vir_bytes addr,
 	put_close(proc, "]");
 }
 
-static int
-ipc_semop_out(struct trace_proc * proc, const message * m_out)
+static int ipc_semop_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "semid", "%d", m_out->m_lc_ipc_semop.id);

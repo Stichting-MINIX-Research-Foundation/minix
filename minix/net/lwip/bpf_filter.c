@@ -24,8 +24,7 @@
  * Obtain an unsigned 32-bit value in network byte order from the pbuf chain
  * 'pbuf' at offset 'k'.  The given offset is guaranteed to be within bounds.
  */
-static uint32_t
-bpf_get32_ext(const struct pbuf * pbuf, uint32_t k)
+static uint32_t bpf_get32_ext(const struct pbuf * pbuf, uint32_t k)
 {
 	uint32_t val;
 	unsigned int i;
@@ -70,8 +69,7 @@ bpf_get32_ext(const struct pbuf * pbuf, uint32_t k)
  * Obtain an unsigned 16-bit value in network byte order from the pbuf chain
  * 'pbuf' at offset 'k'.  The given offset is guaranteed to be within bounds.
  */
-static uint32_t
-bpf_get16_ext(const struct pbuf * pbuf, uint32_t k)
+static uint32_t bpf_get16_ext(const struct pbuf * pbuf, uint32_t k)
 {
 
 	/* As above. */
@@ -99,8 +97,7 @@ bpf_get16_ext(const struct pbuf * pbuf, uint32_t k)
  * Obtain an unsigned 8-bit value from the pbuf chain 'pbuf' at offset 'k'.
  * The given offset is guaranteed to be within bounds.
  */
-static uint32_t
-bpf_get8_ext(const struct pbuf * pbuf, uint32_t k)
+static uint32_t bpf_get8_ext(const struct pbuf * pbuf, uint32_t k)
 {
 
 	/* As above. */
@@ -406,8 +403,7 @@ typedef uint16_t meminv_t;
  * if the program was successfully validated, or 0 if the program should not be
  * accepted.
  */
-int
-bpf_validate(const struct bpf_insn * insns, int ninsns)
+int bpf_validate(const struct bpf_insn * insns, int ninsns)
 {
 	bitchunk_t reachable[BITMAP_CHUNKS(BPF_MAXINSNS)];
 	meminv_t invalid, meminv[BPF_MAXINSNS];

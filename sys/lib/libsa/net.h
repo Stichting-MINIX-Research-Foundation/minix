@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.27 2014/03/29 14:30:16 jakllsch Exp $	*/
+/*	$NetBSD: net.h,v 1.28 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -133,4 +133,6 @@ int	ip_cksum(const void *, size_t);
 /* Machine-dependent functions: */
 #ifdef _STANDALONE	/* XXX for mount_nfs(8) SMALLPROG hack */
 satime_t	getsecs(void);
+#else
+#define getsecs() time(NULL)
 #endif

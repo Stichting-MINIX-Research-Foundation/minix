@@ -229,8 +229,7 @@ omap_gpio_bank_get(int gpio_nr)
 	return bank;
 }
 
-static int
-omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
+static int omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 {
 	log_trace(&log, "%s s claiming %d\n", owner, nr);
 
@@ -254,8 +253,7 @@ omap_gpio_claim(char *owner, int nr, struct gpio **gpio)
 	return OK;
 }
 
-static int
-omap_gpio_pin_mode(struct gpio *gpio, int mode)
+static int omap_gpio_pin_mode(struct gpio *gpio, int mode)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
@@ -280,8 +278,7 @@ omap_gpio_pin_mode(struct gpio *gpio, int mode)
 	return 0;
 }
 
-static int
-omap_gpio_set(struct gpio *gpio, int value)
+static int omap_gpio_set(struct gpio *gpio, int value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
@@ -298,8 +295,7 @@ omap_gpio_set(struct gpio *gpio, int value)
 	return OK;
 }
 
-static int
-omap_gpio_read(struct gpio *gpio, int *value)
+static int omap_gpio_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
@@ -323,8 +319,7 @@ omap_gpio_read(struct gpio *gpio, int *value)
 	return OK;
 }
 
-static int
-omap_gpio_intr_read(struct gpio *gpio, int *value)
+static int omap_gpio_intr_read(struct gpio *gpio, int *value)
 {
 	struct omap_gpio_bank *bank;
 	assert(gpio != NULL);
@@ -340,8 +335,7 @@ omap_gpio_intr_read(struct gpio *gpio, int *value)
 	return OK;
 }
 
-static int
-omap_message_hook(message * m)
+static int omap_message_hook(message * m)
 {
 	unsigned long irq_set, i;
 	struct omap_gpio_bank *bank;
@@ -400,8 +394,7 @@ static int revision_matches(u32_t board_id,u32_t rev) {
 	return 1;
 }
 
-static int
-omap_gpio_init(struct gpio_driver *gpdrv)
+static int omap_gpio_init(struct gpio_driver *gpdrv)
 {
 	u32_t revision;
 	int i;
@@ -496,56 +489,48 @@ omap_gpio_init(struct gpio_driver *gpdrv)
 	return 0;
 }
 
-int
-gpio_init()
+int gpio_init()
 {
 	return omap_gpio_init(&drv);
 }
 
 /* request access to a gpio */
-int
-gpio_claim(char *owner, int nr, struct gpio **gpio)
+int gpio_claim(char *owner, int nr, struct gpio **gpio)
 {
 	return drv.claim(owner, nr, gpio);
 }
 
 /* Configure the GPIO for a certain purpose */
-int
-gpio_pin_mode(struct gpio *gpio, int mode)
+int gpio_pin_mode(struct gpio *gpio, int mode)
 {
 	return drv.pin_mode(gpio, mode);
 }
 
 /* Set the value for a GPIO */
-int
-gpio_set(struct gpio *gpio, int value)
+int gpio_set(struct gpio *gpio, int value)
 {
 	return drv.set(gpio, value);
 }
 
 /* Read the current value of the GPIO */
-int
-gpio_read(struct gpio *gpio, int *value)
+int gpio_read(struct gpio *gpio, int *value)
 {
 	return drv.read(gpio, value);
 }
 
 /* Read and clear the value interrupt value of the GPIO */
-int
-gpio_intr_read(struct gpio *gpio, int *value)
+int gpio_intr_read(struct gpio *gpio, int *value)
 {
 	return drv.intr_read(gpio, value);
 }
 
 /* Interrupt hook */
-int
-gpio_intr_message(message * m)
+int gpio_intr_message(message * m)
 {
 	return drv.message_hook(m);
 }
 
-int
-gpio_release(void)
+int gpio_release(void)
 {
 	return OK;
 }

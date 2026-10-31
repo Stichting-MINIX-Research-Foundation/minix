@@ -1,0 +1,20 @@
+#	$NetBSD: Makefile.liveimage,v 1.2 2018/12/15 18:03:17 gson Exp $
+
+.include <bsd.own.mk>
+
+KERN_SET=		minix-kernel
+#MBR_BOOTCODE=	mbr_ext
+PRIMARY_BOOT=		bootxx_minixfs3
+SECONDARY_BOOT=		boot_monitor
+#SECONDARY_BOOT_ARG=	# unnecessary
+
+USE_MBR=		yes
+USE_GPT=		no
+USE_GPTMBR=		no
+#EFIMB=			64
+SWAPMB= 		0
+LIVEIMAGEMB=	2048
+
+FSTAB_IN=	${.CURDIR}/fstab.in
+
+.include "${.CURDIR}/../../../common/bootimage/Makefile.liveimage"

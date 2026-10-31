@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.82 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.88 2023/01/07 19:41:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,6 @@
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
 #define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
 #define FFS_EXTATTR_AUTOCREATE	6	/* size for backing file autocreation */
-#define FFS_MAXID		7	/* number of valid ffs ids */
 
 struct buf;
 struct fid;
@@ -90,8 +89,8 @@ __BEGIN_DECLS
 /* ffs_alloc.c */
 int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
-int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
-		      kauth_cred_t, struct buf **, daddr_t *);
+int	ffs_realloccg(struct inode *, daddr_t, daddr_t, daddr_t, int, int,
+		      int, kauth_cred_t, struct buf **, daddr_t *);
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, ino_t *);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
@@ -136,16 +135,19 @@ int	ffs_spec_fsync(void *);
 int	ffs_reclaim(void *);
 int	ffs_getpages(void *);
 void	ffs_gop_size(struct vnode *, off_t, off_t *, int);
+int	ffs_lock(void *);
+int	ffs_unlock(void *);
+int	ffs_islocked(void *);
+int	ffs_full_fsync(struct vnode *, int);
+
+/* ffs_extattr.c */
 int	ffs_openextattr(void *);
 int	ffs_closeextattr(void *);
 int	ffs_getextattr(void *);
 int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
-int	ffs_lock(void *);
-int	ffs_unlock(void *);
-int	ffs_islocked(void *);
-int	ffs_full_fsync(struct vnode *, int);
+int	ffsext_strategy(void *);
 
 /*
  * Snapshot function prototypes.
@@ -168,8 +170,8 @@ int	ffs_wapbl_stop(struct mount *, int);
 int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
 void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
 
-void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
-void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_sync_metadata(struct mount *, struct wapbl_dealloc *);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, struct wapbl_dealloc *);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);
@@ -186,13 +188,13 @@ void	ffs_appleufs_set(struct appleufslabel *, const char *, time_t,
 			 uint64_t);
 
 /* ffs_bswap.c */
-void	ffs_sb_swap(struct fs*, struct fs *);
+void	ffs_sb_swap(const struct fs *, struct fs *);
 void	ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void	ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 struct csum;
 void	ffs_csum_swap(struct csum *, struct csum *, int);
 struct csum_total;
-void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
+void	ffs_csumtotal_swap(const struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */
@@ -200,7 +202,7 @@ void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
 int	ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
 #endif /* defined(_KERNEL) */
-void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
+void	ffs_fragacct(struct fs *, int, uint32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void	ffs_clrblock(struct fs *, u_char *, int32_t);

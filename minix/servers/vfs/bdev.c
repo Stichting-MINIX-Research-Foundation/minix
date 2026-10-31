@@ -30,8 +30,7 @@
  * Send a request to a block device, and suspend the current thread until a
  * reply from the driver comes in.
  */
-static int
-bdev_sendrec(endpoint_t driver_e, message * mess_ptr)
+static int bdev_sendrec(endpoint_t driver_e, message * mess_ptr)
 {
 	int r, status, retry_count;
 	message mess_retry;
@@ -75,8 +74,7 @@ bdev_sendrec(endpoint_t driver_e, message * mess_ptr)
 /*
  * Open a block device.
  */
-int
-bdev_open(dev_t dev, int bits)
+int bdev_open(dev_t dev, int bits)
 {
 	devmajor_t major_dev;
 	devminor_t minor_dev;
@@ -110,8 +108,7 @@ bdev_open(dev_t dev, int bits)
 /*
  * Close a block device.
  */
-int
-bdev_close(dev_t dev)
+int bdev_close(dev_t dev)
 {
 	devmajor_t major_dev;
 	devminor_t minor_dev;
@@ -140,8 +137,7 @@ bdev_close(dev_t dev)
 /*
  * Perform an I/O control operation on a block device.
  */
-int
-bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req, vir_bytes buf)
+int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req, vir_bytes buf)
 {
 	struct dmap *dp;
 	cp_grant_id_t grant;
@@ -189,8 +185,7 @@ bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req, vir_bytes buf)
  * A block driver has results for a call.  There must be a thread waiting for
  * these results; wake it up.  This function MUST NOT block its calling thread.
  */
-void
-bdev_reply(void)
+void bdev_reply(void)
 {
 	struct worker_thread *wp;
 	struct dmap *dp;
@@ -223,8 +218,7 @@ bdev_reply(void)
  * A new block device driver has been mapped in.  This may affect both mounted
  * file systems and open block-special files.
  */
-void
-bdev_up(devmajor_t maj)
+void bdev_up(devmajor_t maj)
 {
 	int r, found, bits;
 	struct filp *rfilp;

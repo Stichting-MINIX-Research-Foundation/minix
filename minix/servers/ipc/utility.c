@@ -1,7 +1,6 @@
 #include "inc.h"
 
-int
-check_perm(struct ipc_perm * req, endpoint_t who, int mode)
+int check_perm(struct ipc_perm * req, endpoint_t who, int mode)
 {
 	int req_mode;
 	uid_t uid;
@@ -34,8 +33,7 @@ check_perm(struct ipc_perm * req, endpoint_t who, int mode)
 /*
  * Copy over an ipc_perm structure to an ipc_perm_sysctl structure.
  */
-void
-prepare_mib_perm(struct ipc_perm_sysctl * perms, const struct ipc_perm * perm)
+void prepare_mib_perm(struct ipc_perm_sysctl * perms, const struct ipc_perm * perm)
 {
 
 	memset(perms, 0, sizeof(*perms));

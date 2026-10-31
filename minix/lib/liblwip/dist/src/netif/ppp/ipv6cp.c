@@ -334,9 +334,7 @@ static char *llv6_ntoa(eui64_t ifaceid);
 /*
  * setifaceid - set the interface identifiers manually
  */
-static int
-setifaceid(argv)
-    char **argv;
+static int setifaceid(char **argv)
 {
     char *comma, *arg, c;
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
@@ -390,8 +388,7 @@ setifaceid(argv)
     return 1;
 }
 
-static void
-printifaceid(opt, printer, arg)
+static void printifaceid(opt, printer, arg)
     option_t *opt;
     void (*printer)(void *, char *, ...));
     void *arg;
@@ -1338,9 +1335,7 @@ static void ipv6cp_finished(fsm *f) {
  * ipv6cp_script_done - called when the ipv6-up or ipv6-down script
  * has finished.
  */
-static void
-ipv6cp_script_done(arg)
-    void *arg;
+static void ipv6cp_script_done(void *arg)
 {
     ipv6cp_script_pid = 0;
     switch (ipv6cp_script_state) {
@@ -1364,9 +1359,7 @@ ipv6cp_script_done(arg)
  * ipv6cp_script - Execute a script with arguments
  * interface-name tty-name speed local-LL remote-LL.
  */
-static void
-ipv6cp_script(script)
-    char *script;
+static void ipv6cp_script(char *script)
 {
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];

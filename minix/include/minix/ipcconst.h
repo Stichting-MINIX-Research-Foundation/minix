@@ -14,8 +14,10 @@
 #define IPCNO_HIGHEST	SENDA
 /* Check that the message payload type doesn't grow past the maximum IPC payload size.
  * This is a compile time check. */
+#ifndef _ASSERT_MSG_SIZE
 #define _ASSERT_MSG_SIZE(msg_type) \
     typedef int _ASSERT_##msg_type[/* CONSTCOND */sizeof(msg_type) == 56 ? 1 : -1]
+#endif
 
 /* Macros for IPC status code manipulation. */
 #define IPC_STATUS_CALL_SHIFT	0

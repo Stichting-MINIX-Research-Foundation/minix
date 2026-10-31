@@ -1,0 +1,218 @@
+# $NetBSD: files.acpica,v 1.17 2019/01/05 20:40:05 christos Exp $
+
+define		acpica
+makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
+
+prefix	external/bsd/acpica/dist
+
+# common/
+file	common/ahids.c			acpica
+file	common/ahuuids.c		acpica & acpi_debug & ddb
+
+# debugger/
+file	debugger/dbcmds.c		acpica & acpi_debug & ddb
+file	debugger/dbconvert.c		acpica & acpi_debug & ddb
+file	debugger/dbdisply.c		acpica & acpi_debug & ddb
+file	debugger/dbexec.c		acpica & acpi_debug & ddb
+file	debugger/dbhistry.c		acpica & acpi_debug & ddb
+file	debugger/dbinput.c		acpica & acpi_debug & ddb
+file	debugger/dbmethod.c		acpica & acpi_debug & ddb
+file	debugger/dbnames.c		acpica & acpi_debug & ddb
+file	debugger/dbobject.c		acpica & acpi_debug & ddb
+file	debugger/dbstats.c		acpica & acpi_debug & ddb
+file	debugger/dbtest.c		acpica & acpi_debug & ddb
+file	debugger/dbutils.c		acpica & acpi_debug & ddb
+file	debugger/dbxface.c		acpica & acpi_debug & ddb
+
+# disassembler/
+file	disassembler/dmbuffer.c		acpica & acpi_debug & ddb
+file	disassembler/dmcstyle.c		acpica & acpi_debug & ddb
+file	disassembler/dmdeferred.c	acpica & acpi_debug & ddb
+file	disassembler/dmnames.c		acpica & acpi_debug & ddb
+file	disassembler/dmopcode.c		acpica & acpi_debug & ddb
+file	disassembler/dmresrc.c		acpica & acpi_debug & ddb
+file	disassembler/dmresrcl.c		acpica & acpi_debug & ddb
+file	disassembler/dmresrcl2.c	acpica & acpi_debug & ddb
+file	disassembler/dmresrcs.c		acpica & acpi_debug & ddb
+file	disassembler/dmutils.c		acpica & acpi_debug & ddb
+file	disassembler/dmwalk.c		acpica & acpi_debug & ddb
+
+# dispatcher/
+file	dispatcher/dsargs.c		acpica
+file	dispatcher/dscontrol.c		acpica
+file	dispatcher/dsdebug.c		acpica
+file	dispatcher/dsfield.c		acpica
+file	dispatcher/dsinit.c		acpica
+file	dispatcher/dsmethod.c		acpica
+file	dispatcher/dsmthdat.c		acpica
+file	dispatcher/dsobject.c		acpica
+file	dispatcher/dsopcode.c		acpica
+file	dispatcher/dspkginit.c		acpica
+file	dispatcher/dsutils.c		acpica
+file	dispatcher/dswexec.c		acpica
+file	dispatcher/dswload.c		acpica
+file	dispatcher/dswload2.c		acpica
+file	dispatcher/dswscope.c		acpica
+file	dispatcher/dswstate.c		acpica
+
+# events/
+file	events/evevent.c		acpica
+file	events/evglock.c		acpica
+file	events/evgpe.c			acpica
+file	events/evgpeblk.c		acpica
+file	events/evgpeinit.c		acpica
+file	events/evgpeutil.c		acpica
+file	events/evhandler.c		acpica
+file	events/evmisc.c			acpica
+file	events/evregion.c		acpica
+file	events/evrgnini.c		acpica
+file	events/evsci.c			acpica
+file	events/evxface.c		acpica
+file	events/evxfevnt.c		acpica
+file	events/evxfgpe.c		acpica
+file	events/evxfregn.c		acpica
+
+# executer/
+file	executer/exconcat.c		acpica
+file	executer/exconfig.c		acpica
+file	executer/exconvrt.c		acpica
+file	executer/excreate.c		acpica
+file	executer/exdebug.c		acpica
+file	executer/exdump.c		acpica
+file	executer/exfield.c		acpica
+file	executer/exfldio.c		acpica
+file	executer/exmisc.c		acpica
+file	executer/exmutex.c		acpica
+file	executer/exnames.c		acpica
+file	executer/exoparg1.c		acpica
+file	executer/exoparg2.c		acpica
+file	executer/exoparg3.c		acpica
+file	executer/exoparg6.c		acpica
+file	executer/exprep.c		acpica
+file	executer/exregion.c		acpica
+file	executer/exresnte.c		acpica
+file	executer/exresolv.c		acpica
+file	executer/exresop.c		acpica
+file	executer/exserial.c		acpica
+file	executer/exstore.c		acpica
+file	executer/exstoren.c		acpica
+file	executer/exstorob.c		acpica
+file	executer/exsystem.c		acpica
+file	executer/extrace.c		acpica
+file	executer/exutils.c		acpica
+
+# hardware/
+file	hardware/hwacpi.c		acpica
+file	hardware/hwesleep.c		acpica
+file	hardware/hwgpe.c		acpica
+file	hardware/hwpci.c		acpica
+file	hardware/hwregs.c		acpica
+file	hardware/hwsleep.c		acpica
+file	hardware/hwtimer.c		acpica
+file	hardware/hwvalid.c		acpica
+file	hardware/hwxface.c		acpica
+file	hardware/hwxfsleep.c		acpica
+
+# namespace/
+file	namespace/nsaccess.c		acpica
+file	namespace/nsalloc.c		acpica
+file	namespace/nsarguments.c		acpica
+file	namespace/nsdump.c		acpica
+file	namespace/nsdumpdv.c		acpica
+file	namespace/nsconvert.c		acpica
+file	namespace/nseval.c		acpica
+file	namespace/nsinit.c		acpica
+file	namespace/nsload.c		acpica
+file	namespace/nsnames.c		acpica
+file	namespace/nsobject.c		acpica
+file	namespace/nsparse.c		acpica
+file	namespace/nspredef.c		acpica
+file	namespace/nsprepkg.c		acpica
+file	namespace/nsrepair.c		acpica
+file	namespace/nsrepair2.c		acpica
+file	namespace/nssearch.c		acpica
+file	namespace/nsutils.c		acpica
+file	namespace/nswalk.c		acpica
+file	namespace/nsxfeval.c		acpica
+file	namespace/nsxfname.c		acpica
+file	namespace/nsxfobj.c		acpica
+
+# parser/
+file	parser/psargs.c			acpica
+file	parser/psloop.c			acpica
+file	parser/psobject.c		acpica
+file	parser/psopcode.c		acpica
+file	parser/psopinfo.c		acpica
+file	parser/psparse.c		acpica
+file	parser/psscope.c		acpica
+file	parser/pstree.c			acpica
+file	parser/psutils.c		acpica
+file	parser/pswalk.c			acpica
+file	parser/psxface.c		acpica
+
+# resources/
+file	resources/rsaddr.c		acpica
+file	resources/rscalc.c		acpica
+file	resources/rscreate.c		acpica
+file	resources/rsdump.c		acpica & acpi_debug & ddb
+file	resources/rsdumpinfo.c		acpica & acpi_debug & ddb
+file	resources/rsinfo.c		acpica
+file	resources/rsio.c		acpica
+file	resources/rsirq.c		acpica
+file	resources/rslist.c		acpica
+file	resources/rsmemory.c		acpica
+file	resources/rsmisc.c		acpica
+file	resources/rsserial.c		acpica
+file	resources/rsutils.c		acpica
+file	resources/rsxface.c		acpica
+
+# tables/
+file	tables/tbdata.c			acpica
+file	tables/tbfadt.c			acpica
+file	tables/tbfind.c			acpica
+file	tables/tbinstal.c		acpica
+file	tables/tbprint.c		acpica
+file	tables/tbutils.c		acpica
+file	tables/tbxface.c		acpica
+file	tables/tbxfload.c		acpica
+file	tables/tbxfroot.c		acpica
+
+# utilities/
+file	utilities/utaddress.c		acpica
+file	utilities/utalloc.c		acpica
+file	utilities/utascii.c		acpica
+file	utilities/utbuffer.c		acpica
+file	utilities/utcache.c		acpica
+file	utilities/utcopy.c		acpica
+file	utilities/utdebug.c		acpica
+file	utilities/utdecode.c		acpica
+file	utilities/utdelete.c		acpica
+file	utilities/uterror.c		acpica
+file	utilities/uteval.c		acpica
+file	utilities/utexcep.c		acpica
+file	utilities/utglobal.c		acpica
+file	utilities/uthex.c		acpica
+file	utilities/utids.c		acpica
+file	utilities/utinit.c		acpica
+file	utilities/utlock.c		acpica
+file	utilities/utmath.c		acpica
+file	utilities/utmisc.c		acpica
+file	utilities/utmutex.c		acpica
+file	utilities/utnonansi.c		acpica
+file	utilities/utobject.c		acpica
+file	utilities/utosi.c		acpica
+file	utilities/utownerid.c		acpica
+file	utilities/utpredef.c		acpica
+file	utilities/utresdecode.c		acpica & acpi_debug & ddb
+file	utilities/utresrc.c		acpica
+file	utilities/utstate.c		acpica
+file	utilities/utstring.c		acpica
+file	utilities/utstrsuppt.c		acpica
+file	utilities/utstrtoul64.c		acpica
+file	utilities/uttrack.c		acpica
+file	utilities/utuuid.c		acpica
+file	utilities/utxface.c		acpica
+file	utilities/utxfinit.c		acpica
+file	utilities/utxferror.c		acpica
+
+prefix

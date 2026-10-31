@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_object.3,v 1.8 2011/01/20 10:44:42 wiz Exp $
+.\"	$NetBSD: prop_object.3,v 1.10 2020/06/06 21:25:59 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .Fn prop_object_iterator_release "prop_object_iterator_t iter"
 .Sh DESCRIPTION
 The
-.Nm prop_object
+.Nm
 family of functions operate on all property container object types.
 .Bl -tag -width ""
 .It Fn prop_object_retain "prop_object_t obj"
@@ -136,6 +136,6 @@ Release the iterator
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

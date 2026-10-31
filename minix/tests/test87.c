@@ -25,8 +25,7 @@ static unsigned int nodes, objects;	/* stats for pre/post test check */
  * procedure.  The returned PID value is of the dead, cleaned-up child, and
  * should be used only to check whether the child could store its own PID.
  */
-static pid_t
-test_nonroot(void (* proc)(void))
+static pid_t test_nonroot(void (* proc)(void))
 {
 	struct passwd *pw;
 	pid_t pid;
@@ -60,8 +59,7 @@ test_nonroot(void (* proc)(void))
 /*
  * Test basic operations from an unprivileged process.
  */
-static void
-sub87a(void)
+static void sub87a(void)
 {
 	size_t oldlen;
 	pid_t pid;
@@ -142,8 +140,7 @@ sub87a(void)
 /*
  * Test the basic sysctl(2) interface.
  */
-static void
-test87a(void)
+static void test87a(void)
 {
 	char buf[32];
 	size_t len, oldlen;
@@ -600,8 +597,7 @@ test87a(void)
 /*
  * Test queries from an unprivileged process.
  */
-static void
-sub87b(void)
+static void sub87b(void)
 {
 	struct sysctlnode scn[32];
 	unsigned int count;
@@ -669,8 +665,7 @@ sub87b(void)
 /*
  * Test sysctl(2) queries.
  */
-static void
-test87b(void)
+static void test87b(void)
 {
 	struct sysctlnode scn[32];
 	unsigned int count;
@@ -944,8 +939,7 @@ test87b(void)
  * the caller must perform the appropriate checks.  On success, return the new
  * node identifier.  On failure, return -1, with errno set.
  */
-static int
-create_node(const int * path, unsigned int pathlen, struct sysctlnode * tmpscn,
+static int create_node(const int * path, unsigned int pathlen, struct sysctlnode * tmpscn,
 	int id, const char * name, int other_id, const char * other_name)
 {
 	struct sysctlnode scn, oldscn;
@@ -980,8 +974,7 @@ create_node(const int * path, unsigned int pathlen, struct sysctlnode * tmpscn,
  * Destroy a node by identifier in the given named node directory.  Return 0 on
  * success.  Return -1 on failure, with errno set.
  */
-static int
-destroy_node(const int * path, unsigned int pathlen, int id)
+static int destroy_node(const int * path, unsigned int pathlen, int id)
 {
 	struct sysctlnode scn;
 	int mib[CTL_MAXNAME];
@@ -1002,8 +995,7 @@ destroy_node(const int * path, unsigned int pathlen, int id)
  * parent path and identifier.  Return 0 on success, with the node details
  * stored in 'scn', or -1 on failure.
  */
-static int
-query_node(const int * path, unsigned int pathlen, int id,
+static int query_node(const int * path, unsigned int pathlen, int id,
 	struct sysctlnode * scn)
 {
 	struct sysctlnode scnset[32];
@@ -1033,8 +1025,7 @@ query_node(const int * path, unsigned int pathlen, int id,
 /*
  * Test unprivileged node creation.
  */
-static void
-sub87c(void)
+static void sub87c(void)
 {
 	struct sysctlnode scn;
 	int mib[4];
@@ -1063,8 +1054,7 @@ sub87c(void)
 /*
  * Test sysctl(2) node creation.
  */
-static void
-test87c(void)
+static void test87c(void)
 {
 	static const uint32_t badflags[] = {
 		SYSCTL_VERS_MASK, SYSCTL_TYPEMASK, CTLFLAG_PERMANENT,
@@ -2006,8 +1996,7 @@ test87c(void)
 /*
  * Test unprivileged node destruction.
  */
-static void
-sub87d(void)
+static void sub87d(void)
 {
 	struct sysctlnode scn;
 	int mib[3];
@@ -2032,8 +2021,7 @@ sub87d(void)
 /*
  * Test sysctl(2) node destruction.
  */
-static void
-test87d(void)
+static void test87d(void)
 {
 	struct sysctlnode scn, oldscn, newscn, tmpscn;
 	size_t oldlen;
@@ -2274,8 +2262,7 @@ test87d(void)
  * with the given description.  Return 0 on success, or -1 on failure with
  * errno set.
  */
-static int
-describe_node(const int * path, unsigned int pathlen, int id,
+static int describe_node(const int * path, unsigned int pathlen, int id,
 	const char * desc, int set)
 {
 	char buf[256], *p;
@@ -2313,8 +2300,7 @@ describe_node(const int * path, unsigned int pathlen, int id,
 /*
  * Test getting descriptions from an unprivileged process.
  */
-static void
-sub87e(void)
+static void sub87e(void)
 {
 	static char buf[2048];
 	char seen[32], *p;
@@ -2380,8 +2366,7 @@ sub87e(void)
 /*
  * Test sysctl(2) node descriptions, part 1: getting descriptions.
  */
-static void
-test87e(void)
+static void test87e(void)
 {
 	static char buf[2048];
 	char seen[32], *p;
@@ -2558,8 +2543,7 @@ test87e(void)
 /*
  * Test setting descriptions from an unprivileged process.
  */
-static void
-sub87f(void)
+static void sub87f(void)
 {
 	struct sysctlnode scn;
 	int mib[3];
@@ -2580,8 +2564,7 @@ sub87f(void)
 /*
  * Test sysctl(2) node descriptions, part 2: setting descriptions.
  */
-static void
-test87f(void)
+static void test87f(void)
 {
 	static char buf[2048];
 	char seen, *p;
@@ -2949,8 +2932,7 @@ test87f(void)
  * the size used to set the buffer contents, 0 is returned if the buffer
  * contents match expectations, or -1 if they do not.
  */
-static int
-test_buf(char * buf, unsigned char c, size_t size, int set)
+static int test_buf(char * buf, unsigned char c, size_t size, int set)
 {
 	unsigned char *ptr;
 	int step;
@@ -2977,8 +2959,7 @@ test_buf(char * buf, unsigned char c, size_t size, int set)
 /*
  * Test large data sizes from an unprivileged process.
  */
-static void
-sub87g(void)
+static void sub87g(void)
 {
 	char *ptr;
 	size_t size, oldlen;
@@ -3035,8 +3016,7 @@ sub87g(void)
 /*
  * Test large data sizes and mid-data page faults.
  */
-static void
-test87g(void)
+static void test87g(void)
 {
 	struct sysctlnode scn, newscn;
 	char *ptr;
@@ -3304,8 +3284,7 @@ test87g(void)
  * Verify whether the given node on the given path has the given node version.
  * Return 0 if the version matches, or -1 if it does not or a failure occurred.
  */
-static int
-check_version(const int * path, unsigned int pathlen, int id, uint32_t ver)
+static int check_version(const int * path, unsigned int pathlen, int id, uint32_t ver)
 {
 	struct sysctlnode scn;
 	struct sysctldesc scd;
@@ -3336,8 +3315,7 @@ check_version(const int * path, unsigned int pathlen, int id, uint32_t ver)
 /*
  * Test sysctl(2) node versioning.
  */
-static void
-test87h(void)
+static void test87h(void)
 {
 	struct sysctlnode scn, oldscn;
 	size_t oldlen;
@@ -3564,8 +3542,7 @@ test87h(void)
 /*
  * Perform pre-test initialization.
  */
-static void
-test87_init(void)
+static void test87_init(void)
 {
 	size_t oldlen;
 	int mib[3];
@@ -3592,8 +3569,7 @@ test87_init(void)
 /*
  * Perform post-test checks.
  */
-static void
-test87_check(void)
+static void test87_check(void)
 {
 	unsigned int newnodes, newobjects;
 	size_t oldlen;
@@ -3631,8 +3607,7 @@ test87_check(void)
 /*
  * Test program for sysctl(2).
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

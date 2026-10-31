@@ -21,8 +21,7 @@ static int _uds_socketpair(int type, int protocol, int sv[2]);
 /*
  * Create a pair of connected sockets.
  */
-static int
-__socketpair(int domain, int type, int protocol, int sv[2])
+static int __socketpair(int domain, int type, int protocol, int sv[2])
 {
 	message m;
 
@@ -39,8 +38,7 @@ __socketpair(int domain, int type, int protocol, int sv[2])
 	return 0;
 }
 
-int
-socketpair(int domain, int type, int protocol, int sv[2])
+int socketpair(int domain, int type, int protocol, int sv[2])
 {
 	int r;
 

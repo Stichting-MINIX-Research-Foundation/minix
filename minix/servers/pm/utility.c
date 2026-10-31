@@ -73,13 +73,12 @@ find_param(const char *name)
 /*===========================================================================*
  *				find_proc  				     *
  *===========================================================================*/
-struct mproc *find_proc(lpid)
-pid_t lpid;
+struct mproc *find_proc(pid_t lpid)
 {
   register struct mproc *rmp;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
-	if ((rmp->mp_flags & IN_USE) && rmp->mp_pid == lpid)
+	if (LIVE_PROC(rmp) && rmp->mp_pid == lpid)
 		return(rmp);
 
   return(NULL);
@@ -120,9 +119,7 @@ int pm_isokendpt(int endpoint, int *proc)
 /*===========================================================================*
  *				tell_vfs			 	     *
  *===========================================================================*/
-void tell_vfs(rmp, m_ptr)
-struct mproc *rmp;
-message *m_ptr;
+void tell_vfs(struct mproc *rmp, message *m_ptr)
 {
 /* Send a request to VFS, without blocking.
  */
@@ -141,8 +138,7 @@ message *m_ptr;
 /*===========================================================================*
  *				set_rusage_times		 	     *
  *===========================================================================*/
-void
-set_rusage_times(struct rusage * r_usage, clock_t user_time, clock_t sys_time)
+void set_rusage_times(struct rusage * r_usage, clock_t user_time, clock_t sys_time)
 {
 	u64_t usec;
 

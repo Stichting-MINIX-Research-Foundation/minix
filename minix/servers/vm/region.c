@@ -9,7 +9,6 @@
 #include <minix/debug.h>
 #include <minix/bitmap.h>
 #include <minix/hash.h>
-#include <machine/multiboot.h>
 
 #include <sys/mman.h>
 
@@ -257,7 +256,7 @@ void map_sanitycheck(const char *file, int line)
 int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	struct phys_region *pr)
 {
-	int flags = PTF_PRESENT | PTF_USER;
+	u64_t flags = PTF_PRESENT | PTF_USER;
 	struct phys_block *pb = pr->ph;
 
 	assert(vr);
@@ -428,6 +427,12 @@ static struct vir_region *region_new(struct vmproc *vmp, vir_bytes startv, vir_b
 	struct phys_region **newphysregions;
 	static u32_t id;
 	int slots = phys_slot(length);
+
+	/* Page allocations for an ordinary user process must honor the
+	 * low-memory reserve so the process cannot starve system services to
+	 * death.  Tag the region; vrallocflags() turns this into PAF_USERMEM. */
+	if(vm_isuserp(vmp))
+		flags |= VR_USERMEM;
 
 	if(!(SLABALLOC(newregion))) {
 		printf("vm: region_new: could not allocate\n");
@@ -654,6 +659,8 @@ u32_t vrallocflags(u32_t flags)
 		allocflags |= PAF_LOWER1MB;
 	if(!(flags & VR_UNINITIALIZED))
 		allocflags |= PAF_CLEAR;
+	if(flags & VR_USERMEM)
+		allocflags |= PAF_USERMEM;
 
 	return allocflags;
 }
@@ -1110,7 +1117,12 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 		USE(r,
 		r->vaddr += len;);
 
-		remslots = phys_slot(r->length);
+		/* Slots that remain after the shrink.  r->length still holds
+		 * the pre-shrink length here; using it as-is would make the
+		 * memmove below read phys_slot(len) entries past the end of
+		 * the physblocks array.
+		 */
+		remslots = phys_slot(r->length - len);
 
 		region_insert(&vmp->vm_regions_avl, r);
 
@@ -1381,8 +1393,7 @@ static void get_usage_info_vm(struct vm_usage_info *vui)
  * thread stacks, or if the process is messing with its stack in any way, or if
  * (currently) VFS decides to put the stack elsewhere, etcetera.
  */
-static int
-is_stack_region(struct vir_region * vr)
+static int is_stack_region(struct vir_region * vr)
 {
 
 	return (vr->vaddr == VM_STACKTOP - DEFAULT_STACK_LIMIT &&

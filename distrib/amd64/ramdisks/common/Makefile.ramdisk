@@ -1,0 +1,61 @@
+#	$NetBSD: Makefile.ramdisk,v 1.14 2019/08/22 04:25:38 kamil Exp $
+
+NOSANITIZER=	# defined
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+I386COMMON=	${.CURDIR}/../common
+
+.PATH:		${I386COMMON}
+
+WARNS=		1
+DBG=		-Os
+
+CRUNCHBIN=	ramdiskbin
+
+# Use ${.CURDIR}/list only if LISTS was not already defined by the caller.
+LISTS?=		${.CURDIR}/list
+LISTS+=		${I386COMMON}/list.ramdisk
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	le
+IMAGEDEPENDS+= 	${CRUNCHBIN} \
+		dot.profile \
+		${DESTDIR}/usr/mdec/boot_monitor \
+		${DESTDIR}/usr/mdec/bootxx_minixfs3 \
+		${DESTDIR}/usr/mdec/mbr \
+		${DESTDIR}/usr/mdec/mbr_ext \
+		${DESTDIR}/usr/mdec/mbr_bootsel \
+		${DESTDIR}/usr/mdec/gptmbr.bin \
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		#${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services
+PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
+
+# This propogates through to the link of ramdiskbin
+# The map file is useful when trying to prune the image
+#LDFLAGS+=	-Wl,-Map,${CRUNCHBIN}.map,--cref
+#CRUNCHENV+=	LDFLAGS=${LDFLAGS:Q}
+#CLEANFILES+=	${CRUNCHBIN}.map
+
+.if defined(USE_SYSINST)
+.if ${USE_SYSINST} != yes
+LISTS+=		${DISTRIBDIR}/common/list.sysinst.${USE_SYSINST}
+.else
+LISTS+=		${DISTRIBDIR}/common/list.sysinst
+.endif
+MAKEFS_FLAGS+=	-f 14
+.endif
+
+# Use stubs to eliminate some large stuff from libc
+#HACKSRC=	${DISTRIBDIR}/utils/libhack
+#.include	"${HACKSRC}/Makefile.inc"
+#${CRUNCHBIN}:	libhack.o
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+release:
+
+.include <bsd.prog.mk>

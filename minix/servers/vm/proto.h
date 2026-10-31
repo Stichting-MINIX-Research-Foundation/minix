@@ -22,6 +22,7 @@ int acl_check(struct vmproc *vmp, int call);
 void acl_set(struct vmproc *vmp, bitchunk_t *mask, int sys_proc);
 void acl_fork(struct vmproc *vmp);
 void acl_clear(struct vmproc *vmp);
+int vm_isuserp(struct vmproc *vmp);
 
 /* alloc.c */
 void *reservedqueue_new(int, int, int, int);
@@ -103,11 +104,11 @@ void pt_free(pt_t *pt);
 int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	vir_bytes start, vir_bytes end);
 int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp);
-int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end, u32_t
+int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end, u64_t
 	flags, int verify);
 void pt_clearmapcache(void);
 int pt_writemap(struct vmproc * vmp, pt_t *pt, vir_bytes v, phys_bytes
-	physaddr, size_t bytes, u32_t flags, u32_t writemapflags);
+	physaddr, size_t bytes, u64_t flags, u32_t writemapflags);
 int pt_checkrange(pt_t *pt, vir_bytes v, size_t bytes, int write);
 int pt_bind(pt_t *pt, struct vmproc *who);
 void *vm_mappages(phys_bytes p, int pages);

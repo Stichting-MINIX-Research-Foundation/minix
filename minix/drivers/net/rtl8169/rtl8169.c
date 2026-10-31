@@ -504,7 +504,9 @@ static void rl_init_buf(re_t *rep)
 			desc->status = DESC_OWN |
 			    (RX_BUFSIZE & DESC_RX_LENMASK);
 
-		desc->addr_low =  rep->re_rx[d].ret_buf;
+		desc->addr_low = (u32_t) rep->re_rx[d].ret_buf;
+		desc->addr_high =
+		    (u32_t) ((u64_t) rep->re_rx[d].ret_buf >> 32);
 		desc++;
 	}
 	desc = rep->re_tx_desc;
@@ -516,7 +518,9 @@ static void rl_init_buf(re_t *rep)
 		mallocbuf += tx_bufsize;
 
 		/* Setting Tx descriptor */
-		desc->addr_low =  rep->re_tx[d].ret_buf;
+		desc->addr_low = (u32_t) rep->re_tx[d].ret_buf;
+		desc->addr_high =
+		    (u32_t) ((u64_t) rep->re_tx[d].ret_buf >> 32);
 		desc++;
 	}
 	rep->re_tx_busy = 0;
@@ -791,14 +795,16 @@ static void rl_reset_hw(re_t *rep)
 	rl_outw(port, RL_RMS, RX_BUFSIZE);	/* Maximum rx packet size */
 	t = rl_inl(port, RL_RCR) & RX_CONFIG_MASK;
 	rl_outl(port, RL_RCR, RL_RCR_RXFTH_UNLIM | RL_RCR_MXDMA_1024 | t);
-	rl_outl(port, RL_RDSAR_LO, rep->p_rx_desc);
-	rl_outl(port, RL_RDSAR_HI, 0x00);	/* For 64 bit */
+	rl_outl(port, RL_RDSAR_LO, (u32_t) rep->p_rx_desc);
+	rl_outl(port, RL_RDSAR_HI,
+	    (u32_t) ((u64_t) rep->p_rx_desc >> 32));	/* For 64 bit */
 
 	/* Initialize Tx */
 	rl_outw(port, RL_ETTHR, 0x3f);		/* No early transmit */
 	rl_outl(port, RL_TCR, RL_TCR_MXDMA_2048 | RL_TCR_IFG_STD);
-	rl_outl(port, RL_TNPDS_LO, rep->p_tx_desc);
-	rl_outl(port, RL_TNPDS_HI, 0x00);	/* For 64 bit */
+	rl_outl(port, RL_TNPDS_LO, (u32_t) rep->p_tx_desc);
+	rl_outl(port, RL_TNPDS_HI,
+	    (u32_t) ((u64_t) rep->p_tx_desc >> 32));	/* For 64 bit */
 
 	rl_outw(port, RL_9346CR, RL_9346CR_EEM_NORMAL);	/* Lock */
 

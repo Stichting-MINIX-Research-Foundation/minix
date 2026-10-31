@@ -5,6 +5,6 @@ CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	blockdriver
 
-SRCS=	driver.c drvlib.c driver_st.c driver_mt.c liveupdate.c mq.c trace.c
+SRCS=	driver.c drvlib.c driver_st.c driver_mt.c liveupdate.c mq.c trace.c crc32.c
 
 .include <bsd.lib.mk>

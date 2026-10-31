@@ -143,8 +143,7 @@ static const struct gid_set {
  * Obtain the kinfo_proc2 data for the given process ID.  Return 0 on success,
  * or -1 with errno set appropriately on failure.
  */
-static int
-get_proc2(pid_t pid, struct kinfo_proc2 * proc2)
+static int get_proc2(pid_t pid, struct kinfo_proc2 * proc2)
 {
 	int mib[6];
 	size_t oldlen;
@@ -180,8 +179,7 @@ get_proc2(pid_t pid, struct kinfo_proc2 * proc2)
  * Verify that the current process's real, effective, and saved user IDs are
  * set to the given respective value.
  */
-static void
-test_uids(uid_t ruid, uid_t euid, uid_t suid)
+static void test_uids(uid_t ruid, uid_t euid, uid_t suid)
 {
 	struct kinfo_proc2 proc2;
 
@@ -205,8 +203,7 @@ test_uids(uid_t ruid, uid_t euid, uid_t suid)
  * call on a non-setuid binary, and that the saved user ID is set to the
  * effective user ID.
  */
-static void
-exec89b(const char * param1, const char * param2 __unused)
+static void exec89b(const char * param1, const char * param2 __unused)
 {
 	const struct uid_set *set;
 	int setnum;
@@ -227,8 +224,7 @@ exec89b(const char * param1, const char * param2 __unused)
  * effective UIDs, and that only exec(2) sets the saved UID to the effective
  * UID.
  */
-static void
-sub89b(int setnum)
+static void sub89b(int setnum)
 {
 	const struct uid_set *set;
 	char param1[32];
@@ -271,8 +267,7 @@ sub89b(int setnum)
  * current set.  Test one particular case for test A or B, and verify the
  * result.
  */
-static void
-test_one_uid(int setnum, int sub)
+static void test_one_uid(int setnum, int sub)
 {
 	const struct uid_set *set;
 	int res, exp;
@@ -321,8 +316,7 @@ test_one_uid(int setnum, int sub)
  * Test setuid(2) or seteuid(2) after a successful execve(2) call, which should
  * have set the process's effective and saved user ID.
  */
-static void
-exec89a(const char * param1, const char * param2)
+static void exec89a(const char * param1, const char * param2)
 {
 	const struct uid_set *set;
 	int setnum, sub;
@@ -363,8 +357,7 @@ exec89a(const char * param1, const char * param2)
  * a side effect, test that in particular exec(2) properly sets the effective
  * and saved user ID.
  */
-static void
-sub89a(int setnum, int sub)
+static void sub89a(int setnum, int sub)
 {
 	const struct uid_set *set;
 	char param1[32], param2[32];
@@ -423,8 +416,7 @@ sub89a(int setnum, int sub)
  * setting the real, effective, and saved UIDs to different values before
  * performing the setuid(2) or seteuid(2) call.
  */
-static void
-test89a(void)
+static void test89a(void)
 {
 	unsigned int setnum;
 	int sub, status;
@@ -463,8 +455,7 @@ test89a(void)
  * Ensure that the real, effective, and saved UIDs are fully preserved across
  * fork(2) and non-setuid-binary exec(2) calls.
  */
-static void
-test89b(void)
+static void test89b(void)
 {
 	unsigned int setnum;
 	int status;
@@ -509,8 +500,7 @@ test89b(void)
  * Verify that the current process's real, effective, and saved group IDs are
  * set to the given respective value.
  */
-static void
-test_gids(gid_t rgid, gid_t egid, gid_t sgid)
+static void test_gids(gid_t rgid, gid_t egid, gid_t sgid)
 {
 	struct kinfo_proc2 proc2;
 
@@ -530,8 +520,7 @@ test_gids(gid_t rgid, gid_t egid, gid_t sgid)
  * call on a non-setgid binary, and that the saved group ID is set to the
  * effective group ID.
  */
-static void
-exec89d(const char * param1, const char * param2 __unused)
+static void exec89d(const char * param1, const char * param2 __unused)
 {
 	const struct gid_set *set;
 	int setnum;
@@ -552,8 +541,7 @@ exec89d(const char * param1, const char * param2 __unused)
  * effective GID, and that only exec(2) sets the saved GID to the effective
  * GID.
  */
-static void
-sub89d(int setnum)
+static void sub89d(int setnum)
 {
 	const struct gid_set *set;
 	char param1[32];
@@ -605,8 +593,7 @@ sub89d(int setnum)
  * the current set.  Test one particular case for test C or D, and verify the
  * result.
  */
-static void
-test_one_gid(int setnum, int sub)
+static void test_one_gid(int setnum, int sub)
 {
 	const struct gid_set *set;
 	int res, exp;
@@ -661,8 +648,7 @@ test_one_gid(int setnum, int sub)
  * Test setgid(2) or setegid(2) after a successful execve(2) call, which should
  * have set the process's effective and saved group ID.
  */
-static void
-exec89c(const char * param1, const char * param2)
+static void exec89c(const char * param1, const char * param2)
 {
 	const struct gid_set *set;
 	int setnum, sub;
@@ -689,8 +675,7 @@ exec89c(const char * param1, const char * param2)
  * a side effect, test that in particular exec(2) properly sets the effective
  * and saved group ID.
  */
-static void
-sub89c(int setnum, int sub)
+static void sub89c(int setnum, int sub)
 {
 	const struct gid_set *set;
 	char param1[32], param2[32];
@@ -738,8 +723,7 @@ sub89c(int setnum, int sub)
  * performing the setgid(2) or setegid(2) call.  At the same time, verify that
  * if the caller has an effective UID of 0, all set(e)gid calls are allowed.
  */
-static void
-test89c(void)
+static void test89c(void)
 {
 	unsigned int setnum;
 	int sub, status;
@@ -778,8 +762,7 @@ test89c(void)
  * Ensure that the real, effective, and saved GIDs are fully preserved across
  * fork(2) and non-setgid-binary exec(2) calls.
  */
-static void
-test89d(void)
+static void test89d(void)
 {
 	unsigned int setnum;
 	int status;
@@ -821,8 +804,7 @@ test89d(void)
  * whether the user and/or group IDs have indeed been changed appropriately as
  * the result of the second exec(2).
  */
-static void
-exec89e(const char * param1, const char * param2)
+static void exec89e(const char * param1, const char * param2)
 {
 	int mask, step;
 	mode_t mode;
@@ -865,8 +847,7 @@ exec89e(const char * param1, const char * param2)
  * Set up for the set-uid/set-gid execution test by initializing to different
  * real and effective user IDs.
  */
-static void
-sub89e(int mask)
+static void sub89e(int mask)
 {
 	char param1[32];
 
@@ -886,8 +867,7 @@ sub89e(int mask)
  * Perform basic verification that the set-uid and set-gid bits on binaries are
  * fully independent from each other.
  */
-static void
-test89e(void)
+static void test89e(void)
 {
 	int mask, status;
 	pid_t pid;
@@ -922,8 +902,7 @@ test89e(void)
 /*
  * Call the right function after having executed myself.
  */
-static void
-exec89(const char * param0, const char * param1, const char * param2)
+static void exec89(const char * param0, const char * param1, const char * param2)
 {
 
 	switch (param0[0]) {
@@ -957,8 +936,7 @@ exec89(const char * param0, const char * param1, const char * param2)
 /*
  * Initialize the test.
  */
-static void
-test89_init(void)
+static void test89_init(void)
 {
 	char cp_cmd[PATH_MAX + 9];
 	int status;
@@ -984,8 +962,7 @@ test89_init(void)
 /*
  * Test program for set[ug]id, sete[ug]id, and saved IDs.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

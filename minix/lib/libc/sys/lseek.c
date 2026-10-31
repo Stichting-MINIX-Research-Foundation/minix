@@ -10,8 +10,7 @@
 __weak_alias(lseek, _lseek)
 #endif
 
-off_t
-lseek(int fd, off_t offset, int whence)
+off_t lseek(int fd, off_t offset, int whence)
 {
   message m;
 

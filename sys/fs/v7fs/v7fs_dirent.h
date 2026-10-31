@@ -33,6 +33,6 @@
 #define	_V7FS_DIRENT_H_
 __BEGIN_DECLS
 bool v7fs_dirent_endian_convert(struct v7fs_self *, struct v7fs_dirent *, int);
-void v7fs_dirent_filename(char *, const char *);
+void v7fs_dirent_filename(char *, const char *, size_t);
 __END_DECLS
 #endif /*!_V7FS_DIRENT_H_ */

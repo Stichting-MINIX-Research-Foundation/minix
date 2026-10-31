@@ -147,16 +147,14 @@ void test22a()
   if (umask(0022) != 0777) e(36);
 }
 
-int mode(arg)
-char *arg;
+int mode(char *arg)
 {				/* return the file mode. */
   struct stat st;
   Stat(arg, &st);
   return st.st_mode & 0777;
 }
 
-int umode(arg)
-char *arg;
+int umode(char *arg)
 {				/* return the umask used for this file */
   return 0777 ^ mode(arg);
 }

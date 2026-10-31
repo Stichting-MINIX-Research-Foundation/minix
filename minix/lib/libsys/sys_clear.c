@@ -3,8 +3,7 @@
 /*===========================================================================*
  *                                sys_clear			     	     *
  *===========================================================================*/
-int sys_clear(proc_ep)
-endpoint_t proc_ep;			/* which process has exited */
+int sys_clear(endpoint_t proc_ep)
 {
 /* A process has exited. PM tells the kernel.
  */

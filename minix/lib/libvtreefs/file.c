@@ -11,8 +11,7 @@ static size_t bufsize = 0;
 /*
  * Initialize the main buffer used for I/O.  Return OK or an error code.
  */
-int
-init_buf(size_t size)
+int init_buf(size_t size)
 {
 
 	/* A default buffer size, for at least getdents. */
@@ -29,8 +28,7 @@ init_buf(size_t size)
 /*
  * Free up the I/O buffer.
  */
-void
-cleanup_buf(void)
+void cleanup_buf(void)
 {
 
 	free(buf);
@@ -42,8 +40,7 @@ cleanup_buf(void)
 /*
  * Read from a file.
  */
-ssize_t
-fs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
+ssize_t fs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 	off_t pos, int __unused call)
 {
 	struct inode *node;
@@ -105,8 +102,7 @@ fs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 /*
  * Write to a file.
  */
-ssize_t
-fs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes, off_t pos,
+ssize_t fs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes, off_t pos,
 	int __unused call)
 {
 	struct inode *node;
@@ -166,8 +162,7 @@ fs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes, off_t pos,
 /*
  * Truncate a file.
  */
-int
-fs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
+int fs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
 {
 	struct inode *node;
 
@@ -191,8 +186,7 @@ fs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
 /*
  * Retrieve directory entries.
  */
-ssize_t
-fs_getdents(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
+ssize_t fs_getdents(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 	off_t * posp)
 {
 	struct fsdriver_dentry fsdentry;
@@ -201,7 +195,7 @@ fs_getdents(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 	off_t pos;
 	int r, skip, get_next, indexed;
 
-	if (*posp >= ULONG_MAX)
+	if ((uint64_t)*posp >= (uint64_t)ULONG_MAX)
 		return EIO;
 
 	if ((node = find_inode(ino_nr)) == NULL)

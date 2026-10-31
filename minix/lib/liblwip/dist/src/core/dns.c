@@ -314,8 +314,7 @@ const ip_addr_t dns_mquery_v6group = DNS_MQUERY_IPV6_GROUP_INIT;
  * Initialize the resolver: set up the UDP pcb and configure the default server
  * (if DNS_SERVER_ADDRESS is set).
  */
-void
-dns_init(void)
+void dns_init(void)
 {
 #ifdef DNS_SERVER_ADDRESS
   /* initialize default DNS server address */
@@ -360,8 +359,7 @@ dns_init(void)
  * @param numdns the index of the DNS server to set must be < DNS_MAX_SERVERS
  * @param dnsserver IP address of the DNS server to set
  */
-void
-dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
+void dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
 {
   if (numdns < DNS_MAX_SERVERS) {
     if (dnsserver != NULL) {
@@ -394,16 +392,14 @@ dns_getserver(u8_t numdns)
  * The DNS resolver client timer - handle retries and timeouts and should
  * be called every DNS_TMR_INTERVAL milliseconds (every second by default).
  */
-void
-dns_tmr(void)
+void dns_tmr(void)
 {
   LWIP_DEBUGF(DNS_DEBUG, ("dns_tmr: dns_check_entries\n"));
   dns_check_entries();
 }
 
 #if DNS_LOCAL_HOSTLIST
-static void
-dns_init_local(void)
+static void dns_init_local(void)
 {
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC && defined(DNS_LOCAL_HOSTLIST_INIT)
   size_t i;
@@ -439,8 +435,7 @@ dns_init_local(void)
  * @param iterator_arg 3rd argument passed to iterator_fn
  * @return the number of entries in the local host-list
  */
-size_t
-dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
+size_t dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg)
 {
   size_t i;
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
@@ -525,8 +520,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
  * @param addr address for which entries shall be removed from the local host-list
  * @return the number of removed entries
  */
-int
-dns_local_removehost(const char *hostname, const ip_addr_t *addr)
+int dns_local_removehost(const char *hostname, const ip_addr_t *addr)
 {
   int removed = 0;
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
@@ -645,8 +639,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
  * @param start_offset offset into p where the name starts
  * @return 0xFFFF: names differ, other: names equal -> offset behind name
  */
-static u16_t
-dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
+static u16_t dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
 {
   int n;
   u16_t response_offset = start_offset;
@@ -692,8 +685,7 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
  * @param query_idx start index into p pointing to encoded DNS name in the DNS server response
  * @return index to end of the name
  */
-static u16_t
-dns_skip_name(struct pbuf* p, u16_t query_idx)
+static u16_t dns_skip_name(struct pbuf* p, u16_t query_idx)
 {
   int n;
   u16_t offset = query_idx;
@@ -875,8 +867,7 @@ dns_alloc_random_port(void)
  *
  * @return an index into dns_pcbs
  */
-static u8_t
-dns_alloc_pcb(void)
+static u8_t dns_alloc_pcb(void)
 {
   u8_t i;
   u8_t idx;
@@ -917,8 +908,7 @@ dns_alloc_pcb(void)
  * @param idx dns table index of the entry that is resolved or removed
  * @param addr IP address for the hostname (or NULL on error or memory shortage)
  */
-static void
-dns_call_found(u8_t idx, ip_addr_t* addr)
+static void dns_call_found(u8_t idx, ip_addr_t* addr)
 {
 #if ((LWIP_DNS_SECURE & (LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)) != 0)
   u8_t i;
@@ -975,8 +965,7 @@ dns_call_found(u8_t idx, ip_addr_t* addr)
 }
 
 /* Create a query transmission ID that is unique for all outstanding queries */
-static u16_t
-dns_create_txid(void)
+static u16_t dns_create_txid(void)
 {
   u16_t txid;
   u8_t i;
@@ -1005,8 +994,7 @@ again:
  *
  * @param i index of the dns_table entry to check
  */
-static void
-dns_check_entry(u8_t i)
+static void dns_check_entry(u8_t i)
 {
   err_t err;
   struct dns_table_entry *entry = &dns_table[i];
@@ -1082,8 +1070,7 @@ dns_check_entry(u8_t i)
 /**
  * Call dns_check_entry for each entry in dns_table - check all entries.
  */
-static void
-dns_check_entries(void)
+static void dns_check_entries(void)
 {
   u8_t i;
 
@@ -1095,8 +1082,7 @@ dns_check_entries(void)
 /**
  * Save TTL and call dns_call_found for correct response.
  */
-static void
-dns_correct_response(u8_t idx, u32_t ttl)
+static void dns_correct_response(u8_t idx, u32_t ttl)
 {
   struct dns_table_entry *entry = &dns_table[idx];
 
@@ -1127,8 +1113,7 @@ dns_correct_response(u8_t idx, u32_t ttl)
 /**
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
  */
-static void
-dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   u8_t i;
   u16_t txid;

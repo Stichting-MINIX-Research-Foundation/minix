@@ -48,7 +48,8 @@ CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPO
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
 # that must live in their own unique namespace.
 #
-.for unpaged_obj in head.o pre_init.o direct_tty_utils.o \
+.for unpaged_obj in head.o pre_init.o mb2_getparam.o \
+	direct_tty_utils.o direct_com_utils.o \
 	pg_utils.o klib.o utility.o arch_reset.o \
 	io_inb.o io_outb.o \
 	${MINLIB_OBJS_UNPAGED} ${MINC_OBJS_UNPAGED} ${SYS_OBJS_UNPAGED}
@@ -73,7 +74,8 @@ ORIG_UNPAGED_OBJS += ${unpaged_obj}
 CLEANFILES+= ${ORIG_UNPAGED_OBJS}
 
 SRCS+=	mpx.S arch_clock.c arch_do_vmctl.c arch_system.c \
-	klib.S memory.c protect.c direct_tty_utils.c arch_reset.c pg_utils.c
+	klib.S memory.c protect.c  arch_reset.c pg_utils.c \
+	direct_com_utils.c direct_tty_utils.c
 
 SRCS+=	do_iopenable.c do_readbios.c do_sdevio.c exception.c i8259.c oxpcie.c \
 	usermapped_data_arch.c \
@@ -84,6 +86,8 @@ OBJS.kernel+=	${UNPAGED_OBJS}
 
 .ifdef CONFIG_SMP
 SRCS += arch_smp.c trampoline.S
+trampoline.o: trampoline.S
+	${CC} -E ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${.IMPSRC} | ${AS} -o ${.TARGET}
 .endif
 
 .if ${USE_ACPI} != "no"

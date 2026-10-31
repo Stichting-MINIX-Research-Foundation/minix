@@ -46,7 +46,7 @@ int fs_mount(dev_t dev, unsigned int flags, struct fsdriver_node *root_node,
 		panic("couldn't bdev_open after found unclean FS");
 		return(EINVAL);
   	}
-	printf("MFS: WARNING: FS 0x%llx unclean, mounting readonly\n", fs_dev);
+	printf("MFS: WARNING: FS 0x%llx unclean, mounting readonly\n", (unsigned long long)fs_dev);
   }
 
   lmfs_set_blocksize(superblock.s_block_size);

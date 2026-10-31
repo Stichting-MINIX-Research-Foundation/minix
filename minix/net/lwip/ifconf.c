@@ -12,8 +12,7 @@
 /*
  * Initialize the first loopback device, which is present by default.
  */
-void
-ifconf_init(void)
+void ifconf_init(void)
 {
 	const struct sockaddr_in addr = {
 	    .sin_family = AF_INET,
@@ -75,8 +74,7 @@ ifconf_init(void)
  * Process an address family independent IOCTL request with an "ifreq"
  * structure.
  */
-static int
-ifconf_ioctl_ifreq(unsigned long request, const struct sockdriver_data * data)
+static int ifconf_ioctl_ifreq(unsigned long request, const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
 	struct ifreq ifr;
@@ -160,8 +158,7 @@ ifconf_ioctl_ifreq(unsigned long request, const struct sockdriver_data * data)
  * Process an address family independent IOCTL request with an "ifcapreq"
  * structure.
  */
-static int
-ifconf_ioctl_ifcap(unsigned long request,
+static int ifconf_ioctl_ifcap(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -195,8 +192,7 @@ ifconf_ioctl_ifcap(unsigned long request,
  * Process an address family independent IOCTL request with an "ifmediareq"
  * structure.
  */
-static int
-ifconf_ioctl_ifmedia(unsigned long request,
+static int ifconf_ioctl_ifmedia(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -264,8 +260,7 @@ ifconf_ioctl_ifmedia(unsigned long request,
  * Process an address family independent IOCTL request with an "if_clonereq"
  * structure.
  */
-static int
-ifconf_ioctl_ifclone(unsigned long request,
+static int ifconf_ioctl_ifclone(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct if_clonereq ifcr;
@@ -311,8 +306,7 @@ ifconf_ioctl_ifclone(unsigned long request,
  * Process an address family independent IOCTL request with an "if_addrprefreq"
  * structure.
  */
-static int
-ifconf_ioctl_ifaddrpref(unsigned long request,
+static int ifconf_ioctl_ifaddrpref(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -351,8 +345,7 @@ ifconf_ioctl_ifaddrpref(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET with an "ifreq" structure.
  */
-static int
-ifconf_ioctl_v4_ifreq(unsigned long request,
+static int ifconf_ioctl_v4_ifreq(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct sockaddr_in addr, mask, bcast, dest, *sin = NULL /*gcc*/;
@@ -472,8 +465,7 @@ ifconf_ioctl_v4_ifreq(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET with an "ifaliasreq" structure.
  */
-static int
-ifconf_ioctl_v4_ifalias(unsigned long request,
+static int ifconf_ioctl_v4_ifalias(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -526,8 +518,7 @@ ifconf_ioctl_v4_ifalias(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET.
  */
-static int
-ifconf_ioctl_v4(unsigned long request, const struct sockdriver_data * data,
+static int ifconf_ioctl_v4(unsigned long request, const struct sockdriver_data * data,
 	endpoint_t user_endpt)
 {
 
@@ -565,8 +556,7 @@ ifconf_ioctl_v4(unsigned long request, const struct sockdriver_data * data,
 /*
  * Process an IOCTL request for AF_INET6 with an "in6_ifreq" structure.
  */
-static int
-ifconf_ioctl_v6_ifreq(unsigned long request,
+static int ifconf_ioctl_v6_ifreq(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -621,8 +611,7 @@ ifconf_ioctl_v6_ifreq(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET6 with an "in6_aliasreq" structure.
  */
-static int
-ifconf_ioctl_v6_ifalias(unsigned long request,
+static int ifconf_ioctl_v6_ifalias(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -651,8 +640,7 @@ ifconf_ioctl_v6_ifalias(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET6 with an "in6_ndireq" structure.
  */
-static int
-ifconf_ioctl_v6_ndireq(unsigned long request,
+static int ifconf_ioctl_v6_ndireq(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -693,8 +681,7 @@ ifconf_ioctl_v6_ndireq(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET6 with an "in6_nbrinfo" structure.
  */
-static int
-ifconf_ioctl_v6_nbrinfo(unsigned long request,
+static int ifconf_ioctl_v6_nbrinfo(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -739,8 +726,7 @@ ifconf_ioctl_v6_nbrinfo(unsigned long request,
 /*
  * Process an IOCTL request for AF_INET6.
  */
-static int
-ifconf_ioctl_v6(unsigned long request, const struct sockdriver_data * data,
+static int ifconf_ioctl_v6(unsigned long request, const struct sockdriver_data * data,
 	endpoint_t user_endpt)
 {
 
@@ -783,8 +769,7 @@ ifconf_ioctl_v6(unsigned long request, const struct sockdriver_data * data,
 /*
  * Process an IOCTL request for AF_LINK with an "if_laddrreq" structure.
  */
-static int
-ifconf_ioctl_dl_lifaddr(unsigned long request,
+static int ifconf_ioctl_dl_lifaddr(unsigned long request,
 	const struct sockdriver_data * data)
 {
 	struct ifdev *ifdev;
@@ -837,8 +822,7 @@ ifconf_ioctl_dl_lifaddr(unsigned long request,
 /*
  * Process an IOCTL request for AF_LINK.
  */
-static int
-ifconf_ioctl_dl(unsigned long request, const struct sockdriver_data * data,
+static int ifconf_ioctl_dl(unsigned long request, const struct sockdriver_data * data,
 	endpoint_t user_endpt)
 {
 
@@ -862,8 +846,7 @@ ifconf_ioctl_dl(unsigned long request, const struct sockdriver_data * data,
  * link sockets.  The given socket may be used to obtain the target domain:
  * AF_INET, AF_INET6, or AF_LINK.
  */
-int
-ifconf_ioctl(struct sock * sock, unsigned long request,
+int ifconf_ioctl(struct sock * sock, unsigned long request,
 	const struct sockdriver_data * data, endpoint_t user_endpt)
 {
 	int domain;

@@ -370,9 +370,7 @@ void test03()
   }
 }				/* test03 */
 
-void write_standards(filedes, a)
-int filedes;
-char a[];
+void write_standards(int filedes, char a[])
 {
 
   /* Write must return written account of numbers */
@@ -464,9 +462,7 @@ void test04()
   }
 }				/* test04 */
 
-void read_standards(filedes, a)
-int filedes;
-char a[];
+void read_standards(int filedes, char a[])
 {
   char b[ARSIZE];
 
@@ -486,9 +482,7 @@ char a[];
 	if (errno != EINVAL) e(91);
 }				/* read_standards */
 
-void read_more(filedes, a)
-int filedes;
-char a[];
+void read_more(int filedes, char a[])
  /* Separated from read_standards() because the PIPE test * would fail.                                           */
 {
   int i;
@@ -626,9 +620,7 @@ void test05()
 	if (errno != EBADF) e(30);
 }				/* test05 */
 
-void try_open(fname, mode, test)
-int mode, test;
-char *fname;
+void try_open(char *fname, int mode, int test)
 {
   int n;
 
@@ -777,9 +769,7 @@ void access_standards()
   for (i = 0; i < 8; i++) try_access(fnames[mode], i, OK);
 }				/* access_standards */
 
-void try_access(fname, mode, test)
-int mode, test;
-char *fname;
+void try_access(char *fname, int mode, int test)
 {
   if (access(fname, mode) != test) e(96);
 }				/* try_access */
@@ -938,9 +928,7 @@ void make_and_fill_dirs()
 
 }				/* make_and_fill_dirs */
 
-void put_file_in_dir(dirname, mode)
-char *dirname;
-int mode;
+void put_file_in_dir(char *dirname, int mode)
  /* Fill directory 'dirname' with file with mode 'mode'.   */
 {
   int nr;
@@ -964,8 +952,7 @@ int mode;
 *                                                                            *
 *****************************************************************************/
 
-void init_array(a)
-char *a;
+void init_array(char *a)
 {
   int i;
 
@@ -973,8 +960,7 @@ char *a;
   while (i++ < ARSIZE) *a++ = 'a' + (i % 26);
 }				/* init_array */
 
-void clear_array(b)
-char *b;
+void clear_array(char *b)
 {
   int i;
 
@@ -983,9 +969,7 @@ char *b;
 
 }				/* clear_array */
 
-int comp_array(a, b, range)
-char *a, *b;
-int range;
+int comp_array(char *a, char *b, int range)
 {
   assert(range >= 0 && range <= ARSIZE);
 
@@ -996,29 +980,23 @@ int range;
 	return(FAIL);
 }				/* comp_array */
 
-void try_close(filedes, name)
-int filedes;
-char *name;
+void try_close(int filedes, char *name)
 {
   if (close(filedes) != OK) e(100);
 }				/* try_close */
 
-void try_unlink(fname)
-char *fname;
+void try_unlink(char *fname)
 {
   if (unlink(fname) != 0) e(101);
 }				/* try_unlink */
 
-void Remove(fdes, fname)
-int fdes;
-char *fname;
+void Remove(int fdes, char *fname)
 {
   try_close(fdes, fname);
   try_unlink(fname);
 }				/* Remove */
 
-int get_mode(name)
-char *name;
+int get_mode(char *name)
 {
   struct stat stbf1;
 
@@ -1050,8 +1028,7 @@ int open_alot()
   return(i);
 }				/* open_alot */
 
-int close_alot(number)
-int number;
+int close_alot(int number)
 {
   int i, count = 0;
 
@@ -1103,9 +1080,7 @@ void clean_up_the_mess()
   /* FINISH */
 }				/* clean_up_the_mess */
 
-void chmod_8_dirs(sw)
-int sw;				/* if switch == 8, give all different
-			 * mode,else the same mode */
+void chmod_8_dirs(int sw)
 {
   int mode;
   int i;

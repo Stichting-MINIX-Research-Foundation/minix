@@ -2144,8 +2144,7 @@ magic_nested_mmap(void *start, size_t length, int prot, int flags,
 /*===========================================================================*
  *				magic_nested_munmap			     *
  *===========================================================================*/
-int
-magic_nested_munmap(void *start, size_t length)
+int magic_nested_munmap(void *start, size_t length)
 {
 	int i, r;
 

@@ -49,6 +49,10 @@ __RCSID("$NetBSD: nbperf.c,v 1.5 2013/01/31 16:32:02 joerg Exp $");
 
 #include "nbperf.h"
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "../../tools/compat/mi_vector_hash.h"
+#endif
+
 static int predictable;
 
 static __dead

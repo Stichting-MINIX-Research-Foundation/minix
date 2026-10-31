@@ -2,7 +2,7 @@
 
 /* Copyright (c) 2010 David Young.  All rights reserved. */
 
-#if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
+#if (defined(__NetBSD__) || defined(__minix)) && (defined(_KERNEL) || defined(_STANDALONE))
 #include <lib/libkern/libkern.h>
 #include <sys/errno.h>
 #define	ppath_assert(__x)	KASSERT(__x)

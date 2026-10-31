@@ -9,8 +9,7 @@ pci_reserve.c
 /*===========================================================================*
  *				pci_reserve				     *
  *===========================================================================*/
-void pci_reserve(devind)
-int devind;
+void pci_reserve(int devind)
 {
 	int r;
 	message m;

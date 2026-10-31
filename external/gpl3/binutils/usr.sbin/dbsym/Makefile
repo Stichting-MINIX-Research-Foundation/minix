@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2013/09/29 14:20:38 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2016/01/26 19:37:49 christos Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBINUTILS} != "no"
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
-DIST=		${TOP}/dist
 BFDSUBDIR=	lib
 
 PROG=		dbsym

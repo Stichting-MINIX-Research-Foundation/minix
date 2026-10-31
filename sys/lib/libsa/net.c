@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.35 2009/04/11 10:57:55 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.36 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -64,7 +64,6 @@
 #include <unistd.h>
 #define panic printf
 #define delay() usleep(100000)
-#define getsecs() time(NULL)
 #endif
 
 #include "net.h"
@@ -93,7 +92,7 @@ sendrecv(struct iodesc *d,
 
 #ifdef NET_DEBUG
 	if (debug)
-		printf("sendrecv: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	tmo = MINTMO;
@@ -121,7 +120,7 @@ sendrecv(struct iodesc *d,
 				continue;
 			}
 			if ((size_t)cc < ssize)
-				panic("sendrecv: short write! (%zd < %zu)",
+				panic("%s: short write! (%zd < %zu)", __func__,
 				    cc, ssize);
 
 			tlast = t;

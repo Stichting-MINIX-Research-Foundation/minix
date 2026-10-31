@@ -40,7 +40,7 @@ int arch_do_vmctl(
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_GET_PDBR:
 		/* Get process page directory base reg (TTBR). */
-		m_ptr->SVMCTL_VALUE = p->p_seg.p_ttbr;
+		m_ptr->SVMCTL_PTROOT = p->p_seg.p_ttbr;
 		return OK;
 	case VMCTL_SETADDRSPACE:
 		set_ttbr(p, m_ptr->SVMCTL_PTROOT, (u32_t *) m_ptr->SVMCTL_PTROOT_V);

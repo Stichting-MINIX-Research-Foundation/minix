@@ -25,7 +25,7 @@ static int mappedfile_writable(struct phys_region *pr);
 static int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr);
 static int mappedfile_lowshrink(struct vir_region *vr, vir_bytes len);
 static void mappedfile_delete(struct vir_region *region);
-static int mappedfile_pt_flags(struct vir_region *vr);
+static u64_t mappedfile_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_mappedfile = {
 	.name = "file-mapped memory",
@@ -40,7 +40,7 @@ struct mem_type mem_type_mappedfile = {
 	.pt_flags = mappedfile_pt_flags,
 };
 
-static int mappedfile_pt_flags(struct vir_region *vr){
+static u64_t mappedfile_pt_flags(struct vir_region *vr){
 #if defined(__arm__)
 	return ARM_VM_PTE_CACHED;
 #else

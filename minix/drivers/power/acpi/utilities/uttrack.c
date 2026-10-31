@@ -269,8 +269,7 @@ AcpiUtAllocateZeroedAndTrack (
  *
  ******************************************************************************/
 
-void
-AcpiUtFreeAndTrack (
+void AcpiUtFreeAndTrack (
     void                    *Allocation,
     UINT32                  Component,
     const char              *Module,
@@ -575,8 +574,7 @@ AcpiUtRemoveAllocation (
  *
  ******************************************************************************/
 
-void
-AcpiUtDumpAllocationInfo (
+void AcpiUtDumpAllocationInfo (
     void)
 {
 /*
@@ -636,8 +634,7 @@ AcpiUtDumpAllocationInfo (
  *
  ******************************************************************************/
 
-void
-AcpiUtDumpAllocations (
+void AcpiUtDumpAllocations (
     UINT32                  Component,
     const char              *Module)
 {

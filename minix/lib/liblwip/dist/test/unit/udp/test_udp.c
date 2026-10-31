@@ -8,8 +8,7 @@
 #endif
 
 /* Helper functions */
-static void
-udp_remove_all(void)
+static void udp_remove_all(void)
 {
   struct udp_pcb *pcb = udp_pcbs;
   struct udp_pcb *pcb2;
@@ -24,14 +23,12 @@ udp_remove_all(void)
 
 /* Setups/teardown functions */
 
-static void
-udp_setup(void)
+static void udp_setup(void)
 {
   udp_remove_all();
 }
 
-static void
-udp_teardown(void)
+static void udp_teardown(void)
 {
   udp_remove_all();
 }

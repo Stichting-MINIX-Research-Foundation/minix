@@ -128,13 +128,11 @@ AcpiNsCheckSortedList (
 #define ACPI_SORT_ASCENDING     0
 #define ACPI_SORT_DESCENDING    1
 
-static void
-AcpiNsRemoveElement (
+static void AcpiNsRemoveElement (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Index);
 
-static void
-AcpiNsSortList (
+static void AcpiNsSortList (
     ACPI_OPERAND_OBJECT     **Elements,
     UINT32                  Count,
     UINT32                  Index,
@@ -978,8 +976,7 @@ AcpiNsCheckSortedList (
  *
  *****************************************************************************/
 
-static void
-AcpiNsSortList (
+static void AcpiNsSortList (
     ACPI_OPERAND_OBJECT     **Elements,
     UINT32                  Count,
     UINT32                  Index,
@@ -1029,8 +1026,7 @@ AcpiNsSortList (
  *
  *****************************************************************************/
 
-static void
-AcpiNsRemoveElement (
+static void AcpiNsRemoveElement (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Index)
 {

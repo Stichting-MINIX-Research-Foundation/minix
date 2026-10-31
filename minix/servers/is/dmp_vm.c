@@ -51,8 +51,7 @@ static void print_region(struct vm_region_info *vri, int *n)
   (*n)++;
 }
 
-void
-vm_dmp(void)
+void vm_dmp(void)
 {
   static struct proc proc[NR_TASKS + NR_PROCS];
   static struct vm_region_info vri[LINES];

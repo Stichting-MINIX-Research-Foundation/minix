@@ -50,8 +50,7 @@ static const struct {
  * TODO: convert IPv4 addresses to IPv4-mapped IPv6 addresses.
  * TODO: embed the interface index in link-local addresses.
  */
-int
-addrpol_get_label(const ip_addr_t * iporig)
+int addrpol_get_label(const ip_addr_t * iporig)
 {
 	ip_addr_t ipaddr;
 	unsigned int i;
@@ -86,8 +85,7 @@ addrpol_get_label(const ip_addr_t * iporig)
  * function of only the given address, so the result may be cached on a per-
  * address basis without risking invalidation at any point in time.
  */
-int
-addrpol_get_scope(const ip_addr_t * ipaddr, int is_src)
+int addrpol_get_scope(const ip_addr_t * ipaddr, int is_src)
 {
 	const ip6_addr_t *ip6addr;
 

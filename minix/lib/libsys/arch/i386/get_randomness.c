@@ -11,9 +11,7 @@
 /*===========================================================================*
  *                              get_randomness                               *
  *===========================================================================*/
-void get_randomness(rand, source)
-struct k_randomness *rand;
-int source;
+void get_randomness(struct k_randomness *rand, int source)
 {
 /* Use architecture-dependent high-resolution clock for
  * raw entropy gathering.

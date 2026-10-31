@@ -43,7 +43,7 @@ int arch_do_vmctl(
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_GET_PDBR:
 		/* Get process page directory base reg (CR3). */
-		m_ptr->SVMCTL_VALUE = p->p_seg.p_cr3;
+		m_ptr->SVMCTL_PTROOT = p->p_seg.p_cr3;
 		return OK;
 	case VMCTL_SETADDRSPACE:
 		setcr3(p, m_ptr->SVMCTL_PTROOT, (u32_t *) m_ptr->SVMCTL_PTROOT_V);

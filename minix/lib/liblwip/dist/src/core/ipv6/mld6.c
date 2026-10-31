@@ -116,8 +116,7 @@ mld6_stop(struct netif *netif)
  *
  * @param netif network interface on which report MLD memberships
  */
-void
-mld6_report_groups(struct netif *netif)
+void mld6_report_groups(struct netif *netif)
 {
   struct mld_group *group = netif_mld6_data(netif);
 
@@ -218,8 +217,7 @@ mld6_remove_group(struct netif *netif, struct mld_group *group)
  * @param p the mld packet, p->payload pointing to the icmpv6 header
  * @param inp the netif on which this packet was received
  */
-void
-mld6_input(struct pbuf *p, struct netif *inp)
+void mld6_input(struct pbuf *p, struct netif *inp)
 {
   struct mld_header *mld_hdr;
   struct mld_group *group;
@@ -479,8 +477,7 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
  *
  * When a delaying member expires, a membership report is sent.
  */
-void
-mld6_tmr(void)
+void mld6_tmr(void)
 {
   struct netif *netif;
 
@@ -511,8 +508,7 @@ mld6_tmr(void)
  *              should be sent
  * @param maxresp the max resp delay provided in the query
  */
-static void
-mld6_delayed_report(struct mld_group *group, u16_t maxresp)
+static void mld6_delayed_report(struct mld_group *group, u16_t maxresp)
 {
   /* Convert maxresp from milliseconds to tmr ticks */
   maxresp = maxresp / MLD6_TMR_INTERVAL;
@@ -546,8 +542,7 @@ mld6_delayed_report(struct mld_group *group, u16_t maxresp)
  * @param group the group to report or quit
  * @param type ICMP6_TYPE_MLR (report) or ICMP6_TYPE_MLD (done)
  */
-static void
-mld6_send(struct netif *netif, struct mld_group *group, u8_t type)
+static void mld6_send(struct netif *netif, struct mld_group *group, u8_t type)
 {
   struct mld_header *mld_hdr;
   struct pbuf *p;

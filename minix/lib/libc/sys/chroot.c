@@ -5,8 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int chroot(name)
-const char *name;
+int chroot(const char *name)
 {
   message m;
 

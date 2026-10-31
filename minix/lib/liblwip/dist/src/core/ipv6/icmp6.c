@@ -81,8 +81,7 @@ static void icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, 
  * @param p the mld packet, p->payload pointing to the icmpv6 header
  * @param inp the netif on which this packet was received
  */
-void
-icmp6_input(struct pbuf *p, struct netif *inp)
+void icmp6_input(struct pbuf *p, struct netif *inp)
 {
   struct icmp6_hdr *icmp6hdr;
   struct pbuf *r;
@@ -222,8 +221,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
  *          p->payload pointing to the IPv6 header
  * @param c ICMPv6 code for the unreachable type
  */
-void
-icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
+void icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
 {
   icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR);
 }
@@ -238,8 +236,7 @@ icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
  *          p->payload pointing to the IPv6 header
  * @param mtu the maximum mtu that we can accept
  */
-void
-icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
+void icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
 {
   icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB);
 }
@@ -254,8 +251,7 @@ icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
  *          p->payload pointing to the IPv6 header
  * @param c ICMPv6 code for the time exceeded type
  */
-void
-icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
+void icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
 {
   icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
 }
@@ -275,8 +271,7 @@ icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
  * @param dest_addr destination address of the original packet, with zone
  *                  information
  */
-void
-icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
+void icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
     const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
 {
   icmp6_send_response_with_addrs(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
@@ -293,8 +288,7 @@ icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
  * @param c ICMPv6 code for the param problem type
  * @param pointer the pointer to the byte where the parameter is found
  */
-void
-icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
+void icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
 {
   icmp6_send_response(p, c, pointer, ICMP6_TYPE_PP);
 }
@@ -309,8 +303,7 @@ icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
  * @param data Additional 32-bit parameter in the ICMPv6 header
  * @param type Type of the ICMPv6 header
  */
-static void
-icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
+static void icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
 {
   const struct ip6_addr *reply_src, *reply_dest;
   struct netif *netif = ip_current_netif();
@@ -346,8 +339,7 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
  * @param src_addr original source address
  * @param dest_addr original destination address
  */
-static void
-icmp6_send_response_with_addrs(struct pbuf *p, u8_t code, u32_t data, u8_t type,
+static void icmp6_send_response_with_addrs(struct pbuf *p, u8_t code, u32_t data, u8_t type,
     const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
 {
   const struct ip6_addr *reply_src, *reply_dest;
@@ -385,8 +377,7 @@ icmp6_send_response_with_addrs(struct pbuf *p, u8_t code, u32_t data, u8_t type,
  * @param reply_dest destination address of the packet to send
  * @param netif netif to send the packet
  */
-static void
-icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, u8_t type,
+static void icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, u8_t type,
     const ip6_addr_t *reply_src, const ip6_addr_t *reply_dest, struct netif *netif)
 {
   struct pbuf *q;

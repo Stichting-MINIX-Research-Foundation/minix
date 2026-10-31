@@ -42,8 +42,7 @@ static void _socket_flags(int type, int *result);
 /*
  * Create a socket.
  */
-static int
-__socket(int domain, int type, int protocol)
+static int __socket(int domain, int type, int protocol)
 {
 	message m;
 
@@ -91,8 +90,7 @@ int socket(int domain, int type, int protocol)
 	return -1;
 }
 
-static void
-_socket_flags(int type, int *result)
+static void _socket_flags(int type, int *result)
 {
 	/* Process socket flags */
 	if (type & SOCK_CLOEXEC) {

@@ -17,8 +17,7 @@ svrctl_name(unsigned long req)
 	return NULL;
 }
 
-int
-svrctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
+int svrctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
 {
 	struct sysgetenv *env;
 

@@ -103,8 +103,7 @@ static u8_t snmp_auth_traps_enabled = 0;
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param enable switch if 0 destination is disabled >0 enabled.
  */
-void
-snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
+void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
 {
   if (dst_idx < SNMP_TRAP_DESTINATIONS) {
     trap_dst[dst_idx].enable = enable;
@@ -117,8 +116,7 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param dst IPv4 address in host order.
  */
-void
-snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
+void snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
 {
   if (dst_idx < SNMP_TRAP_DESTINATIONS) {
     ip_addr_set(&trap_dst[dst_idx].dip, dst);
@@ -129,8 +127,7 @@ snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
  * @ingroup snmp_traps
  * Enable/disable authentication traps
  */
-void
-snmp_set_auth_traps_enabled(u8_t enable)
+void snmp_set_auth_traps_enabled(u8_t enable)
 {
   snmp_auth_traps_enabled = enable;
 }
@@ -139,8 +136,7 @@ snmp_set_auth_traps_enabled(u8_t enable)
  * @ingroup snmp_traps
  * Get authentication traps enabled state
  */
-u8_t
-snmp_get_auth_traps_enabled(void)
+u8_t snmp_get_auth_traps_enabled(void)
 {
   return snmp_auth_traps_enabled;
 }
@@ -249,8 +245,7 @@ snmp_send_trap_specific(s32_t specific_trap, struct snmp_varbind *varbinds)
  * @ingroup snmp_traps
  * Send coldstart trap
  */
-void
-snmp_coldstart_trap(void)
+void snmp_coldstart_trap(void)
 {
   snmp_send_trap_generic(SNMP_GENTRAP_COLDSTART);
 }
@@ -259,16 +254,14 @@ snmp_coldstart_trap(void)
  * @ingroup snmp_traps
  * Send authentication failure trap (used internally by agent) 
  */
-void
-snmp_authfail_trap(void)
+void snmp_authfail_trap(void)
 {
   if (snmp_auth_traps_enabled != 0) {
     snmp_send_trap_generic(SNMP_GENTRAP_AUTH_FAILURE);
   }
 }
 
-static u16_t
-snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
+static u16_t snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
 {
   struct snmp_varbind *varbind;
   u16_t tot_len;
@@ -301,8 +294,7 @@ snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
  * @param vb_len varbind-list length
  * @return the required length for encoding the trap header
  */
-static u16_t
-snmp_trap_header_sum(struct snmp_msg_trap *trap, u16_t vb_len)
+static u16_t snmp_trap_header_sum(struct snmp_msg_trap *trap, u16_t vb_len)
 {
   u16_t tot_len;
   u16_t len;
@@ -357,8 +349,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *trap, u16_t vb_len)
   return tot_len;
 }
 
-static void
-snmp_trap_varbind_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind *varbinds)
+static void snmp_trap_varbind_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind *varbinds)
 {
   struct snmp_asn1_tlv tlv;
   struct snmp_varbind *varbind;
@@ -378,8 +369,7 @@ snmp_trap_varbind_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_
 /**
  * Encodes trap header from head to tail.
  */
-static void
-snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
+static void snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
 {
   struct snmp_asn1_tlv tlv;
 

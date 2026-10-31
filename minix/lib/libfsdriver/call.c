@@ -8,8 +8,7 @@ static int fsdriver_vmcache;	/* have we used the VM cache? */
 /*
  * Process a READSUPER request from VFS.
  */
-int
-fsdriver_readsuper(const struct fsdriver * __restrict fdp,
+int fsdriver_readsuper(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_node root_node;
@@ -70,8 +69,7 @@ fsdriver_readsuper(const struct fsdriver * __restrict fdp,
 /*
  * Process an UNMOUNT request from VFS.
  */
-int
-fsdriver_unmount(const struct fsdriver * __restrict fdp,
+int fsdriver_unmount(const struct fsdriver * __restrict fdp,
 	const message * __restrict __unused m_in,
 	message * __restrict __unused m_out)
 {
@@ -92,8 +90,7 @@ fsdriver_unmount(const struct fsdriver * __restrict fdp,
 /*
  * Process a PUTNODE request from VFS.
  */
-int
-fsdriver_putnode(const struct fsdriver * __restrict fdp,
+int fsdriver_putnode(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -116,8 +113,7 @@ fsdriver_putnode(const struct fsdriver * __restrict fdp,
 /*
  * Process a NEWNODE request from VFS.
  */
-int
-fsdriver_newnode(const struct fsdriver * __restrict fdp,
+int fsdriver_newnode(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_node node;
@@ -150,8 +146,7 @@ fsdriver_newnode(const struct fsdriver * __restrict fdp,
 /*
  * Process a read or write request from VFS.
  */
-static int
-read_write(const struct fsdriver * __restrict fdp,
+static int read_write(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out, int call)
 {
 	struct fsdriver_data data;
@@ -190,8 +185,7 @@ read_write(const struct fsdriver * __restrict fdp,
 /*
  * Process a READ request from VFS.
  */
-int
-fsdriver_read(const struct fsdriver * __restrict fdp,
+int fsdriver_read(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 
@@ -204,8 +198,7 @@ fsdriver_read(const struct fsdriver * __restrict fdp,
 /*
  * Process a WRITE request from VFS.
  */
-int
-fsdriver_write(const struct fsdriver * __restrict fdp,
+int fsdriver_write(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 
@@ -223,8 +216,7 @@ fsdriver_write(const struct fsdriver * __restrict fdp,
  * the block beyond its immediate use for the mmap request, so as to prevent
  * potentially stale data from being cached--at the cost of performance.
  */
-static ssize_t
-builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
+static ssize_t builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
 	size_t nbytes, off_t pos)
 {
 	static u32_t flags = 0;	/* storage for the VMMC_ flags of all blocks */
@@ -238,7 +230,7 @@ builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
 		return ENOMEM;
 
 	data.endpt = SELF;
-	data.grant = (cp_grant_id_t)buf;
+	data.ptr = buf;
 	data.size = nbytes;
 
 	r = fdp->fdr_read(ino_nr, &data, nbytes, pos, FSC_READ);
@@ -275,8 +267,7 @@ builtin_peek(const struct fsdriver * __restrict fdp, ino_t ino_nr,
 /*
  * Process a PEEK request from VFS.
  */
-int
-fsdriver_peek(const struct fsdriver * __restrict fdp,
+int fsdriver_peek(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -317,8 +308,7 @@ fsdriver_peek(const struct fsdriver * __restrict fdp,
 /*
  * Process a GETDENTS request from VFS.
  */
-int
-fsdriver_getdents(const struct fsdriver * __restrict fdp,
+int fsdriver_getdents(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_data data;
@@ -355,8 +345,7 @@ fsdriver_getdents(const struct fsdriver * __restrict fdp,
 /*
  * Process a FTRUNC request from VFS.
  */
-int
-fsdriver_trunc(const struct fsdriver * __restrict fdp,
+int fsdriver_trunc(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -378,8 +367,7 @@ fsdriver_trunc(const struct fsdriver * __restrict fdp,
 /*
  * Process a INHIBREAD request from VFS.
  */
-int
-fsdriver_inhibread(const struct fsdriver * __restrict fdp,
+int fsdriver_inhibread(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -395,8 +383,7 @@ fsdriver_inhibread(const struct fsdriver * __restrict fdp,
 /*
  * Process a CREATE request from VFS.
  */
-int
-fsdriver_create(const struct fsdriver * __restrict fdp,
+int fsdriver_create(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_node node;
@@ -440,8 +427,7 @@ fsdriver_create(const struct fsdriver * __restrict fdp,
 /*
  * Process a MKDIR request from VFS.
  */
-int
-fsdriver_mkdir(const struct fsdriver * __restrict fdp,
+int fsdriver_mkdir(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
@@ -476,8 +462,7 @@ fsdriver_mkdir(const struct fsdriver * __restrict fdp,
 /*
  * Process a MKNOD request from VFS.
  */
-int
-fsdriver_mknod(const struct fsdriver * __restrict fdp,
+int fsdriver_mknod(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
@@ -514,8 +499,7 @@ fsdriver_mknod(const struct fsdriver * __restrict fdp,
 /*
  * Process a LINK request from VFS.
  */
-int
-fsdriver_link(const struct fsdriver * __restrict fdp,
+int fsdriver_link(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
@@ -545,8 +529,7 @@ fsdriver_link(const struct fsdriver * __restrict fdp,
 /*
  * Process an UNLINK request from VFS.
  */
-int
-fsdriver_unlink(const struct fsdriver * __restrict fdp,
+int fsdriver_unlink(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
@@ -575,8 +558,7 @@ fsdriver_unlink(const struct fsdriver * __restrict fdp,
 /*
  * Process a RMDIR request from VFS.
  */
-int
-fsdriver_rmdir(const struct fsdriver * __restrict fdp,
+int fsdriver_rmdir(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
@@ -608,8 +590,7 @@ fsdriver_rmdir(const struct fsdriver * __restrict fdp,
 /*
  * Process a RENAME request from VFS.
  */
-int
-fsdriver_rename(const struct fsdriver * __restrict fdp,
+int fsdriver_rename(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char old_name[NAME_MAX+1], new_name[NAME_MAX+1];
@@ -648,8 +629,7 @@ fsdriver_rename(const struct fsdriver * __restrict fdp,
 /*
  * Process a SLINK request from VFS.
  */
-int
-fsdriver_slink(const struct fsdriver * __restrict fdp,
+int fsdriver_slink(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	struct fsdriver_data data;
@@ -687,8 +667,7 @@ fsdriver_slink(const struct fsdriver * __restrict fdp,
 /*
  * Process a RDLINK request from VFS.
  */
-int
-fsdriver_rdlink(const struct fsdriver * __restrict fdp,
+int fsdriver_rdlink(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_data data;
@@ -714,8 +693,7 @@ fsdriver_rdlink(const struct fsdriver * __restrict fdp,
 /*
  * Process a STAT request from VFS.
  */
-int
-fsdriver_stat(const struct fsdriver * __restrict fdp,
+int fsdriver_stat(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	struct stat buf;
@@ -743,8 +721,7 @@ fsdriver_stat(const struct fsdriver * __restrict fdp,
 /*
  * Process a CHOWN request from VFS.
  */
-int
-fsdriver_chown(const struct fsdriver * __restrict fdp,
+int fsdriver_chown(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	ino_t ino_nr;
@@ -769,8 +746,7 @@ fsdriver_chown(const struct fsdriver * __restrict fdp,
 /*
  * Process a CHMOD request from VFS.
  */
-int
-fsdriver_chmod(const struct fsdriver * __restrict fdp,
+int fsdriver_chmod(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	ino_t ino_nr;
@@ -792,8 +768,7 @@ fsdriver_chmod(const struct fsdriver * __restrict fdp,
 /*
  * Process a UTIME request from VFS.
  */
-int
-fsdriver_utime(const struct fsdriver * __restrict fdp,
+int fsdriver_utime(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -814,8 +789,7 @@ fsdriver_utime(const struct fsdriver * __restrict fdp,
 /*
  * Process a MOUNTPOINT request from VFS.
  */
-int
-fsdriver_mountpoint(const struct fsdriver * __restrict fdp,
+int fsdriver_mountpoint(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
@@ -831,8 +805,7 @@ fsdriver_mountpoint(const struct fsdriver * __restrict fdp,
 /*
  * Process a STATVFS request from VFS.
  */
-int
-fsdriver_statvfs(const struct fsdriver * __restrict fdp,
+int fsdriver_statvfs(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	struct statvfs buf;
@@ -853,8 +826,7 @@ fsdriver_statvfs(const struct fsdriver * __restrict fdp,
 /*
  * Process a SYNC request from VFS.
  */
-int
-fsdriver_sync(const struct fsdriver * __restrict fdp,
+int fsdriver_sync(const struct fsdriver * __restrict fdp,
 	const message * __restrict __unused m_in,
 	message * __restrict __unused m_out)
 {
@@ -868,8 +840,7 @@ fsdriver_sync(const struct fsdriver * __restrict fdp,
 /*
  * Process a NEW_DRIVER request from VFS.
  */
-int
-fsdriver_newdriver(const struct fsdriver * __restrict fdp,
+int fsdriver_newdriver(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char label[DS_MAX_KEYLEN];
@@ -897,8 +868,7 @@ fsdriver_newdriver(const struct fsdriver * __restrict fdp,
 /*
  * Process a block read or write request from VFS.
  */
-static ssize_t
-bread_bwrite(const struct fsdriver * __restrict fdp,
+static ssize_t bread_bwrite(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out, int call)
 {
 	struct fsdriver_data data;
@@ -937,36 +907,33 @@ bread_bwrite(const struct fsdriver * __restrict fdp,
 /*
  * Process a BREAD request from VFS.
  */
-ssize_t
-fsdriver_bread(const struct fsdriver * __restrict fdp,
+int fsdriver_bread(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 
 	if (fdp->fdr_bread == NULL)
 		return ENOSYS;
 
-	return bread_bwrite(fdp, m_in, m_out, FSC_READ);
+	return (int)bread_bwrite(fdp, m_in, m_out, FSC_READ);
 }
 
 /*
  * Process a BWRITE request from VFS.
  */
-ssize_t
-fsdriver_bwrite(const struct fsdriver * __restrict fdp,
+int fsdriver_bwrite(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 
 	if (fdp->fdr_bwrite == NULL)
 		return ENOSYS;
 
-	return bread_bwrite(fdp, m_in, m_out, FSC_WRITE);
+	return (int)bread_bwrite(fdp, m_in, m_out, FSC_WRITE);
 }
 
 /*
  * Process a BPEEK request from VFS.
  */
-int
-fsdriver_bpeek(const struct fsdriver * __restrict fdp,
+int fsdriver_bpeek(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	dev_t dev;
@@ -998,8 +965,7 @@ fsdriver_bpeek(const struct fsdriver * __restrict fdp,
 /*
  * Process a FLUSH request from VFS.
  */
-int
-fsdriver_flush(const struct fsdriver * __restrict fdp,
+int fsdriver_flush(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	dev_t dev;

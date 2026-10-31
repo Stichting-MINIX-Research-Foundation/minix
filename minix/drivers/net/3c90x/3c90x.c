@@ -83,8 +83,7 @@ static const struct netdriver xlbc_table = {
 /*
  * Find a matching PCI device.
  */
-static int
-xlbc_probe(unsigned int skip)
+static int xlbc_probe(unsigned int skip)
 {
 	uint16_t vid, did;
 	int devind;
@@ -116,8 +115,7 @@ xlbc_probe(unsigned int skip)
 /*
  * Issue a command to the command register.
  */
-static void
-xlbc_issue_cmd(uint16_t cmd)
+static void xlbc_issue_cmd(uint16_t cmd)
 {
 
 	assert(!(XLBC_READ_16(XLBC_STATUS_REG) & XLBC_STATUS_IN_PROGRESS));
@@ -129,8 +127,7 @@ xlbc_issue_cmd(uint16_t cmd)
  * Wait for a command to be acknowledged.  Return TRUE iff the command
  * completed within the timeout period.
  */
-static int
-xlbc_wait_cmd(void)
+static int xlbc_wait_cmd(void)
 {
 	spin_t spin;
 
@@ -149,8 +146,7 @@ xlbc_wait_cmd(void)
 /*
  * Reset the device to its initial state.  Return TRUE iff successful.
  */
-static int
-xlbc_reset(void)
+static int xlbc_reset(void)
 {
 
 	(void)xlbc_wait_cmd();
@@ -176,8 +172,7 @@ xlbc_reset(void)
 /*
  * Select a register window.
  */
-static void
-xlbc_select_window(unsigned int window)
+static void xlbc_select_window(unsigned int window)
 {
 
 	if (state.window == window)
@@ -191,8 +186,7 @@ xlbc_select_window(unsigned int window)
 /*
  * Read a word from the EEPROM.  On failure, return a value with all bits set.
  */
-static uint16_t
-xlbc_read_eeprom(unsigned int word)
+static uint16_t xlbc_read_eeprom(unsigned int word)
 {
 	spin_t spin;
 
@@ -218,8 +212,7 @@ xlbc_read_eeprom(unsigned int word)
 /*
  * Obtain the preconfigured hardware address of the device.
  */
-static void
-xlbc_get_hwaddr(netdriver_addr_t * addr)
+static void xlbc_get_hwaddr(netdriver_addr_t * addr)
 {
 	uint16_t word[3];
 
@@ -245,8 +238,7 @@ xlbc_get_hwaddr(netdriver_addr_t * addr)
 /*
  * Configure the device to use the given hardware address.
  */
-static void
-xlbc_set_hwaddr(netdriver_addr_t * addr)
+static void xlbc_set_hwaddr(netdriver_addr_t * addr)
 {
 
 	xlbc_select_window(XLBC_STATION_WINDOW);
@@ -268,8 +260,7 @@ xlbc_set_hwaddr(netdriver_addr_t * addr)
 /*
  * Perform one-time initialization of various settings.
  */
-static void
-xlbc_init_once(void)
+static void xlbc_init_once(void)
 {
 	uint16_t word;
 	uint32_t dword;
@@ -311,8 +302,7 @@ xlbc_init_once(void)
 /*
  * Allocate memory for DMA.
  */
-static void
-xlbc_alloc_dma(void)
+static void xlbc_alloc_dma(void)
 {
 
 	/* Packet descriptors require 8-byte alignment. */
@@ -356,8 +346,7 @@ xlbc_alloc_dma(void)
 /*
  * Reset the transmitter.
  */
-static void
-xlbc_reset_tx(void)
+static void xlbc_reset_tx(void)
 {
 
 	xlbc_issue_cmd(XLBC_CMD_TX_RESET);
@@ -375,8 +364,7 @@ xlbc_reset_tx(void)
 /*
  * Reset the receiver.
  */
-static void
-xlbc_reset_rx(void)
+static void xlbc_reset_rx(void)
 {
 	unsigned int i;
 
@@ -407,8 +395,7 @@ xlbc_reset_rx(void)
  * Execute a MII read, write, or Z cycle.  Stop the clock, wait, start the
  * clock, optionally change direction and/or data bits, and wait again.
  */
-static uint16_t
-xlbc_mii_cycle(uint16_t val, uint16_t mask, uint16_t bits)
+static uint16_t xlbc_mii_cycle(uint16_t val, uint16_t mask, uint16_t bits)
 {
 
 	val &= ~XLBC_PHYS_MGMT_CLK;
@@ -434,8 +421,7 @@ xlbc_mii_cycle(uint16_t val, uint16_t mask, uint16_t bits)
 /*
  * Read a MII register.
  */
-static uint16_t
-xlbc_mii_read(uint16_t phy, uint16_t reg)
+static uint16_t xlbc_mii_read(uint16_t phy, uint16_t reg)
 {
 	uint32_t dword;
 	uint16_t val;
@@ -490,8 +476,7 @@ xlbc_mii_read(uint16_t phy, uint16_t reg)
 /*
  * Write a MII register.
  */
-static void
-xlbc_mii_write(uint16_t phy, uint16_t reg, uint16_t data)
+static void xlbc_mii_write(uint16_t phy, uint16_t reg, uint16_t data)
 {
 	uint32_t dword;
 	uint16_t val;
@@ -593,8 +578,7 @@ xlbc_get_link_type(void)
 /*
  * Set the duplex mode to full or half, based on the current link type.
  */
-static void
-xlbc_set_duplex(enum xlbc_link_type link)
+static void xlbc_set_duplex(enum xlbc_link_type link)
 {
 	uint16_t word;
 	int duplex;
@@ -635,8 +619,7 @@ xlbc_set_duplex(enum xlbc_link_type link)
 /*
  * The link status has changed.
  */
-static void
-xlbc_link_event(void)
+static void xlbc_link_event(void)
 {
 	enum xlbc_link_type link_type;
 
@@ -661,10 +644,9 @@ xlbc_link_event(void)
 /*
  * Initialize the device.
  */
-static void
-xlbc_init_hw(int devind, netdriver_addr_t * addr)
+static void xlbc_init_hw(int devind, netdriver_addr_t * addr)
 {
-	uint32_t bar;
+	u64_t bar;
 	uint16_t cr;
 	int r, io, irq;
 
@@ -675,7 +657,7 @@ xlbc_init_hw(int devind, netdriver_addr_t * addr)
 	if (state.size < XLBC_MIN_REG_SIZE || io)
 		panic("invalid register bar");
 
-	state.base = vm_map_phys(SELF, (void *)bar, state.size);
+	state.base = vm_map_phys(SELF, (void *)(uintptr_t)bar, state.size);
 	if (state.base == MAP_FAILED)
 		panic("unable to map in registers");
 
@@ -730,8 +712,7 @@ xlbc_init_hw(int devind, netdriver_addr_t * addr)
 /*
  * Initialize the 3c90x driver and device.
  */
-static int
-xlbc_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+static int xlbc_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 	unsigned int * ticks)
 {
 	int devind;
@@ -753,8 +734,7 @@ xlbc_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 /*
  * Stop the device.  The main purpose is to stop any ongoing and future DMA.
  */
-static void
-xlbc_stop(void)
+static void xlbc_stop(void)
 {
 
 	/* A full reset ought to do it. */
@@ -764,8 +744,7 @@ xlbc_stop(void)
 /*
  * Set packet receipt mode.
  */
-static void
-xlbc_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+static void xlbc_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
 	unsigned int mcast_count __unused)
 {
 
@@ -784,8 +763,7 @@ xlbc_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
 /*
  * Try to receive a packet.
  */
-static ssize_t
-xlbc_recv(struct netdriver_data * data, size_t max)
+static ssize_t xlbc_recv(struct netdriver_data * data, size_t max)
 {
 	uint32_t flags;
 	uint8_t *ptr;
@@ -850,8 +828,7 @@ xlbc_recv(struct netdriver_data * data, size_t max)
  * is the starting point of the packet; this may be beyond the transmission
  * buffer size in the case that the current buffer contents already wrap.
  */
-static size_t
-xlbc_pad_tx(size_t off, size_t size)
+static size_t xlbc_pad_tx(size_t off, size_t size)
 {
 
 	if (off < XLBC_TXB_SIZE && off + size >= XLBC_TXB_SIZE)
@@ -863,8 +840,7 @@ xlbc_pad_tx(size_t off, size_t size)
 /*
  * Try to send a packet.
  */
-static int
-xlbc_send(struct netdriver_data * data, size_t size)
+static int xlbc_send(struct netdriver_data * data, size_t size)
 {
 	size_t used, off, left;
 	unsigned int head, last;
@@ -938,8 +914,7 @@ xlbc_send(struct netdriver_data * data, size_t size)
  * One or more packets have been downloaded.  Free up the corresponding
  * descriptors for later reuse.
  */
-static void
-xlbc_advance_tx(void)
+static void xlbc_advance_tx(void)
 {
 	uint32_t flags, len;
 
@@ -970,8 +945,7 @@ xlbc_advance_tx(void)
  * A transmission error has occurred.  Restart, and if necessary even reset,
  * the transmitter.
  */
-static void
-xlbc_recover_tx(void)
+static void xlbc_recover_tx(void)
 {
 	uint8_t status;
 	int enable, reset;
@@ -1036,8 +1010,7 @@ xlbc_recover_tx(void)
  * Update statistics.  We read all registers, not just the ones we are
  * interested in, so as to limit the number of useless statistics interrupts.
  */
-static void
-xlbc_update_stats(void)
+static void xlbc_update_stats(void)
 {
 
 	xlbc_select_window(XLBC_STATS_WINDOW);
@@ -1065,8 +1038,7 @@ xlbc_update_stats(void)
 /*
  * Process an interrupt.
  */
-static void
-xlbc_intr(unsigned int __unused mask)
+static void xlbc_intr(unsigned int __unused mask)
 {
 	uint32_t val;
 	int r;
@@ -1133,8 +1105,7 @@ xlbc_intr(unsigned int __unused mask)
 /*
  * Do regular processing.
  */
-static void
-xlbc_tick(void)
+static void xlbc_tick(void)
 {
 
 	xlbc_update_stats();
@@ -1143,8 +1114,7 @@ xlbc_tick(void)
 /*
  * The 3c90x ethernet driver.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 
 	env_setargs(argc, argv);

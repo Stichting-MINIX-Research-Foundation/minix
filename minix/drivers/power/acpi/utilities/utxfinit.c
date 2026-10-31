@@ -54,8 +54,7 @@
         ACPI_MODULE_NAME    ("utxfinit")
 
 /* For AcpiExec only */
-void
-AeDoObjectOverrides (
+void AeDoObjectOverrides (
     void);
 
 

@@ -368,8 +368,7 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
 }
 
 /* analyze and handle a single received packet while not in session state */
-void
-pppoe_disc_input(struct netif *netif, struct pbuf *pb)
+void pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 {
   u16_t tag, len;
   u16_t session, plen;
@@ -646,8 +645,7 @@ done:
   return;
 }
 
-void
-pppoe_data_input(struct netif *netif, struct pbuf *pb)
+void pppoe_data_input(struct netif *netif, struct pbuf *pb)
 {
   u16_t session, plen;
   struct pppoe_softc *sc;
@@ -811,8 +809,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
   return pppoe_output(sc, pb);
 }
 
-static void
-pppoe_timeout(void *arg)
+static void pppoe_timeout(void *arg)
 {
   u32_t retry_wait;
   int err;
@@ -879,8 +876,7 @@ pppoe_timeout(void *arg)
 }
 
 /* Start a connection (i.e. initiate discovery phase) */
-static void
-pppoe_connect(ppp_pcb *ppp, void *ctx)
+static void pppoe_connect(ppp_pcb *ppp, void *ctx)
 {
   err_t err;
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
@@ -937,8 +933,7 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
 }
 
 /* disconnect */
-static void
-pppoe_disconnect(ppp_pcb *ppp, void *ctx)
+static void pppoe_disconnect(ppp_pcb *ppp, void *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
 
@@ -962,8 +957,7 @@ pppoe_disconnect(ppp_pcb *ppp, void *ctx)
 }
 
 /* Connection attempt aborted */
-static void
-pppoe_abort_connect(struct pppoe_softc *sc)
+static void pppoe_abort_connect(struct pppoe_softc *sc)
 {
   PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
   sc->sc_state = PPPOE_STATE_INITIAL;
@@ -1148,8 +1142,7 @@ pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb)
 }
 
 #if 0 /*def PFIL_HOOKS*/
-static int
-pppoe_ifattach_hook(void *arg, struct pbuf **mp, struct netif *ifp, int dir)
+static int pppoe_ifattach_hook(void *arg, struct pbuf **mp, struct netif *ifp, int dir)
 {
   struct pppoe_softc *sc;
   int s;
@@ -1176,8 +1169,7 @@ pppoe_ifattach_hook(void *arg, struct pbuf **mp, struct netif *ifp, int dir)
 #endif
 
 #if 0 /* UNUSED */
-static void
-pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
+static void pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 {
   LWIP_UNUSED_ARG(message);
 

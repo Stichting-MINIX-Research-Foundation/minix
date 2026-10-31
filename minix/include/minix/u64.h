@@ -9,17 +9,17 @@
 
 static inline unsigned long ex64lo(u64_t i)
 {
-	return (unsigned long)i;
+	return (unsigned long)(u32_t)i;
 }
 
 static inline unsigned long ex64hi(u64_t i)
 {
-	return (unsigned long)(i>>32);
+	return (unsigned long)(u32_t)(i >> 32);
 }
 
 static inline u64_t make64(unsigned long lo, unsigned long hi)
 {
-	return ((u64_t)hi << 32) | (u64_t)lo;
+	return ((u64_t)hi << 32) | (u64_t)(u32_t)lo;
 }
 
 #endif /* _MINIX__U64_H */

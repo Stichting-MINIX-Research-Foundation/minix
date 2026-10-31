@@ -3,9 +3,7 @@
 /*===========================================================================*
  *                                sys_voutb				     *
  *===========================================================================*/
-int sys_voutb(pvb_pairs, nr_ports)
-pvb_pair_t *pvb_pairs;			/* (port,byte-value)-pairs */
-int nr_ports;				/* nr of pairs to be processed */
+int sys_voutb(pvb_pair_t *pvb_pairs, int nr_ports)
 {
     message m_io;
 

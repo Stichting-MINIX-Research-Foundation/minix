@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.acpidevs,v 1.5 2008/10/19 22:05:22 apb Exp $
+#
+# As per tron@NetBSD.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/acpi/acpidevs".
+# 2.) Commit "src/sys/dev/acpi/acpidevs".
+# 3.) Execute "make -f Makefile.acpidevs" in "src/sys/dev/acpi".
+# 4.) Commit "src/sys/dev/acpi/acpidevs_data.h".
+
+.include <bsd.own.mk>
+
+acpidevs_data.h: acpidevs devlist2h.awk
+	/bin/rm -f acpidevs_data.h
+	${TOOL_AWK} -f devlist2h.awk acpidevs

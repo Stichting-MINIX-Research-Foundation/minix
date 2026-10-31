@@ -121,8 +121,7 @@ AcpiNsDumpOneDevice (
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpRootDevices (
+void AcpiNsDumpRootDevices (
     void)
 {
     ACPI_HANDLE             SysBusHandle;

@@ -18,8 +18,7 @@ static struct fs_hooks hooks = {
  * structures, recursively creating directories which have their associated
  * data point to child file structures.
  */
-static void
-construct_tree(struct inode * dir, struct file * files)
+static void construct_tree(struct inode * dir, struct file * files)
 {
 	struct file *file;
 	struct inode *node;
@@ -46,8 +45,7 @@ construct_tree(struct inode * dir, struct file * files)
 /*
  * Initialization hook.  Generate the static part of the tree.
  */
-static void
-init_hook(void)
+static void init_hook(void)
 {
 	static int first_time = TRUE;
 	struct inode *root;

@@ -30,8 +30,7 @@ static int _uds_getsockname(int fd, struct sockaddr *__restrict address,
 /*
  * Get the local address of a socket.
  */
-static int
-__getsockname(int fd, struct sockaddr * __restrict address,
+static int __getsockname(int fd, struct sockaddr * __restrict address,
 	socklen_t * __restrict address_len)
 {
 	message m;

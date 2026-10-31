@@ -3,13 +3,7 @@
 /*===========================================================================*
  *                                sys_umap_remote			     *
  *===========================================================================*/
-int sys_umap_remote(proc_ep, grantee, seg, vir_addr, bytes, phys_addr)
-endpoint_t proc_ep;			/* process number to do umap for */
-endpoint_t grantee;			/* process nr to check as grantee */
-int seg;				/* T, D, or S segment */
-vir_bytes vir_addr;			/* address in bytes with segment*/
-vir_bytes bytes;			/* number of bytes to be copied */
-phys_bytes *phys_addr;			/* placeholder for result */
+int sys_umap_remote(endpoint_t proc_ep, endpoint_t grantee, int seg, vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr)
 {
     message m;
     int result;

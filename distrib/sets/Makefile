@@ -268,7 +268,8 @@ installsets: .PHONY check_DESTDIR sanitise_METALOG
 	    ${MAKEFLIST_FLAGS} -i ${INSTALLDIR} ${INSTALLSETS}
 
 # Should we ignore errors like extra or missing files in the flists?
-SLOPPY_FLIST?= NO
+# MINIX sets do not cover all NetBSD files installed to DESTDIR; default YES.
+SLOPPY_FLIST?= YES
 .if !empty(SLOPPY_FLIST:M[Yy][Ee][Ss])
 CHECKFLIST_FLAGS+=	-e -m
 REGPKG.sloppy=		-m

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.79 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: stand.h,v 1.82 2016/08/27 18:59:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,6 +64,7 @@
 #ifndef _LIBSA_STAND_H_
 #define	_LIBSA_STAND_H_
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
@@ -77,7 +78,7 @@
 
 #ifdef LIBSA_RENAME_PRINTF
 #define getchar		libsa_getchar
-#define gets		libsa_gets
+#define kgets		libsa_kgets
 #define printf		libsa_printf
 #define putchar		libsa_putchar
 #define vprintf		libsa_vprintf
@@ -276,7 +277,6 @@ void	*alloc(size_t) __compactcall;
 void	dealloc(void *, size_t) __compactcall;
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
@@ -287,7 +287,7 @@ void	vprintf(const char *, va_list)
 int	vsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
-void	gets(char *);
+void	kgets(char *, size_t);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
 __dead void	exit(int);
@@ -353,5 +353,27 @@ void	bcopy(const void *, void *, size_t);
 void	bzero(void *, size_t);
 
 int	atoi(const char *);
+
+#if !defined(SA_HARDCODED_SECSIZE)
+#define	GETSECSIZE(f)	getsecsize(f)
+static inline u_int
+getsecsize(struct open_file *f)
+{
+	int rc;
+	u_int secsize = 0;
+
+	rc = DEV_IOCTL(f->f_dev)(f, SAIOSECSIZE, &secsize);
+	if (rc != 0 || secsize == 0)
+		secsize = DEV_BSIZE;
+
+	return secsize;
+}
+#else
+/*
+ * For some archs, divdi3 and friends are required to support variable
+ * sector sizes. Shave them off by making secsize compile-time constant.
+ */
+#define	GETSECSIZE(f)	DEV_BSIZE
+#endif
 
 #endif /* _LIBSA_STAND_H_ */

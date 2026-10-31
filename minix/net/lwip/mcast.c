@@ -51,8 +51,7 @@ static LIST_HEAD(, mcast_member) mcast_freelist;
 /*
  * Initialize the per-socket multicast membership module.
  */
-void
-mcast_init(void)
+void mcast_init(void)
 {
 	unsigned int slot;
 
@@ -70,8 +69,7 @@ mcast_init(void)
  * Reset the multicast head for a socket.  The socket must not have any
  * previous multicast group memberships.
  */
-void
-mcast_reset(struct mcast_head * mcast_head)
+void mcast_reset(struct mcast_head * mcast_head)
 {
 
 	LIST_INIT(&mcast_head->mh_list);
@@ -86,8 +84,7 @@ mcast_reset(struct mcast_head * mcast_head)
  * Return OK if the membership has been successfully removed, or a negative
  * error code otherwise.
  */
-int
-mcast_join(struct mcast_head * mcast_head, const ip_addr_t * group,
+int mcast_join(struct mcast_head * mcast_head, const ip_addr_t * group,
 	struct ifdev * ifdev)
 {
 	struct mcast_member *mm;
@@ -183,8 +180,7 @@ mcast_join(struct mcast_head * mcast_head, const ip_addr_t * group,
  * previously have been associated with a socket.  If 'leave_group' is set,
  * also tell lwIP to leave the corresponding multicast group.
  */
-static void
-mcast_free(struct mcast_member * mm, int leave_group)
+static void mcast_free(struct mcast_member * mm, int leave_group)
 {
 	struct netif *netif;
 	err_t err;
@@ -222,8 +218,7 @@ mcast_free(struct mcast_member * mm, int leave_group)
  * mcast_join().  Return OK if the membership has been successfully removed, or
  * a negative error code otherwise.
  */
-int
-mcast_leave(struct mcast_head * mcast_head, const ip_addr_t * group,
+int mcast_leave(struct mcast_head * mcast_head, const ip_addr_t * group,
 	struct ifdev * ifdev)
 {
 	struct mcast_member *mm;
@@ -252,8 +247,7 @@ mcast_leave(struct mcast_head * mcast_head, const ip_addr_t * group,
  * Remove all per-socket multicast membership associations of the given socket.
  * This function is called when the socket is closed.
  */
-void
-mcast_leave_all(struct mcast_head * mcast_head)
+void mcast_leave_all(struct mcast_head * mcast_head)
 {
 	struct mcast_member *mm;
 
@@ -269,8 +263,7 @@ mcast_leave_all(struct mcast_head * mcast_head)
  * multicast membership structures associated with the interface, without
  * leaving the multicast group itself (as that will happen a bit later anyway).
  */
-void
-mcast_clear(struct ifdev * ifdev)
+void mcast_clear(struct ifdev * ifdev)
 {
 	unsigned int slot;
 

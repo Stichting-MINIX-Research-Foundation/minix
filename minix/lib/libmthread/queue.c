@@ -5,9 +5,7 @@
 /*===========================================================================*
  *				mthread_queue_add			     *
  *===========================================================================*/
-void mthread_queue_add(queue, thread)
-mthread_queue_t *queue;		/* Queue we want thread to append to */
-mthread_thread_t thread;
+void mthread_queue_add(mthread_queue_t *queue, mthread_thread_t thread)
 {
 /* Append a thread to the tail of the queue. As a process can be present on
  * only one queue at the same time, we can use the threads array's 'next'
@@ -32,8 +30,7 @@ mthread_thread_t thread;
 /*===========================================================================*
  *				mthread_queue_init			     *
  *===========================================================================*/
-void mthread_queue_init(queue)
-mthread_queue_t *queue;		/* Queue that has to be initialized */
+void mthread_queue_init(mthread_queue_t *queue)
 {
 /* Initialize queue to a known state */
 
@@ -44,8 +41,7 @@ mthread_queue_t *queue;		/* Queue that has to be initialized */
 /*===========================================================================*
  *				mthread_queue_isempty			     *
  *===========================================================================*/
-int mthread_queue_isempty(queue)
-mthread_queue_t *queue;
+int mthread_queue_isempty(mthread_queue_t *queue)
 {
   return(queue->mq_head == NULL);
 }
@@ -55,8 +51,7 @@ mthread_queue_t *queue;
  *				mthread_dump_queue			     *
  *===========================================================================*/
 #ifdef MDEBUG
-void mthread_dump_queue(queue)
-mthread_queue_t *queue;
+void mthread_dump_queue(mthread_queue_t *queue)
 {
   int threshold, count = 0;
   mthread_tcb_t *t;
@@ -90,8 +85,7 @@ mthread_queue_t *queue;
 /*===========================================================================*
  *				mthread_queue_remove			     *
  *===========================================================================*/
-mthread_thread_t mthread_queue_remove(queue)
-mthread_queue_t *queue;		/* Queue we want a thread from */
+mthread_thread_t mthread_queue_remove(mthread_queue_t *queue)
 {
 /* Get the first thread in this queue, if there is one. */
   mthread_thread_t thread;
@@ -119,7 +113,7 @@ mthread_queue_t *queue;		/* Queue we want a thread from */
 		/* Find offset in queue */
 		random_tcb = queue->mq_head;
 		prev = random_tcb;
-		while (--offset_id > 0) {
+		while (offset_id-- > 0) {
 			prev = random_tcb;
 			random_tcb = random_tcb->m_next;
 		}

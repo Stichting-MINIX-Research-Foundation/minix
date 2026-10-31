@@ -4,8 +4,7 @@
 #include <string.h>
 #include <minix/safecopies.h>
 
-int
-socketpath(endpoint_t endpt, const char * path, size_t size, int what,
+int socketpath(endpoint_t endpt, const char * path, size_t size, int what,
 	dev_t * dev, ino_t * ino)
 {
 	cp_grant_id_t grant;

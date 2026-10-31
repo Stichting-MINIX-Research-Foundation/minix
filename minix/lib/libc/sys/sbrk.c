@@ -10,8 +10,7 @@ __weak_alias(sbrk, _sbrk)
 
 extern char *_brksize;
 
-void *sbrk(incr)
-intptr_t incr;
+void *sbrk(intptr_t incr)
 {
   char *newsize, *oldsize;
 

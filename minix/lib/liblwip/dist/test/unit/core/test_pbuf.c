@@ -15,13 +15,11 @@
 
 /* Setups/teardown functions */
 
-static void
-pbuf_setup(void)
+static void pbuf_setup(void)
 {
 }
 
-static void
-pbuf_teardown(void)
+static void pbuf_teardown(void)
 {
 }
 

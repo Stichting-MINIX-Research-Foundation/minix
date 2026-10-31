@@ -46,8 +46,7 @@ static const struct ifdev_ops loopif_ops;
 /*
  * Initialize the loopback interface module.
  */
-void
-loopif_init(void)
+void loopif_init(void)
 {
 	unsigned int slot;
 
@@ -79,8 +78,7 @@ loopif_init(void)
  * packets received on the output side of the loopback device during this
  * loop iteration, to the input side of the device.
  */
-static void
-loopif_poll(struct ifdev * ifdev)
+static void loopif_poll(struct ifdev * ifdev)
 {
 	struct loopif *loopif = (struct loopif *)ifdev;
 	struct pbuf *pbuf, **pnext;
@@ -236,8 +234,7 @@ loopif_init_netif(struct ifdev * ifdev, struct netif * netif)
 /*
  * Create a new loopback device.
  */
-static int
-loopif_create(const char * name)
+static int loopif_create(const char * name)
 {
 	struct loopif *loopif;
 
@@ -271,8 +268,7 @@ loopif_create(const char * name)
 /*
  * Destroy an existing loopback device.
  */
-static int
-loopif_destroy(struct ifdev * ifdev)
+static int loopif_destroy(struct ifdev * ifdev)
 {
 	struct loopif *loopif = (struct loopif *)ifdev;
 	struct pbuf *pbuf, **pnext;
@@ -309,8 +305,7 @@ loopif_destroy(struct ifdev * ifdev)
 /*
  * Set NetBSD-style interface flags (IFF_) for a loopback interface.
  */
-static int
-loopif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
+static int loopif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
 {
 	struct loopif *loopif = (struct loopif *)ifdev;
 
@@ -337,8 +332,7 @@ loopif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
  * new value is acceptable, in which case the caller will do the rest.  Return
  * FALSE otherwise.
  */
-static int
-loopif_set_mtu(struct ifdev * ifdev __unused, unsigned int mtu)
+static int loopif_set_mtu(struct ifdev * ifdev __unused, unsigned int mtu)
 {
 
 	return (mtu <= LOOPIF_MAX_MTU);
@@ -358,8 +352,7 @@ static const struct ifdev_ops loopif_ops = {
  * Set and/or retrieve a per-protocol loopback checksumming option through
  * sysctl(7).
  */
-ssize_t
-loopif_cksum(struct rmib_call * call, struct rmib_node * node __unused,
+ssize_t loopif_cksum(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp)
 {
 	struct loopif *loopif;

@@ -41,8 +41,7 @@ void check_vmnt_locks_by_me(struct fproc *rfp)
 /*===========================================================================*
  *				check_vmnt_locks			     *
  *===========================================================================*/
-void
-check_vmnt_locks(void)
+void check_vmnt_locks(void)
 {
   struct vmnt *vmp;
   int count = 0;
@@ -50,7 +49,7 @@ check_vmnt_locks(void)
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++)
 	if (is_vmnt_locked(vmp)) {
 		count++;
-		printf("vmnt %p is %s, fs_e=%d dev=%llx\n", vmp, (tll_islocked(&vmp->m_lock) ? "locked":"pending locked"), vmp->m_fs_e, vmp->m_dev);
+		printf("vmnt %p is %s, fs_e=%d dev=%lx\n", vmp, (tll_islocked(&vmp->m_lock) ? "locked":"pending locked"), vmp->m_fs_e, (unsigned long)vmp->m_dev);
 	}
 
   if (count) panic("%d locked vmnts\n", count);

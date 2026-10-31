@@ -162,8 +162,7 @@ mqtt_msg_type_to_str(u8_t msg_type)
  * @param client MQTT client
  * @return New packet identifier, range 1 to 65535
  */
-static u16_t
-msg_generate_packet_id(mqtt_client_t *client)
+static u16_t msg_generate_packet_id(mqtt_client_t *client)
 {
   client->pkt_id_seq++;
   if (client->pkt_id_seq == 0) {
@@ -201,8 +200,7 @@ msg_generate_packet_id(mqtt_client_t *client)
  * @param rb Output ring buffer
  * @param tpcb TCP connection handle
  */
-static void
-mqtt_output_send(struct mqtt_ringbuf_t *rb, struct tcp_pcb *tpcb)
+static void mqtt_output_send(struct mqtt_ringbuf_t *rb, struct tcp_pcb *tpcb)
 {
   err_t err;
   u8_t wrap = 0;
@@ -279,8 +277,7 @@ mqtt_create_request(struct mqtt_request_t *r_objs, u16_t pkt_id, mqtt_request_cb
  * @param tail Pointer to request queue tail pointer
  * @param r Request to append
  */
-static void
-mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
+static void mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
 {
   struct mqtt_request_t *head = NULL;
   s16_t time_before = 0;
@@ -308,8 +305,7 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
  * Delete request item
  * @param r Request item to delete
  */
-static void
-mqtt_delete_request(struct mqtt_request_t *r)
+static void mqtt_delete_request(struct mqtt_request_t *r)
 {
   if (r != NULL) {
     r->next = r;
@@ -357,8 +353,7 @@ mqtt_take_request(struct mqtt_request_t **tail, u16_t pkt_id)
  * @param tail Pointer to request queue tail pointer
  * @param t Time since last call in seconds
  */
-static void
-mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
+static void mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
 {
   struct mqtt_request_t *r = *tail;
   LWIP_ASSERT("mqtt_request_time_elapsed: tail != NULL", tail != NULL);
@@ -385,8 +380,7 @@ mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
  * Free all request items
  * @param tail Pointer to request queue tail pointer
  */
-static void
-mqtt_clear_requests(struct mqtt_request_t **tail)
+static void mqtt_clear_requests(struct mqtt_request_t **tail)
 {
   struct mqtt_request_t *iter, *next;
   LWIP_ASSERT("mqtt_clear_requests: tail != NULL", tail != NULL);
@@ -400,8 +394,7 @@ mqtt_clear_requests(struct mqtt_request_t **tail)
  * Initialize all request items
  * @param r_objs Pointer to request objects
  */
-static void
-mqtt_init_requests(struct mqtt_request_t *r_objs)
+static void mqtt_init_requests(struct mqtt_request_t *r_objs)
 {
   u8_t n;
   LWIP_ASSERT("mqtt_init_requests: r_objs != NULL", r_objs != NULL);
@@ -415,8 +408,7 @@ mqtt_init_requests(struct mqtt_request_t *r_objs)
 /* Output message build helpers */
 
 
-static void
-mqtt_output_append_u8(struct mqtt_ringbuf_t *rb, u8_t value)
+static void mqtt_output_append_u8(struct mqtt_ringbuf_t *rb, u8_t value)
 {
   mqtt_ringbuf_put(rb, value);
 }
@@ -428,8 +420,7 @@ void mqtt_output_append_u16(struct mqtt_ringbuf_t *rb, u16_t value)
   mqtt_ringbuf_put(rb, value & 0xff);
 }
 
-static void
-mqtt_output_append_buf(struct mqtt_ringbuf_t *rb, const void *data, u16_t length)
+static void mqtt_output_append_buf(struct mqtt_ringbuf_t *rb, const void *data, u16_t length)
 {
   u16_t n;
   for (n = 0; n < length; n++) {
@@ -437,8 +428,7 @@ mqtt_output_append_buf(struct mqtt_ringbuf_t *rb, const void *data, u16_t length
   }
 }
 
-static void
-mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t length)
+static void mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t length)
 {
   u16_t n;
   mqtt_ringbuf_put(rb, length >> 8);
@@ -458,8 +448,7 @@ mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t leng
  * @param r_length Remaining length after fixed header
  */
 
-static void
-mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t dup,
+static void mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t dup,
                  u8_t qos, u8_t retain, u16_t r_length)
 {
   /* Start with control byte */
@@ -478,8 +467,7 @@ mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t d
  * @param r_length Remaining length after fixed header
  * @return 1 if message will fit, 0 if not enough buffer space
  */
-static u8_t
-mqtt_output_check_space(struct mqtt_ringbuf_t *rb, u16_t r_length)
+static u8_t mqtt_output_check_space(struct mqtt_ringbuf_t *rb, u16_t r_length)
 {
   /* Start with length of type byte + remaining length */
   u16_t total_len = 1 + r_length;
@@ -501,8 +489,7 @@ mqtt_output_check_space(struct mqtt_ringbuf_t *rb, u16_t r_length)
  * @param client MQTT client
  * @param reason Reason for disconnection
  */
-static void
-mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
+static void mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
 {
   LWIP_ASSERT("mqtt_close: client != NULL", client != NULL);
 
@@ -540,8 +527,7 @@ mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
  * Interval timer, called every MQTT_CYCLIC_TIMER_INTERVAL seconds in MQTT_CONNECTING and MQTT_CONNECTED states
  * @param arg MQTT client
  */
-static void
-mqtt_cyclic_timer(void *arg)
+static void mqtt_cyclic_timer(void *arg)
 {
   u8_t restart_timer = 1;
   mqtt_client_t *client = (mqtt_client_t *)arg;
@@ -620,8 +606,7 @@ pub_ack_rec_rel_response(mqtt_client_t *client, u8_t msg, u16_t pkt_id, u8_t qos
  * @param r Matching request
  * @param result Result code from server
  */
-static void
-mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
+static void mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
 {
   if (r->cb != NULL) {
     r->cb(r->arg, result < 3 ? ERR_OK : ERR_ABRT);
@@ -932,8 +917,7 @@ mqtt_tcp_sent_cb(void *arg, struct tcp_pcb *tpcb, u16_t len)
  * @param arg MQTT client
  * @param err Error encountered
  */
-static void
-mqtt_tcp_err_cb(void *arg, err_t err)
+static void mqtt_tcp_err_cb(void *arg, err_t err)
 {
   mqtt_client_t *client = (mqtt_client_t *)arg;
   LWIP_UNUSED_ARG(err); /* only used for debug output */
@@ -1159,8 +1143,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
  * @param data_cb Callback for each fragment of payload that arrives
  * @param arg User supplied argument to both callbacks
  */
-void
-mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb,
+void mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb,
                              mqtt_incoming_data_cb_t data_cb, void *arg)
 {
   LWIP_ASSERT("mqtt_set_inpub_callback: client != NULL", client != NULL);
@@ -1313,8 +1296,7 @@ tcp_fail:
  * Disconnect from MQTT server
  * @param client MQTT client
  */
-void
-mqtt_disconnect(mqtt_client_t *client)
+void mqtt_disconnect(mqtt_client_t *client)
 {
   LWIP_ASSERT("mqtt_disconnect: client != NULL", client);
   /* If connection in not already closed */
@@ -1331,8 +1313,7 @@ mqtt_disconnect(mqtt_client_t *client)
  * @param client MQTT client
  * @return 1 if connected to server, 0 otherwise
  */
-u8_t
-mqtt_client_is_connected(mqtt_client_t *client)
+u8_t mqtt_client_is_connected(mqtt_client_t *client)
 {
   LWIP_ASSERT("mqtt_client_is_connected: client != NULL", client);
   return client->conn_state == MQTT_CONNECTED;

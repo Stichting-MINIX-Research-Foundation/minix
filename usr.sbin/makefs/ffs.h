@@ -60,6 +60,7 @@ typedef struct {
 	int	avgfilesize;	/* expected average file size */
 	int	avgfpdir;	/* expected # of files per directory */
 	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
+	int	extattr;	/* use UFS2ea magic */
 	int	maxbsize;	/* maximum extent size */
 	int	maxblkspercg;	/* max # of blocks per cylinder group */
 		/* XXX: support `old' file systems ? */

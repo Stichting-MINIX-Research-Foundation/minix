@@ -7,8 +7,7 @@
 
 int main(int argc, char **argv);
 
-void
-prettyprogress(long b, long maxb, time_t starttime)
+void prettyprogress(long b, long maxb, time_t starttime)
 {
   /* print progress indication */
   time_t spent, now;
@@ -44,9 +43,7 @@ prettyprogress(long b, long maxb, time_t starttime)
   return;
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	long i = 0, count = 0;
 	int l;

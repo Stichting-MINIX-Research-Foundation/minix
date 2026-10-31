@@ -43,7 +43,7 @@
 #define i386_saved_state trapframe
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct i386_saved_state db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */

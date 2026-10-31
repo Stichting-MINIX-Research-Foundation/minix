@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.8 2013/05/31 15:11:07 tsutsui Exp $ */
+/* $NetBSD: vbe.c,v 1.9 2017/01/24 11:09:14 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -145,6 +145,7 @@ vbe_set_mode(int modenum)
 		for (i = 0; i < 256; i++)
 			vbe_set_palette(&rasops_cmap[i * 3], i);
 
+	memset(&fb, 0, sizeof(fb));
 	fb.physaddr = (uint64_t)mi.PhysBasePtr & 0xffffffff;
 	fb.width = mi.XResolution;
 	fb.height = mi.YResolution;

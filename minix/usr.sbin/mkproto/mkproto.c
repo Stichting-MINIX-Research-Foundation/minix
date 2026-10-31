@@ -112,9 +112,7 @@ void minix_free_readdir(struct me_dirent *md, int n)
        free(md);
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   char *dir = __UNCONST("");
   struct stat st;
@@ -199,8 +197,7 @@ char *argv[];
 }
 
 /* Output the prototype spec for this directory. */
-void descend(dirname)
-char *dirname;
+void descend(char *dirname)
 {
   struct me_dirent *dirents;
   DIR *dirp;
@@ -287,9 +284,7 @@ char *dirname;
 }
 
 
-void display_attrib(name, st)
-const char *name;
-struct stat *st;
+void display_attrib(const char *name, struct stat *st)
 {
 /* Output the specification for a single file */
 
@@ -315,8 +310,7 @@ struct stat *st;
 	gid);
 }
 
-void usage(binname)
-char *binname;
+void usage(char *binname)
 {
   fprintf(stderr, "Usage: %s [options] source_directory [prototype_file]\n", binname);
   fprintf(stderr, "options:\n");

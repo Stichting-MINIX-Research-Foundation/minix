@@ -50,8 +50,7 @@
 
 /* Local prototypes */
 
-static void
-AcpiTbInitGenericAddress (
+static void AcpiTbInitGenericAddress (
     ACPI_GENERIC_ADDRESS    *GenericAddress,
     UINT8                   SpaceId,
     UINT8                   ByteWidth,
@@ -59,12 +58,10 @@ AcpiTbInitGenericAddress (
     char                    *RegisterName,
     UINT8                   Flags);
 
-static void
-AcpiTbConvertFadt (
+static void AcpiTbConvertFadt (
     void);
 
-static void
-AcpiTbSetupFadtRegisters (
+static void AcpiTbSetupFadtRegisters (
     void);
 
 static UINT64
@@ -206,8 +203,7 @@ static ACPI_FADT_PM_INFO    FadtPmInfoTable[] =
  *
  ******************************************************************************/
 
-static void
-AcpiTbInitGenericAddress (
+static void AcpiTbInitGenericAddress (
     ACPI_GENERIC_ADDRESS    *GenericAddress,
     UINT8                   SpaceId,
     UINT8                   ByteWidth,
@@ -335,8 +331,7 @@ AcpiTbSelectAddress (
  *
  ******************************************************************************/
 
-void
-AcpiTbParseFadt (
+void AcpiTbParseFadt (
     UINT32                  TableIndex)
 {
     UINT32                  Length;
@@ -404,8 +399,7 @@ AcpiTbParseFadt (
  *
  ******************************************************************************/
 
-void
-AcpiTbCreateLocalFadt (
+void AcpiTbCreateLocalFadt (
     ACPI_TABLE_HEADER       *Table,
     UINT32                  Length)
 {
@@ -494,8 +488,7 @@ AcpiTbCreateLocalFadt (
  *
  ******************************************************************************/
 
-static void
-AcpiTbConvertFadt (
+static void AcpiTbConvertFadt (
     void)
 {
     char                    *Name;
@@ -693,8 +686,7 @@ AcpiTbConvertFadt (
  *
  ******************************************************************************/
 
-static void
-AcpiTbSetupFadtRegisters (
+static void AcpiTbSetupFadtRegisters (
     void)
 {
     ACPI_GENERIC_ADDRESS    *Target64;

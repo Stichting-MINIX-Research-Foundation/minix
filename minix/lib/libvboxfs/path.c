@@ -8,8 +8,7 @@
  * of the path object is set as small as possible.  If 'name' is NULL, the path
  * will be initialized to the empty string.
  */
-int
-vboxfs_set_path(vboxfs_path_t *path, const char *name)
+int vboxfs_set_path(vboxfs_path_t *path, const char *name)
 {
 	size_t len;
 
@@ -33,8 +32,7 @@ vboxfs_set_path(vboxfs_path_t *path, const char *name)
  * in the given name buffer first.  The given size must include room for a
  * terminating null character.
  */
-int
-vboxfs_get_path(vboxfs_path_t *path, char *name, size_t size)
+int vboxfs_get_path(vboxfs_path_t *path, char *name, size_t size)
 {
 
 	/* FIXME: missing UTF-8 conversion */
@@ -52,8 +50,7 @@ vboxfs_get_path(vboxfs_path_t *path, char *name, size_t size)
 /*
  * Return the byte size of a previously initialized path object.
  */
-size_t
-vboxfs_get_path_size(vboxfs_path_t *path)
+size_t vboxfs_get_path_size(vboxfs_path_t *path)
 {
 
 	return offsetof(vboxfs_path_t, data) + path->size;

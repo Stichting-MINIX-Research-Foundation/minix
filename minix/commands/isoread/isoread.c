@@ -184,10 +184,7 @@ int Verbose = 0;        /* 1 = Print all info on directories */
 int ByteOffset = 0;     /* 1 = Print byte offset and length of files */
 int Aflag = 0;          /* 1 = Suppress output of \r  */
 
-int iso_cmp(name, dir_ptr, dir_flag)
-char *name;
-struct dir_entry *dir_ptr;
-int dir_flag;
+int iso_cmp(char *name, struct dir_entry *dir_ptr, int dir_flag)
 {
 /* Compare name with directory entries, looking for match with a dirname.
  * An iso9660 filename is terminated by ";n", where n will probably 
@@ -215,7 +212,7 @@ int dir_flag;
 }
 
 
-void usage()
+void usage(void)
 {
   if (Read_Dir)
    fprintf (STDERR, "Usage: isodir [-lrB] inputfile [dir]\n");
@@ -227,9 +224,7 @@ void usage()
 }
 
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   struct dir_entry *entry;
   char path[MAX_PATH_LENGTH];
@@ -352,8 +347,7 @@ char **argv;
 }
 
 
-struct dir_entry *look_up(path)
-char *path;
+struct dir_entry *look_up(char *path)
 {
   /* Lookup a file name */
 
@@ -428,9 +422,7 @@ char *path;
 }
   
 
-void recurse_dir(path, dir_ptr)
-char *path;
-struct dir_entry *dir_ptr;
+void recurse_dir(char *path, struct dir_entry *dir_ptr)
 {
   /* Recursively descend all directories starting with dir_ptr */
 
@@ -503,8 +495,7 @@ struct dir_entry *dir_ptr;
 }
     
 
-void list_dir(dir_ptr)
-struct dir_entry *dir_ptr;
+void list_dir(struct dir_entry *dir_ptr)
 {
   /* List all entries in a directory */
   int tty;
@@ -601,8 +592,7 @@ struct dir_entry *dir_ptr;
 }
 
 
-void print_dir_date(date)
-char *date;
+void print_dir_date(char *date)
 {
   /* Print date in a directory entry */
 
@@ -623,8 +613,7 @@ char *date;
 }
 
 
-void list_file(dir_ptr)
-struct dir_entry *dir_ptr;
+void list_file(struct dir_entry *dir_ptr)
 {
   /* List contents of a file */
 
@@ -658,8 +647,7 @@ struct dir_entry *dir_ptr;
 }
 
 
-void print_date(date)
-char *date;
+void print_date(char *date)
 {
   /* Print the date in a volume descriptor */
 
@@ -680,8 +668,7 @@ char *date;
            date[13]);
 }
 
-void iso_info(vol_desc)
-struct iso9660_descriptor *vol_desc;
+void iso_info(struct iso9660_descriptor *vol_desc)
 {
   int i;
 
@@ -711,8 +698,7 @@ struct iso9660_descriptor *vol_desc;
 }
 
 
-void hs_info(vol_desc)
-struct high_sierra_descriptor *vol_desc;
+void hs_info(struct high_sierra_descriptor *vol_desc)
 {
   int i;
 
@@ -730,7 +716,7 @@ struct high_sierra_descriptor *vol_desc;
 }
   
 
-int valid_fs()               
+int valid_fs(void) 
 {
 
   int i;
@@ -764,10 +750,7 @@ int valid_fs()
 }
 
 
-void read_device(offset, nr_of_bytes, buffer)
-long offset;
-int nr_of_bytes;
-char *buffer;
+void read_device(long offset, int nr_of_bytes, char *buffer)
 {
   int bytes_read;
 
@@ -790,15 +773,13 @@ char *buffer;
 
 /* The ISO9660 functions */
 
-int iso_711 (c)
-char *c;
+int iso_711 (char *c)
 {
   return (*c & 0xff);
 }
 
 
-int iso_712 (c)
-char *c;
+int iso_712 (char *c)
 {
   int n;
 	
@@ -807,20 +788,17 @@ char *c;
   return n;
 }
 
-int iso_721 (c)
-char *c;
+int iso_721 (char *c)
 {
   return ((c[0] & 0xff) | ((c[1] & 0xff) << 8));
 }
 
-int iso_722 (c)
-char *c;
+int iso_722 (char *c)
 {
   return (((c[0] & 0xff) << 8) | (c[1] & 0xff));
 }
 
-int iso_723 (c)
-char *c;
+int iso_723 (char *c)
 {
   if (c[0] != c[3] || c[1] != c[2]) 
   {
@@ -830,8 +808,7 @@ char *c;
   return (iso_721 (c));
 }
 
-long iso_731 (c)
-char *c;
+long iso_731 (char *c)
 {
   return ((long)(c[0] & 0xff)
        | ((long)(c[1] & 0xff) << 8)
@@ -840,8 +817,7 @@ char *c;
 }
 
 
-long iso_732 (c)
-char *c;
+long iso_732 (char *c)
 {
   return (((long)(c[0] & 0xff) << 24)
         | (((long)c[1] & 0xff) << 16)
@@ -849,8 +825,7 @@ char *c;
         | ((long)c[3] & 0xff));
 }
 
-long iso_733 (c)
-char *c;
+long iso_733 (char *c)
 {
 int i;
 

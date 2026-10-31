@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.8 2010/12/24 20:40:42 jakllsch Exp $	 */
+/*	$NetBSD: devopen.c,v 1.8.64.2 2019/12/17 12:59:52 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ dev2bios(char *devname, int unit, int *biosdev)
 }
 
 void
-bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
+bios2dev(int biosdev, daddr_t sector, char **devname, int *unit,
+	 int *partition, const char **part_name)
 {
 
 	/* set default */
@@ -109,7 +110,7 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 	} else
 		*devname = "fd";
 
-	*partition = biosdisk_findpartition(biosdev, sector);
+	(void)biosdisk_findpartition(biosdev, sector, partition, part_name);
 }
 
 #ifdef _STANDALONE
@@ -128,9 +129,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 	int biosdev;
 	int error;
 
-	if ((error = parsebootfile(fname, &fsname, &devname,
-				   &unit, &partition, (const char **) file))
-	    || (error = dev2bios(devname, unit, &biosdev)))
+	error = parsebootfile(fname, &fsname, &devname,
+			      &unit, &partition, (const char **) file);
+	if (error)
 		return error;
 
 	f->f_dev = &devsw[0];		/* must be biosdisk */
@@ -141,6 +142,27 @@ devopen(struct open_file *f, const char *fname, char **file)
 		BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
 	}
 #endif
+
+#ifndef NO_GPT
+	/* Search by GPT label name */
+	if (strstr(devname, "NAME=") == devname) {
+		f->f_dev = &devsw[0];		/* must be biosdisk */
+
+		return biosdisk_open_name(f, devname);
+	}
+#endif
+#ifndef NO_RAIDFRAME
+	/* Search by raidframe name */
+	if (strstr(devname, "raid") == devname) {
+		f->f_dev = &devsw[0];		/* must be biosdisk */
+
+		return biosdisk_open_name(f, fname);
+	}
+#endif
+
+	error = dev2bios(devname, unit, &biosdev);
+	if (error)
+		return error;
 
 	return biosdisk_open(f, biosdev, partition);
 }

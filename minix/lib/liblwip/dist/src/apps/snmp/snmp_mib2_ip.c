@@ -58,8 +58,7 @@
 #if LWIP_IPV4
 /* --- ip .1.3.6.1.2.1.4 ----------------------------------------------------- */
 
-static s16_t
-ip_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t ip_get_value(struct snmp_node_instance* instance, void* value)
 {
   s32_t* sint_ptr = (s32_t*)value;
   u32_t* uint_ptr = (u32_t*)value;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2014/09/01 09:09:47 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2016/02/06 10:40:58 mlelstv Exp $
 #
 
 MSDOS=	${NETBSDSRCDIR}/sys/fs/msdosfs
@@ -12,5 +12,5 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys
 .endif
 
 SRCS+= mkfs_msdos.c msdosfs_fat.c msdosfs_conv.c msdosfs_vfsops.c
-SRCS+= msdosfs_lookup.c msdosfs_denode.c msdosfs_vnops.c
+SRCS+= msdosfs_lookup.c msdosfs_denode.c msdosfs_vnops.c msdosfs_unicode.c
 SRCS+= clock_subr.c

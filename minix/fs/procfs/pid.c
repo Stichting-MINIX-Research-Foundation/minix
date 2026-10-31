@@ -26,8 +26,7 @@ struct file pid_files[] = {
 /*
  * Is the given slot a zombie process?
  */
-static int
-is_zombie(int slot)
+static int is_zombie(int slot)
 {
 
 	return (slot >= NR_TASKS &&
@@ -38,8 +37,7 @@ is_zombie(int slot)
  * Get MINIX3-specific process data for the process identified by the given
  * kernel slot.  Return OK or a negative error code.
  */
-int
-get_proc_data(pid_t pid, struct minix_proc_data * mpd)
+int get_proc_data(pid_t pid, struct minix_proc_data * mpd)
 {
 	int mib[4] = { CTL_MINIX, MINIX_PROC, PROC_DATA, pid };
 	size_t oldlen;
@@ -56,8 +54,7 @@ get_proc_data(pid_t pid, struct minix_proc_data * mpd)
  * a result, we only provide information that mtop(1) actually uses.  In the
  * future, this file may be extended with additional fields again.
  */
-static void
-pid_psinfo(int slot)
+static void pid_psinfo(int slot)
 {
 	struct minix_proc_data mpd;
 	struct vm_usage_info vui;
@@ -136,8 +133,7 @@ pid_psinfo(int slot)
  * Dump the process's command line as it is contained in the process itself.
  * Each argument is terminated with a null character.
  */
-static void
-pid_cmdline(int slot)
+static void pid_cmdline(int slot)
 {
 	char buf[BUF_SIZE];
 	int mib[] = { CTL_KERN, KERN_PROC_ARGS, 0, KERN_PROC_ARGV };
@@ -163,8 +159,7 @@ pid_cmdline(int slot)
  * Dump the process's initial environment as it is contained in the process
  * itself.  Each entry is terminated with a null character.
  */
-static void
-pid_environ(int slot)
+static void pid_environ(int slot)
 {
 	char buf[BUF_SIZE];
 	int mib[] = { CTL_KERN, KERN_PROC_ARGS, 0, KERN_PROC_ENV };
@@ -189,8 +184,7 @@ pid_environ(int slot)
 /*
  * Print the virtual memory regions of a process.
  */
-static void
-pid_map(int slot)
+static void pid_map(int slot)
 {
 	struct minix_proc_data mpd;
 	struct vm_region_info vri[MAX_VRI_COUNT];
@@ -217,7 +211,11 @@ pid_map(int slot)
 			break;
 
 		for (i = 0; i < r; i++) {
+#if defined(__x86_64__)
+			buf_printf("%016lx-%016lx %c%c%c\n",
+#else
 			buf_printf("%08lx-%08lx %c%c%c\n",
+#endif
 			    vri[i].vri_addr,
 			    vri[i].vri_addr + vri[i].vri_length,
 			    (vri[i].vri_prot & PROT_READ) ? 'r' : '-',

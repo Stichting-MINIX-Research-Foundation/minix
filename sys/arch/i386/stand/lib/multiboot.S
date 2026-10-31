@@ -1,13 +1,6 @@
-/*	$NetBSD: multiboot.S,v 1.1 2008/10/11 11:06:20 joerg Exp $	*/
-	
-/* starts program in protected mode / flat space
- with given stackframe
- needs global variables flatcodeseg and flatdataseg
- (gdt offsets)
-  derived from: NetBSD:sys/arch/i386/stand/lib/startprog.S
- */
+/*	$NetBSD: multiboot.S,v 1.2.20.1 2019/09/17 19:32:00 martin Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -62,63 +55,71 @@
  */
 
 /*
-  Copyright 1988, 1989, 1990, 1991, 1992 
-   by Intel Corporation, Santa Clara, California.
-
-                All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and
-its documentation for any purpose and without fee is hereby
-granted, provided that the above copyright notice appears in all
-copies and that both the copyright notice and this permission notice
-appear in supporting documentation, and that the name of Intel
-not be used in advertising or publicity pertaining to distribution
-of the software without specific, written prior permission.
-
-INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
-IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
-NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ *   Copyright 1988, 1989, 1990, 1991, 1992
+ *    by Intel Corporation, Santa Clara, California.
+ * 
+ *                 All Rights Reserved
+ * 
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that the above copyright notice appears in all
+ * copies and that both the copyright notice and this permission notice
+ * appear in supporting documentation, and that the name of Intel
+ * not be used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * 
+ * INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+ * IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 #include <machine/asm.h>
-#define MULTIBOOT_INFO_MAGIC		0x2BADB002
 
 /*
- * multiboot(phyaddr,header,stack)
- *	start the program on protected mode where phyaddr is the entry point
+ * Starts program in protected mode / flat space with given stackframe.
+ * Needs global variables flatcodeseg and flatdataseg (gdt offsets).
+ * Derived from: NetBSD:sys/arch/i386/stand/lib/startprog.S
+ */
+
+/*
+ * multiboot(entry, header, stack, magic)
+ *	start the program on protected mode, entry is phyaddr.
  */
 ENTRY(multiboot)
 	pushl	%ebp
-	movl	%esp, %ebp
+	movl	%esp,%ebp
 
-	# prepare a new stack
-	movl	$flatdataseg, %eax
-	movw	%ax, %es		# for arg copy
-	movl	16(%ebp), %ebx	# stack
+	/* Prepare a new stack */
+	movl	$flatdataseg,%eax
+	movw	%ax,%es		/* for arg copy */
+	movl	16(%ebp),%ebx	/* stack */
 	subl	$4,%ebx
-	movl	%ebx, %edi
+	movl	%ebx,%edi
 
-	movl	12(%ebp), %ebx	# header	
-	movl	8(%ebp), %ecx	# entry
+	movl	20(%ebp),%edx	/* magic */
+	movl	12(%ebp),%ebx	/* header */
+	movl	8(%ebp),%ecx	/* entry */
 
-	# set new stackptr (movsl decd sp 1 more -> dummy return address)
-	movw	%ax, %ss
-	movl	%edi, %esp
+	/* Set new stack pointer */
+	movw	%ax,%ss
+	movl	%edi,%esp
 
-	# push on our entry address
-	movl	$flatcodeseg, %eax		# segment
-	pushl	%eax
-	pushl	%ecx			#entry
+	/* Push on our entry address */
+	movl	$flatcodeseg,%eax
+	pushl	%eax			/* code segment */
+	pushl	%ecx			/* phyaddr */
 
-	# convert over the other data segs
-	movl	$flatdataseg, %eax
-	mov	%ax, %ds
-	mov	%ax, %es
+	/* Convert over the other data segs */
+	movl	$flatdataseg,%eax
+	mov	%ax,%ds
+	mov	%ax,%es
 
-	movl	$MULTIBOOT_INFO_MAGIC, %eax
-	# convert the PC (and code seg)
+	movl	%edx,%eax	/* magic */
+
+	/* Jump to phyaddr, with the new code segment */
 	lret
+

@@ -1,9 +1,12 @@
 # Makefile for terminal driver (TTY)
 PROG=	tty
 
-.include "arch/${MACHINE_ARCH}/Makefile.inc"
-
 SRCS +=	tty.c
+
+.include "arch/${MACHINE_ARCH}/Makefile.inc"
+.include "wscons/Makefile.inc"
+.include "wsfont/Makefile.inc"
+.include "rasops/Makefile.inc"
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lchardriver -lsys -ltimers

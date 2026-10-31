@@ -2,8 +2,7 @@
 
 #include <string.h>
 
-int
-copyfd(endpoint_t endpt, int fd, int what)
+int copyfd(endpoint_t endpt, int fd, int what)
 {
 	message m;
 

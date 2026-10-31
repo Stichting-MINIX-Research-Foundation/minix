@@ -1,0 +1,1361 @@
+#!/bin/sh -
+#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.3 2020/03/19 19:08:31 martin Exp $
+#
+# Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#
+# Device "make" file.  Valid special arguments:
+#	all	makes all known devices, including local devices.
+#		Tries to make the 'standard' number of each type.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
+#	floppy	devices to be put on install floppies
+#	ramdisk	devices to be put into INSTALL kernel ramdisks.
+#	std	standard devices
+#	local	configuration specific devices
+#	lua	Lua device
+#	wscons	make wscons devices
+#	usbs	make USB devices
+#
+# Tapes:
+#	st*	SCSI tapes
+#	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
+#	ht*	MASSBUS TM03 and TU??
+#	mt*	MSCP tapes (e.g. TU81, TK50)
+#	tm*	UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11)
+#	ts*	UNIBUS TS11
+#	ut*	UNIBUS TU45 emulations (e.g. si 9700)
+#	uu*	TU58 cassettes on DL11 controller
+#
+# Disks:
+#	dk*	wedge disk slices
+#	ccd*	concatenated disk devices
+#	cd*	SCSI or ATAPI CD-ROM
+#	cgd*	cryptographic disk devices
+#	raid*	RAIDframe disk devices
+#	sd*	SCSI disks
+#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	bmd*	Nereid bank memory disks
+#	ed*	IBM PS/2 ESDI disk devices
+#	fd*	"floppy" disk drives (3 1/2", 5 1/4")
+#	fss*	Files system snapshot devices
+#	gdrom*	Dreamcast "gigadisc" CD-ROM drive
+#	hk*	UNIBUS RK06 and RK07
+#	hp*	MASSBUS RM??
+#	ld*	Logical disk devices (e.g., hardware RAID)
+#	mcd*	Mitsumi CD-ROM
+#	md*	memory pseudo-disk devices
+#	ofdisk*	OpenFirmware disk devices
+#	ra*	MSCP disks (RA??, RD??)
+#	rb*	730 IDC w/ RB80 and/or RB02
+#	rd*	HDC9224 RD disks on VS2000
+#	rl*	UNIBUS RL02
+#	rx*	MSCP floppy disk (RX33/50/...)
+#	up*	other UNIBUS devices (e.g. on Emulex SC-21V controller)
+#	vnd*	"file" pseudo-disks
+#	xbd*	Xen virtual disks
+#	xd*	Xylogic 753/7053 disks
+#	xy*	Xylogic 450/451 disks
+#
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#	lms*	Logitech bus mouse
+#	mms*	Microsoft bus mouse
+#	qms*	"quadrature mouse"
+#	pms*	PS/2 mouse
+#	mouse	mouse (provides events, for X11)
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
+#	kbd	raw keyboard (provides events, for X11)
+#	kbdctl	keyboard control
+#
+# Terminals/Console ports:
+#	tty[01]*	standard serial ports
+#	tty0*	SB1250 ("sbscn") serial ports (sbmips)
+#	ttyE*	wscons - Workstation console ("wscons") glass-tty emulators
+#	ttyCZ?	Cyclades-Z multiport serial boards.  Each "unit"
+#		makes 64 ports.
+#	ttyCY?	Cyclom-Y multiport serial boards. Each "unit" makes
+#		32 ports.
+#	ttye*	ITE bitmapped consoles
+#	ttyv0	pccons
+#	ttyC?	NS16550 ("com") serial ports
+#	ttyS*	SA1110 serial port (hpcarm)
+#	ttyTX?	TX39 internal serial ports (hpcmips)
+#	ttyB?	DEC 3000 ZS8530 ("scc") serial ports (alpha)
+#	ttyA*	mfc serial ports (amiga)
+#	ttyB*	msc serial ports (amiga)
+#	ttyC*	com style serial ports (DraCo, HyperCom) (amiga)
+#		On the DraCo, units 0 and 1 are the built-in "modem" and
+#		"mouse" ports, if configured.
+#	ttyA0   8530 Channel A (formerly ser02) (atari)
+#	ttyA1	8530 Channel B (formerly mdm02) (atari)
+#	ttyB0	UART on first 68901 (formerly mdm01) (atari)
+#	ixpcom	IXP12x0 COM ports
+#	epcom	EP93xx COM ports
+#	plcom	ARM PL01[01] serial ports
+#	wmcom	EPOC Windermere COM ports
+#	ttyM?	HP200/300 4 port serial mux interface (hp300)
+#	ttya	"ttya" system console (luna68k)
+#	ttyb	second system serial port (luna68k)
+#	tty*	Onboard serial ports (mvme68k)
+#		On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
+#		On the mvme167, and '177: ttyC1, ttyC2 and ttyC3.
+#		Note that tty[CZ]0 is grabbed by the console device
+#		so is not created by default
+#	dc*	PMAX 4 channel serial interface (kbd, mouse, modem, printer)
+#	scc*	82530 serial interface (pmax)
+#	ttyZ*	Zilog 8530 ("zstty") serial ports
+#	tty[abcd]	Built-in serial ports (sparc)
+#	tty*	Z88530 serial controllers (sparc64)
+#	ttyh*	SAB82532 serial controllers (sparc64)
+#	tty[a-j]	Built-in serial ports (sun2, sun3)
+#	ttyC?	pccons (arc)
+#	dz*	UNIBUS DZ11 and DZ32 (vax)
+#	dh*	UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11) (vax)
+#	dmf*	UNIBUS DMF32 (vax)
+#	dhu*    UNIBUS DHU11 (vax)
+#	dmz*    UNIBUS DMZ32 (vax)
+#	dl*	UNIBUS DL11 (vax)
+#	xencons	Xen virtual console
+#
+# Terminal multiplexors:
+#	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
+#	dh*	UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11)
+#	dhu*	UNIBUS DHU11
+#	dl*	UNIBUS DL11
+#	dmf*	UNIBUS DMF32
+#	dmz*	UNIBUS DMZ32
+#	dz*	UNIBUS DZ11 and DZ32
+#	scc*	82530 serial interface
+#
+# Call units:
+#	dn*	UNIBUS DN11 and emulations (e.g. Able Quadracall)
+#
+# Pseudo terminals:
+#	ptm	pty multiplexor device, and pts directory
+#	pty*	set of 16 master and slave pseudo terminals
+#	opty	first 16 ptys, to save inodes on install media
+#	ipty	first 2 ptys, for install media use only
+#
+# Printers:
+#	arcpp*	Archimedes parallel port
+#	lpt*	stock lp
+#	lpa*	interruptless lp
+#	par*	Amiga motherboard parallel port
+#	cpi*	Macintosh Nubus CSI parallel printer card
+#
+# USB devices:
+#	usb*	USB control devices
+#	uhid*	USB generic HID devices
+#	ulpt*	USB printer devices
+#	ugen*	USB generic devices
+#	urio*	USB Diamond Rio 500 devices
+#	uscanner*	USB scanners
+#	ttyHS*	USB Option N.V. modems
+#	ttyU*	USB modems
+#	ttyY*	USB serial adapters
+#
+# Video devices:
+#	bwtwo*	monochromatic frame buffer
+#	cgtwo*	8-bit color frame buffer
+#	cgthree*	8-bit color frame buffer
+#	cgfour*	8-bit color frame buffer
+#	cgsix*	accelerated 8-bit color frame buffer
+#	cgeight*	24-bit color frame buffer
+#	etvme	Tseng et-compatible cards on VME (atari)
+#	ik*	UNIBUS interface to Ikonas frame buffer
+#	leo	Circad Leonardo VME-bus true color (atari)
+#	ps*	UNIBUS interface to Picture System 2
+#	qv*	QVSS (MicroVAX) display
+#	tcx*	accelerated 8/24-bit color frame buffer
+#
+# Maple bus devices:
+#	maple	Maple bus control devices
+#	mlcd*	Maple bus LCD devices
+#	mmem*	Maple bus storage devices
+#
+# IEEE1394 bus devices:
+#	fw*	IEEE1394 bus generic node access devices
+#	fwmem*	IEEE1394 bus physical memory of the remote node access devices
+#
+# Special purpose devices:
+#	ad*	UNIBUS interface to Data Translation A/D converter
+#	agp*	AGP GART devices
+#	altq	ALTQ control interface
+#	amr*	AMI MegaRaid control device
+#	apm	power management device
+#	audio*	audio devices
+#	bell*	OPM bell device (x68k)
+#	bktr	Brooktree 848/849/878/879 based TV cards
+#	bpf	packet filter
+#	bthub	Bluetooth Device Hub control interface
+#	cfs*	Coda file system device
+#	ch*	SCSI media changer
+#	cir*	Consumer IR
+#	clockctl clock control for non root users
+#	cpuctl	CPU control
+#	crypto	hardware crypto access driver
+#	dmoverio hardware-assisted data movers
+#	dpt*	DPT/Adaptec EATA RAID management interface
+#	dpti*	DPT/Adaptec I2O RAID management interface
+#	drm*	Direct Rendering Manager interface
+#	dtv*	Digital TV interface
+#	fb*	PMAX generic framebuffer pseudo-device
+#	fd	file descriptors
+#	gpiopps* 1PPS signals on GPIO pins
+#	grf*	graphics frame buffer device
+#	hdaudio* High Definition audio control device
+#	hdmicec* HDMI CEC devices
+#	hil	HP300 HIL input devices
+#	icp	ICP-Vortex/Intel RAID control interface
+#	iic*	IIC bus device
+#	io	x86 IOPL access for COMPAT_10, COMPAT_FREEBSD
+#	iop*	I2O IOP control interface
+#	ipmi*	OpenIPMI compatible interface
+#	ipl	IP Filter
+#	irframe* IrDA physical frame
+#	ite*	terminal emulator interface to HP300 graphics devices
+#	joy*	joystick device
+#	kttcp	kernel ttcp helper device
+#	lockstat kernel locking statistics
+#	magma*	Magma multiport serial/parallel cards
+#	midi*	MIDI
+#	mfi*	LSI MegaRAID/MegaSAS control interface
+#	mlx*	Mylex DAC960 control interface
+#	mly*	Mylex AcceleRAID/eXtremeRAID control interface
+#	np*	UNIBUS Ethernet co-processor interface, for downloading.
+#	npf	NPF packet filter
+#	nsmb*	SMB requester
+#	nvme*	Non-Volatile Memory Host Controller Interface device driver
+#	nvme*ns* Non-Volatile Memory namespace
+#	nvmm	NetBSD Virtual Machine Monitor
+#	openfirm OpenFirmware accessor
+#	pad*	Pseudo-audio device driver
+#	pci*	PCI bus access devices
+#	pf	PF packet filter
+#	putter	Pass-to-Userspace Transporter
+#	px*	PixelStamp Xserver access
+#	radio*	radio devices
+#	random	Random number generator
+#	rtc*	RealTimeClock
+#	scsibus* SCSI busses
+#	se*	SCSI Ethernet
+#	ses*	SES/SAF-TE SCSI Devices
+#	speaker	PC speaker		(XXX - installed)
+#	spi*	SPI bus device
+#	sram	battery backuped memory (x68k)
+#	srt*	source-address based routing
+#	ss*	SCSI scanner
+#	stic*	PixelStamp interface chip
+#	sysmon	System Monitoring hardware
+#	tap*	virtual Ethernet device
+#	tprof	task profiler
+#	tun*	network tunnel driver
+#	twa	3ware Apache control interface
+#	twe	3ware Escalade control interface
+#	uk*	unknown SCSI device
+#	veriexec Veriexec fingerprint loader
+#	video*	video capture devices
+#	view*	generic interface to graphic displays (Amiga)
+#	wsfont*	console font control
+#	wsmux*	wscons event multiplexor
+#	xenevt	Xen event interface
+#
+# iSCSI communication devices
+#	iscsi*	iSCSI driver and /sbin/iscsid communication
+#
+# Trusted Computing devices
+#	tpm	Trusted Platform Module
+#
+# Debugging and tracing
+#	dtrace	Dynamic tracing framework
+
+
+#
+# NOTE:
+#
+# * MAKEDEV is used both as a standalone script (via "sh ./MAKEDEV
+#   all" or similar), and as a function library for MAKEDEV.local (via
+#   "MAKEDEV_AS_LIBRARY=1 . MAKEDEV").  Because of this, the script
+#   should consist almost entirely of function definitions, apart from a
+#   few lines right at the end.
+#
+# * MAKEDEV may be executed in an environment that is missing some
+#   common commands.  For example, it may be executed from a minimal
+#   system used during installation, or it may be executed early in the
+#   boot sequence before most file systems have been mounted.  It may
+#   also be executed in a cross-build environment on a non-NetBSD host.
+#
+
+usage()
+{
+	cat 1>&2 << _USAGE_
+Usage: ${0##*/} [-fMsu] [-m mknod] [-p pax] [-t mtree] special [...]
+	Create listed special devices.  Options:
+	-f		Force permissions to be updated on existing devices.
+	-M		Create memory file system.
+	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
+	-p pax  	Name of pax(1) program.  [\$TOOL_PAX or pax]
+	-s		Generate mtree(8) specfile instead of creating devices.
+	-t mtree	Name of mtree(8) program.  [\$TOOL_MTREE or mtree]
+	-u		Don't re-create devices that already exist.
+
+_USAGE_
+	exit 1
+}
+
+# zeropad width number
+#	display number with a zero (`0') padding of width digits.
+#
+zeropad()
+{
+	case $(($1 - ${#2})) in
+	5)	echo 00000$2;;
+	4)	echo 0000$2;;
+	3)	echo 000$2;;
+	2)	echo 00$2;;
+	1)	echo 0$2;;
+	0)	echo $2;;
+	*)	die "bad padding" ;;
+	esac
+}
+
+# hexprint number
+#	display (base10) number as hexadecimal
+#
+hexprint()
+{
+	val="$(($1 + 0))"
+	hex=
+	set -- 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	while [ "$val" -gt 0 ]; do
+		eval hex=\$$(($val % 16 + 1))\$hex
+		val="$(($val / 16))"
+	done
+	echo "${hex:-0}"
+}
+
+# linecount multiline_string
+#	count the number of lines in the string
+#
+linecount()
+{
+	local IFS='
+' # just a newline, no other white space between the quotes
+	set -- $1
+	echo $#
+}
+
+# nooutput -12 cmd [args...]
+#	run a command with stdout and/or stderr ignored.
+#	"nooutput -1 cmd" is like "cmd >/dev/null";
+#	"nooutput -2 cmd" is like "{ cmd ; } 2>/dev/null";
+#	"nooutput -12 cmd" is like "{ cmd ; } >/dev/null 2>&1";
+#	except they should work even if /dev/null doesn't [yet] exist.
+#
+#	The "{...}" wrapper used in cases where stderr is redirected
+#	serves to capture shell error messages such as "cmd: not found".
+#
+nooutput()
+{
+	local flags="$1" ; shift
+	local junk
+	case "$flags" in
+	"-1")	junk="$( "$@" )" ;;
+	"-2")	( exec 4>&1 ; junk="$( { "$@" ; } 2>&1 1>&4 )" ) ;;
+	"-12")	junk="$( { "$@" ; } 2>&1 )" ;;
+	*)	warn "Incorrect use of nooutput" ;;
+	esac
+}
+
+# check_pax path_to_pax
+#	Check whether pax exists and supports the command line options
+#	and input format that we will want to use.
+#
+check_pax()
+{
+	local pax="$1"
+	echo ". type=dir optional" | nooutput -12 "${pax}" -r -w -M -pe .
+}
+
+# check_mtree path_to_mtree
+#	Check whether mtree exists and supports the command line options
+#	and input format that we will want to use.
+#
+check_mtree()
+{
+	local mtree="$1"
+	echo ". type=dir optional" | nooutput -12 "${mtree}" -e -U
+}
+
+# setup args...
+#	Parse command line arguments, exit on error.
+#	Callers should shift $((OPTIND - 1)) afterwards.
+#
+setup()
+{
+	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
+
+	: ${HOST_SH:=sh}
+	: ${TOOL_MKNOD:=mknod}
+	: ${TOOL_MTREE:=mtree}
+	: ${TOOL_PAX:=pax}
+	status=0
+	do_create_mfs=false
+	do_force=false
+	do_mknod=false
+	do_pax=false
+	do_mtree=false
+	do_redirect=false
+	do_specfile=false
+	do_update=false
+	opts=
+	while getopts Mfm:p:st:u ch; do
+		# Note that $opts is only for options pased through to
+		# MAKEDEV.local, not for all options.
+		case ${ch} in
+		M)
+			# "-M" sets do_create_mfs;
+			# "-M -M" is for use from init(8), and sets do_redirect
+			do_redirect=$do_create_mfs
+			do_create_mfs=true
+			;;
+		f)	do_force=true
+			opts="${opts} -f"
+			;;
+		m)	TOOL_MKNOD=${OPTARG}
+			do_mknod=true
+			opts="${opts} -m ${OPTARG}"
+			;;
+		p)	TOOL_PAX="${OPTARG}"
+			if check_pax "${TOOL_PAX}"; then
+				do_pax=true
+				# do not add this to $opts; we will later
+				# add "-s" instead.
+			else
+				warn "Ignored -p option:" \
+					"${TOOL_PAX} is missing or broken"
+				do_mknod=true
+			fi
+			;;
+		s)	do_specfile=true
+			opts="${opts} -s"
+			;;
+		t)	TOOL_MTREE="${OPTARG}"
+			if check_mtree "${TOOL_MTREE}"; then
+				do_mtree=true
+				# do not add this to $opts; we will later
+				# add "-s" instead.
+			else
+				warn "Ignored -t option:" \
+					"${TOOL_MTREE} is missing or broken"
+				do_mknod=true
+			fi
+			;;
+		u)
+			do_update=true
+			opts="${opts} -u"
+			;;
+		*)	usage ;;
+		esac
+	done
+
+	shift $((${OPTIND} - 1))
+	[ $# -gt 0 ] || usage
+
+	u_root="%uid_root%"
+	u_daemon="%uid_daemon%"
+	u_uucp="%uid_uucp%"
+	g_daemon="%gid_daemon%"
+	g_gpio="%gid__gpio%"
+	g_kmem="%gid_kmem%"
+	g_ntpd="%gid_ntpd%"
+	g_operator="%gid_operator%"
+	g_tty="%gid_tty%"
+	g_wheel="%gid_wheel%"
+	dialin=0
+	dialout=524288
+	callunit=262144
+
+	# only allow read&write for owner by default
+	umask 077
+
+	# Set fdesc_mounted=true if the fdesc file system is mounted
+	# on the current directory (typically "/dev").
+	# Later, this will be used to suppress creation of device nodes
+	# that are supplied by the fdesc file system.
+	#
+	fdesc_mounted=false
+	if [ -d fd ]; then
+		# Parse the output from "mount -u -o nosuchoption .".
+		# We don't parse the output from df(1) because that's
+		# less likely to be available on install media.
+		#
+		# If the current directory is a mount point for the
+		# fdesc file system, then the expected output (whether
+		# or not the current user is root) is:
+		#	mount_fdesc: -o suchoption: option not supported.
+		#
+		# If the current directory is not a mount point, then
+		# the expected output is:
+		#	mount: .: unknown special file or file system.
+		#
+		# If we are not running on NetBSD, or mount(8) is not
+		# found, then we should get some other error message.
+		#
+		case "$({ LC_ALL=C mount -u -o nosuchoption . ; } 2>&1)" in
+		*mount_fdesc*)	fdesc_mounted=true ;;
+		esac
+	fi
+
+	# do_force requires mknod
+	if $do_force; then
+		if $do_mtree || $do_pax || $do_specfile; then
+			die "-f option works only with mknod"
+		fi
+		do_mknod=true
+	fi
+
+	# do_force and do_update do not work together
+	if $do_force && $do_update; then
+		die "-f and -u options do not work together"
+	fi
+
+	# If no explicit method was specified on the command line or
+	# forced above, then use one of mtree, pax, or mknod, in that
+	# order of preference.
+	#
+	# mtree is preferred because it's fast and designed for the
+	# purpose.  However, it's unlikely to be available early in the
+	# boot sequence, when init(8) may invoke MAKEDEV(8).
+	#
+	# pax is usually acceptable, and it's likely to be available
+	# early in the boot sequence.  However, it's much slower than mtree.
+	#
+	# mknod is just very slow, because the shell has to fork for
+	# each device node.
+	#
+
+	case ",${do_mtree},,${do_pax},,${do_mknod},,${do_specfile}," in
+	( ,false,,false,,false,,false, )
+		if check_mtree "${TOOL_MTREE}"; then
+			do_mtree=true
+		elif check_pax "${TOOL_PAX}"; then
+			do_pax=true
+		else
+			do_mknod=true
+		fi
+		;;
+	( *,true,*,true,* )
+		die "-m, -p, -s, and -t options are mutually exclusive"
+		;;
+	esac
+
+	# If we are using mknod, then decide what options to pass it.
+	MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
+	if $do_mknod; then
+		if $do_force; then
+			MKNOD="${MKNOD} -R"
+		else
+			MKNOD="${MKNOD} -r"
+		fi
+	fi
+
+	# do_mtree or do_pax internally implies do_specfile.
+	# This happens after checking for mutually-exclusive options.
+	if $do_mtree || $do_pax && ! $do_specfile; then
+		do_specfile=true
+		opts="${opts} -s"
+	fi
+}
+
+# specfile_before
+#	This is called before the bulk of the makedev processing,
+#	if do_specfile is set.
+#
+#	It simply prints ". type=dir optional", which must be the
+#	first line of the specfile.
+#
+specfile_before()
+{
+	echo ". type=dir optional"
+}
+
+# mtree_after
+#	Output in specfile format is piped into this function.
+#
+#	It uses mtree to create the devices defined in the specfile.
+#
+mtree_after()
+{
+	nooutput -1 "${TOOL_MTREE}" -e -U
+}
+
+# pax_after
+#	Output in specfile format is piped into this function.
+#
+#	It uses pax to create the devices defined in the specfile.
+#
+pax_after()
+{
+	# Run pax in an empty directory, so it pays
+	# attention only to the specfile, without being
+	# confused by the existing contents of the target
+	# directory.  Without this, pax would complain "file
+	# would overwrite itself" for already-existing
+	# device nodes.
+	tmpdir=./tmp.$$
+	mkdir "${tmpdir}" || die "can't create temporary directory"
+	cd "${tmpdir}" || die "can't cd to temporary directory"
+	"${TOOL_PAX}" -r -w -M -pe ..
+	pax_status=$?
+	cd .. # back to where we started
+	rmdir "${tmpdir}"
+	return $pax_status
+}
+
+# makedev_main makedev_name args...
+#	Perform most of the work of the main program.  makedev_name
+#	is typically "makedev", but may be the name of some other
+#	makedev-like function (if we are invoked from MAKEDEV.local or
+#	some other script).  The other args to this function are the
+#	command line args with which the MAKEDEV (or MAKEDEV.local)
+#	script was invoked.
+#
+makedev_main()
+{
+	local makedev="$1" ; shift
+
+	# Parse command line args
+	setup ${1+"$@"}
+	shift $((${OPTIND}-1))
+
+	if $do_create_mfs; then
+		# Count inodes and create mfs file system.
+		# The makedev call merely updates $count_nodes.
+		count_nodes=0
+		$makedev ${1+"$@"}
+		create_mfs_dev $count_nodes
+		unset count_nodes
+	fi
+
+	# Set before, middle, and after variables, so we can do
+	# something like "( $before && $middle ) | $after",
+	# except it will have to be more complex so we can capture
+	# the exit status from both sides of the pipe.
+	#
+	if $do_specfile; then
+		before=specfile_before
+	else
+		before=:
+	fi
+	middle='$makedev ${1+"$@"} && (exit $status)'
+	if $do_mtree; then
+		after=mtree_after
+	elif $do_pax ; then
+		after=pax_after
+	else
+		after=cat
+	fi
+
+	# Actually perform the "{ $before && $middle } | $after" commands.
+	#
+	# We go to some trouble to ensure that, if any of
+	# $before, $middle, or $after fails, then we also
+	# exit with a non-zero status.
+	#
+	# In the block below, fd 3 is a copy of the original stdout,
+	# and fd 4 goes to a subshell that analyses the exit status
+	# status from the other commands.
+	#
+	{
+		exec 3>&1;
+		{
+			{ eval "$before" && eval "$middle"; echo $? >&4; } \
+			| { eval "$after"; echo $? >&4; } \
+		} 4>&1 1>&3 \
+		| (
+			read status1;
+			read status2; 
+			case "$status1,$status2" in
+			0,0) exit 0;;
+			0,*) exit $status2;;
+			*,*) exit $status1;;
+			esac
+		)
+	}
+}
+
+#
+# functions available to create nodes:
+#
+# mkdev name [b|c] major minor [mode{=600} [gid{=0} [uid{=0}]]]
+#	create device node `name' with the appropriate permissions
+#
+# lndev src target
+#	create a symlink from src to target
+#
+# makedir dir mode
+#	create directory with appropriate mode
+#
+
+mkdev()
+{
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
+	if $do_update && test -e $1; then
+		return
+	fi
+	if $do_specfile; then
+		case $2 in
+		b)	type=block ;;
+		c)	type=char ;;
+		esac
+		echo "./$1 type=${type} device=netbsd,$3,$4 mode=${5:-600} gid=${6:-$g_wheel} uid=${7:-$u_root}"
+	else
+		${MKNOD} -m ${5:-600} -g \#${6:-$g_wheel} -u \#${7:-$u_root} $1 $2 $3 $4
+	fi
+}
+
+lndev()
+{
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
+	if $do_update && test -e $2; then
+		return
+	fi
+	if $do_specfile; then
+		echo "./$2 type=link link=$1 mode=0700 gid=$g_wheel uid=$u_root"
+	else
+		ln -f -s $1 $2
+	fi
+}
+
+makedir()
+{
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
+	if $do_update && test -e $1; then
+		return
+	fi
+	if $do_specfile; then
+		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
+	else
+		nooutput -2 mkdir $1
+		chmod $2 $1
+	fi
+}
+
+warn()
+{
+	echo 1>&2 "$0: $*"
+	status=1
+}
+
+die()
+{
+	echo 1>&2 "$0: $*"
+	exit 1
+}
+
+# makedev special [...]
+#	the main loop
+#
+makedev()
+{
+
+for i
+do
+
+case $i in
+
+%MD_DEVICES%
+
+all)
+	makedev console
+	makedev input
+	makedev c0d0 c0d0p0 c0d0p0s0 c0d0p1 c0d0p1s0
+	makedev      c0d0p2 c0d0p2s0 c0d0p3 c0d0p3s0
+	makedev c0d1 c0d1p0 c0d1p0s0 c0d1p1 c0d1p1s0
+	makedev      c0d1p2 c0d1p2s0 c0d1p3 c0d1p3s0
+	makedev c1d0 c1d0p0 c1d0p0s0 c1d0p1 c1d0p1s0
+	makedev      c1d0p2 c1d0p2s0 c1d0p3 c1d0p3s0
+	makedev c1d1 c1d1p0 c1d1p0s0 c1d1p1 c1d1p1s0
+	makedev      c1d1p2 c1d1p2s0 c1d1p3 c1d1p3s0
+	makedev fd0 fd1 fd0p0 fd1p0
+	makedev pci
+	makedev ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03
+	makedev bmp085b1s77 bmp085b2s77 bmp085b3s77
+	makedev bpf
+	makedev eepromb1s50 eepromb1s51 eepromb1s52 eepromb1s53
+	makedev eepromb1s54 eepromb1s55 eepromb1s56 eepromb1s57
+	makedev eepromb2s50 eepromb2s51 eepromb2s52 eepromb2s53
+	makedev eepromb2s54 eepromb2s55 eepromb2s56 eepromb2s57
+	makedev eepromb3s50 eepromb3s51 eepromb3s52 eepromb3s53
+	makedev eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57
+	makedev fb0 fbd filter hello
+	makedev i2c-1 i2c-2 i2c-3
+	makedev klog
+	makedev ptmx
+	makedev random
+	makedev sht21b1s40 sht21b2s40 sht21b3s40
+	makedev tsl2550b1s39 tsl2550b2s39 tsl2550b3s39
+	makedev ttyp0 ttyp1 ttyp2 ttyp3 ttyp4 ttyp5 ttyp6 ttyp7 ttyp8 ttyp9
+	makedev ttypa ttypb ttypc ttypd ttype ttypf
+	makedev ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9
+	makedev ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf
+	makedev vnd0 vnd0p0 vnd0p0s0 vnd1 vnd1p0 vnd1p0s0
+	makedev vnd2 vnd3 vnd4 vnd5 vnd6 vnd7
+	makedev local # do this last
+	;;
+
+init)
+	# unless overridden by MD entry, this is equal to 'all'
+	makedev all opty
+	;;
+	
+%MI_DEVICES_BEGIN%
+	
+video)
+	makedev video0 video1 video2 video3
+	;;
+
+iic)
+	makedev iic0 iic1 iic2 iic3
+	;;
+
+console|lp|tty|log|video)
+	mkdev		console c %cons_chr% 0	600 $g_tty
+	mkdev		tty     c %tty_chr% 0	666
+	mkdev       lp      c %lp_chr%  0   200 $u_daemon $g_daemon
+	mkdev       log     c %cons_chr% 15 222
+	mkdev       video   c %cons_chr% 125
+	;;
+
+ram|mem|kmem|null|boot|zero|imgrd)
+	mkdev		ram	    b %mem_chr% 0	600 $g_kmem
+	mkdev		mem	    c %mem_chr% 1	640 $g_kmem
+	mkdev		kmem	c %mem_chr% 2	640 $g_kmem
+	mkdev		null	c %mem_chr% 3	666
+	mkdev		boot	b %mem_chr% 4	600 $g_kmem
+	mkdev		zero	c %mem_chr% 5	666
+	mkdev		imgrd   b %mem_chr% 6	600 $g_kmem
+	mkdev		klog	c %klog_chr% 0	600
+	;;
+
+audio|mixer)
+	mkdev       audio	c %audio_chr%   0	666
+	mkdev       mixer	c %audio_chr%   1	666
+	;;
+
+bmp085b[1-3]s77)
+	# Weather Cape: temperature & pressure sensor
+	#bus=`expr $i : 'bmp085b\\(.*\\)s77'` #bus number
+	bus=${i#bmp085b}
+	bus=${bus%s77}
+	major=$(($bus + 52))
+	mkdev $i c ${major} 0 444
+	;;
+
+c[0-3]d[0-7])
+	# Whole disk devices.  The controller digit (c<N>) selects the
+	# major, the disk digit (d<N>) selects the minor.
+	ctrlr=`expr $i : '.\\(.\\)'`
+	disk=`expr $i : '...\\(.\\)'`
+	minor=$(($disk * 5))
+	disk_major ${ctrlr}
+
+	mkdev $i b ${major} ${minor}
+	;;
+
+c[0-3]d[0-7]p[0-3])
+	# Disk primary partitions.
+	prefix=`expr $i : '\\(.*\\).'`
+	ctrlr=`expr $i : '.\\(.\\)'`
+	disk=`expr $i : '...\\(.\\)'`
+	disk_major ${ctrlr}
+
+	for p in 0 1 2 3
+	do
+		minor=$(($disk * 5 + 1 + $p))
+		mkdev ${prefix}${p} b ${major} ${minor}
+	done
+	;;
+
+c[0-3]d[0-7]p[0-3]s[0-3])
+	# Disk subpartition.
+	prefix=`expr $i : '\\(.*\\)...'`
+	ctrlr=`expr $i : '.\\(.\\)'`
+	disk=`expr $i : '...\\(.\\)'`
+	disk_major ${ctrlr}
+
+	for p in 0 1 2 3
+	do
+		for s in 0 1 2 3
+		do
+			minor=$((128 + $disk * 16 + $p * 4 + $s))
+			mkdev ${prefix}${p}s${s} b ${major} ${minor} 
+		done
+	done
+	;;
+
+eepromb[1-3]s5[0-7])
+	# cat24c256 driver
+	#bus=`expr ${dev} : 'eepromb\\(.*\\)s'`
+	dev=${i#eepromb}
+	bus=${dev%s*}
+	# configurable part of slave addr
+	slave_low=${dev#*s}
+	major=$(($bus * 8 + $slave_low + 17))
+
+	mkdev $i b ${major} 0
+	;;
+
+
+fb0)
+	# Framebuffer driver
+	mkdev $i     c %fb_chr%     0   644
+	;;
+	
+fbd)
+	# Faulty block device driver
+	mkdev $i     b %fbd_chr%     0
+	;;
+	
+fd[0-3])
+	# Floppy disk drive N has minor N.
+	minor=`expr $i : '..\\(.\\)'`
+
+	mkdev $i b 2 ${minor}  666
+	;;
+	
+fd[0-3]p[0-3])
+	# Floppy disk partitions.
+	prefix=`expr $i : '\\(.*\\).'`
+	drive=`expr $i : '..\\(.\\)'`
+
+	for p in 0 1 2 3
+	do
+		minor=$((112 + $drive + $p * 4))
+		mkdev ${prefix}${p} b 2 ${minor} 666
+	done
+	;;
+
+filter)
+	# Filter driver
+	mkdev $i     b %filter_chr%  0
+	;;
+
+hello)
+	# Hello driver
+	mkdev $i     c %hello_chr%   0   644
+	;;
+
+i2c-[1-3])
+	# i2c driver
+	bus=${i#i2c-} # bus number
+	# least significant digit of major
+	#major_low=`expr ${dev} : '....\\(.*\\)'`
+	major_low=$(($bus + 19))
+	mkdev "i2c-${bus}" c ${major_low} 0
+	;;
+	
+input)
+	# Input server
+	mkdev kbdmux    c %kbd_chr%     0
+	mkdev mousemux  c %kbd_chr%     64
+	for n in 0 1 2 3
+	do
+		minor_keyboard=$(($n + 1))
+		minor_mouse=$(($n + 65))
+		mkdev kbd${n}   c %kbd_chr%     ${minor_keyboard}
+		mkdev mouse${n} c %kbd_chr%     ${minor_mouse}
+	done
+	;;
+	
+klog)
+	mkdev		klog	c %klog_chr% 0	600
+	;;
+
+
+flash[0-9]*)
+	unit=${i#flash}
+	flash=flash$unit
+	mkdev flash$unit b %flash_blk% $unit
+	mkdev rflash$unit c %flash_chr% $unit
+	;;
+
+sht21b[1-3]s40)
+	# Weather Cape: relative humidity & temperature sensor
+	bus=`expr ${i} : 'sht21b\\(.*\\)s40'`
+	major=$(($bus + 49))
+	mkdev sht21b${bus}s40 c ${major} 0 444
+	;;
+	
+tsl2550b[1-3]s39)
+	# Weather Cape: ambient light sensor
+	bus=`expr ${i} : 'tsl2550b\\(.*\\)s39'`
+	major=$(($bus + 46))
+	mkdev $i c ${major} 0 444
+	;;
+
+tty0[0-3])
+	# Serial lines.
+	line=`expr $i : '.*\\(.\\)'`
+	minor=$(($line + 16))
+
+	mkdev $i c %cons_chr% ${minor} 666 $g_tty
+	;;
+	
+tty[p-s][0-9a-f]|pty[p-s][0-9a-f])
+	# Pseudo ttys.
+	dev=`expr ${i} : '...\\(..\\)'`
+	group=`expr ${dev} : '\\(.\\)'`
+	group=`echo ${group} | tr 'pqrs' '0123'`
+	pty=`expr ${dev} : '.\\(.\\)'`
+	case ${pty} in
+		[a-f])	pty=1`/bin/echo ${pty} | tr 'abcdef' '012345'`
+	esac
+	minor_tty=$(($group * 16 + $pty + 128))
+	minor_pty=$(($group * 16 + $pty + 192))
+
+	mkdev tty${dev} c 9 ${minor_tty}  666 $g_tty
+	mkdev pty${dev} c 9 ${minor_pty}  666 $g_tty
+	;;
+
+ttyc[1-7])
+	unit=${i#ttyc}
+	mkdev ttyc$unit c %cons_chr% $unit 600 $g_tty
+	;;
+
+opty)
+	# Create 16 device nodes, [pt]typ0 to [pt]typf,
+	# same as "MAKEDEV pty0".
+	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		case $j in
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
+		esac
+		mkdev ttyp$j c %pts_chr% $jn 666
+		mkdev ptyp$j c %ptc_chr% $jn 666
+	done
+	;;
+
+pty[0-9]*)
+	# Each unit number creates up to 16 pairs of {tty,pty} device nodes:
+	# pty0 => 16 pairs, [tp]typ0 to [tp]typf
+	# pty1 => 16 pairs, [tp]tyq0 to [tp]tyqf
+	# pty16 => 16 pairs, [tp]typg to [tp]typv
+	# pty17 => 16 pairs, [tp]typw to [tp]typL
+	# pty18 => 14 pairs, [tp]typM to [tp]typZ
+	warn "$i: creating BSD style tty nodes with ptyfs is a security issue"
+	class=${i#pty}
+	d1="p q r s t u v w x y z P Q R S T"
+	if [ "$class" -ge 64 ]
+	then
+		warn "$i: pty unit must be between 0 and 63"
+		continue
+	elif [ "$class" -lt 16 ]
+	then
+		# pty[p-zP-T][0-9a-f]
+		offset=0
+		mult=0
+		d2="0 1 2 3 4 5 6 7 8 9 a b c d e f"
+	else
+		# pty[p-zP-T][g-zA-Z]
+		class=$(($class - 16))
+		offset=256
+		mult=2
+		d2="g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
+	fi
+	start=$(($class * 16))
+	set -- $d2
+	nt=$#
+	s1=$(($start / $nt))
+	set -- $d1
+	shift $s1
+	t1=$1
+	if [ "$t1" = v ]; then
+		warn "$i: pty unit conflicts with console ttyv0 device"
+		continue
+	fi
+	s2=$(($start % ($nt - $s1 * $mult)))
+	set -- $d2
+	shift $s2
+	t2=$1
+	unit=$(($start + $offset - $s1 * $mult))
+	end=$(($unit + 16))
+	while [ "$unit" -lt "$end" ]
+	do
+		mkdev tty$t1$t2 c %pts_chr% $unit 666
+		mkdev pty$t1$t2 c %ptc_chr% $unit 666
+		shift
+		t2=$1
+		if [ -z "$t2" ]
+		then
+			break
+		fi
+		unit=$(($unit + 1))
+	done
+	;;
+
+bpf)
+	mkdev bpf	c %bpf_chr% 0
+	lndev bpf bpf0
+	;;
+
+speaker)
+	mkdev speaker c %spkr_chr% 0
+	;;
+
+video|video[0-9]*)
+	unit=${i#video}
+	: ${unit:-0}
+	mkdev video$unit c %video_chr% $unit 666
+	;;
+	
+vnd[0-7])
+	# Whole disk devices.
+	disk=`expr $i : '...\\(.\\)'`
+	major=$(($disk + 56))
+
+	mkdev $i b ${major} 0
+	;;
+	
+vnd[0-7]p[0-3])
+	# Disk primary partitions.
+	prefix=`expr $i : '\\(.*\\).'`
+	disk=`expr $i : '...\\(.\\)'`
+	major=$(($disk + 56))
+
+	for p in 0 1 2 3
+	do
+		minor=$((1 + $p))
+		mkdev ${prefix}${p} b ${major} ${minor} 
+	done
+	;;
+	
+vnd[0-7]p[0-3]s[0-3])
+	# Disk subpartition.
+	prefix=`expr $i : '\\(.*\\)...'`
+	disk=`expr $i : '...\\(.\\)'`
+	major=$(($disk + 56))
+	
+	for p in 0 1 2 3
+	do
+		for s in 0 1 2 3
+		do
+			minor=$((128 + $p * 4 + $s))
+			mkdev ${prefix}${p}s${s} b ${major} ${minor} 
+		done
+	done
+	;;
+
+
+iic[0-9]*)
+	unit=${i#iic}
+	: ${unit:-0}
+	mkdev iic$unit c %iic_chr% $unit 600
+	;;
+
+spi[0-9]*)
+	unit=${i#spi}
+	: ${unit:-0}
+	mkdev spi$unit c %spi_chr% $unit 600
+	;;
+
+apm)
+	mkdev apm	c %apm_chr% 0 644
+	mkdev apmctl	c %apm_chr% 8 644
+	;;
+
+random|urandom)
+	mkdev random	c %random_chr% 0 644
+	mkdev urandom	c %random_chr% 0 644
+	;;
+
+
+kbd)
+	mkdev kbd c %kbd_chr% 0
+	;;
+
+kbdctl)
+	mkdev kbdctl c %kbd_chr% 1
+	;;
+
+panel)
+	mkdev panel0 c %panel_chr% 0 660
+	;;
+
+ipty)
+	;;
+
+ptmx)
+	# MINIX: pty derives the "tty" group ID from /dev/ptmx at startup
+	# (see etc/usr/rc), so the node must belong to the tty group.
+	mkdev ptmx c %ptmx_chr% 0 666 $g_tty
+	;;
+
+mmem[0-9]*)
+	unit=${i#mmem}
+	for pt in 0	# 1 2 3 4 ... 255
+	do
+#		mkdev mmem${unit}.${pt}a  b %mmem_blk% $(($unit * 4096 + $pt * 16 + 0)) 640 $g_operator
+		mkdev mmem${unit}.${pt}c  b %mmem_blk% $(($unit * 4096 + $pt * 16 + 2)) 640 $g_operator
+#		mkdev rmmem${unit}.${pt}a c %mmem_chr% $(($unit * 4096 + $pt * 16 + 0)) 640 $g_operator
+		mkdev rmmem${unit}.${pt}c c %mmem_chr% $(($unit * 4096 + $pt * 16 + 2)) 640 $g_operator
+	done
+	;;
+
+
+pci)
+	# PCI server, manages PCI buses
+	mkdev pci   c %pci_chr% 0
+	;;
+
+
+
+midevend)
+%MI_DEVICES_END%
+local)
+	if [ -f "$0.local" ]; then
+		umask 0
+		if [ -n "$count_nodes" ]; then
+			count_nodes=$((count_nodes + \
+			    $(linecount "$("$HOST_SH" "$0.local" $opts -s all)") ))
+		else
+			"$HOST_SH" "$0.local" $opts all
+		fi
+		umask 077
+	fi
+	;;
+
+*)
+	warn "$i: unknown device"
+	;;
+
+esac
+done
+
+}
+
+disk_major()
+{
+    case $1 in
+    0)  major=3;;
+    1)  major=8;;
+    2)  major=10;;
+    3)  major=12;;
+    esac
+}
+
+
+
+# create_mfs_dev nodes
+#	Create a memory file system for a given number of device nodes,
+#	and mount it.  Attempts to use mount_tmpfs, or falls back to
+#	mount_mfs.
+#
+#	If do_redirect, then also redirect output to the console.
+#
+create_mfs_dev()
+{
+	ndevnodes=${1-1200}
+	dev_mountpoint=${PWD:-/dev}
+
+	# Number of inodes is the specified number of device nodes, plus
+	# a margin to allow for extra device nodes created later.
+	ninode=$((ndevnodes * 11 / 10))
+	# Add 2 reserved inodes (needed for both mfs and tmpfs), and round
+	# up to a multiple of 32 (needed for mfs, not needed for tmpfs).
+	ninode=$(( (ninode + 2 + 31) / 32 * 32 ))
+	# Try tmpfs; if that fails try mfs.
+	#
+	# For tmpfs, allocate 16KB and 512 byte per node.
+	# Actual requirements are much lower, but the size limit
+	# is only intended to avoid accidental writing to /dev.
+	fs_bytes=$((16384 + ninode * 512))
+	if mount_tmpfs -s $fs_bytes -n $ninode -m 0755 \
+		-o union tmpfs "$dev_mountpoint"
+	then
+		fstype=tmpfs
+	else
+		# This file system size calculation is exact for mount_mfs(8)
+		# with 512-byte sectors.  40960 bytes (80 blocks) is the
+		# minimum size allowed by mount_mfs.
+		fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*512 + 8192))
+		[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
+		fs_blocks=$((fs_bytes/512))
+		if mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
+		    -o union swap "$dev_mountpoint"
+		then
+			fstype=mfs
+		else
+			die "Failed to create memory file system"
+		fi
+	fi
+
+	# Our current directory was in the lower file system; change it to
+	# the newly mounted upper file system.
+	cd "$dev_mountpoint"
+
+	if $do_redirect; then
+		# Redirect stdout and stderr to console
+		${MKNOD} -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
+		exec >temp_console 2>&1
+		rm temp_console
+	fi
+
+	echo "Created $fstype $dev_mountpoint" \
+		"($fs_bytes byte, $ninode inodes)"
+}
+
+#
+# MAIN: If MAKEDEV_AS_LIBRARY is set, then we are being used as a
+# function library, so just return.  Otherwise, do all the real work.
+#
+[ -n "${MAKEDEV_AS_LIBRARY}" ] && return
+makedev_main makedev ${1+"$@"}

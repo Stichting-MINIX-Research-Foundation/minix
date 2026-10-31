@@ -64,8 +64,7 @@
 /** The list of RAW PCBs */
 static struct raw_pcb *raw_pcbs;
 
-static u8_t
-raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
+static u8_t raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
@@ -124,8 +123,7 @@ raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
  *           caller).
  *
  */
-u8_t
-raw_input(struct pbuf *p, struct netif *inp)
+u8_t raw_input(struct pbuf *p, struct netif *inp)
 {
   struct raw_pcb *pcb, *prev;
   s16_t proto;
@@ -266,8 +264,7 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
  *
  * @param pcb the raw pcb to disconnect.
  */
-void
-raw_disconnect(struct raw_pcb *pcb)
+void raw_disconnect(struct raw_pcb *pcb)
 {
   /* reset remote address association */
 #if LWIP_IPV4 && LWIP_IPV6
@@ -294,8 +291,7 @@ raw_disconnect(struct raw_pcb *pcb)
  * - not free the packet, and return zero. The packet will be matched
  *   against further PCBs and/or forwarded to another protocol layers.
  */
-void
-raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
+void raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 {
   /* remember recv() callback and user data */
   pcb->recv = recv;
@@ -520,8 +516,7 @@ raw_send(struct raw_pcb *pcb, struct pbuf *p)
  *
  * @see raw_new()
  */
-void
-raw_remove(struct raw_pcb *pcb)
+void raw_remove(struct raw_pcb *pcb)
 {
   struct raw_pcb *pcb2;
   /* pcb to be removed is first in list? */

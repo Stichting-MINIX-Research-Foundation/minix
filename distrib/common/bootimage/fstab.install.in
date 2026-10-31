@@ -1,2 +1,4 @@
-/dev/@@BOOTDISK@@a	/		ffs	rw		1 1
-tmpfs			/tmp		tmpfs	rw		0 0
+ROOT.a			/		mfs	rw		1 1
+none		/sys		devman	rw,rslabel=devman	0	0
+none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0	0
+

@@ -64,8 +64,7 @@ static int randomFaults[] = {
   INTERFACE_FAULT
 };
 
-void
-swifi_inject_fault(char * module_name,
+void swifi_inject_fault(char * module_name,
 		 unsigned long faultType,
 		 unsigned long randomSeed,
 		 unsigned long numFaults)

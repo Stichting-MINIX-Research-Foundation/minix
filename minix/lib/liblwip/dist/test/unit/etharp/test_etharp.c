@@ -21,8 +21,7 @@ struct eth_addr test_ethaddr4 = {{1,1,1,1,1,4}};
 static int linkoutput_ctr;
 
 /* Helper functions */
-static void
-etharp_remove_all(void)
+static void etharp_remove_all(void)
 {
   int i;
   /* call etharp_tmr often enough to have all entries cleaned */
@@ -52,8 +51,7 @@ default_netif_init(struct netif *netif)
   return ERR_OK;
 }
 
-static void
-default_netif_add(void)
+static void default_netif_add(void)
 {
   IP4_ADDR(&test_gw, 192,168,0,1);
   IP4_ADDR(&test_ipaddr, 192,168,0,1);
@@ -65,15 +63,13 @@ default_netif_add(void)
   netif_set_up(&test_netif);
 }
 
-static void
-default_netif_remove(void)
+static void default_netif_remove(void)
 {
   fail_unless(netif_default == &test_netif);
   netif_remove(&test_netif);
 }
 
-static void
-create_arp_response(ip4_addr_t *adr)
+static void create_arp_response(ip4_addr_t *adr)
 {
   int k;
   struct eth_hdr *ethhdr;
@@ -114,15 +110,13 @@ create_arp_response(ip4_addr_t *adr)
 
 /* Setups/teardown functions */
 
-static void
-etharp_setup(void)
+static void etharp_setup(void)
 {
   etharp_remove_all();
   default_netif_add();
 }
 
-static void
-etharp_teardown(void)
+static void etharp_teardown(void)
 {
   etharp_remove_all();
   default_netif_remove();

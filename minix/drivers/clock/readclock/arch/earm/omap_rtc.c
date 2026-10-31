@@ -143,8 +143,7 @@ static int omap_rtc_clkconf(void);
 #define safe_reg_set_bit(a,v) safe_reg_write((a), reg_read((a)) | (1<<v))
 #define safe_reg_clear_bit(a,v) safe_reg_write((a), reg_read((a)) & ~(1<<v))
 
-static void
-omap_rtc_unlock(void)
+static void omap_rtc_unlock(void)
 {
 	/* Specific bit patterns need to be written to specific registers in a 
 	 * specific order to enable writing to RTC_SS registers. 
@@ -153,16 +152,14 @@ omap_rtc_unlock(void)
 	reg_write(rtc.regs->RTC_SS_KICK1R, AM335X_RTC_SS_KICK1R_UNLOCK_MASK);
 }
 
-static void
-omap_rtc_lock(void)
+static void omap_rtc_lock(void)
 {
 	/* Write garbage to the KICK registers to enable write protect. */
 	reg_write(rtc.regs->RTC_SS_KICK0R, AM335X_RTC_SS_KICK0R_LOCK_MASK);
 	reg_write(rtc.regs->RTC_SS_KICK1R, AM335X_RTC_SS_KICK1R_LOCK_MASK);
 }
 
-static int
-omap_rtc_clkconf(void)
+static int omap_rtc_clkconf(void)
 {
 	int r;
 
@@ -191,8 +188,7 @@ omap_rtc_clkconf(void)
 	return OK;
 }
 
-int
-omap_rtc_init(void)
+int omap_rtc_init(void)
 {
 	int r;
 	int rtc_rev, major, minor;
@@ -288,8 +284,7 @@ omap_rtc_init(void)
  * year			last 2 digits of year	X + 1900
  */
 
-int
-omap_rtc_get_time(struct tm *t, int flags)
+int omap_rtc_get_time(struct tm *t, int flags)
 {
 	int r;
 
@@ -323,8 +318,7 @@ omap_rtc_get_time(struct tm *t, int flags)
 	return OK;
 }
 
-int
-omap_rtc_set_time(struct tm *t, int flags)
+int omap_rtc_set_time(struct tm *t, int flags)
 {
 	int r;
 
@@ -354,8 +348,7 @@ omap_rtc_set_time(struct tm *t, int flags)
 	return OK;
 }
 
-int
-omap_rtc_pwr_off(void)
+int omap_rtc_pwr_off(void)
 {
 	int r;
 	struct tm t;
@@ -407,8 +400,7 @@ omap_rtc_pwr_off(void)
 	return OK;
 }
 
-void
-omap_rtc_exit(void)
+void omap_rtc_exit(void)
 {
 	use_count--;
 	if (use_count == 0) {

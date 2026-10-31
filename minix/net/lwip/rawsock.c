@@ -97,8 +97,7 @@ static struct rmib_node net_inet6_raw6_node =
 /*
  * Initialize the raw sockets module.
  */
-void
-rawsock_init(void)
+void rawsock_init(void)
 {
 	unsigned int slot;
 
@@ -120,8 +119,7 @@ rawsock_init(void)
  * Check whether the given arrived IPv6 packet is fit to be received on the
  * given raw socket.
  */
-static int
-rawsock_check_v6(struct rawsock * raw, struct pbuf * pbuf)
+static int rawsock_check_v6(struct rawsock * raw, struct pbuf * pbuf)
 {
 	uint8_t type;
 
@@ -164,8 +162,7 @@ rawsock_check_v6(struct rawsock * raw, struct pbuf * pbuf)
  * the swapping part of the preparation done on IPv4 packets being sent if the
  * IP_HDRINCL socket option is enabled.
  */
-static void
-rawsock_adjust_v4(struct pbuf * pbuf)
+static void rawsock_adjust_v4(struct pbuf * pbuf)
 {
 	struct ip_hdr *iphdr;
 
@@ -188,8 +185,7 @@ rawsock_adjust_v4(struct pbuf * pbuf)
  * this function.  As such, we must make a copy of the given packet if we want
  * to keep it, and never free it.
  */
-static uint8_t
-rawsock_input(void * arg, struct raw_pcb * pcb __unused, struct pbuf * psrc,
+static uint8_t rawsock_input(void * arg, struct raw_pcb * pcb __unused, struct pbuf * psrc,
 	const ip_addr_t * srcaddr)
 {
 	struct rawsock *raw = (struct rawsock *)arg;
@@ -346,8 +342,7 @@ rawsock_socket(int domain, int protocol, struct sock ** sockp,
 /*
  * Bind a raw socket to a local address.
  */
-static int
-rawsock_bind(struct sock * sock, const struct sockaddr * addr,
+static int rawsock_bind(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -378,8 +373,7 @@ rawsock_bind(struct sock * sock, const struct sockaddr * addr,
 /*
  * Connect a raw socket to a remote address.
  */
-static int
-rawsock_connect(struct sock * sock, const struct sockaddr * addr,
+static int rawsock_connect(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt __unused)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -453,8 +447,7 @@ rawsock_connect(struct sock * sock, const struct sockaddr * addr,
 /*
  * Perform preliminary checks on a send request.
  */
-static int
-rawsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
+static int rawsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
 	const struct sockaddr * addr, socklen_t addr_len __unused,
 	endpoint_t user_endpt __unused, int flags)
 {
@@ -482,8 +475,7 @@ rawsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
  * This function is called twice when sending a packet.  The result is that the
  * flagged options are overridden for only the packet being sent.
  */
-static void
-rawsock_swap_opt(struct rawsock * raw, struct pktopt * pkto)
+static void rawsock_swap_opt(struct rawsock * raw, struct pktopt * pkto)
 {
 	uint8_t tos, ttl, mcast_ttl;
 
@@ -509,8 +501,7 @@ rawsock_swap_opt(struct rawsock * raw, struct pktopt * pkto)
  * IPv4 header for sending, by modifying a few fields in it, as expected by
  * userland.
  */
-static int
-rawsock_prepare_hdrincl(struct rawsock * raw, struct pbuf * pbuf,
+static int rawsock_prepare_hdrincl(struct rawsock * raw, struct pbuf * pbuf,
 	const ip_addr_t * src_addr)
 {
 	struct ip_hdr *iphdr;
@@ -555,8 +546,7 @@ rawsock_prepare_hdrincl(struct rawsock * raw, struct pbuf * pbuf,
 /*
  * Send a packet on a raw socket.
  */
-static int
-rawsock_send(struct sock * sock, const struct sockdriver_data * data,
+static int rawsock_send(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * off, const struct sockdriver_data * ctl __unused,
 	socklen_t ctl_len __unused, socklen_t * ctl_off __unused,
 	const struct sockaddr * addr, socklen_t addr_len,
@@ -785,8 +775,7 @@ rawsock_send(struct sock * sock, const struct sockdriver_data * data,
 /*
  * Update the set of flag-type socket options on a raw socket.
  */
-static void
-rawsock_setsockmask(struct sock * sock, unsigned int mask)
+static void rawsock_setsockmask(struct sock * sock, unsigned int mask)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
 
@@ -803,8 +792,7 @@ rawsock_setsockmask(struct sock * sock, unsigned int mask)
 /*
  * Prepare a helper structure for IP-level option processing.
  */
-static void
-rawsock_get_ipopts(struct rawsock * raw, struct ipopts * ipopts)
+static void rawsock_get_ipopts(struct rawsock * raw, struct ipopts * ipopts)
 {
 
 	ipopts->local_ip = &raw->raw_pcb->local_ip;
@@ -820,8 +808,7 @@ rawsock_get_ipopts(struct rawsock * raw, struct ipopts * ipopts)
 /*
  * Set socket options on a raw socket.
  */
-static int
-rawsock_setsockopt(struct sock * sock, int level, int name,
+static int rawsock_setsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -1046,8 +1033,7 @@ rawsock_setsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve socket options on a raw socket.
  */
-static int
-rawsock_getsockopt(struct sock * sock, int level, int name,
+static int rawsock_getsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -1172,8 +1158,7 @@ rawsock_getsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve the local socket address of a raw socket.
  */
-static int
-rawsock_getsockname(struct sock * sock, struct sockaddr * addr,
+static int rawsock_getsockname(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -1187,8 +1172,7 @@ rawsock_getsockname(struct sock * sock, struct sockaddr * addr,
 /*
  * Retrieve the remote socket address of a raw socket.
  */
-static int
-rawsock_getpeername(struct sock * sock, struct sockaddr * addr,
+static int rawsock_getpeername(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
@@ -1205,8 +1189,7 @@ rawsock_getpeername(struct sock * sock, struct sockaddr * addr,
 /*
  * Shut down a raw socket for reading and/or writing.
  */
-static int
-rawsock_shutdown(struct sock * sock, unsigned int mask)
+static int rawsock_shutdown(struct sock * sock, unsigned int mask)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
 
@@ -1221,8 +1204,7 @@ rawsock_shutdown(struct sock * sock, unsigned int mask)
 /*
  * Close a raw socket.
  */
-static int
-rawsock_close(struct sock * sock, int force __unused)
+static int rawsock_close(struct sock * sock, int force __unused)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
 
@@ -1239,8 +1221,7 @@ rawsock_close(struct sock * sock, int force __unused)
 /*
  * Free up a closed raw socket.
  */
-static void
-rawsock_free(struct sock * sock)
+static void rawsock_free(struct sock * sock)
 {
 	struct rawsock *raw = (struct rawsock *)sock;
 
@@ -1255,8 +1236,7 @@ rawsock_free(struct sock * sock)
  * Fill the given kinfo_pcb sysctl(7) structure with information about the RAW
  * PCB identified by the given pointer.
  */
-static void
-rawsock_get_info(struct kinfo_pcb * ki, const void * ptr)
+static void rawsock_get_info(struct kinfo_pcb * ki, const void * ptr)
 {
 	const struct raw_pcb *pcb = (const struct raw_pcb *)ptr;
 	struct rawsock *raw;
@@ -1313,8 +1293,7 @@ rawsock_enum(const void * last)
 /*
  * Obtain the list of RAW protocol control blocks, for sysctl(7).
  */
-static ssize_t
-rawsock_pcblist(struct rmib_call * call, struct rmib_node * node,
+static ssize_t rawsock_pcblist(struct rmib_call * call, struct rmib_node * node,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 

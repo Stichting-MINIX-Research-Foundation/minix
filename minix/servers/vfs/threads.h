@@ -24,6 +24,7 @@ struct worker_thread {
   thread_t w_tid;
   mutex_t w_event_mutex;
   cond_t w_event;
+  int w_woken;			/* non-zero: wake signal pending */
   struct fproc *w_fp;
   message w_m_in;
   message w_m_out;

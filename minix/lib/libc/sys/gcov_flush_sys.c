@@ -2,8 +2,7 @@
 #include <string.h>
 #include <minix/gcov.h>
 
-int
-gcov_flush_svr(const char * label, char * buff, size_t buff_sz)
+int gcov_flush_svr(const char * label, char * buff, size_t buff_sz)
 {
 	message m;
 

@@ -229,6 +229,7 @@ static int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
   ssize_t r, size;
 
   /* Copy the vector from the caller to kernel space. */
+  if (mp->m_lbdev_lblockdriver_msg.count < 0) return EINVAL;
   nr_req = mp->m_lbdev_lblockdriver_msg.count;	/* Length of I/O vector */
   if (nr_req > NR_IOREQS) nr_req = NR_IOREQS;
 

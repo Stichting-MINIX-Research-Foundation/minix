@@ -380,8 +380,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
 /*===========================================================================*
  *				sig_proc				     *
  *===========================================================================*/
-void
-sig_proc(
+void sig_proc(
 	register struct mproc *rmp,	/* pointer to the process to be signaled */
 	int signo,			/* signal to send to process (1 to _NSIG-1) */
 	int trace,			/* pass signal to tracer first? */
@@ -542,8 +541,7 @@ sig_proc(
 /*===========================================================================*
  *				sig_proc_exit				     *
  *===========================================================================*/
-static void
-sig_proc_exit(
+static void sig_proc_exit(
 	struct mproc *rmp,		/* process that must exit */
 	int signo			/* signal that caused termination */
 )
@@ -565,10 +563,7 @@ sig_proc_exit(
 /*===========================================================================*
  *				check_sig				     *
  *===========================================================================*/
-int check_sig(proc_id, signo, ksig)
-pid_t proc_id;			/* pid of proc to sig, or 0 or -1, or -pgrp */
-int signo;			/* signal to send to process (0 to _NSIG-1) */
-int ksig;			/* non-zero means signal comes from kernel  */
+int check_sig(pid_t proc_id, int signo, int ksig)
 {
 /* Check to see if it is possible to send a signal.  The signal may have to be
  * sent to a group of processes.  This routine is invoked by the KILL system
@@ -595,7 +590,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
   count = 0;
   error_code = ESRCH;
   for (rmp = &mproc[NR_PROCS-1]; rmp >= &mproc[0]; rmp--) {
-	if (!(rmp->mp_flags & IN_USE)) continue;
+	if (!LIVE_PROC(rmp)) continue;
 
 	/* Check for selection. */
 	if (proc_id > 0 && proc_id != rmp->mp_pid) continue;
@@ -648,8 +643,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 /*===========================================================================*
  *				check_pending				     *
  *===========================================================================*/
-void
-check_pending(register struct mproc *rmp)
+void check_pending(register struct mproc *rmp)
 {
   /* Check to see if any pending signals have been unblocked. Deliver as many
    * of them as we can, until we have to wait for a reply from VFS first.
@@ -684,8 +678,7 @@ check_pending(register struct mproc *rmp)
 /*===========================================================================*
  *				restart_sigs				     *
  *===========================================================================*/
-void
-restart_sigs(struct mproc *rmp)
+void restart_sigs(struct mproc *rmp)
 {
 /* VFS has replied to a request from us; do signal-related work.
  */
@@ -716,8 +709,7 @@ restart_sigs(struct mproc *rmp)
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-static int
-unpause(
+static int unpause(
 	struct mproc *rmp		/* which process */
 )
 {
@@ -772,8 +764,7 @@ unpause(
 /*===========================================================================*
  *				sig_send				     *
  *===========================================================================*/
-static int
-sig_send(
+static int sig_send(
 	struct mproc *rmp,		/* what process to spawn a signal handler in */
 	int signo			/* signal to send to process (1 to _NSIG-1) */
 )

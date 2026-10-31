@@ -25,8 +25,7 @@ extern int quietflag;
 
 int fds[MAXFILES];
 
-static void
-genblock(int b, char *blockdata, int blocksize, u32_t seed)
+static void genblock(int b, char *blockdata, int blocksize, u32_t seed)
 {
 	u32_t *p = (u32_t *) blockdata,
 		*plimit = (u32_t *) (blockdata + blocksize),
@@ -40,8 +39,7 @@ genblock(int b, char *blockdata, int blocksize, u32_t seed)
 	}
 }
 
-static int
-checkblock(int b, int blocksize, u32_t seed)
+static int checkblock(int b, int blocksize, u32_t seed)
 {
 	static char data[MAXBLOCKSIZE], expected_data[MAXBLOCKSIZE];
 	int r;
@@ -65,8 +63,7 @@ checkblock(int b, int blocksize, u32_t seed)
 	return 0;
 }
 
-static int
-writeblock(int b, int blocksize, u32_t seed)
+static int writeblock(int b, int blocksize, u32_t seed)
 {
 	static char data[MAXBLOCKSIZE];
 
@@ -100,8 +97,7 @@ makepermutation(int nblocks, int *permutation)
 	return permutation;
 }
 
-static int
-checkblocks(int nblocks, int blocksize, u32_t seed)
+static int checkblocks(int nblocks, int blocksize, u32_t seed)
 {
 	int b;
 	int nrandom = nblocks * 3;
@@ -135,8 +131,7 @@ checkblocks(int nblocks, int blocksize, u32_t seed)
 	return 0;
 }
 
-int
-dotest(int blocksize, int nblocks, int iterations)
+int dotest(int blocksize, int nblocks, int iterations)
 {
 	int b, i;
 	int nrandom = nblocks * iterations;
@@ -212,8 +207,7 @@ dotest(int blocksize, int nblocks, int iterations)
 	return 0;
 }
 
-void
-get_fd_offset(int b, int blocksize, u64_t *file_offset, int *fd)
+void get_fd_offset(int b, int blocksize, u64_t *file_offset, int *fd)
 {
         u64_t offset = (u64_t) b * blocksize;
         int filenumber;
@@ -227,8 +221,7 @@ get_fd_offset(int b, int blocksize, u64_t *file_offset, int *fd)
         *file_offset = offset - (filenumber * MBPERFILE * MB);
 }
 
-void
-makefiles(int n)
+void makefiles(int n)
 {
 	int f;
         for(f = 0; f < n; f++) {

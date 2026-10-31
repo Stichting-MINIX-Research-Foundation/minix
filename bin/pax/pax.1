@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.63 2013/11/14 07:45:05 wiz Exp $
+.\"    $NetBSD: pax.1,v 1.71 2019/03/19 00:36:14 gutteridge Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd November 13, 2013
+.Dd March 19, 2019
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -572,20 +572,21 @@ using the syntax of the
 .Xr ed 1
 utility regular expressions.
 The format of these regular expressions are:
-.Dl /old/new/[gp]
+.Dl /old/new/[gps]
 As in
 .Xr ed 1 ,
 .Cm old
 is a basic regular expression and
 .Cm new
-can contain an ampersand (\*[Am]), \en (where n is a digit) back-references,
+can contain an ampersand (&), \en (where n is a digit) back-references,
 or subexpression matching.
 The
 .Cm old
 string may also contain
 .Aq Dv newline
 characters.
-Any non-null character can be used as a delimiter (/ is shown here).
+Any non-null character except a backslash (\\) can be used as a delimiter
+(/ is shown here).
 Multiple
 .Fl s
 expressions can be specified.
@@ -604,9 +605,14 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl Ao "original pathname" Ac \*[Gt]\*[Gt] Ao "new pathname" Ac
+.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
+The substitutions are applied by default to the destination hard and symbolic
+links.
+The optional trailing
+.Cm s
+prevents the substitutions from being performed on symbolic link destinations.
 .It Fl t
 Reset the access times of any file or directory read or accessed by
 .Nm
@@ -742,6 +748,19 @@ Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length and the type of the file.
 .It Fl Fl gnu
 Recognize GNU tar extensions.
+.It Fl Fl timestamp Ar timestamp
+Store all modification times in the archive with the
+.Ar timestamp
+given instead of the actual modification time of the individual archive member
+so that repeatable builds are possible.
+The
+.Ar timestamp
+can be a
+.Pa pathname ,
+where the timestamps are derived from that file, a parseable date for
+.Xr parsedate 3
+(this option is not yet available in the tools build), or an integer value
+interpreted as the number of seconds from the Epoch.
 .It Fl Fl xz
 Use
 .Xr xz 1
@@ -958,11 +977,11 @@ Time comparisons using both file times is useful when
 is used to create a time based incremental archive (only files that were
 changed during a specified time range will be archived).
 .Pp
-A time range is made up of six different fields and each field must contain two
-digits.
+A time range is made up of seven different fields and each field must contain
+two digits.
 The format is:
 .Dl [[[[[cc]yy]mm]dd]hh]mm[\&.ss]
-Where
+where
 .Cm cc
 is the first two digits of the year (the century),
 .Cm yy
@@ -1277,7 +1296,15 @@ and
 operations are extensions to the
 .Tn POSIX
 standard.
+.Sh HISTORY
+A
+.Nm
+utility appeared in
+.Bx 4.4 .
 .Sh AUTHORS
-Keith Muller at the University of California, San Diego.
-Luke Mewburn implemented
+.An -nosplit
+.An Keith Muller
+at the University of California, San Diego.
+.An Luke Mewburn
+implemented
 .Fl M .

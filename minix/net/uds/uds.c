@@ -14,8 +14,7 @@ static SLIST_HEAD(udshash, udssock) udshash[UDSHASH_SLOTS];
 /*
  * Initialize file-to-socket hash table.
  */
-static void
-udshash_init(void)
+static void udshash_init(void)
 {
 	unsigned int slot;
 
@@ -26,8 +25,7 @@ udshash_init(void)
 /*
  * Return a hash table slot number for the given <dev,ino> pair.
  */
-static unsigned int
-udshash_slot(dev_t dev, ino_t ino)
+static unsigned int udshash_slot(dev_t dev, ino_t ino)
 {
 
 	assert(dev != NO_DEV);
@@ -66,8 +64,7 @@ udshash_get(dev_t dev, ino_t ino)
  * Add a socket to the file-to-socket hash table.  The socket must have its
  * device and inode fields set, and must not be in the hash table already.
  */
-static void
-udshash_add(struct udssock * uds)
+static void udshash_add(struct udssock * uds)
 {
 	unsigned int slot;
 
@@ -80,8 +77,7 @@ udshash_add(struct udssock * uds)
  * Remove a socket from the file-to-socket hash table.  The socket must be in
  * the hash table.
  */
-static void
-udshash_del(struct udssock * uds)
+static void udshash_del(struct udssock * uds)
 {
 	unsigned int slot;
 
@@ -128,8 +124,7 @@ uds_enum(struct udssock * prev, int type)
 /*
  * Invalidate credentials on the socket.
  */
-static void
-uds_clear_cred(struct udssock * uds)
+static void uds_clear_cred(struct udssock * uds)
 {
 
 	uds->uds_cred.unp_pid = -1;
@@ -144,8 +139,7 @@ uds_clear_cred(struct udssock * uds)
  * and never updated later.  The party receiving the credentials must take this
  * into account.
  */
-static void
-uds_get_cred(struct udssock * uds, endpoint_t user_endpt)
+static void uds_get_cred(struct udssock * uds, endpoint_t user_endpt)
 {
 	int r;
 
@@ -162,8 +156,7 @@ uds_get_cred(struct udssock * uds, endpoint_t user_endpt)
  * Allocate and initialize a UDS socket.  On succes, return OK with a pointer
  * to the new socket in 'udsp'.  On failure, return a negative error code.
  */
-static int
-uds_alloc(struct udssock ** udsp)
+static int uds_alloc(struct udssock ** udsp)
 {
 	struct udssock *uds;
 	int r;
@@ -199,8 +192,7 @@ uds_alloc(struct udssock ** udsp)
 /*
  * Free a previously allocated socket.
  */
-static void
-uds_free(struct sock * sock)
+static void uds_free(struct sock * sock)
 {
 	struct udssock *uds = (struct udssock *)sock;
 
@@ -264,8 +256,7 @@ uds_socket(int domain, int type, int protocol, endpoint_t user_endpt __unused,
 /*
  * Connect a pair of sockets.
  */
-static int
-uds_pair(struct sock * sock1, struct sock * sock2, endpoint_t user_endpt)
+static int uds_pair(struct sock * sock1, struct sock * sock2, endpoint_t user_endpt)
 {
 	struct udssock *uds1 = (struct udssock *)sock1;
 	struct udssock *uds2 = (struct udssock *)sock2;
@@ -294,8 +285,7 @@ uds_pair(struct sock * sock1, struct sock * sock2, endpoint_t user_endpt)
  * connection depending on whether the socket was linked, that is, on the
  * accept queue of a listening socket.
  */
-static void
-uds_disconnect(struct udssock * uds, int was_linked)
+static void uds_disconnect(struct udssock * uds, int was_linked)
 {
 	struct udssock *conn;
 
@@ -336,8 +326,7 @@ uds_disconnect(struct udssock * uds, int was_linked)
  * Add the socket 'link' to the queue of the socket 'uds'.  This also implies
  * that 'link's link socket is set to 'uds'.
  */
-static void
-uds_add_queue(struct udssock * uds, struct udssock * link)
+static void uds_add_queue(struct udssock * uds, struct udssock * link)
 {
 
 	dprintf(("UDS: add_queue(%d,%d)\n",
@@ -355,8 +344,7 @@ uds_add_queue(struct udssock * uds, struct udssock * link)
  * Remove the socket 'link' from the queue of the socket 'uds'.  This also
  * reset 'link's link to NULL.
  */
-static void
-uds_del_queue(struct udssock * uds, struct udssock * link)
+static void uds_del_queue(struct udssock * uds, struct udssock * link)
 {
 
 	dprintf(("UDS: del_queue(%d,%d)\n",
@@ -377,8 +365,7 @@ uds_del_queue(struct udssock * uds, struct udssock * link)
  * 'except' if non-NULL.  Raise an ECONNRESET error on all removed sockets that
  * are not equal to 'uds'.
  */
-static void
-uds_clear_queue(struct udssock * uds, struct udssock * except)
+static void uds_clear_queue(struct udssock * uds, struct udssock * except)
 {
 	struct udssock *link, *tmp;
 	int found;
@@ -443,8 +430,7 @@ uds_clear_queue(struct udssock * uds, struct udssock * except)
  * for copying and terminating the path as needed.  A pointer to the path as
  * stored in 'addr' is returned in 'pathp'.  On failure, return an error code.
  */
-static int
-uds_check_addr(const struct sockaddr * addr, socklen_t addr_len,
+static int uds_check_addr(const struct sockaddr * addr, socklen_t addr_len,
 	const char ** pathp)
 {
 	const char *p;
@@ -486,8 +472,7 @@ uds_check_addr(const struct sockaddr * addr, socklen_t addr_len,
  * here.  The libraries may subsequently copy out only a part of it to the user
  * process.  This function always succeeds.
  */
-void
-uds_make_addr(const char * path, size_t len, struct sockaddr * addr,
+void uds_make_addr(const char * path, size_t len, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 
@@ -515,8 +500,7 @@ uds_make_addr(const char * path, size_t len, struct sockaddr * addr,
 /*
  * Bind a socket to a local address.
  */
-static int
-uds_bind(struct sock * sock, const struct sockaddr * addr, socklen_t addr_len,
+static int uds_bind(struct sock * sock, const struct sockaddr * addr, socklen_t addr_len,
 	endpoint_t user_endpt)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -591,8 +575,7 @@ uds_bind(struct sock * sock, const struct sockaddr * addr, socklen_t addr_len,
  * On succes, return OK, with 'peerp' set to the socket that was found.  On
  * failure, return a negative error code.
  */
-int
-uds_lookup(struct udssock * uds, const struct sockaddr * addr,
+int uds_lookup(struct udssock * uds, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt, struct udssock ** peerp)
 {
 	struct udssock *peer;
@@ -630,8 +613,7 @@ uds_lookup(struct udssock * uds, const struct sockaddr * addr,
  * connecting, or disconnected state prior to the call.  Return OK or an error
  * code.  The link state of the link socket remains unchanged in any case.
  */
-static int
-uds_attach(struct udssock * uds, struct udssock * link)
+static int uds_attach(struct udssock * uds, struct udssock * link)
 {
 	struct udssock *conn;
 	int r;
@@ -678,8 +660,7 @@ uds_attach(struct udssock * uds, struct udssock * link)
 /*
  * Connect a socket to a remote address.
  */
-static int
-uds_connect(struct sock * sock, const struct sockaddr * addr,
+static int uds_connect(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -832,8 +813,7 @@ uds_connect(struct sock * sock, const struct sockaddr * addr,
 /*
  * Put a socket in listening mode.
  */
-static int
-uds_listen(struct sock * sock, int backlog)
+static int uds_listen(struct sock * sock, int backlog)
 {
 	struct udssock *uds = (struct udssock *)sock;
 
@@ -875,8 +855,7 @@ uds_listen(struct sock * sock, int backlog)
  * accepted, an appropriate error code if an accept call would fail instantly,
  * or SUSPEND if the accept request would block waiting for a connection.
  */
-static int
-uds_test_accept(struct sock * sock)
+static int uds_test_accept(struct sock * sock)
 {
 	struct udssock *uds = (struct udssock *)sock;
 
@@ -974,8 +953,7 @@ uds_accept(struct sock * sock, struct sockaddr * addr, socklen_t * addr_len,
 /*
  * Set socket options.
  */
-static int
-uds_setsockopt(struct sock * sock, int level, int name,
+static int uds_setsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -1067,8 +1045,7 @@ uds_setsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve socket options.
  */
-static int
-uds_getsockopt(struct sock * sock, int level, int name,
+static int uds_getsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -1135,8 +1112,7 @@ uds_getsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve a socket's local address.
  */
-static int
-uds_getsockname(struct sock * sock, struct sockaddr * addr,
+static int uds_getsockname(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -1151,8 +1127,7 @@ uds_getsockname(struct sock * sock, struct sockaddr * addr,
 /*
  * Retrieve a socket's remote address.
  */
-static int
-uds_getpeername(struct sock * sock, struct sockaddr * addr,
+static int uds_getpeername(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct udssock *uds = (struct udssock *)sock;
@@ -1182,8 +1157,7 @@ uds_getpeername(struct sock * sock, struct sockaddr * addr,
  * bitwise mask with libsockevent's SFL_SHUT_{RD,WR} flags rather than the set
  * of SHUT_{RD,WR,RDWR} values from userland.
  */
-static int
-uds_shutdown(struct sock * sock, unsigned int flags)
+static int uds_shutdown(struct sock * sock, unsigned int flags)
 {
 	struct udssock *uds = (struct udssock *)sock;
 	struct udssock *conn;
@@ -1225,8 +1199,7 @@ uds_shutdown(struct sock * sock, unsigned int flags)
  * The 'force' flag is unused because we need never wait for data to be sent,
  * since we keep all in-flight data on the receiver side.
  */
-static int
-uds_close(struct sock * sock, int force __unused)
+static int uds_close(struct sock * sock, int force __unused)
 {
 	struct udssock *uds = (struct udssock *)sock;
 
@@ -1299,8 +1272,7 @@ static const struct sockevent_ops uds_ops = {
 /*
  * Initialize the service.
  */
-static int
-uds_init(int type __unused, sef_init_info_t * info __unused)
+static int uds_init(int type __unused, sef_init_info_t * info __unused)
 {
 	unsigned int i;
 
@@ -1334,8 +1306,7 @@ uds_init(int type __unused, sef_init_info_t * info __unused)
 /*
  * Clean up before shutdown.
  */
-static void
-uds_cleanup(void)
+static void uds_cleanup(void)
 {
 
 	/* Tell the status module to clean up. */
@@ -1345,8 +1316,7 @@ uds_cleanup(void)
 /*
  * The service has received a signal.
  */
-static void
-uds_signal(int signo)
+static void uds_signal(int signo)
 {
 
 	/* Only check for the termination signal.  Ignore anything else. */
@@ -1363,8 +1333,7 @@ uds_signal(int signo)
 /*
  * Perform initialization using the System Event Framework (SEF).
  */
-static void
-uds_startup(void)
+static void uds_startup(void)
 {
 
 	/* Register initialization callbacks. */
@@ -1380,8 +1349,7 @@ uds_startup(void)
 /*
  * The UNIX Domain Sockets driver.
  */
-int
-main(void)
+int main(void)
 {
 	message m;
 	int r, ipc_status;

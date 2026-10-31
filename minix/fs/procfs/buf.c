@@ -14,8 +14,7 @@ static off_t skip;
  * first 'start' bytes of the produced output are to be skipped.  After that, a
  * total of 'len' bytes are requested.
  */
-void
-buf_init(char * ptr, size_t len, off_t start)
+void buf_init(char * ptr, size_t len, off_t start)
 {
 
 	buf = ptr;
@@ -27,8 +26,7 @@ buf_init(char * ptr, size_t len, off_t start)
 /*
  * Add formatted text to the end of the buffer.
  */
-void
-buf_printf(char * fmt, ...)
+void buf_printf(char * fmt, ...)
 {
 	va_list args;
 	ssize_t len, max;
@@ -85,8 +83,7 @@ buf_printf(char * fmt, ...)
 /*
  * Add arbitrary data to the end of the buffer.
  */
-void
-buf_append(char * data, size_t len)
+void buf_append(char * data, size_t len)
 {
 
 	if (left == 0)
@@ -117,8 +114,7 @@ buf_append(char * data, size_t len)
  * Return the resulting number of bytes produced, not counting the trailing
  * null character in the buffer.
  */
-ssize_t
-buf_result(void)
+ssize_t buf_result(void)
 {
 
 	return used;

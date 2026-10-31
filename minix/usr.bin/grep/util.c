@@ -1,7 +1,7 @@
 /*	$OpenBSD: util.c,v 1.48 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,8 +55,7 @@ static int	grep_cmp(const unsigned char *, const unsigned char *, size_t);
 static void	grep_revstr(unsigned char *, int);
 #endif
 
-int
-grep_tree(char **argv)
+int grep_tree(char **argv)
 {
 	FTS	*fts;
 	FTSENT	*p;
@@ -92,8 +91,7 @@ grep_tree(char **argv)
 	return c;
 }
 
-int
-procfile(const char *fn)
+int procfile(const char *fn)
 {
 	str_t ln;
 	file_t *f;
@@ -170,8 +168,7 @@ procfile(const char *fn)
 
 #define isword(x) (isalnum((unsigned char)x) || (x) == '_')
 
-static int
-procline(str_t *l, int nottext)
+static int procline(str_t *l, int nottext)
 {
 	regmatch_t	pmatch;
 	int		c, i, r;
@@ -248,8 +245,7 @@ print:
 }
 
 #ifndef SMALL
-void
-fgrepcomp(fastgrep_t *fg, const unsigned char *pat)
+void fgrepcomp(fastgrep_t *fg, const unsigned char *pat)
 {
 	int i;
 
@@ -291,8 +287,7 @@ fgrepcomp(fastgrep_t *fg, const unsigned char *pat)
 /*
  * Returns: -1 on failure, 0 on success
  */
-int
-fastcomp(fastgrep_t *fg, const char *pat)
+int fastcomp(fastgrep_t *fg, const char *pat)
 {
 #ifdef SMALL
 	return -1;
@@ -461,8 +456,7 @@ nonspecial:
 	((s == 0 || !isword(d[s-1])) && (e == l || !isword(d[e])) && \
 	  e > s && isword(d[s]) && isword(d[e-1]))
 
-static int
-grep_search(fastgrep_t *fg, unsigned char *data, size_t dataLen,
+static int grep_search(fastgrep_t *fg, unsigned char *data, size_t dataLen,
 	regmatch_t *pmatch)
 {
 #ifdef SMALL
@@ -579,8 +573,7 @@ grep_realloc(void *ptr, size_t size)
  * Returns:	i >= 0 on failure (position that it failed)
  *		-1 on success
  */
-static int
-grep_cmp(const unsigned char *pat, const unsigned char *data, size_t len)
+static int grep_cmp(const unsigned char *pat, const unsigned char *data, size_t len)
 {
 	size_t i;
 
@@ -594,8 +587,7 @@ grep_cmp(const unsigned char *pat, const unsigned char *data, size_t len)
 	return (-1);
 }
 
-static void
-grep_revstr(unsigned char *str, int len)
+static void grep_revstr(unsigned char *str, int len)
 {
 	int i;
 	char c;
@@ -608,8 +600,7 @@ grep_revstr(unsigned char *str, int len)
 }
 #endif
 
-void
-printline(str_t *line, int sep, regmatch_t *pmatch)
+void printline(str_t *line, int sep, regmatch_t *pmatch)
 {
 	int n;
 

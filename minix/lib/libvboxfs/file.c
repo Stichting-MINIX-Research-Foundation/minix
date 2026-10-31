@@ -20,8 +20,7 @@ static char iobuf[VBOXFS_MAX_FILEIO];
 /*
  * Open a file.
  */
-int
-vboxfs_open(const char *path, int flags, int mode, sffs_file_t *handle)
+int vboxfs_open(const char *path, int flags, int mode, sffs_file_t *handle)
 {
 	vboxfs_handle_t *handlep;
 	int r;
@@ -42,8 +41,7 @@ vboxfs_open(const char *path, int flags, int mode, sffs_file_t *handle)
 /*
  * Read or write a chunk from or to a file.
  */
-static ssize_t
-read_write(vboxfs_handle_t handle, char *buf, size_t size, u64_t pos,
+static ssize_t read_write(vboxfs_handle_t handle, char *buf, size_t size, u64_t pos,
 	int write)
 {
 	vbox_param_t param[5];
@@ -67,8 +65,7 @@ read_write(vboxfs_handle_t handle, char *buf, size_t size, u64_t pos,
 /*
  * Read from a file.
  */
-ssize_t
-vboxfs_read(sffs_file_t handle, char *buf, size_t size, u64_t pos)
+ssize_t vboxfs_read(sffs_file_t handle, char *buf, size_t size, u64_t pos)
 {
 	vboxfs_handle_t *handlep;
 
@@ -80,8 +77,7 @@ vboxfs_read(sffs_file_t handle, char *buf, size_t size, u64_t pos)
 /*
  * Write to a file.
  */
-ssize_t
-vboxfs_write(sffs_file_t handle, char *buf, size_t len, u64_t pos)
+ssize_t vboxfs_write(sffs_file_t handle, char *buf, size_t len, u64_t pos)
 {
 	vboxfs_handle_t *handlep;
 
@@ -93,8 +89,7 @@ vboxfs_write(sffs_file_t handle, char *buf, size_t len, u64_t pos)
 /*
  * Close a file handle.
  */
-int
-vboxfs_close(sffs_file_t handle)
+int vboxfs_close(sffs_file_t handle)
 {
 	vboxfs_handle_t *handlep;
 
@@ -110,8 +105,7 @@ vboxfs_close(sffs_file_t handle)
 /*
  * Return an internal buffer address and size for I/O operations.
  */
-size_t
-vboxfs_buffer(char **ptr)
+size_t vboxfs_buffer(char **ptr)
 {
 
 	*ptr = iobuf;

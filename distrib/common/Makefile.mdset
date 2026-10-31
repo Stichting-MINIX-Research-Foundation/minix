@@ -125,7 +125,6 @@ _POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
 _POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST}
 .endif
 
-
 CLEANFILES+=	${_KERNEL.${_K}.${_F}}
 
 .if defined(MDSET_NOIMAGE.${_FILENAME})

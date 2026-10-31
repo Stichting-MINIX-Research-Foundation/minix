@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp $
+#	$NetBSD: mknative-binutils,v 1.13 2020/04/04 01:34:53 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -22,7 +22,7 @@ get_libbfd () {
 	{
 		getvars bfd/Makefile \
 			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
-			INCLUDES TDEFAULTS
+			INCLUDES TDEFAULTS HAVEVECS
 	} | write_mk external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/defs.mk
 
 	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
@@ -47,6 +47,18 @@ get_libopcodes () {
 	{
 		cat $_TMPDIR/opcodes/config.h
 	} | write_c external/gpl3/binutils/lib/libopcodes/arch/$MACHINE_ARCH/config.h
+}
+
+get_libgnuctf () {
+	mkdir -p $_TOP/external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH
+
+	{
+		getvars libctf/Makefile libctf_la_SOURCES
+	} | write_mk external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH/defs.mk
+
+	{
+		cat $_TMPDIR/libctf/config.h
+	} | write_c external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH/config.h
 }
 
 ##### external/gpl3/binutils/lib/libiberty #####
@@ -96,6 +108,7 @@ get_binutils () {
                 DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
 	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
 		-e s/G_as_new_LDADD=/G_OBJS+=/ \
+		-e s@config/@@g \
 		-e 's/\.\..*a//' |
 	write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
 
@@ -137,6 +150,7 @@ case $1 in
 all|binutils)	# everything (uses "canadian cross" temp environment)
 	get_binutils
 	get_libbfd
+	get_libgnuctf
 	get_libopcodes
 	get_libiberty
 	exit 0

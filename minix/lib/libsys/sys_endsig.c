@@ -3,8 +3,7 @@
 /*===========================================================================*
  *                                sys_endksig				     *
  *===========================================================================*/
-int sys_endksig(proc_ep)
-endpoint_t proc_ep;				/* process number */
+int sys_endksig(endpoint_t proc_ep)
 {
     message m;
     int result;

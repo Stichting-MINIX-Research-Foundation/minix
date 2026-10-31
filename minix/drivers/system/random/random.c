@@ -34,7 +34,7 @@ static void add_sample(int source, unsigned long sample);
 static void data_block(rd_keyinstance *keyp, void *data);
 static void reseed(void);
 
-void random_init()
+void random_init(void)
 {
 	int i, j;
 
@@ -54,17 +54,14 @@ void random_init()
 	reseed_count= 0;
 }
 
-int random_isseeded()
+int random_isseeded(void)
 {
 	if (got_seeded)
 		return 1;
 	return 0;
 }
 
-void random_update(source, buf, count)
-int source;
-rand_t *buf;
-int count;
+void random_update(int source, rand_t *buf, int count)
 {
 	int i;
 
@@ -78,9 +75,7 @@ int count;
 	reseed();
 }
 
-void random_getbytes(buf, size)
-void *buf;
-size_t size;
+void random_getbytes(void *buf, size_t size)
 {
 	int n, r;
 	u8_t *cp;
@@ -112,9 +107,7 @@ size_t size;
 	data_block(&key, random_key+AES_BLOCKSIZE);
 }
 
-void random_putbytes(buf, size)
-void *buf;
-size_t size;
+void random_putbytes(void *buf, size_t size)
 {
 	/* Add bits to pool zero */
 	SHA256_Update(&pool_ctx[0], buf, size);
@@ -127,9 +120,7 @@ size_t size;
 	reseed();
 }
 
-static void add_sample(source, sample)
-int source;
-unsigned long sample;
+static void add_sample(int source, unsigned long sample)
 {
 	int i, pool_nr;
 	unsigned long d, v, di, min;
@@ -178,9 +169,7 @@ unsigned long sample;
 	pool_ind[source]= pool_nr;
 }
 
-static void data_block(keyp, data)
-rd_keyinstance *keyp;
-void *data;
+static void data_block(rd_keyinstance *keyp, void *data)
 {
 	int r;
 	u8_t input[AES_BLOCKSIZE];
@@ -203,7 +192,7 @@ void *data;
 		count_hi++;
 }
 
-static void reseed()
+static void reseed(void)
 {
 	int i;
 	SHA256_CTX ctx;

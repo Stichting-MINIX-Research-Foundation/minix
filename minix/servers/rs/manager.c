@@ -18,8 +18,7 @@ static int run_script(struct rproc *rp);
 /*===========================================================================*
  *				caller_is_root				     *
  *===========================================================================*/
-static int caller_is_root(endpoint)
-endpoint_t endpoint;				/* caller endpoint */
+static int caller_is_root(endpoint_t endpoint)
 {
   uid_t euid;
 
@@ -36,9 +35,7 @@ endpoint_t endpoint;				/* caller endpoint */
 /*===========================================================================*
  *				caller_can_control			     *
  *===========================================================================*/
-static int caller_can_control(endpoint, target_rp)
-endpoint_t endpoint;
-struct rproc *target_rp;
+static int caller_can_control(endpoint_t endpoint, struct rproc *target_rp)
 {
   int control_allowed = 0;
   register struct rproc *rp;
@@ -78,10 +75,7 @@ struct rproc *target_rp;
 /*===========================================================================*
  *			     check_call_permission			     *
  *===========================================================================*/
-int check_call_permission(caller, call, rp)
-endpoint_t caller;
-int call;
-struct rproc *rp;
+int check_call_permission(endpoint_t caller, int call, struct rproc *rp)
 {
 /* Check if the caller has permission to execute a particular call. */
   struct rprocpub *rpub;
@@ -132,10 +126,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				copy_rs_start				     *
  *===========================================================================*/
-int copy_rs_start(src_e, src_rs_start, dst_rs_start)
-endpoint_t src_e;
-char *src_rs_start;
-struct rs_start *dst_rs_start;
+int copy_rs_start(endpoint_t src_e, char *src_rs_start, struct rs_start *dst_rs_start)
 {
   int r;
 
@@ -148,12 +139,7 @@ struct rs_start *dst_rs_start;
 /*===========================================================================*
  *				copy_label				     *
  *===========================================================================*/
-int copy_label(src_e, src_label, src_len, dst_label, dst_len)
-endpoint_t src_e;
-char *src_label;
-size_t src_len;
-char *dst_label;
-size_t dst_len;
+int copy_label(endpoint_t src_e, char *src_label, size_t src_len, char *dst_label, size_t dst_len)
 {
   int s, len;
 
@@ -357,12 +343,7 @@ void end_srv_init(struct rproc *rp)
 /*===========================================================================*
  *			     kill_service_debug				     *
  *===========================================================================*/
-int kill_service_debug(file, line, rp, errstr, err)
-char *file;
-int line;
-struct rproc *rp;
-char *errstr;
-int err;
+int kill_service_debug(char *file, int line, struct rproc *rp, char *errstr, int err)
 {
 /* Crash a system service and don't let it restart. */
   if(errstr && !shutting_down) {
@@ -377,10 +358,7 @@ int err;
 /*===========================================================================*
  *			    crash_service_debug				     *
  *===========================================================================*/
-int crash_service_debug(file, line, rp)
-char *file;
-int line;
-struct rproc *rp;
+int crash_service_debug(char *file, int line, struct rproc *rp)
 {
 /* Simluate a crash in a system service. */
   struct rprocpub *rpub;
@@ -402,10 +380,7 @@ struct rproc *rp;
 /*===========================================================================*
  *			  cleanup_service_debug				     *
  *===========================================================================*/
-void cleanup_service_debug(file, line, rp)
-char *file;
-int line;
-struct rproc *rp;
+void cleanup_service_debug(char *file, int line, struct rproc *rp)
 {
   struct rprocpub *rpub;
   int detach, cleanup_script;
@@ -494,10 +469,7 @@ struct rproc *rp;
 /*===========================================================================*
  *			     detach_service_debug			     *
  *===========================================================================*/
-void detach_service_debug(file, line, rp)
-char *file;
-int line;
-struct rproc *rp;
+void detach_service_debug(char *file, int line, struct rproc *rp)
 {
 /* Detach the given system service. */
   static unsigned long detach_counter = 0;
@@ -528,8 +500,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				create_service				     *
  *===========================================================================*/
-int create_service(rp)
-struct rproc *rp;
+int create_service(struct rproc *rp)
 {
 /* Create the given system service. */
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
@@ -784,8 +755,7 @@ int clone_service(struct rproc *rp, int instance_flag, int init_flags)
 /*===========================================================================*
  *				publish_service				     *
  *===========================================================================*/
-int publish_service(rp)
-struct rproc *rp;				/* pointer to service slot */
+int publish_service(struct rproc *rp)
 {
 /* Publish a service. */
   int r;
@@ -861,8 +831,7 @@ struct rproc *rp;				/* pointer to service slot */
 /*===========================================================================*
  *			      unpublish_service				     *
  *===========================================================================*/
-int unpublish_service(rp)
-struct rproc *rp;				/* pointer to service slot */
+int unpublish_service(struct rproc *rp)
 {
 /* Unpublish a service. */
   struct rprocpub *rpub;
@@ -1300,9 +1269,7 @@ void restart_service(struct rproc *rp)
 /*===========================================================================*
  *		         inherit_service_defaults			     *
  *===========================================================================*/
-void inherit_service_defaults(def_rp, rp)
-struct rproc *def_rp;
-struct rproc *rp;
+void inherit_service_defaults(struct rproc *def_rp, struct rproc *rp)
 {
   struct rprocpub *def_rpub;
   struct rprocpub *rpub;
@@ -1331,10 +1298,7 @@ struct rproc *rp;
 /*===========================================================================*
  *		           get_service_instances			     *
  *===========================================================================*/
-void get_service_instances(rp, rps, length)
-struct rproc *rp;
-struct rproc ***rps;
-int *length;
+void get_service_instances(struct rproc *rp, struct rproc ***rps, int *length)
 {
 /* Retrieve all the service instances of a given service. */
   static struct rproc *instances[5];
@@ -1354,8 +1318,7 @@ int *length;
 /*===========================================================================*
  *				share_exec				     *
  *===========================================================================*/
-void share_exec(rp_dst, rp_src)
-struct rproc *rp_dst, *rp_src;
+void share_exec(struct rproc *rp_dst, struct rproc *rp_src)
 {
   if(rs_verbose)
       printf("RS: %s shares exec image with %s\n",
@@ -1369,8 +1332,7 @@ struct rproc *rp_dst, *rp_src;
 /*===========================================================================*
  *				read_exec				     *
  *===========================================================================*/
-int read_exec(rp)
-struct rproc *rp;
+int read_exec(struct rproc *rp)
 {
   int e, r, fd;
   char *e_name;
@@ -1421,8 +1383,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				free_exec				     *
  *===========================================================================*/
-void free_exec(rp)
-struct rproc *rp;
+void free_exec(struct rproc *rp)
 {
 /* Free an exec image. */
   int slot_nr, has_shared_exec;
@@ -1457,10 +1418,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				 edit_slot				     *
  *===========================================================================*/
-int edit_slot(rp, rs_start, source)
-struct rproc *rp;
-struct rs_start *rs_start;
-endpoint_t source;
+int edit_slot(struct rproc *rp, struct rs_start *rs_start, endpoint_t source)
 {
 /* Edit a given slot to override existing settings. */
   struct rprocpub *rpub;
@@ -1705,10 +1663,7 @@ endpoint_t source;
 /*===========================================================================*
  *				 init_slot				     *
  *===========================================================================*/
-int init_slot(rp, rs_start, source)
-struct rproc *rp;
-struct rs_start *rs_start;
-endpoint_t source;
+int init_slot(struct rproc *rp, struct rs_start *rs_start, endpoint_t source)
 {
 /* Initialize a slot as requested by the client. */
   struct rprocpub *rpub;
@@ -1797,9 +1752,7 @@ endpoint_t source;
 /*===========================================================================*
  *				clone_slot				     *
  *===========================================================================*/
-int clone_slot(rp, clone_rpp)
-struct rproc *rp;
-struct rproc **clone_rpp;
+int clone_slot(struct rproc *rp, struct rproc **clone_rpp)
 {
   int r;
   struct rproc *clone_rp;
@@ -1867,9 +1820,7 @@ static void swap_slot_pointer(struct rproc **rpp, struct rproc *src_rp,
 /*===========================================================================*
  *				swap_slot				     *
  *===========================================================================*/
-void swap_slot(src_rpp, dst_rpp)
-struct rproc **src_rpp;
-struct rproc **dst_rpp;
+void swap_slot(struct rproc **src_rpp, struct rproc **dst_rpp)
 {
 /* Swap two service slots. */
   struct rproc *src_rp, *dst_rp;
@@ -2064,8 +2015,7 @@ struct rproc* lookup_slot_by_flags(int flags)
 /*===========================================================================*
  *				alloc_slot				     *
  *===========================================================================*/
-int alloc_slot(rpp)
-struct rproc **rpp;
+int alloc_slot(struct rproc **rpp)
 {
 /* Alloc a new system service slot. */
   int slot_nr;
@@ -2085,8 +2035,7 @@ struct rproc **rpp;
 /*===========================================================================*
  *				free_slot				     *
  *===========================================================================*/
-void free_slot(rp)
-struct rproc *rp;
+void free_slot(struct rproc *rp)
 {
 /* Free a system service slot. */
   struct rprocpub *rpub;
@@ -2112,10 +2061,7 @@ struct rproc *rp;
 /*===========================================================================*
  *				get_next_name				     *
  *===========================================================================*/
-static char *get_next_name(ptr, name, caller_label)
-char *ptr;
-char *name;
-char *caller_label;
+static char *get_next_name(char *ptr, char *name, char *caller_label)
 {
 	/* Get the next name from the list of (IPC) program names.
 	 */
@@ -2154,9 +2100,7 @@ char *caller_label;
 /*===========================================================================*
  *				add_forward_ipc				     *
  *===========================================================================*/
-void add_forward_ipc(rp, privp)
-struct rproc *rp;
-struct priv *privp;
+void add_forward_ipc(struct rproc *rp, struct priv *privp)
 {
 	/* Add IPC send permissions to a process based on that process's IPC
 	 * list.
@@ -2227,9 +2171,7 @@ struct priv *privp;
 /*===========================================================================*
  *				add_backward_ipc			     *
  *===========================================================================*/
-void add_backward_ipc(rp, privp)
-struct rproc *rp;
-struct priv *privp;
+void add_backward_ipc(struct rproc *rp, struct priv *privp)
 {
 	/* Add IPC send permissions to a process based on other processes' IPC
 	 * lists. This is enough to allow each such two processes to talk to
@@ -2297,9 +2239,7 @@ struct priv *privp;
 /*===========================================================================*
  *				init_privs				     *
  *===========================================================================*/
-void init_privs(rp, privp)
-struct rproc *rp;
-struct priv *privp;
+void init_privs(struct rproc *rp, struct priv *privp)
 {
 	int i;
 	int is_ipc_all, is_ipc_all_sys;

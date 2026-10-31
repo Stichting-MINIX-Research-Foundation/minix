@@ -47,9 +47,7 @@ static off_t sizes[] = {
 
 static unsigned char *data;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int j, m = 0xFFFF;
 
@@ -103,8 +101,7 @@ void(*call) (off_t osize, off_t nsize);
 		call(sizes[i], sizes[j]);
 }
 
-int make_file(size)
-off_t size;
+int make_file(off_t size)
 {
   off_t off;
   int fd, r;
@@ -123,11 +120,7 @@ off_t size;
   return fd;
 }
 
-void check_file(fd, hole_start, hole_end, size)
-int fd;
-off_t hole_start;
-off_t hole_end;
-off_t size;
+void check_file(int fd, off_t hole_start, off_t hole_end, off_t size)
 {
   static unsigned char buf[16384];
   struct stat statbuf;
@@ -399,9 +392,7 @@ void test50d()
   if (unlink(TESTFILE) != 0) e(29);
 }
 
-void sub50e(osize, nsize)
-off_t osize;
-off_t nsize;
+void sub50e(off_t osize, off_t nsize)
 {
   int fd;
 
@@ -431,9 +422,7 @@ void test50e()
   all_sizes(sub50e);
 }
 
-void sub50f(osize, nsize)
-off_t osize;
-off_t nsize;
+void sub50f(off_t osize, off_t nsize)
 {
   int fd;
 
@@ -470,9 +459,7 @@ void test50f()
   all_sizes(sub50f);
 }
 
-void sub50g(osize, nsize)
-off_t osize;
-off_t nsize;
+void sub50g(off_t osize, off_t nsize)
 {
   int fd;
 
@@ -501,9 +488,7 @@ void test50g()
   all_sizes(sub50g);
 }
 
-void sub50h(osize, nsize)
-off_t osize;
-off_t nsize;
+void sub50h(off_t osize, off_t nsize)
 {
   struct flock flock;
   int fd;
@@ -539,11 +524,7 @@ void test50h()
   all_sizes(sub50h);
 }
 
-void sub50i(size, off, len, type)
-off_t size;
-off_t off;
-size_t len;
-int type;
+void sub50i(off_t size, off_t off, size_t len, int type)
 {
   struct flock flock;
   int fd;

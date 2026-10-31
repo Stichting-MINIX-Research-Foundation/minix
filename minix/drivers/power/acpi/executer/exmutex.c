@@ -51,8 +51,7 @@
 
 /* Local prototypes */
 
-static void
-AcpiExLinkMutex (
+static void AcpiExLinkMutex (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_THREAD_STATE       *Thread);
 
@@ -69,8 +68,7 @@ AcpiExLinkMutex (
  *
  ******************************************************************************/
 
-void
-AcpiExUnlinkMutex (
+void AcpiExUnlinkMutex (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
     ACPI_THREAD_STATE       *Thread = ObjDesc->Mutex.OwnerThread;
@@ -121,8 +119,7 @@ AcpiExUnlinkMutex (
  *
  ******************************************************************************/
 
-static void
-AcpiExLinkMutex (
+static void AcpiExLinkMutex (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_THREAD_STATE       *Thread)
 {
@@ -504,8 +501,7 @@ AcpiExReleaseMutex (
  *
  ******************************************************************************/
 
-void
-AcpiExReleaseAllMutexes (
+void AcpiExReleaseAllMutexes (
     ACPI_THREAD_STATE       *Thread)
 {
     ACPI_OPERAND_OBJECT     *Next = Thread->AcquiredMutexList;

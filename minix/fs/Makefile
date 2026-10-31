@@ -5,6 +5,7 @@ SUBDIR+=	pfs
 
 .if ${MKIMAGEONLY} == "no"
 SUBDIR+=	ext2
+SUBDIR+=	ffs
 SUBDIR+=	isofs
 SUBDIR+=	procfs
 SUBDIR+=	ptyfs

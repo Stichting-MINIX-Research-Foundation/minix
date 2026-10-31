@@ -25,6 +25,10 @@
 #define PAF_LOWER16MB	0x08
 #define PAF_LOWER1MB	0x10
 #define PAF_ALIGN16K	0x40	/* Aligned to 16k boundary. */
+#define PAF_USERMEM	0x80	/* Ordinary user memory: honor the low-memory
+				 * reserve so a user process cannot exhaust the
+				 * pages that system services need to stay alive.
+				 */
 
 #define MARK do { if(mark) { printf("%d\n", __LINE__); } } while(0)
 

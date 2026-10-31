@@ -684,8 +684,7 @@ STATIC unsigned char *regprop(void);
 /*
  - regexec - match a regexp against a string
  */
-int
-regexec(register regexp *prog, register unsigned char *string) {
+int regexec(register regexp *prog, register unsigned char *string) {
 	register unsigned char *s;
 #ifndef	STDLIB
 	extern char *strchr();

@@ -122,8 +122,7 @@ static struct rmib_node minix_lwip_drivers_node =
 /*
  * Initialize the network driver communication module.
  */
-void
-ndev_init(void)
+void ndev_init(void)
 {
 	unsigned int slot;
 	int r;
@@ -178,8 +177,7 @@ ndev_init(void)
 /*
  * Initialize a queue for first use.
  */
-static void
-ndev_queue_init(struct ndev_queue * nq)
+static void ndev_queue_init(struct ndev_queue * nq)
 {
 
 	/*
@@ -197,8 +195,7 @@ ndev_queue_init(struct ndev_queue * nq)
  * Advance the given request queue, freeing up the request at the head of the
  * queue including any grants in use for it.
  */
-static void
-ndev_queue_advance(struct ndev_queue * nq)
+static void ndev_queue_advance(struct ndev_queue * nq)
 {
 	struct ndev_req * nreq;
 	cp_grant_id_t grant;
@@ -235,8 +232,7 @@ ndev_queue_advance(struct ndev_queue * nq)
  * Clear any outstanding requests from the given queue and reset it to a
  * pre-initialization state.
  */
-static void
-ndev_queue_reset(struct ndev_queue * nq)
+static void ndev_queue_reset(struct ndev_queue * nq)
 {
 
 	while (nq->nq_count > 0) {
@@ -289,8 +285,7 @@ ndev_queue_get(struct ndev_queue * nq, int type, uint32_t * seq)
  * been obtained using ndev_queue_get() directly before the call to this
  * function.  This function never fails.
  */
-static void
-ndev_queue_add(struct ndev_queue * nq, struct ndev_req * nreq)
+static void ndev_queue_add(struct ndev_queue * nq, struct ndev_req * nreq)
 {
 
 	if (nreq->nreq_type != NDEV_RECV && nq->nq_count >= NDEV_SENDQ) {
@@ -312,8 +307,7 @@ ndev_queue_add(struct ndev_queue * nq, struct ndev_req * nreq)
  * or FALSE if the head of the request queue (if any) did not match the given
  * type and/or sequence ID.
  */
-static int
-ndev_queue_remove(struct ndev_queue * nq, int type, uint32_t seq)
+static int ndev_queue_remove(struct ndev_queue * nq, int type, uint32_t seq)
 {
 	struct ndev_req *nreq;
 
@@ -338,8 +332,7 @@ ndev_queue_remove(struct ndev_queue * nq, int type, uint32_t seq)
  * other hand, if this is a restarted driver, it will stay disabled until the
  * init reply comes in.
  */
-static void
-ndev_send_init(struct ndev * ndev)
+static void ndev_send_init(struct ndev * ndev)
 {
 	message m;
 	int r;
@@ -355,8 +348,7 @@ ndev_send_init(struct ndev * ndev)
 /*
  * A network device driver has been started or restarted.
  */
-static void
-ndev_up(const char * label, endpoint_t endpt)
+static void ndev_up(const char * label, endpoint_t endpt)
 {
 	static int reported = FALSE;
 	struct ndev *ndev;
@@ -429,8 +421,7 @@ ndev_up(const char * label, endpoint_t endpt)
 /*
  * A network device driver has been terminated.
  */
-static void
-ndev_down(struct ndev * ndev)
+static void ndev_down(struct ndev * ndev)
 {
 
 	/* Cancel any ongoing requests. */
@@ -458,8 +449,7 @@ ndev_down(struct ndev * ndev)
  * that network drivers may have been started, restarted, and/or shut down.
  * Find out what has changed, and act accordingly.
  */
-void
-ndev_check(void)
+void ndev_check(void)
 {
 	static const char *prefix = "drv.net.";
 	char key[DS_MAX_KEYLEN], *label;
@@ -513,8 +503,7 @@ ndev_check(void)
 /*
  * A network device driver has sent a reply to our initialization request.
  */
-static void
-ndev_init_reply(struct ndev * ndev, const message * m_ptr)
+static void ndev_init_reply(struct ndev * ndev, const message * m_ptr)
 {
 	struct ndev_hwaddr hwaddr;
 	uint8_t hwaddr_len, max_send, max_recv;
@@ -637,8 +626,7 @@ ndev_init_reply(struct ndev * ndev, const message * m_ptr)
  * configuration request was sent to the driver, EBUSY if no (more) requests
  * can be sent to the driver right now, or ENOMEM on grant allocation failure.
  */
-int
-ndev_conf(ndev_id_t id, const struct ndev_conf * nconf)
+int ndev_conf(ndev_id_t id, const struct ndev_conf * nconf)
 {
 	struct ndev *ndev;
 	struct ndev_req *nreq;
@@ -714,8 +702,7 @@ ndev_conf(ndev_id_t id, const struct ndev_conf * nconf)
 /*
  * The network device driver has sent a reply to a configuration request.
  */
-static void
-ndev_conf_reply(struct ndev * ndev, const message * m_ptr)
+static void ndev_conf_reply(struct ndev * ndev, const message * m_ptr)
 {
 
 	/*
@@ -738,8 +725,7 @@ ndev_conf_reply(struct ndev * ndev, const message * m_ptr)
  * driver.  The given pbuf chain may be part of a queue.  Return OK if the
  * request was successfully sent, or ENOMEM on grant allocation failure.
  */
-static int
-ndev_transfer(struct ndev * ndev, const struct pbuf * pbuf, int do_send,
+static int ndev_transfer(struct ndev * ndev, const struct pbuf * pbuf, int do_send,
 	uint32_t seq, struct ndev_req * nreq)
 {
 	cp_grant_id_t grant;
@@ -802,8 +788,7 @@ ndev_transfer(struct ndev * ndev, const struct pbuf * pbuf, int do_send,
  * having to go through an intermediate representation (e.g. an iovec array)
  * for the data being sent.  The same applies to ndev_receive().
  */
-int
-ndev_send(ndev_id_t id, const struct pbuf * pbuf)
+int ndev_send(ndev_id_t id, const struct pbuf * pbuf)
 {
 	struct ndev *ndev;
 	struct ndev_req *nreq;
@@ -831,8 +816,7 @@ ndev_send(ndev_id_t id, const struct pbuf * pbuf)
 /*
  * The network device driver has sent a reply to a send request.
  */
-static void
-ndev_send_reply(struct ndev * ndev, const message * m_ptr)
+static void ndev_send_reply(struct ndev * ndev, const message * m_ptr)
 {
 
 	/*
@@ -856,8 +840,7 @@ ndev_send_reply(struct ndev * ndev, const message * m_ptr)
  * merely to avoid needless buffer allocatin in the case that ndev_recv() is
  * going to return EBUSY anyway.
  */
-int
-ndev_can_recv(ndev_id_t id)
+int ndev_can_recv(ndev_id_t id)
 {
 	struct ndev *ndev;
 
@@ -877,8 +860,7 @@ ndev_can_recv(ndev_id_t id)
  * concurrent receive requests has been reached for this driver, or ENOMEM on
  * grant allocation failure.
  */
-int
-ndev_recv(ndev_id_t id, struct pbuf * pbuf)
+int ndev_recv(ndev_id_t id, struct pbuf * pbuf)
 {
 	struct ndev *ndev;
 	struct ndev_req *nreq;
@@ -907,8 +889,7 @@ ndev_recv(ndev_id_t id, struct pbuf * pbuf)
 /*
  * The network device driver has sent a reply to a receive request.
  */
-static void
-ndev_recv_reply(struct ndev * ndev, const message * m_ptr)
+static void ndev_recv_reply(struct ndev * ndev, const message * m_ptr)
 {
 
 	/*
@@ -930,8 +911,7 @@ ndev_recv_reply(struct ndev * ndev, const message * m_ptr)
  * A network device driver sent a status report to us.  Process it and send a
  * reply.
  */
-static void
-ndev_status(struct ndev * ndev, const message * m_ptr)
+static void ndev_status(struct ndev * ndev, const message * m_ptr)
 {
 	message m;
 	int r;
@@ -965,8 +945,7 @@ ndev_status(struct ndev * ndev, const message * m_ptr)
 /*
  * Process a network driver reply message.
  */
-void
-ndev_process(const message * m_ptr, int ipc_status)
+void ndev_process(const message * m_ptr, int ipc_status)
 {
 	struct ndev *ndev;
 	endpoint_t endpt;

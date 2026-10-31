@@ -215,8 +215,7 @@ AcpiPsPushScope (
  *
  ******************************************************************************/
 
-void
-AcpiPsPopScope (
+void AcpiPsPopScope (
     ACPI_PARSE_STATE        *ParserState,
     ACPI_PARSE_OBJECT       **Op,
     UINT32                  *ArgList,
@@ -273,8 +272,7 @@ AcpiPsPopScope (
  *
  ******************************************************************************/
 
-void
-AcpiPsCleanupScope (
+void AcpiPsCleanupScope (
     ACPI_PARSE_STATE        *ParserState)
 {
     ACPI_GENERIC_STATE      *Scope;

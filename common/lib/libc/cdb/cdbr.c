@@ -67,6 +67,9 @@ __RCSID("$NetBSD: cdbr.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "mi_vector_hash.h"
+#endif
 #include <unistd.h>
 #define SET_ERRNO(val) errno = (val)
 #endif

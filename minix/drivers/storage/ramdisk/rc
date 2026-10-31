@@ -84,7 +84,7 @@ fi
 
 if sysenv bootramdisk >/dev/null
 then
-	rootdevname=imgrd
+	rootdevname=/dev/imgrd
 fi
 
 echo "Root device name is $rootdevname"

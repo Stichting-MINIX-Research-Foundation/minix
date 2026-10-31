@@ -32,8 +32,7 @@ static void sockevent_cancel_recv(struct sock * sock,
 /*
  * Initialize the hash table of sock objects.
  */
-static void
-sockhash_init(void)
+static void sockhash_init(void)
 {
 	unsigned int slot;
 
@@ -44,8 +43,7 @@ sockhash_init(void)
 /*
  * Given a socket identifier, return a hash table slot number.
  */
-static unsigned int
-sockhash_slot(sockid_t id)
+static unsigned int sockhash_slot(sockid_t id)
 {
 
 	/*
@@ -81,8 +79,7 @@ sockhash_get(sockid_t id)
  * Add a sock object to the hash table.  The sock object must have a valid ID
  * in its 'sock_id' field, and must not be in the hash table already.
  */
-static void
-sockhash_add(struct sock * sock)
+static void sockhash_add(struct sock * sock)
 {
 	unsigned int slot;
 
@@ -95,8 +92,7 @@ sockhash_add(struct sock * sock)
  * Remove a sock object from the hash table.  The sock object must be in the
  * hash table.
  */
-static void
-sockhash_del(struct sock * sock)
+static void sockhash_del(struct sock * sock)
 {
 	unsigned int slot;
 
@@ -111,8 +107,7 @@ sockhash_del(struct sock * sock)
  * identifier, a SOCK_ type, and a socket operations table.  The socket is
  * added to the ID-to-object hash table.  This function always succeeds.
  */
-static void
-sockevent_reset(struct sock * sock, sockid_t id, int domain, int type,
+static void sockevent_reset(struct sock * sock, sockid_t id, int domain, int type,
 	const struct sockevent_ops * ops)
 {
 
@@ -139,8 +134,7 @@ sockevent_reset(struct sock * sock, sockid_t id, int domain, int type,
  * listening socket 'sock'.  The new socket is given as 'newsock', and its new
  * socket identifier is given as 'newid'.  This function always succeeds.
  */
-void
-sockevent_clone(struct sock * sock, struct sock * newsock, sockid_t newid)
+void sockevent_clone(struct sock * sock, struct sock * newsock, sockid_t newid)
 {
 
 	sockevent_reset(newsock, newid, (int)sock->sock_domain,
@@ -163,8 +157,7 @@ sockevent_clone(struct sock * sock, struct sock * newsock, sockid_t newid)
  * been added to the hash table through sockevent_clone() before, 'newsock' is
  * a non-NULL pointer which identifies the socket object to clone into.
  */
-static void
-sockevent_accepted(struct sock * sock, struct sock * newsock, sockid_t newid)
+static void sockevent_accepted(struct sock * sock, struct sock * newsock, sockid_t newid)
 {
 
 	if (newsock == NULL) {
@@ -186,8 +179,7 @@ sockevent_accepted(struct sock * sock, struct sock * newsock, sockid_t newid)
  * cause: either the given domain, type, protocol combination is not supported,
  * or the socket driver is out of sockets (globally or for this combination).
  */
-static int
-sockevent_alloc(int domain, int type, int protocol, endpoint_t user_endpt,
+static int sockevent_alloc(int domain, int type, int protocol, endpoint_t user_endpt,
 	struct sock ** sockp)
 {
 	struct sock *sock;
@@ -231,8 +223,7 @@ sockevent_alloc(int domain, int type, int protocol, endpoint_t user_endpt,
 /*
  * Free a previously allocated sock object.
  */
-static void
-sockevent_free(struct sock * sock)
+static void sockevent_free(struct sock * sock)
 {
 	const struct sockevent_ops *ops;
 
@@ -275,8 +266,7 @@ sockevent_socket(int domain, int type, int protocol, endpoint_t user_endpt)
 /*
  * Create a pair of connected sockets.
  */
-static int
-sockevent_socketpair(int domain, int type, int protocol, endpoint_t user_endpt,
+static int sockevent_socketpair(int domain, int type, int protocol, endpoint_t user_endpt,
 	sockid_t id[2])
 {
 	struct sock *sock1, *sock2;
@@ -320,8 +310,7 @@ sockevent_socketpair(int domain, int type, int protocol, endpoint_t user_endpt,
  * A send request returned EPIPE.  If desired, send a SIGPIPE signal to the
  * user process that issued the request.
  */
-static void
-sockevent_sigpipe(struct sock * sock, endpoint_t user_endpt, int flags)
+static void sockevent_sigpipe(struct sock * sock, endpoint_t user_endpt, int flags)
 {
 
 	/*
@@ -359,8 +348,7 @@ sockevent_sigpipe(struct sock * sock, endpoint_t user_endpt, int flags)
  * Suspend a request without data, that is, a bind, connect, accept, or close
  * request.
  */
-static void
-sockevent_suspend(struct sock * sock, unsigned int event,
+static void sockevent_suspend(struct sock * sock, unsigned int event,
 	const struct sockdriver_call * __restrict call, endpoint_t user_endpt)
 {
 	struct sockevent_proc *spr, **sprp;
@@ -388,8 +376,7 @@ sockevent_suspend(struct sock * sock, unsigned int event,
 /*
  * Suspend a request with data, that is, a send or receive request.
  */
-static void
-sockevent_suspend_data(struct sock * sock, unsigned int event, int timer,
+static void sockevent_suspend_data(struct sock * sock, unsigned int event, int timer,
 	const struct sockdriver_call * __restrict call, endpoint_t user_endpt,
 	const struct sockdriver_data * __restrict data, size_t len, size_t off,
 	const struct sockdriver_data * __restrict ctl, socklen_t ctl_len,
@@ -430,8 +417,7 @@ sockevent_suspend_data(struct sock * sock, unsigned int event, int timer,
  * Return TRUE if there are any suspended requests on the given socket's queue
  * that match any of the events in the given event mask, or FALSE otherwise.
  */
-static int
-sockevent_has_suspended(struct sock * sock, unsigned int mask)
+static int sockevent_has_suspended(struct sock * sock, unsigned int mask)
 {
 	struct sockevent_proc *spr;
 
@@ -476,8 +462,7 @@ sockevent_unsuspend(struct sock * sock, const struct sockdriver_call * call)
  * fully resumed and should stay on the queue.  In the latter case, no
  * resumption will be attempted for other suspended requests of the same type.
  */
-static int
-sockevent_resume(struct sock * sock, struct sockevent_proc * spr)
+static int sockevent_resume(struct sock * sock, struct sockevent_proc * spr)
 {
 	struct sock *newsock;
 	struct sockdriver_data data, ctl;
@@ -665,8 +650,7 @@ sockevent_resume(struct sock * sock, struct sockevent_proc * spr)
  * Return TRUE if the given socket is ready for reading for a select call, or
  * FALSE otherwise.
  */
-static int
-sockevent_test_readable(struct sock * sock)
+static int sockevent_test_readable(struct sock * sock)
 {
 	int r;
 
@@ -706,8 +690,7 @@ sockevent_test_readable(struct sock * sock)
  * Return TRUE if the given socket is ready for writing for a select call, or
  * FALSE otherwise.
  */
-static int
-sockevent_test_writable(struct sock * sock)
+static int sockevent_test_writable(struct sock * sock)
 {
 	int r;
 
@@ -733,8 +716,7 @@ sockevent_test_writable(struct sock * sock)
  * Test whether any of the given select operations are ready on the given
  * socket.  Return the subset of ready operations; zero if none.
  */
-static unsigned int
-sockevent_test_select(struct sock * sock, unsigned int ops)
+static unsigned int sockevent_test_select(struct sock * sock, unsigned int ops)
 {
 	unsigned int ready_ops;
 
@@ -764,8 +746,7 @@ sockevent_test_select(struct sock * sock, unsigned int ops)
 /*
  * Fire the given mask of events on the given socket object now.
  */
-static void
-sockevent_fire(struct sock * sock, unsigned int mask)
+static void sockevent_fire(struct sock * sock, unsigned int mask)
 {
 	struct sockevent_proc *spr, **sprp;
 	unsigned int r, flag, ops;
@@ -854,8 +835,7 @@ sockevent_fire(struct sock * sock, unsigned int mask)
  * handling one event generates a new event, that event is handled from here
  * rather than immediately.
  */
-static void
-sockevent_pump(void)
+static void sockevent_pump(void)
 {
 	struct sock *sock;
 	unsigned int mask;
@@ -881,8 +861,7 @@ sockevent_pump(void)
 /*
  * Return TRUE if any events are pending on any sockets, or FALSE otherwise.
  */
-static int
-sockevent_has_events(void)
+static int sockevent_has_events(void)
 {
 
 	return (!SIMPLEQ_EMPTY(&sockevent_pending));
@@ -893,8 +872,7 @@ sockevent_has_events(void)
  * Depending on the context of the call, they events may or may not be
  * processed immediately.
  */
-void
-sockevent_raise(struct sock * sock, unsigned int mask)
+void sockevent_raise(struct sock * sock, unsigned int mask)
 {
 
 	assert(sock->sock_ops != NULL);
@@ -950,8 +928,7 @@ sockevent_raise(struct sock * sock, unsigned int mask)
  * Set a pending error on the socket object, and wake up any suspended
  * operations that are affected by this.
  */
-void
-sockevent_set_error(struct sock * sock, int err)
+void sockevent_set_error(struct sock * sock, int err)
 {
 
 	assert(err < 0);
@@ -966,8 +943,7 @@ sockevent_set_error(struct sock * sock, int err)
 /*
  * Initialize timer-related data structures.
  */
-static void
-socktimer_init(void)
+static void socktimer_init(void)
 {
 
 	SLIST_INIT(&socktimer);
@@ -982,8 +958,7 @@ socktimer_init(void)
  * earliest (relative) timeout of all of them, or TMR_NEVER if no such requests
  * are present.
  */
-static clock_t
-sockevent_expire(struct sock * sock, clock_t now)
+static clock_t sockevent_expire(struct sock * sock, clock_t now)
 {
 	struct sockevent_proc *spr, **sprp;
 	clock_t lowest, left;
@@ -1093,8 +1068,7 @@ sockevent_expire(struct sock * sock, clock_t now)
  * timers, and see if any of their requests have now expired.  Set a new alarm
  * as necessary.
  */
-static void
-socktimer_expire(int arg __unused)
+static void socktimer_expire(int arg __unused)
 {
 	SLIST_HEAD(, sock) oldtimer;
 	struct sock *sock, *tsock;
@@ -1161,8 +1135,7 @@ socktimer_expire(int arg __unused)
  * the caller need not take the object off the set if the call was canceled
  * later; see also socktimer_del().
  */
-static clock_t
-socktimer_add(struct sock * sock, clock_t ticks)
+static clock_t socktimer_add(struct sock * sock, clock_t ticks)
 {
 	clock_t now;
 
@@ -1199,8 +1172,7 @@ socktimer_add(struct sock * sock, clock_t ticks)
  * the timer list is maintained lazily, this needs to be done only right before
  * the socket object is freed.
  */
-static void
-socktimer_del(struct sock * sock)
+static void socktimer_del(struct sock * sock)
 {
 
 	if (sock->sock_flags & SFL_TIMER) {
@@ -1214,8 +1186,7 @@ socktimer_del(struct sock * sock)
 /*
  * Bind a socket to a local address.
  */
-static int
-sockevent_bind(sockid_t id, const struct sockaddr * __restrict addr,
+static int sockevent_bind(sockid_t id, const struct sockaddr * __restrict addr,
 	socklen_t addr_len, endpoint_t user_endpt,
 	const struct sockdriver_call * __restrict call)
 {
@@ -1247,8 +1218,7 @@ sockevent_bind(sockid_t id, const struct sockaddr * __restrict addr,
 /*
  * Connect a socket to a remote address.
  */
-static int
-sockevent_connect(sockid_t id, const struct sockaddr * __restrict addr,
+static int sockevent_connect(sockid_t id, const struct sockaddr * __restrict addr,
 	socklen_t addr_len, endpoint_t user_endpt,
 	const struct sockdriver_call * call)
 {
@@ -1333,8 +1303,7 @@ sockevent_connect(sockid_t id, const struct sockaddr * __restrict addr,
 /*
  * Put a socket in listening mode.
  */
-static int
-sockevent_listen(sockid_t id, int backlog)
+static int sockevent_listen(sockid_t id, int backlog)
 {
 	struct sock *sock;
 	int r;
@@ -1433,8 +1402,7 @@ sockevent_accept(sockid_t id, struct sockaddr * __restrict addr,
 /*
  * Send regular and/or control data.
  */
-static int
-sockevent_send(sockid_t id, const struct sockdriver_data * __restrict data,
+static int sockevent_send(sockid_t id, const struct sockdriver_data * __restrict data,
 	size_t len, const struct sockdriver_data * __restrict ctl_data,
 	socklen_t ctl_len, const struct sockaddr * __restrict addr,
 	socklen_t addr_len, endpoint_t user_endpt, int flags,
@@ -1584,8 +1552,7 @@ sockevent_send(sockid_t id, const struct sockdriver_data * __restrict data,
  * may be overridden by an error pending on the socket, although data returned
  * from here trumps such pending errors.
  */
-static int
-sockevent_recv_inner(struct sock * sock,
+static int sockevent_recv_inner(struct sock * sock,
 	const struct sockdriver_data * __restrict data,
 	size_t len, size_t * __restrict off,
 	const struct sockdriver_data * __restrict ctl_data,
@@ -1706,8 +1673,7 @@ sockevent_recv_inner(struct sock * sock,
 /*
  * Receive regular and/or control data.
  */
-static int
-sockevent_recv(sockid_t id, const struct sockdriver_data * __restrict data,
+static int sockevent_recv(sockid_t id, const struct sockdriver_data * __restrict data,
 	size_t len, const struct sockdriver_data * __restrict ctl_data,
 	socklen_t * __restrict ctl_len, struct sockaddr * __restrict addr,
 	socklen_t * __restrict addr_len, endpoint_t user_endpt,
@@ -1765,8 +1731,7 @@ sockevent_recv(sockid_t id, const struct sockdriver_data * __restrict data,
 /*
  * Process an I/O control call.
  */
-static int
-sockevent_ioctl(sockid_t id, unsigned long request,
+static int sockevent_ioctl(sockid_t id, unsigned long request,
 	const struct sockdriver_data * __restrict data, endpoint_t user_endpt,
 	const struct sockdriver_call * __restrict call __unused)
 {
@@ -1814,8 +1779,7 @@ sockevent_ioctl(sockid_t id, unsigned long request,
 /*
  * Set socket options.
  */
-static int
-sockevent_setsockopt(sockid_t id, int level, int name,
+static int sockevent_setsockopt(sockid_t id, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct sock *sock;
@@ -1988,8 +1952,7 @@ sockevent_setsockopt(sockid_t id, int level, int name,
 /*
  * Retrieve socket options.
  */
-static int
-sockevent_getsockopt(sockid_t id, int level, int name,
+static int sockevent_getsockopt(sockid_t id, int level, int name,
 	const struct sockdriver_data * __restrict data,
 	socklen_t * __restrict len)
 {
@@ -2086,8 +2049,7 @@ sockevent_getsockopt(sockid_t id, int level, int name,
 /*
  * Retrieve a socket's local address.
  */
-static int
-sockevent_getsockname(sockid_t id, struct sockaddr * __restrict addr,
+static int sockevent_getsockname(sockid_t id, struct sockaddr * __restrict addr,
 	socklen_t * __restrict addr_len)
 {
 	struct sock *sock;
@@ -2104,8 +2066,7 @@ sockevent_getsockname(sockid_t id, struct sockaddr * __restrict addr,
 /*
  * Retrieve a socket's remote address.
  */
-static int
-sockevent_getpeername(sockid_t id, struct sockaddr * __restrict addr,
+static int sockevent_getpeername(sockid_t id, struct sockaddr * __restrict addr,
 	socklen_t * __restrict addr_len)
 {
 	struct sock *sock;
@@ -2131,8 +2092,7 @@ sockevent_getpeername(sockid_t id, struct sockaddr * __restrict addr,
  * The function may in fact be called from sop_shutdown() before completion to
  * mark the socket as shut down as reflected by sockevent_is_shutdown().
  */
-void
-sockevent_set_shutdown(struct sock * sock, unsigned int flags)
+void sockevent_set_shutdown(struct sock * sock, unsigned int flags)
 {
 	unsigned int mask;
 
@@ -2166,8 +2126,7 @@ sockevent_set_shutdown(struct sock * sock, unsigned int flags)
 /*
  * Shut down socket send and receive operations.
  */
-static int
-sockevent_shutdown(sockid_t id, int how)
+static int sockevent_shutdown(sockid_t id, int how)
 {
 	struct sock *sock;
 	unsigned int flags;
@@ -2198,8 +2157,7 @@ sockevent_shutdown(sockid_t id, int how)
 /*
  * Close a socket.
  */
-static int
-sockevent_close(sockid_t id, const struct sockdriver_call * call)
+static int sockevent_close(sockid_t id, const struct sockdriver_call * call)
 {
 	struct sock *sock;
 	int r, force;
@@ -2294,8 +2252,7 @@ sockevent_close(sockid_t id, const struct sockdriver_call * call)
 /*
  * Cancel a suspended send request.
  */
-static void
-sockevent_cancel_send(struct sock * sock, struct sockevent_proc * spr, int err)
+static void sockevent_cancel_send(struct sock * sock, struct sockevent_proc * spr, int err)
 {
 	int r;
 
@@ -2324,8 +2281,7 @@ sockevent_cancel_send(struct sock * sock, struct sockevent_proc * spr, int err)
 /*
  * Cancel a suspended receive request.
  */
-static void
-sockevent_cancel_recv(struct sock * sock, struct sockevent_proc * spr, int err)
+static void sockevent_cancel_recv(struct sock * sock, struct sockevent_proc * spr, int err)
 {
 	int r;
 
@@ -2362,8 +2318,7 @@ sockevent_cancel_recv(struct sock * sock, struct sockevent_proc * spr, int err)
  * must be sent for the request.  If no matching request was found, no reply
  * must be sent at all.
  */
-static void
-sockevent_cancel(sockid_t id, const struct sockdriver_call * call)
+static void sockevent_cancel(sockid_t id, const struct sockdriver_call * call)
 {
 	struct sockevent_proc *spr;
 	struct sock *sock;
@@ -2442,8 +2397,7 @@ sockevent_cancel(sockid_t id, const struct sockdriver_call * call)
 /*
  * Process a select request.
  */
-static int
-sockevent_select(sockid_t id, unsigned int ops,
+static int sockevent_select(sockid_t id, unsigned int ops,
 	const struct sockdriver_select * sel)
 {
 	struct sock *sock;
@@ -2513,8 +2467,7 @@ sockevent_select(sockid_t id, unsigned int ops,
  * clock notification messages to libsockevent must call expire_timers(3)
  * themselves instead.
  */
-static void
-sockevent_alarm(clock_t now)
+static void sockevent_alarm(clock_t now)
 {
 
 	expire_timers(now);
@@ -2544,8 +2497,7 @@ static const struct sockdriver sockevent_tab = {
 /*
  * Initialize the socket event library.
  */
-void
-sockevent_init(sockevent_socket_cb_t socket_cb)
+void sockevent_init(sockevent_socket_cb_t socket_cb)
 {
 
 	sockhash_init();
@@ -2568,8 +2520,7 @@ sockevent_init(sockevent_socket_cb_t socket_cb)
 /*
  * Process a socket driver request message.
  */
-void
-sockevent_process(const message * m_ptr, int ipc_status)
+void sockevent_process(const message * m_ptr, int ipc_status)
 {
 
 	/* Block events until after we have processed the request. */

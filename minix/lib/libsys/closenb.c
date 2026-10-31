@@ -14,8 +14,7 @@
  * in letting arbitrary user processes use this functionality.  Thus, it needs
  * no separate VFS call number.
  */
-int
-closenb(int fd)
+int closenb(int fd)
 {
 	message m;
 

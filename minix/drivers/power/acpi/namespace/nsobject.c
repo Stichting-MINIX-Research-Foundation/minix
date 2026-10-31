@@ -216,8 +216,7 @@ AcpiNsAttachObject (
  *
  ******************************************************************************/
 
-void
-AcpiNsDetachObject (
+void AcpiNsDetachObject (
     ACPI_NAMESPACE_NODE     *Node)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;

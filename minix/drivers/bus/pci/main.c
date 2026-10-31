@@ -30,8 +30,7 @@ find_acl(int endpoint)
 	return NULL;
 }
 
-static void
-reply(message *mp, int result)
+static void reply(message *mp, int result)
 {
 	int r;
 	message m;
@@ -42,8 +41,7 @@ reply(message *mp, int result)
 		printf("reply: unable to send to %d: %d\n", mp->m_source, r);
 }
 
-static void
-do_init(message *mp)
+static void do_init(message *mp)
 {
 	int r;
 
@@ -58,8 +56,7 @@ do_init(message *mp)
 			mp->m_source, r);
 }
 
-static void
-do_first_dev(message *mp)
+static void do_first_dev(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -87,8 +84,7 @@ do_first_dev(message *mp)
 	}
 }
 
-static void
-do_next_dev(message *mp)
+static void do_next_dev(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -113,8 +109,7 @@ do_next_dev(message *mp)
 	}
 }
 
-static void
-do_find_dev(message *mp)
+static void do_find_dev(message *mp)
 {
 	int r, devind;
 	u8_t bus, dev, func;
@@ -135,8 +130,7 @@ do_find_dev(message *mp)
 	}
 }
 
-static void
-do_ids(message *mp)
+static void do_ids(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -161,8 +155,7 @@ do_ids(message *mp)
 	}
 }
 
-static void
-do_dev_name(message *mp)
+static void do_dev_name(message *mp)
 {
 	int r, name_len, len;
 	u16_t vid, did;
@@ -198,8 +191,7 @@ do_dev_name(message *mp)
 	}
 }
 
-static void
-do_slot_name(message *mp)
+static void do_slot_name(message *mp)
 {
 	int r, devind, name_len, len;
 	cp_grant_id_t gid;
@@ -234,8 +226,7 @@ do_slot_name(message *mp)
 	}
 }
 
-static void
-do_set_acl(message *mp)
+static void do_set_acl(message *mp)
 {
 	int i, r, gid;
 
@@ -277,8 +268,7 @@ do_set_acl(message *mp)
 	reply(mp, OK);
 }
 
-static void
-do_del_acl(message *mp)
+static void do_del_acl(message *mp)
 {
 	int i, proc_nr;
 
@@ -318,8 +308,7 @@ do_del_acl(message *mp)
 	reply(mp, OK);
 }
 
-static void
-do_reserve(message *mp)
+static void do_reserve(message *mp)
 {
 	struct rs_pci *aclp;
 	int r, devind;
@@ -337,8 +326,7 @@ do_reserve(message *mp)
 	}
 }
 
-static void
-do_attr_r8(message *mp)
+static void do_attr_r8(message *mp)
 {
 	int r, devind, port;
 	u8_t v;
@@ -363,8 +351,7 @@ do_attr_r8(message *mp)
 	}
 }
 
-static void
-do_attr_r16(message *mp)
+static void do_attr_r16(message *mp)
 {
 	int r, devind, port;
 	u16_t v;
@@ -389,8 +376,7 @@ do_attr_r16(message *mp)
 	}
 }
 
-static void
-do_attr_r32(message *mp)
+static void do_attr_r32(message *mp)
 {
 	int r, devind, port;
 	u32_t v;
@@ -415,8 +401,7 @@ do_attr_r32(message *mp)
 	}
 }
 
-static void
-do_attr_w8(message *mp)
+static void do_attr_w8(message *mp)
 {
 	int r, devind, port;
 	u8_t v;
@@ -435,8 +420,7 @@ do_attr_w8(message *mp)
 	}
 }
 
-static void
-do_attr_w16(message *mp)
+static void do_attr_w16(message *mp)
 {
 	int r, devind, port;
 	u16_t v;
@@ -455,8 +439,7 @@ do_attr_w16(message *mp)
 	}
 }
 
-static void
-do_attr_w32(message *mp)
+static void do_attr_w32(message *mp)
 {
 	int r, devind, port;
 	u32_t v;
@@ -475,11 +458,11 @@ do_attr_w32(message *mp)
 	}
 }
 
-static void
-do_get_bar(message *mp)
+static void do_get_bar(message *mp)
 {
 	int r, devind, port, ioflag;
-	u32_t base, size;
+	u64_t base;
+	u32_t size;
 
 	devind= mp->m_lsys_pci_busc_get_bar.devind;
 	port= mp->m_lsys_pci_busc_get_bar.port;
@@ -501,8 +484,7 @@ do_get_bar(message *mp)
 	}
 }
 
-static void
-do_rescan_bus(message *mp)
+static void do_rescan_bus(message *mp)
 {
 	int r, busnr;
 
@@ -521,21 +503,18 @@ do_rescan_bus(message *mp)
 /*======================================================================*
  *			CharDriver Callbacks				*
  *======================================================================*/
-static int
-pci_open(devminor_t UNUSED(minor), int UNUSED(access),
+static int pci_open(devminor_t UNUSED(minor), int UNUSED(access),
 	endpoint_t UNUSED(user_endpt))
 {
 	return OK;
 }
 
-static int
-pci_close(devminor_t UNUSED(minor))
+static int pci_close(devminor_t UNUSED(minor))
 {
 	return OK;
 }
 
-static int
-pci_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int pci_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
 	int devind;
@@ -606,7 +585,7 @@ pci_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 #endif
 
 		map.vaddr_ret = vm_map_phys(user_endpt,
-			(void *)map.phys_offset, map.size);
+			(void *)(uintptr_t)map.phys_offset, map.size);
 		r = sys_safecopyto(endpt, grant, 0, (vir_bytes)&map,
 			sizeof(map));
 		break;
@@ -666,8 +645,7 @@ pci_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	return r;
 }
 
-static void
-pci_other(message *m, int ipc_status)
+static void pci_other(message *m, int ipc_status)
 {
 	switch(m->m_type)
 	{
@@ -708,8 +686,7 @@ static struct chardriver driver =
  *			SEF Callbacks					*
  *======================================================================*/
 /* NOTE: sef_cb_init is in pci.c. */
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -724,8 +701,7 @@ sef_local_startup(void)
 /*======================================================================*
  *				main					*
  *======================================================================*/
-int
-main(void)
+int main(void)
 {
 	/*
 	 * Perform initialization.

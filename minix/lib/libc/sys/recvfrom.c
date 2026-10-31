@@ -40,8 +40,7 @@ static ssize_t _uds_recvfrom_dgram(int sock, void *__restrict buffer,
 /*
  * Receive a message from a socket.
  */
-static ssize_t
-__recvfrom(int fd, void * __restrict buffer, size_t length, int flags,
+static ssize_t __recvfrom(int fd, void * __restrict buffer, size_t length, int flags,
 	struct sockaddr * __restrict address,
 	socklen_t * __restrict address_len)
 {

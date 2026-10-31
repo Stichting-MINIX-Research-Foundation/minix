@@ -120,8 +120,7 @@ static int ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_r
  *
  * Should be called every 1000 msec (defined by IP_TMR_INTERVAL).
  */
-void
-ip_reass_tmr(void)
+void ip_reass_tmr(void)
 {
   struct ip_reassdata *r, *prev = NULL;
 
@@ -156,8 +155,7 @@ ip_reass_tmr(void)
  * @param prev the previous datagram in the linked list
  * @return the number of pbufs freed
  */
-static int
-ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
+static int ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 {
   u16_t pbufs_freed = 0;
   u16_t clen;
@@ -219,8 +217,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
  *        (used for freeing other datagrams if not enough space)
  * @return the number of pbufs freed
  */
-static int
-ip_reass_remove_oldest_datagram(struct ip_hdr *fraghdr, int pbufs_needed)
+static int ip_reass_remove_oldest_datagram(struct ip_hdr *fraghdr, int pbufs_needed)
 {
   /* @todo Can't we simply remove the last datagram in the
    *       linked list behind reassdatagrams?
@@ -309,8 +306,7 @@ ip_reass_enqueue_new_datagram(struct ip_hdr *fraghdr, int clen)
  * Dequeues a datagram from the datagram queue. Doesn't deallocate the pbufs.
  * @param ipr points to the queue entry to dequeue
  */
-static void
-ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
+static void ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 {
   /* dequeue the reass struct  */
   if (reassdatagrams == ipr) {
@@ -335,8 +331,7 @@ ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
  * @param new_p points to the pbuf for the current fragment
  * @return 0 if invalid, >0 otherwise
  */
-static int
-ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p)
+static int ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p)
 {
   struct ip_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
   struct pbuf *q;
@@ -647,8 +642,7 @@ ip_frag_alloc_pbuf_custom_ref(void)
 }
 
 /** Free a struct pbuf_custom_ref */
-static void
-ip_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
+static void ip_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
 {
   LWIP_ASSERT("p != NULL", p != NULL);
   memp_free(MEMP_FRAG_PBUF, p);
@@ -656,8 +650,7 @@ ip_frag_free_pbuf_custom_ref(struct pbuf_custom_ref* p)
 
 /** Free-callback function to free a 'struct pbuf_custom_ref', called by
  * pbuf_free. */
-static void
-ipfrag_free_pbuf_custom(struct pbuf *p)
+static void ipfrag_free_pbuf_custom(struct pbuf *p)
 {
   struct pbuf_custom_ref *pcr = (struct pbuf_custom_ref*)p;
   LWIP_ASSERT("pcr != NULL", pcr != NULL);

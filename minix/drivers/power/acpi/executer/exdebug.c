@@ -73,8 +73,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiExDoDebugObject (
+void AcpiExDoDebugObject (
     ACPI_OPERAND_OBJECT     *SourceDesc,
     UINT32                  Level,
     UINT32                  Index)

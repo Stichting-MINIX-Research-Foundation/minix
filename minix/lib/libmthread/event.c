@@ -4,8 +4,7 @@
 /*===========================================================================*
  *				mthread_event_init			     *
  *===========================================================================*/
-int mthread_event_init(event)
-mthread_event_t *event; /* The event to be initialized */
+int mthread_event_init(mthread_event_t *event)
 {
 /* Initialize an event object.
  */
@@ -29,8 +28,7 @@ mthread_event_t *event; /* The event to be initialized */
 /*===========================================================================*
  *				mthread_event_destroy			     *
  *===========================================================================*/
-int mthread_event_destroy(event)
-mthread_event_t *event; /* The event to be destroyed */
+int mthread_event_destroy(mthread_event_t *event)
 {
 /* Destroy an event object.
  */
@@ -49,8 +47,7 @@ mthread_event_t *event; /* The event to be destroyed */
 /*===========================================================================*
  *				mthread_event_wait			     *
  *===========================================================================*/
-int mthread_event_wait(event)
-mthread_event_t *event; /* The event to be waited on */
+int mthread_event_wait(mthread_event_t *event)
 {
 /* Wait for an event, blocking the current thread in the process.
  */
@@ -75,8 +72,7 @@ mthread_event_t *event; /* The event to be waited on */
 /*===========================================================================*
  *				mthread_event_fire			     *
  *===========================================================================*/
-int mthread_event_fire(event)
-mthread_event_t *event; /* The event to be fired */
+int mthread_event_fire(mthread_event_t *event)
 {
 /* Fire an event, waking up any thread blocked on it.
 */
@@ -102,8 +98,7 @@ mthread_event_t *event; /* The event to be fired */
 /*===========================================================================*
  *				mthread_event_fire_all			     *
  *===========================================================================*/
-int mthread_event_fire_all(event)
-mthread_event_t *event; /* The event to be fired */
+int mthread_event_fire_all(mthread_event_t *event)
 {
 /* Fire an event, waking up any thread blocked on it.
 */

@@ -466,8 +466,7 @@ AcpiUtAllocateObjectDescDbg (
  *
  ******************************************************************************/
 
-void
-AcpiUtDeleteObjectDesc (
+void AcpiUtDeleteObjectDesc (
     ACPI_OPERAND_OBJECT     *Object)
 {
     ACPI_FUNCTION_TRACE_PTR (UtDeleteObjectDesc, Object);

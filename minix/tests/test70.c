@@ -25,8 +25,7 @@
 
 #define SEEKWINDOW 1000
 
-static int
-doseeks(int seekbase)
+static int doseeks(int seekbase)
 {
 	char template[30] = "tempfile.XXXXXXXX";
 	int iteration, fd = mkstemp(template);
@@ -61,8 +60,7 @@ doseeks(int seekbase)
 	return 0;
 }
 
-int
-main(void)
+int main(void)
 {
   start(70);
   pid_t f;

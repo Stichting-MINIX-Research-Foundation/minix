@@ -105,8 +105,7 @@ void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, u8_t *key) {
 /*
  * Initialize (de)compressor state.
  */
-void
-mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options)
+void mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options)
 {
 #if PPP_DEBUG
 	const u8_t *debugstr = (const u8_t*)"mppe_comp_init";

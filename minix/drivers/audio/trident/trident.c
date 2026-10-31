@@ -19,25 +19,25 @@ static int get_frag_size(u32_t *val, int *len, int num);
 static int free_buf(u32_t *val, int *len, int num);
 
 /* developer interface */
-static int dev_reset(u32_t *base);
-static void dev_configure(u32_t *base);
-static void dev_init_mixer(u32_t *base);
-static void dev_set_sample_rate(u32_t *base, u16_t sample_rate);
-static void dev_set_format(u32_t *base, u32_t bits, u32_t sign,
+static int dev_reset(vir_bytes *base);
+static void dev_configure(vir_bytes *base);
+static void dev_init_mixer(vir_bytes *base);
+static void dev_set_sample_rate(vir_bytes *base, u16_t sample_rate);
+static void dev_set_format(vir_bytes *base, u32_t bits, u32_t sign,
 							u32_t stereo, u32_t sample_count);
-static void dev_start_channel(u32_t *base, int sub_dev);
-static void dev_stop_channel(u32_t *base, int sub_dev);
-static void dev_set_dma(u32_t *base, u32_t dma, u32_t len, int sub_dev);
-static u32_t dev_read_dma_current(u32_t *base, int sub_dev);
-static void dev_pause_dma(u32_t *base, int sub_dev);
-static void dev_resume_dma(u32_t *base, int sub_dev);
-static void dev_intr_other(u32_t *base, u32_t status);
-static u32_t dev_read_clear_intr_status(u32_t *base);
-static void dev_intr_enable(u32_t *base, int flag);
+static void dev_start_channel(vir_bytes *base, int sub_dev);
+static void dev_stop_channel(vir_bytes *base, int sub_dev);
+static void dev_set_dma(vir_bytes *base, u32_t dma, u32_t len, int sub_dev);
+static u32_t dev_read_dma_current(vir_bytes *base, int sub_dev);
+static void dev_pause_dma(vir_bytes *base, int sub_dev);
+static void dev_resume_dma(vir_bytes *base, int sub_dev);
+static void dev_intr_other(vir_bytes *base, u32_t status);
+static u32_t dev_read_clear_intr_status(vir_bytes *base);
+static void dev_intr_enable(vir_bytes *base, int flag);
 
 /* ======= Developer implemented function ======= */
 /* ====== Self-defined function ====== */
-static void dev_write_chan_reg(u32_t base) {
+static void dev_write_chan_reg(vir_bytes base) {
 	u32_t reg[5], i, data;
 	reg[0] = (my_chan.cso << 16) | (my_chan.alpha << 4) | my_chan.fms;
 	reg[1] = my_chan.dma;
@@ -51,7 +51,7 @@ static void dev_write_chan_reg(u32_t base) {
 
 /* ====== Mixer handling interface ======*/
 /* Write the data to mixer register (### WRITE_MIXER_REG ###) */
-void dev_mixer_write(u32_t *base, u32_t reg, u32_t val) {
+void dev_mixer_write(vir_bytes *base, u32_t reg, u32_t val) {
 	u32_t i, data, base0 = base[0];
 	for (i = 0; i < 50000; i++) {
 		data = sdr_in16(base0, REG_CODEC_WRITE);
@@ -65,7 +65,7 @@ void dev_mixer_write(u32_t *base, u32_t reg, u32_t val) {
 }
 
 /* Read the data from mixer register (### READ_MIXER_REG ###) */
-u32_t dev_mixer_read(u32_t *base, u32_t reg) {
+u32_t dev_mixer_read(vir_bytes *base, u32_t reg) {
 	u32_t i, data, base0 = base[0];
 	data = (reg & 0x00ff) | STS_CODEC_BUSY;
 	sdr_out32(base0, REG_CODEC_READ, data);
@@ -83,32 +83,32 @@ u32_t dev_mixer_read(u32_t *base, u32_t reg) {
 
 /* Reset the device (### RESET_HARDWARE_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int dev_reset(u32_t *base) {
-	u32_t base0 = base[0];
+static int dev_reset(vir_bytes *base) {
+	vir_bytes base0 = base[0];
 	sdr_out32(base0, REG_CODEC_CTRL, 0x000a);
 	return OK;
 }
 
 /* Configure hardware registers (### CONF_HARDWARE ###) */
-static void dev_configure(u32_t *base) {
-	u32_t base0 = base[0];
+static void dev_configure(vir_bytes *base) {
+	vir_bytes base0 = base[0];
 	sdr_out32(base0, REG_GCTRL, 0x3000);
 }
 
 /* Initialize the mixer (### INIT_MIXER ###) */
-static void dev_init_mixer(u32_t *base) {
+static void dev_init_mixer(vir_bytes *base) {
 	dev_mixer_write(base, 0, 0);
 }
 
 /* Set DAC and ADC sample rate (### SET_SAMPLE_RATE ###) */
-static void dev_set_sample_rate(u32_t *base, u16_t sample_rate) {
-	u32_t base0 = base[0];
+static void dev_set_sample_rate(vir_bytes *base, u16_t sample_rate) {
+	vir_bytes base0 = base[0];
 	my_chan.delta = (sample_rate << 12) / 48000;
 	sdr_out16(base0, REG_SB_DELTA, (48000 << 12) / sample_rate);
 }
 
 /* Set DAC and ADC format (### SET_FORMAT ###)*/
-static void dev_set_format(u32_t *base, u32_t bits, u32_t sign,
+static void dev_set_format(vir_bytes *base, u32_t bits, u32_t sign,
 							u32_t stereo, u32_t sample_count) {
 	u32_t data = 0, base0 = base[0];
 	if (bits == 16)
@@ -128,7 +128,7 @@ static void dev_set_format(u32_t *base, u32_t bits, u32_t sign,
 }
 
 /* Start the channel (### START_CHANNEL ###) */
-static void dev_start_channel(u32_t *base, int sub_dev) {
+static void dev_start_channel(vir_bytes *base, int sub_dev) {
 	u32_t data, base0 = base[0];
 	if (sub_dev == DAC) {
 		my_chan.fmc = 3; my_chan.fms = 0; my_chan.ec = 0;
@@ -147,7 +147,7 @@ static void dev_start_channel(u32_t *base, int sub_dev) {
 }
 
 /* Stop the channel (### STOP_CHANNEL ###) */
-static void dev_stop_channel(u32_t *base, int sub_dev) {
+static void dev_stop_channel(vir_bytes *base, int sub_dev) {
 	u32_t data, base0 = base[0];
 	if (sub_dev == DAC)
 		sdr_out32(base0, REG_STOP_A, 1);
@@ -156,7 +156,7 @@ static void dev_stop_channel(u32_t *base, int sub_dev) {
 }
 
 /* Set DMA address and length (### SET_DMA ###) */
-static void dev_set_dma(u32_t *base, u32_t dma, u32_t len, int sub_dev) {
+static void dev_set_dma(vir_bytes *base, u32_t dma, u32_t len, int sub_dev) {
 	u32_t data, base0 = base[0];
 	my_chan.dma = dma;
 	my_chan.eso = len - 1;
@@ -170,7 +170,7 @@ static void dev_set_dma(u32_t *base, u32_t dma, u32_t len, int sub_dev) {
 }
 
 /* Read current address (### READ_DMA_CURRENT_ADDR ###) */
-static u32_t dev_read_dma_current(u32_t *base, int sub_dev) {
+static u32_t dev_read_dma_current(vir_bytes *base, int sub_dev) {
 	u32_t data, base0 = base[0];
 	sdr_out8(base0, REG_GCTRL, 0);
 	if (sub_dev == DAC)
@@ -182,7 +182,7 @@ static u32_t dev_read_dma_current(u32_t *base, int sub_dev) {
 }
 
 /* Pause the DMA (### PAUSE_DMA ###) */
-static void dev_pause_dma(u32_t *base, int sub_dev) {
+static void dev_pause_dma(vir_bytes *base, int sub_dev) {
 	u32_t data, base0 = base[0];
 	if (sub_dev == DAC)
 		sdr_out32(base0, REG_STOP_A, 1);
@@ -193,7 +193,7 @@ static void dev_pause_dma(u32_t *base, int sub_dev) {
 }
 
 /* Resume the DMA (### RESUME_DMA ###) */
-static void dev_resume_dma(u32_t *base, int sub_dev) {
+static void dev_resume_dma(vir_bytes *base, int sub_dev) {
 	u32_t data, base0 = base[0];
 	if (sub_dev == DAC) {
 		data = sdr_in32(base0, REG_START_A);
@@ -207,7 +207,7 @@ static void dev_resume_dma(u32_t *base, int sub_dev) {
 
 /* Read and clear interrupt stats (### READ_CLEAR_INTR_STS ###)
  * -- Return interrupt status */
-static u32_t dev_read_clear_intr_status(u32_t *base) {
+static u32_t dev_read_clear_intr_status(vir_bytes *base) {
 	u32_t status, base0 = base[0];
 	status = sdr_in32(base0, REG_INTR_STS);
 	if (status & INTR_STS_ADC) {
@@ -218,7 +218,7 @@ static u32_t dev_read_clear_intr_status(u32_t *base) {
 }
 
 /* Enable or disable interrupt (### INTR_ENABLE_DISABLE ###) */
-static void dev_intr_enable(u32_t *base, int flag) {
+static void dev_intr_enable(vir_bytes *base, int flag) {
 	u32_t data, base0 = base[0];
 	data = sdr_in32(base0, REG_INTR_CTRL_A);
 	data &= 0xfffe;
@@ -232,7 +232,8 @@ static void dev_intr_enable(u32_t *base, int flag) {
 /* Probe the device */
 static int dev_probe(void) {
 	int devind, i, ioflag;
-	u32_t device, bar, size, base;
+	u32_t device, size;
+	u64_t bar, base;
 	u16_t vid, did, temp;
 	u8_t *reg;
 
@@ -263,7 +264,7 @@ static int dev_probe(void) {
 			printf("SDR: Fail to map hardware registers from PCI\n");
 			return -EIO;
 		}
-		dev.base[i] = (u32_t)reg;
+		dev.base[i] = (vir_bytes)reg;
 	}
 #else
 	/* Get PCI BAR0-5 */

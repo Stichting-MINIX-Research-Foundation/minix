@@ -79,8 +79,7 @@ static int active_packet (unsigned char *, int);
 /*
  * demand_conf - configure the interface for doing dial-on-demand.
  */
-void
-demand_conf()
+void demand_conf()
 {
     int i;
     const struct protent *protp;
@@ -124,8 +123,7 @@ demand_conf()
 /*
  * demand_block - set each network protocol to block further packets.
  */
-void
-demand_block()
+void demand_block()
 {
     int i;
     const struct protent *protp;
@@ -140,8 +138,7 @@ demand_block()
  * demand_discard - set each network protocol to discard packets
  * with an error.
  */
-void
-demand_discard()
+void demand_discard()
 {
     struct packet *pkt, *nextpkt;
     int i;
@@ -167,8 +164,7 @@ demand_discard()
 /*
  * demand_unblock - set each enabled network protocol to pass packets.
  */
-void
-demand_unblock()
+void demand_unblock()
 {
     int i;
     const struct protent *protp;
@@ -221,10 +217,7 @@ static u_short fcstab[256] = {
  * Calls loop_frame when a complete frame has been accumulated.
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
-int
-loop_chars(p, n)
-    unsigned char *p;
-    int n;
+int loop_chars(unsigned char *p, int n)
 {
     int c, rv;
 
@@ -281,10 +274,7 @@ loop_chars(p, n)
  * We apply the active_filter to see if we want this packet to
  * bring up the link.
  */
-int
-loop_frame(frame, len)
-    unsigned char *frame;
-    int len;
+int loop_frame(unsigned char *frame, int len)
 {
     struct packet *pkt;
 
@@ -314,10 +304,7 @@ loop_frame(frame, len)
  * demand_rexmit - Resend all those frames which we got via the
  * loopback, now that the real serial link is up.
  */
-void
-demand_rexmit(proto, newip)
-    int proto;
-    u32_t newip;
+void demand_rexmit(int proto, u32_t newip)
 {
     struct packet *pkt, *prev, *nextpkt;
     unsigned short checksum;
@@ -430,10 +417,7 @@ demand_rexmit(proto, newip)
  * Scan a packet to decide whether it is an "active" packet,
  * that is, whether it is worth bringing up the link for.
  */
-static int
-active_packet(p, len)
-    unsigned char *p;
-    int len;
+static int active_packet(unsigned char *p, int len)
 {
     int proto, i;
     const struct protent *protp;

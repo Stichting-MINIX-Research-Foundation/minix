@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-extern int prtactive;
-
 static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
 				  daddr_t, int, long *);
 
@@ -104,7 +102,7 @@ ext2fs_size(struct inode *ip)
 	uint64_t size = ip->i_e2fs_size;
 
 	if ((ip->i_e2fs_mode & IFMT) == IFREG)
-		size |= (uint64_t)ip->i_e2fs_dacl << 32;
+		size |= (uint64_t)ip->i_din.e2fs_din->e2di_size_high << 32;
 	return size;
 }
 
@@ -113,7 +111,7 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 {
 	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
 	    ip->i_e2fs_mode == 0) {
-		ip->i_e2fs_dacl = size >> 32;
+		ip->i_din.e2fs_din->e2di_size_high = size >> 32;
 		if (size >= 0x80000000U) {
 			struct m_ext2fs *fs = ip->i_e2fs;
 
@@ -121,8 +119,8 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 				/* Linux automagically upgrades to REV1 here! */
 				return EFBIG;
 			}
-			if (!(fs->e2fs.e2fs_features_rocompat
-			    & EXT2F_ROCOMPAT_LARGEFILE)) {
+			if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs,
+			    EXT2F_ROCOMPAT_LARGEFILE)) {
 				fs->e2fs.e2fs_features_rocompat |=
 				    EXT2F_ROCOMPAT_LARGEFILE;
 				fs->e2fs_fmod = 1;
@@ -142,7 +140,7 @@ ext2fs_nblock(struct inode *ip)
 	uint64_t nblock = ip->i_e2fs_nblock;
 	struct m_ext2fs * const fs = ip->i_e2fs;
 
-	if (fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_HUGE_FILE) {
+	if (EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE)) {
 		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
 
 		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
@@ -164,7 +162,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 		return 0;
 	}
 
-	if (!ISSET(fs->e2fs.e2fs_features_rocompat, EXT2F_ROCOMPAT_HUGE_FILE)) 
+	if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE)) 
 		return EFBIG;
 
 	if (nblock <= 0xffffffffffffULL) {
@@ -190,7 +188,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 int
 ext2fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -198,8 +196,6 @@ ext2fs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("ext2fs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0)
 		goto out;
@@ -223,8 +219,8 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
-	VOP_UNLOCK(vp);
-	return (error);
+
+	return error;
 }
 
 
@@ -249,7 +245,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	int flags;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (0);
+		return 0;
 	ip = VTOI(vp);
 	EXT2FS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
@@ -257,26 +253,26 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	else
 		flags = ip->i_flag & IN_MODIFIED;
 	if (flags == 0)
-		return (0);
+		return 0;
 	fs = ip->i_e2fs;
 
 	error = bread(ip->i_devvp,
 			  EXT2_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (error);
+		return error;
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (char *)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
-	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
+	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp, EXT2_DINODE_SIZE(fs));
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
 	    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
-		return (bwrite(bp));
+		return bwrite(bp);
 	else {
 		bdwrite(bp);
-		return (0);
+		return 0;
 	}
 }
 
@@ -311,7 +307,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	}
 
 	if (length < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	if (ovp->v_type == VLNK &&
 	    (ext2fs_size(oip) < ump->um_maxsymlinklen ||
@@ -320,18 +316,16 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)ext2fs_size(oip));
 		(void)ext2fs_setsize(oip, 0);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	if (ext2fs_size(oip) == length) {
 		/* still do a uvm_vnp_setsize() as writesize may be larger */
 		uvm_vnp_setsize(ovp, length);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	fs = oip->i_e2fs;
 	if (length > ump->um_maxfilesize)
-		return (EFBIG);
+		return EFBIG;
 
 	osize = ext2fs_size(oip);
 
@@ -347,12 +341,11 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		if (error) {
 			(void) ext2fs_truncate(ovp, osize, ioflag & IO_SYNC,
 			    cred);
-			return (error);
+			return error;
 		}
 		uvm_vnp_setsize(ovp, length);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(error  || ovp->v_size == ext2fs_size(oip));
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -485,7 +478,10 @@ done:
 		allerror = error;
 	oip->i_flag |= IN_CHANGE;
 	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
-	return (allerror);
+	return allerror;
+update:
+	oip->i_flag |= IN_CHANGE | IN_UPDATE;
+	return ext2fs_update(ovp, NULL, NULL, 0);
 }
 
 /*
@@ -550,7 +546,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (error) {
 		brelse(bp, 0);
 		*countp = 0;
-		return (error);
+		return error;
 	}
 
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
@@ -611,5 +607,5 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	*countp = blocksreleased;
-	return (allerror);
+	return allerror;
 }

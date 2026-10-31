@@ -291,8 +291,7 @@ snmp_asn1_enc_oid(struct snmp_pbuf_stream* pbuf_stream, const u32_t *oid, u16_t 
  * @param length parameter length
  * @param octets_needed points to the return value
  */
-void
-snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
+void snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
 {
   if (length < 0x80U) {
     *octets_needed = 1;
@@ -313,8 +312,7 @@ snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
  * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
  * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
  */
-void
-snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed)
+void snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed)
 {
   if (value < 0x80UL) {
     *octets_needed = 1;
@@ -339,8 +337,7 @@ snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed)
  * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
  * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
  */
-void
-snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
+void snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
 {
   /* check if high u32 is 0 */
   if (*value == 0x00) {
@@ -362,8 +359,7 @@ snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
  *
  * @note ASN coded integers are _always_ signed.
  */
-void
-snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed)
+void snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed)
 {
   if (value < 0) {
     value = ~value;
@@ -386,8 +382,7 @@ snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed)
  * @param oid_len object identifier array length
  * @param octets_needed points to the return value
  */
-void
-snmp_asn1_enc_oid_cnt(const u32_t *oid, u16_t oid_len, u16_t *octets_needed)
+void snmp_asn1_enc_oid_cnt(const u32_t *oid, u16_t oid_len, u16_t *octets_needed)
 {
   u32_t sub_id;
 

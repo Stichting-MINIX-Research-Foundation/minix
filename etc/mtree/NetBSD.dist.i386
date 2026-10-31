@@ -1,0 +1,4 @@
+#	$NetBSD: NetBSD.dist.i386,v 1.2 2019/03/12 10:07:49 mrg Exp $
+
+./usr/include/x86
+

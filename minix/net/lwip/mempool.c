@@ -285,8 +285,7 @@ static struct rmib_node minix_lwip_mempool_node =
  * the statically allocated pool ('is_static' is TRUE) or a single large buffer
  * that we aim to chop up into small buffers.
  */
-static void
-mempool_prepare_small(struct mempool_small_slab * mss, int is_static)
+static void mempool_prepare_small(struct mempool_small_slab * mss, int is_static)
 {
 	struct mempool_small_buf *msb;
 	unsigned int count;
@@ -312,8 +311,7 @@ mempool_prepare_small(struct mempool_small_slab * mss, int is_static)
 /*
  * Allocate a new slab for large buffers, if allowed by policy and possible.
  */
-static void
-mempool_new_slab(void)
+static void mempool_new_slab(void)
 {
 	struct mempool_large_slab *mls;
 	struct mempool_large_buf *mlb;
@@ -384,8 +382,7 @@ mempool_new_slab(void)
 /*
  * Deallocate a slab for large buffers, if allowed.
  */
-static void
-mempool_destroy_slab(struct mempool_large_slab * mls)
+static void mempool_destroy_slab(struct mempool_large_slab * mls)
 {
 
 	assert(mempool_nr_slabs > 0);
@@ -411,8 +408,7 @@ mempool_destroy_slab(struct mempool_large_slab * mls)
  * Regular timer.  Deallocate empty slabs already marked for deallocation, and
  * mark any other empty slabs for deallocation.
  */
-static void
-mempool_tick(int arg __unused)
+static void mempool_tick(int arg __unused)
 {
 	struct mempool_large_slab *mls, *tmls;
 
@@ -440,8 +436,7 @@ mempool_tick(int arg __unused)
 /*
  * Initialize the memory pool module.
  */
-void
-mempool_init(void)
+void mempool_init(void)
 {
 	unsigned int slot;
 
@@ -490,8 +485,7 @@ mempool_init(void)
  * Return the total number of large buffers currently in the system, regardless
  * of allocation status.
  */
-unsigned int
-mempool_cur_buffers(void)
+unsigned int mempool_cur_buffers(void)
 {
 
 	return mempool_nr_large;
@@ -502,8 +496,7 @@ mempool_cur_buffers(void)
  * to allocate.  Note that due to low-memory conditions, this maximum may not
  * be allocated in practice even when desired.
  */
-unsigned int
-mempool_max_buffers(void)
+unsigned int mempool_max_buffers(void)
 {
 
 	if (mempool_max_slabs <= 1)
@@ -669,8 +662,7 @@ mempool_malloc(size_t size)
 /*
  * Memory pool wrapper function for free() calls from lwIP.
  */
-void
-mempool_free(void * ptr)
+void mempool_free(void * ptr)
 {
 	struct mempool_large_slab *mls;
 	struct mempool_large_buf *mlb;

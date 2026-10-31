@@ -108,13 +108,13 @@ int do_mount(void)
   if (!super_user) return(EPERM);
 
   /* Get the label from the caller, and ask DS for the endpoint of the FS. */
-  if (label_len > sizeof(mount_label))
+  if (label_len == 0 || label_len > sizeof(mount_label))
 	return EINVAL;
   r = sys_datacopy_wrapper(who_e, label, SELF, (vir_bytes) mount_label,
-	sizeof(mount_label));
+	label_len);
   if (r != OK) return(r);
 
-  mount_label[sizeof(mount_label)-1] = 0;
+  mount_label[label_len-1] = 0;
 
   r = ds_retrieve_label_endpt(mount_label, &fs_e);
   if (r != OK) return(r);
@@ -179,7 +179,7 @@ char mount_label[LABEL_MAX] )
 	/* Get driver process' endpoint */
 	dp = &dmap[major(dev)];
 	if (dp->dmap_driver == NONE) {
-		printf("VFS: no driver for dev %llx\n", dev);
+		printf("VFS: no driver for dev %lx\n", (unsigned long)dev);
 		return(EINVAL);
 	}
 
@@ -457,6 +457,8 @@ int do_umount(void)
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
    */
+  if (label_len == 0)
+	return OK;
   if (strlen(label) >= label_len)
 	label[label_len-1] = 0;
   return sys_datacopy_wrapper(SELF, (vir_bytes) label, who_e, label_addr,
@@ -479,7 +481,7 @@ int unmount(
   /* Find vmnt that is to be unmounted */
   for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
 	  if (vmp_i->m_dev == dev) {
-		  if(vmp) panic("device mounted more than once: %llx", dev);
+		  if(vmp) panic("device mounted more than once: %lx", (unsigned long)dev);
 		  vmp = vmp_i;
 	  }
   }
@@ -578,8 +580,8 @@ void unmount_all(int force)
   /* Verify we succesfully unmounted all file systems */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
 	if (vmp->m_dev != NO_DEV) {
-		panic("vmp still mounted: %s %d %llx\n", vmp->m_label,
-			vmp->m_fs_e, vmp->m_dev);
+		panic("vmp still mounted: %s %d %lx\n", vmp->m_label,
+			vmp->m_fs_e, (unsigned long)vmp->m_dev);
 	}
   }
 }

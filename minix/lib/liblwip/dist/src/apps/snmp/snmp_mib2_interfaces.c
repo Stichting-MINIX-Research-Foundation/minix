@@ -58,8 +58,7 @@
 
 /* --- interfaces .1.3.6.1.2.1.2 ----------------------------------------------------- */
 
-static s16_t
-interfaces_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t interfaces_get_value(struct snmp_node_instance* instance, void* value)
 {
   if (instance->node->oid == 1) {
     s32_t *sint_ptr = (s32_t*)value;
@@ -153,8 +152,7 @@ interfaces_Table_get_next_cell_instance(const u32_t* column, struct snmp_obj_id*
   return SNMP_ERR_NOSUCHINSTANCE;
 }
 
-static s16_t
-interfaces_Table_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t interfaces_Table_get_value(struct snmp_node_instance* instance, void* value)
 {
   struct netif *netif = (struct netif*)instance->reference.ptr;
   u32_t* value_u32 = (u32_t*)value;

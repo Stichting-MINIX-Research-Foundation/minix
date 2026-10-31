@@ -37,8 +37,7 @@ static int _uds_bind(int sock, const struct sockaddr *address,
 /*
  * Bind a socket to a local address.
  */
-static int
-__bind(int fd, const struct sockaddr * address, socklen_t address_len)
+static int __bind(int fd, const struct sockaddr * address, socklen_t address_len)
 {
 	message m;
 
