@@ -36,8 +36,7 @@ static int _uds_connect(int sock, const struct sockaddr *address,
 /*
  * Connect a socket to a remote address.
  */
-static int
-__connect(int fd, const struct sockaddr * address, socklen_t address_len)
+static int __connect(int fd, const struct sockaddr * address, socklen_t address_len)
 {
 	message m;
 

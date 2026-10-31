@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -98,15 +98,25 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
+	struct timespec at;
+	struct timespec mt;
+
+	if (stampst.st_ino)
+	    st = &stampst;
+
 #ifndef HAVE_NBTOOL_CONFIG_H
-	struct timespec at = st->st_atimespec;
-	struct timespec mt = st->st_mtimespec;
+	at = st->st_atimespec;
+	mt = st->st_mtimespec;
 #else
-	struct timespec at = { st->st_atime, 0 };
-	struct timespec mt = { st->st_mtime, 0 };
+	at.tv_sec = st->st_atime;
+	at.tv_nsec = 0;
+	mt.tv_sec = st->st_mtime;
+	mt.tv_nsec = 0;
 #endif
-	unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
-	unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
+	msdosfs_unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate,
+	    NULL, NULL);
+	msdosfs_unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate,
+	    &dep->de_MTime, NULL);
 }
 
 /*
@@ -125,7 +135,7 @@ msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
  * memory denode's will be in synch.
  */
 static int
-msdosfs_findslot(struct denode *dp, struct componentname *cnp) 
+msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 {
 	daddr_t bn;
 	int error;
@@ -146,20 +156,20 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 
 	pmp = dp->de_pmp;
 
-	switch (unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
+	switch (msdosfs_unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
 	    cnp->cn_namelen, 0)) {
 	case 0:
 		return (EINVAL);
 	case 1:
 		break;
 	case 2:
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		wincnt = msdosfs_winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	case 3:
 		olddos = 0;
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		wincnt = msdosfs_winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	}
 
@@ -187,7 +197,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	 */
 	diroff = 0;
 	for (frcn = 0; diroff < dp->de_FileSize; frcn++) {
-		if ((error = pcbmap(dp, frcn, &bn, &cluster, &blsize)) != 0) {
+		if ((error = msdosfs_pcbmap(dp, frcn, &bn, &cluster,
+		    &blsize)) != 0) {
 			if (error == E2BIG)
 				break;
 			return (error);
@@ -240,10 +251,11 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 					if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 						continue;
 
-					chksum = winChkName((const u_char *)cnp->cn_nameptr,
+					chksum = msdosfs_winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum);
+							    chksum,
+							    pmp->pm_flags & MSDOSFSMNT_UTF8);
 					continue;
 				}
 
@@ -259,7 +271,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 				/*
 				 * Check for a checksum or name match
 				 */
-				chksum_ok = (chksum == winChksum(dep->deName));
+				chksum_ok =
+				    (chksum == msdosfs_winChksum(dep->deName));
 				if (!chksum_ok
 				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
 					chksum = -1;
@@ -272,8 +285,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 				 * entry came from for whoever did
 				 * this lookup.
 				 */
-				dp->de_fndoffset = diroff;
-				dp->de_fndcnt = 0;
+				dp->de_crap.mlr_fndoffset = diroff;
+				dp->de_crap.mlr_fndcnt = 0;
 
 				return EEXIST;
 			}
@@ -314,8 +327,8 @@ notfound:
 	 * Return an indication of where the new directory
 	 * entry should be put.
 	 */
-	dp->de_fndoffset = slotoffset;
-	dp->de_fndcnt = wincnt - 1;
+	dp->de_crap.mlr_fndoffset = slotoffset;
+	dp->de_crap.mlr_fndcnt = wincnt - 1;
 
 	/*
 	 * We return with the directory locked, so that
@@ -357,7 +370,7 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad;
 	}
@@ -369,7 +382,7 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	 * readonly.
 	 */
 	memset(&ndirent, 0, sizeof(ndirent));
-	if ((error = uniqdosname(pdep, &cn, ndirent.de_Name)) != 0)
+	if ((error = msdosfs_uniqdosname(pdep, &cn, ndirent.de_Name)) != 0)
 		goto bad;
 
 	ndirent.de_Attributes = (st->st_mode & S_IWUSR) ?
@@ -383,7 +396,8 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	msdosfs_times(pmp, &ndirent, st);
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
-	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
+	if ((error = msdosfs_createde(&ndirent, pdep, &pdep->de_crap, &dep,
+	    &cn)) != 0)
 		goto bad;
 	if ((error = msdosfs_wfile(path, dep, node)) != 0)
 		goto bad;
@@ -401,7 +415,7 @@ msdosfs_updatede(struct denode *dep)
 	int error;
 
 	dep->de_flag &= ~DE_MODIFIED;
-	error = readde(dep, &bp, &dirp);
+	error = msdosfs_readde(dep, &bp, &dirp);
 	if (error)
 		return error;
 	DE_EXTERNALIZE(dirp, dep);
@@ -431,31 +445,29 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		return 0;
 
 	/* Don't bother to try to write files larger than the fs limit */
-	if (st->st_size > MSDOSFS_FILESIZE_MAX) {
-		errno = EFBIG;
-		return -1;
-	}
+	if (st->st_size > MSDOSFS_FILESIZE_MAX)
+		return EFBIG;
 
 	nsize = st->st_size;
 	DPRINTF(("%s(nsize=%zu, osize=%zu)\n", __func__, nsize, osize));
 	if (nsize > osize) {
-		if ((error = deextend(dep, nsize, NULL)) != 0) {
-			errno = error;
-			return -1;
-		}
-		if ((error = msdosfs_updatede(dep)) != 0) {
-			errno = error;
-			return -1;
-		}
+		if ((error = msdosfs_deextend(dep, nsize, NULL)) != 0)
+			return error;
+		if ((error = msdosfs_updatede(dep)) != 0)
+			return error;
 	}
 
-	if ((fd = open(path, O_RDONLY)) == -1)
-		err(1, "open %s", path);
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		error = errno;
+		DPRINTF((1, "open %s: %s", path, strerror(error)));
+		return error;
+	}
 
 	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
 	    == MAP_FAILED) {
-		DPRINTF(("%s: mmap %s %s", __func__, node->name,
-		    strerror(errno)));
+		error = errno;
+		DPRINTF(("%s: mmap %s: %s", __func__, node->name,
+		    strerror(error)));
 		close(fd);
 		goto out;
 	}
@@ -469,12 +481,14 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		cn = dep->de_StartCluster;
 		if (cn == MSDOSFSROOT) {
 			DPRINTF(("%s: bad lbn %lu", __func__, cn));
+			error = EINVAL;
 			goto out;
 		}
 		bn = cntobn(pmp, cn);
 		blsize = pmp->pm_bpcluster;
 #else
-		if ((error = pcbmap(dep, cn++, &bn, NULL, &blsize)) != 0) {
+		if ((error = msdosfs_pcbmap(dep, cn++, &bn, NULL,
+		    &blsize)) != 0) {
 			DPRINTF(("%s: pcbmap %lu", __func__, bn));
 			goto out;
 		}
@@ -486,7 +500,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		    0, &bp)) != 0) {
 			DPRINTF(("bread %d\n", error));
 			goto out;
-		} 
+		}
 		cpsize = MIN((nsize - offs), blsize - on);
 		memcpy((char *)bp->b_data + on, dat + offs, cpsize);
 		bwrite(bp);
@@ -548,7 +562,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad2;
 	}
@@ -556,7 +570,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	/*
 	 * Allocate a cluster to hold the about to be created directory.
 	 */
-	error = clusteralloc(pmp, 0, 1, &newcluster, NULL);
+	error = msdosfs_clusteralloc(pmp, 0, 1, &newcluster, NULL);
 	if (error)
 		goto bad2;
 
@@ -614,7 +628,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	 * cluster.  This will be written to an empty slot in the parent
 	 * directory.
 	 */
-	if ((error = uniqdosname(pdep, &cn, ndirent.de_Name)) != 0)
+	if ((error = msdosfs_uniqdosname(pdep, &cn, ndirent.de_Name)) != 0)
 		goto bad;
 
 	ndirent.de_Attributes = ATTR_DIRECTORY;
@@ -625,14 +639,15 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	ndirent.de_pmp = pdep->de_pmp;
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
-	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
+	if ((error = msdosfs_createde(&ndirent, pdep, &pdep->de_crap, &dep,
+	    &cn)) != 0)
 		goto bad;
 	if ((error = msdosfs_updatede(dep)) != 0)
 		goto bad;
 	return dep;
 
 bad:
-	clusterfree(pmp, newcluster, NULL);
+	msdosfs_clusterfree(pmp, newcluster, NULL);
 bad2:
 	errno = error;
 	return NULL;

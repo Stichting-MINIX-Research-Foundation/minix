@@ -35,6 +35,10 @@
 
 #include "nbtool_config.h"
 
+#ifdef __linux__
+#include <stdio_ext.h>
+#endif
+
 #if !HAVE_FPURGE
 #include <stdio.h>
 #include <fcntl.h>

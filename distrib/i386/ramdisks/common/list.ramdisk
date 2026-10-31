@@ -1,0 +1,92 @@
+#	$NetBSD: list.ramdisk,v 1.26 2015/10/07 14:09:05 martin Exp $
+
+SRCDIRS	external/bsd/less/bin
+SRCDIRS	bin sbin usr.bin usr.sbin libexec
+
+# Programs for a minimal ramdisk image
+
+PROG	bin/cat
+PROG	bin/chmod
+PROG	bin/cp
+PROG	bin/ln
+PROG	bin/ls
+PROG	bin/mkdir
+PROG	bin/mv
+PROG	bin/pax		usr/bin/tar
+PROG	bin/pwd
+PROG	bin/rm
+PROG	bin/sh
+PROG	bin/stty
+
+PROG	sbin/chown	bin/chgrp
+# PROG	sbin/disklabel
+# PROG	sbin/dmesg
+PROG	sbin/fsck
+# PROG	sbin/fsck_ffs
+# PROG	sbin/gpt
+PROG	sbin/ifconfig
+PROG	sbin/init
+PROG	sbin/mknod
+# PROG	sbin/mount
+# PROG	sbin/mount_cd9660
+# PROG	sbin/mount_ext2fs
+# PROG	sbin/mount_ffs
+# PROG	sbin/mount_kernfs
+# PROG	sbin/mount_msdos
+# PROG	sbin/mount_nfs
+# PROG	sbin/mount_tmpfs
+# PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/newfs_ext2fs
+PROG	sbin/ping
+PROG	sbin/reboot	sbin/halt
+PROG	sbin/route
+# PROG	sbin/swapctl
+# PROG	sbin/umount
+
+PROG	usr/bin/ftp
+PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
+PROG	usr/bin/sed
+
+# One of these is rather useful
+# PROG	usr/bin/less	usr/bin/more
+# PROG	usr/bin/more	usr/bin/less
+
+# sysinst doesn't use installboot (yet)
+# PROG	usr/sbin/installboot
+
+PROG	usr/sbin/chroot
+
+#SPECIAL	gzip		srcdir	distrib/utils/x_gzip
+#SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+#SPECIAL	ping		srcdir	distrib/utils/x_ping
+#SPECIAL	route		srcdir	distrib/utils/x_route
+# SPECIAL more		srcdir	distrib/utils/more
+
+# init invokes the shell as -sh
+ARGVLN	sh -sh
+
+# libhack.o is built by Makefile & included Makefile.inc
+LIBS	libhack.o -ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+
+# various files that we need in /etc for the install
+COPY	${NETBSDSRCDIR}/etc/group		etc/group
+COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
+# COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
+COPY	${DISTRIBDIR}/common/services		etc/services
+
+# we need the boot block in /usr/mdec + the MBR copy
+# COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
+COPY	${DESTDIR}/usr/mdec/boot_monitor	usr/mdec/boot_monitor
+COPY	${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
+# COPY	${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
+# COPY	${DESTDIR}/usr/mdec/bootxx_lfsv2	usr/mdec/bootxx_lfsv2
+COPY	${DESTDIR}/usr/mdec/bootxx_minixfs3	usr/mdec/bootxx_minixfs3
+COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
+COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
+COPY	${DESTDIR}/usr/mdec/mbr_com0		usr/mdec/mbr_com0
+COPY	${DESTDIR}/usr/mdec/gptmbr.bin		usr/mdec/gptmbr.bin
+
+# and the boot script
+#COPY	${CURDIR}/../common/dot.profile		.profile

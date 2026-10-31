@@ -32,8 +32,7 @@ static struct sffs_table vboxfs_table = {
 /*
  * Initialize communication with the VBOX driver, and map the given share.
  */
-int
-vboxfs_init(char *share, const struct sffs_table **tablep, int *case_insens,
+int vboxfs_init(char *share, const struct sffs_table **tablep, int *case_insens,
 	int *read_only)
 {
 	vbox_param_t param[4];
@@ -85,8 +84,7 @@ vboxfs_init(char *share, const struct sffs_table **tablep, int *case_insens,
 /*
  * Unmap the share, and disconnect from the VBOX driver.
  */
-void
-vboxfs_cleanup(void)
+void vboxfs_cleanup(void)
 {
 	vbox_param_t param[1];
 

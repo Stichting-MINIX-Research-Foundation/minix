@@ -10,8 +10,7 @@
  * after this function is done, in which case 'next_time' (if non-NULL) is
  * filled with the absolute expiry time of the new head timer.
  */
-int
-tmrs_clrtimer(minix_timer_t ** tmrs, minix_timer_t * tp, clock_t * prev_time,
+int tmrs_clrtimer(minix_timer_t ** tmrs, minix_timer_t * tp, clock_t * prev_time,
 	clock_t * next_time)
 {
 	minix_timer_t **atp;

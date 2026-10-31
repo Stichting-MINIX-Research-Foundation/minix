@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.75 2019/03/20 03:13:39 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.75 2019/03/20 03:13:39 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $");
 #include "pax.h"
 #include "extern.h"
 #include "tar.h"
+
+extern struct stat tst;
 
 /*
  * Routines for reading, writing and header identify of various versions of tar
@@ -349,7 +351,7 @@ tar_chksm(char *blk, int len)
 	 * checksum field as the sum of 8 blanks (which is pre-computed as
 	 * BLNKSUM).
 	 * ASSUMED: len is greater than CHK_OFFSET. (len is where our 0 padding
-	 * starts, no point in summing zero's)
+	 * starts, no point in summing zeros)
 	 */
 	pt += CHK_LEN;
 	stop = blk + len;
@@ -366,7 +368,7 @@ tar_chksm(char *blk, int len)
  * tar_id()
  *	determine if a block given to us is a valid tar header (and not a USTAR
  *	header). We have to be on the lookout for those pesky blocks of	all
- *	zero's.
+ *	zeros.
  * Return:
  *	0 if a tar header, -1 otherwise
  */
@@ -384,7 +386,7 @@ tar_id(char *blk, int size)
 	uhd = (HD_USTAR *)blk;
 
 	/*
-	 * check for block of zero's first, a simple and fast test, then make
+	 * check for block of zeros first, a simple and fast test, then make
 	 * sure this is not a ustar header by looking for the ustar magic
 	 * cookie. We should use TMAGLEN, but some USTAR archive programs are
 	 * wrong and create archives missing the \0. Last we check the
@@ -484,6 +486,8 @@ tar_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_uid = (uid_t)asc_u32(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_u32(hd->gid, sizeof(hd->gid), OCT);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
+	if (arcn->sb.st_size == -1)
+		return -1;
 	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -587,6 +591,7 @@ tar_wr(ARCHD *arcn)
 {
 	HD_TAR *hd;
 	int len;
+	uintmax_t mtime;
 	char hdblk[sizeof(HD_TAR)];
 
 	/*
@@ -695,10 +700,11 @@ tar_wr(ARCHD *arcn)
 	/*
 	 * copy those fields that are independent of the type
 	 */
+	mtime = tst.st_ino ? tst.st_mtime : arcn->sb.st_mtime;
 	if (u32_oct((uintmax_t)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
 	    u32_oct((uintmax_t)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
 	    u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
-	    u32_oct((uintmax_t)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
+	    u32_oct(mtime, hd->mtime, sizeof(hd->mtime), 1))
 		goto out;
 
 	/*
@@ -763,7 +769,7 @@ ustar_stwr(void)
 /*
  * ustar_id()
  *	determine if a block given to us is a valid ustar header. We have to
- *	be on the lookout for those pesky blocks of all zero's
+ *	be on the lookout for those pesky blocks of all zeros
  * Return:
  *	0 if a ustar header, -1 otherwise
  */
@@ -778,7 +784,7 @@ ustar_id(char *blk, int size)
 	hd = (HD_USTAR *)blk;
 
 	/*
-	 * check for block of zero's first, a simple and fast test then check
+	 * check for block of zeros first, a simple and fast test then check
 	 * ustar magic cookie. We should use TMAGLEN, but some USTAR archive
 	 * programs are fouled up and create archives missing the \0. Last we
 	 * check the checksum. If ok we have to assume it is a valid header.
@@ -856,6 +862,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_mode = (mode_t)(asc_u32(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
+	if (arcn->sb.st_size == -1)
+		return -1;
 	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -1046,6 +1054,7 @@ ustar_wr(ARCHD *arcn)
 {
 	HD_USTAR *hd;
 	char *pt;
+	uintmax_t mtime;
 	char hdblk[sizeof(HD_USTAR)];
 	const char *user, *group;
 
@@ -1210,7 +1219,8 @@ ustar_wr(ARCHD *arcn)
 		return size_err("UID", arcn);
 	if (u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3))
 		return size_err("GID", arcn);
-	if (u32_oct((uintmax_t)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+	mtime = tst.st_ino ? tst.st_mtime : arcn->sb.st_mtime;
+	if (u32_oct(mtime, hd->mtime, sizeof(hd->mtime), 3))
 		return size_err("MTIME", arcn);
 	user = user_from_uid(arcn->sb.st_uid, 1);
 	group = group_from_gid(arcn->sb.st_gid, 1);
@@ -1369,7 +1379,7 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 }
 
 /*
- * deal with GNU tar -X/--exclude-from & --exclude switchs.  basically,
+ * deal with GNU tar -X/--exclude-from & --exclude switches.  basically,
  * we go through each line of the file, building a string from the "glob"
  * lines in the file into RE lines, of the form `/^RE$//', which we pass
  * to rep_add(), which will add a empty replacement (exclusion), for the

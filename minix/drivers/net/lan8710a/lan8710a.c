@@ -49,8 +49,7 @@ static const struct netdriver lan8710a_table = {
 /*============================================================================*
  *				main					      *
  *============================================================================*/
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct machine machine;
 
@@ -66,8 +65,7 @@ main(int argc, char *argv[])
 /*============================================================================*
  *				lan8710a_init				      *
  *============================================================================*/
-static int
-lan8710a_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+static int lan8710a_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 	unsigned int * ticks)
 {
 	/* Initialize the ethernet driver. */
@@ -88,8 +86,7 @@ lan8710a_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 /*============================================================================*
  *				lan8710a_enable_interrupt		      *
  *============================================================================*/
-static void
-lan8710a_enable_interrupt(int interrupt)
+static void lan8710a_enable_interrupt(int interrupt)
 {
 	int r;
 
@@ -108,8 +105,7 @@ lan8710a_enable_interrupt(int interrupt)
 /*============================================================================*
  *				lan8710a_intr				      *
  *============================================================================*/
-static void
-lan8710a_intr(unsigned int mask)
+static void lan8710a_intr(unsigned int mask)
 {
 	u32_t dma_status;
 
@@ -158,8 +154,7 @@ lan8710a_intr(unsigned int mask)
 /*============================================================================*
  *				lan8710a_init_addr			      *
  *============================================================================*/
-static void
-lan8710a_init_addr(netdriver_addr_t * addr, unsigned int instance)
+static void lan8710a_init_addr(netdriver_addr_t * addr, unsigned int instance)
 {
 	static char eakey[]= LAN8710A_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
@@ -194,8 +189,7 @@ lan8710a_init_addr(netdriver_addr_t * addr, unsigned int instance)
 /*============================================================================*
  *				lan8710a_map_regs			      *
  *============================================================================*/
-static void
-lan8710a_map_regs(void)
+static void lan8710a_map_regs(void)
 {
 	struct minix_mem_range mr;
 	mr.mr_base = CM_PER_BASE_ADR;
@@ -290,8 +284,7 @@ lan8710a_map_regs(void)
 /*============================================================================*
  *				lan8710a_update_stats			      *
  *============================================================================*/
-static void
-lan8710a_update_stats(void)
+static void lan8710a_update_stats(void)
 {
 	uint32_t val;
 
@@ -320,8 +313,7 @@ lan8710a_update_stats(void)
 /*============================================================================*
  *				lan8710a_tick				      *
  *============================================================================*/
-static void
-lan8710a_tick(void)
+static void lan8710a_tick(void)
 {
 
 	/* Update statistics. */
@@ -331,8 +323,7 @@ lan8710a_tick(void)
 /*============================================================================*
  *				lan8710a_stop				      *
  *============================================================================*/
-static void
-lan8710a_stop(void)
+static void lan8710a_stop(void)
 {
 	/* Reset hardware. */
 	lan8710a_reset_hw();
@@ -341,8 +332,7 @@ lan8710a_stop(void)
 /*============================================================================*
  *				lan8710a_dma_config_tx			      *
  *============================================================================*/
-static void
-lan8710a_dma_config_tx(u8_t desc_idx)
+static void lan8710a_dma_config_tx(u8_t desc_idx)
 {
 	phys_bytes phys_addr;
 	int i;
@@ -367,8 +357,7 @@ lan8710a_dma_config_tx(u8_t desc_idx)
 /*============================================================================*
  *				lan8710a_dma_reset_init			      *
  *============================================================================*/
-static void
-lan8710a_dma_reset_init(void)
+static void lan8710a_dma_reset_init(void)
 {
 	int i;
 	lan8710a_reg_write(CPDMA_SOFT_RESET, SOFT_RESET);
@@ -397,8 +386,8 @@ lan8710a_dma_reset_init(void)
 
 	/*
 	 * Writing the address of the first buffer descriptor in the queue
-	 * (nonzero value)to the channel’s head descriptor pointer in the
-	 * channel’s Rx DMA state.
+	 * (nonzero value)to the channelï¿½s head descriptor pointer in the
+	 * channelï¿½s Rx DMA state.
 	 */
 	lan8710a_reg_write(CPDMA_STRAM_RX_HDP(0),
 			  (u32_t)lan8710a_state.rx_desc_phy);
@@ -410,8 +399,7 @@ lan8710a_dma_reset_init(void)
 /*============================================================================*
  *				lan8710a_init_desc			      *
  *============================================================================*/
-static void
-lan8710a_init_desc(void)
+static void lan8710a_init_desc(void)
 {
 	lan8710a_desc_t *p_rx_desc;
 	lan8710a_desc_t *p_tx_desc;
@@ -458,8 +446,7 @@ lan8710a_init_desc(void)
 /*============================================================================*
  *				lan8710a_init_hw			      *
  *============================================================================*/
-static int
-lan8710a_init_hw(netdriver_addr_t * addr, unsigned int instance)
+static int lan8710a_init_hw(netdriver_addr_t * addr, unsigned int instance)
 {
 	int r, i;
 
@@ -670,8 +657,7 @@ lan8710a_init_hw(netdriver_addr_t * addr, unsigned int instance)
 /*============================================================================*
  *				lan8710a_init_mdio			      *
  *============================================================================*/
-static void
-lan8710a_init_mdio(void)
+static void lan8710a_init_mdio(void)
 {
 	u16_t address = 0;
 	u32_t r;
@@ -699,8 +685,7 @@ lan8710a_init_mdio(void)
 /*============================================================================*
  *				lan8710a_send				      *
  *============================================================================*/
-static int
-lan8710a_send(struct netdriver_data * data, size_t size)
+static int lan8710a_send(struct netdriver_data * data, size_t size)
 {
 	lan8710a_t *e = &lan8710a_state;
 	lan8710a_desc_t *p_tx_desc;
@@ -751,8 +736,7 @@ lan8710a_send(struct netdriver_data * data, size_t size)
 /*============================================================================*
  *				lan8710a_recv				      *
  *============================================================================*/
-static ssize_t
-lan8710a_recv(struct netdriver_data * data, size_t max)
+static ssize_t lan8710a_recv(struct netdriver_data * data, size_t max)
 {
 	lan8710a_t *e = &lan8710a_state;
 	lan8710a_desc_t *p_rx_desc;
@@ -835,8 +819,7 @@ lan8710a_recv(struct netdriver_data * data, size_t max)
 /*============================================================================*
  *				lan8710a_phy_write			      *
  *============================================================================*/
-static void
-lan8710a_phy_write(u32_t reg, u32_t value)
+static void lan8710a_phy_write(u32_t reg, u32_t value)
 {
 	if (!(lan8710a_reg_read(MDIOUSERACCESS0) & MDIO_GO)) {
 		/* Clearing MDIOUSERACCESS0 register */
@@ -859,8 +842,7 @@ lan8710a_phy_write(u32_t reg, u32_t value)
 /*============================================================================*
  *				lan8710a_phy_read			      *
  *============================================================================*/
-static u32_t
-lan8710a_phy_read(u32_t reg)
+static u32_t lan8710a_phy_read(u32_t reg)
 {
 	u32_t value = 0xFFFFFFFF;
 
@@ -889,8 +871,7 @@ lan8710a_phy_read(u32_t reg)
 /*============================================================================*
  *				lan8710a_reset_hw			      *
  *============================================================================*/
-static void
-lan8710a_reset_hw(void)
+static void lan8710a_reset_hw(void)
 {
 	/* Assert a Device Reset signal. */
 	lan8710a_phy_write(LAN8710A_CTRL_REG, LAN8710A_SOFT_RESET);
@@ -902,8 +883,7 @@ lan8710a_reset_hw(void)
 /*============================================================================*
  *				lan8710a_reg_read			      *
  *============================================================================*/
-static u32_t
-lan8710a_reg_read(volatile u32_t *reg)
+static u32_t lan8710a_reg_read(volatile u32_t *reg)
 {
 	u32_t value;
 
@@ -917,8 +897,7 @@ lan8710a_reg_read(volatile u32_t *reg)
 /*============================================================================*
  *				lan8710a_reg_write			      *
  *============================================================================*/
-static void
-lan8710a_reg_write(volatile u32_t *reg, u32_t value)
+static void lan8710a_reg_write(volatile u32_t *reg, u32_t value)
 {
 	/* Write to memory mapped register. */
 	*reg = value;
@@ -927,8 +906,7 @@ lan8710a_reg_write(volatile u32_t *reg, u32_t value)
 /*============================================================================*
  *				lan8710a_reg_set			      *
  *============================================================================*/
-static void
-lan8710a_reg_set(volatile u32_t *reg, u32_t value)
+static void lan8710a_reg_set(volatile u32_t *reg, u32_t value)
 {
 	u32_t data;
 
@@ -942,8 +920,7 @@ lan8710a_reg_set(volatile u32_t *reg, u32_t value)
 /*============================================================================*
  *				lan8710a_reg_unset			      *
  *============================================================================*/
-static void
-lan8710a_reg_unset(volatile u32_t *reg, u32_t value)
+static void lan8710a_reg_unset(volatile u32_t *reg, u32_t value)
 {
 	u32_t data;
 

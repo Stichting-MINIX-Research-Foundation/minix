@@ -3,6 +3,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <minix/type.h>
+#include <minix/param.h>
 #include <minix/minlib.h>
 #include <minix/board.h>
 #include <sys/reboot.h>
@@ -16,6 +18,9 @@
 #define MULTIBOOT_VERBOSE 1
 #endif
 
+#define MULTIBOOT2_BOOTLOADER_MAGIC		0x36d76289
+extern void get_parameters_mb2(u32_t, kinfo_t *);
+
 /* to-be-built kinfo struct, diagnostics buffer */
 kinfo_t kinfo;
 struct kmessages kmessages;
@@ -24,7 +29,7 @@ struct kmessages kmessages;
 phys_bytes vir2phys(void *addr) { return (phys_bytes) addr; } 
 
 /* mb_utils.c uses this; we can reach it directly */
-char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
+//char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
@@ -32,7 +37,7 @@ char *video_mem = (char *) MULTIBOOT_VIDEO_BUFFER;
 /* Kernel may use memory */
 int kernel_may_alloc = 1;
 
-static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi) 
+int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi) 
 {
 	char *p = bigbuf;
 	char *bufend = bigbuf + MULTIBOOT_PARAM_BUF_SIZE;
@@ -74,16 +79,16 @@ static int mb_set_param(char *bigbuf, char *name, char *value, kinfo_t *cbi)
 	return 0;
 }
 
-int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
+int overlaps(kinfo_module_t *mod, int n, int cmp_mod)
 {
-	multiboot_module_t *cmp = &mod[cmp_mod];
+	kinfo_module_t *cmp = &mod[cmp_mod];
 	int m;
 
 #define INRANGE(mod, v) ((v) >= mod->mod_start && (v) < mod->mod_end)
 #define OVERLAP(mod1, mod2) (INRANGE(mod1, mod2->mod_start) || \
 			INRANGE(mod1, mod2->mod_end-1))
 	for(m = 0; m < n; m++) {
-		multiboot_module_t *thismod = &mod[m];
+		kinfo_module_t *thismod = &mod[m];
 		if(m == cmp_mod) continue;
 		if(OVERLAP(thismod, cmp))
 			return 1;
@@ -93,8 +98,10 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 
 void get_parameters(u32_t ebx, kinfo_t *cbi) 
 {
-	multiboot_memory_map_t *mmap;
-	multiboot_info_t *mbi = &cbi->mbi;
+	struct multiboot_mmap	*mmap;
+	struct multiboot_info	mbi1;
+	struct multiboot_info	*mbi = &mbi1;
+	struct multiboot_module	*modp;
 	int var_i,value_i, m, k;
 	char *p;
 	extern char _kern_phys_base, _kern_vir_base, _kern_size,
@@ -105,9 +112,13 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	static char cmdline[BUF];
 
 	/* get our own copy of the multiboot info struct and module list */
-	memcpy((void *) mbi, (void *) ebx, sizeof(*mbi));
+	memcpy((void *) mbi, (void *) ebx, sizeof(mbi1));
 
+	cbi->boot_mode = 0;
+	cbi->mb_version = 1;
+	
 	/* Set various bits of info for the higher-level kernel. */
+	cbi->module_count = mbi->mi_mods_count;
 	cbi->mem_high_phys = 0;
 	cbi->user_sp = (vir_bytes) &_kern_vir_base;
 	cbi->vir_kern_start = (vir_bytes) &_kern_vir_base;
@@ -167,16 +178,51 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	assert(mbi->mi_flags & MULTIBOOT_INFO_HAS_MODS);
 	assert(mbi->mi_mods_count < MULTIBOOT_MAX_MODS);
 	assert(mbi->mi_mods_count > 0);
-	memcpy(&cbi->module_list, (void *) mbi->mi_mods_addr,
-		mbi->mi_mods_count * sizeof(multiboot_module_t));
+	cbi->module_count = mbi->mi_mods_count;
+	for (m = 0; m < mbi->mi_mods_count; m++) {
+		modp = (struct multiboot_module *)(mbi->mi_mods_addr
+			 + sizeof(struct multiboot_module) * m);
+		cbi->module_list[m].mod_start = modp->mmo_start;
+		cbi->module_list[m].mod_end = modp->mmo_end;
+		cbi->module_list[m].mod_string = modp->mmo_string;
+	}
 	
+	memset((void *)&cbi->fb, 0, sizeof(cbi->fb));
+	if(mbi->mi_flags & MULTIBOOT_INFO_HAS_FRAMEBUFFER) {
+		cbi->fb.framebuffer_addr = mbi->framebuffer_addr;
+		cbi->fb.framebuffer_pitch = mbi->framebuffer_pitch;
+		cbi->fb.framebuffer_width = mbi->framebuffer_width;
+		cbi->fb.framebuffer_height = mbi->framebuffer_height;
+		cbi->fb.framebuffer_bpp = mbi->framebuffer_bpp;
+		cbi->fb.framebuffer_type = mbi->framebuffer_type;
+		if (mbi->framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED) {
+			cbi->fb.framebuffer_palette_addr = 
+				mbi->framebuffer_palette_addr;
+			cbi->fb.framebuffer_palette_num_colors = 
+				mbi->framebuffer_palette_num_colors;
+		} else if (mbi->framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB) {
+			cbi->fb.framebuffer_red_field_position =
+				mbi->framebuffer_red_field_position;
+			cbi->fb.framebuffer_red_mask_size =
+				mbi->framebuffer_red_mask_size;
+			cbi->fb.framebuffer_green_field_position =
+				mbi->framebuffer_green_field_position;
+			cbi->fb.framebuffer_green_mask_size =
+				mbi->framebuffer_green_mask_size;
+			cbi->fb.framebuffer_blue_field_position =
+				mbi->framebuffer_blue_field_position;
+			cbi->fb.framebuffer_blue_mask_size =
+				mbi->framebuffer_red_field_position;
+		}
+	}
+		
 	memset(cbi->memmap, 0, sizeof(cbi->memmap));
 	/* mem_map has a variable layout */
 	if(mbi->mi_flags & MULTIBOOT_INFO_HAS_MMAP) {
 		cbi->mmap_size = 0;
-	        for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
-       	     (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
-       	       mmap = (multiboot_memory_map_t *) 
+	        for (mmap = (struct multiboot_mmap *) mbi->mi_mmap_addr;
+       	     (unsigned long) mmap < mbi->mi_mmap_addr + mbi->mi_mmap_length;
+       	       mmap = (struct multiboot_mmap *) 
 		      	((unsigned long) mmap + mmap->mm_size + sizeof(mmap->mm_size))) {
 			if(mmap->mm_type != MULTIBOOT_MEMORY_AVAILABLE) continue;
 			add_memmap(cbi, mmap->mm_base_addr, mmap->mm_length);
@@ -191,11 +237,11 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 	 * with each other. Pretend the kernel is an extra module for a
 	 * second.
 	 */
-	k = mbi->mi_mods_count;
+	k = cbi->module_count;
 	assert(k < MULTIBOOT_MAX_MODS);
 	cbi->module_list[k].mod_start = kernbase;
 	cbi->module_list[k].mod_end = kernbase + kernsize;
-	cbi->mods_with_kernel = mbi->mi_mods_count+1;
+	cbi->mods_with_kernel = cbi->module_count+1;
 	cbi->kern_mod = k;
 
 	for(m = 0; m < cbi->mods_with_kernel; m++) {
@@ -216,12 +262,15 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 
 kinfo_t *pre_init(u32_t magic, u32_t ebx)
 {
-	assert(magic == MULTIBOOT_INFO_MAGIC);
-
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
-	get_parameters(ebx, &kinfo);
+	if (magic == MULTIBOOT2_BOOTLOADER_MAGIC)
+		get_parameters_mb2(ebx, &kinfo);
+	else if (magic == MULTIBOOT_INFO_MAGIC)
+		get_parameters(ebx, &kinfo);
+	else
+		panic("Invalid magic: %d\n", magic);
 
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so

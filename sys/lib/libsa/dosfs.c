@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.20 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.22 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -108,12 +108,18 @@ static const struct direntry dot[2] = {
 		{0, 0}, {0x21, 0}, {0, 0}, {0, 0, 0, 0}}
 };
 
+#ifdef SA_DOSFS_NO_BIG_PART_SUPPORT
+#define	BYTE_OFF_T	u_int
+#else
+#define	BYTE_OFF_T	uint64_t
+#endif
+
 /* The usual conversion macros to avoid multiplication and division */
 #define bytsec(n)      ((n) >> SSHIFT)
-#define secbyt(s)      ((s) << SSHIFT)
+#define secbyt(s)      ((BYTE_OFF_T)(s) << SSHIFT)
 #define entsec(e)      ((e) >> DSHIFT)
 #define bytblk(fs, n)  ((n) >> (fs)->bshift)
-#define blkbyt(fs, b)  ((b) << (fs)->bshift)
+#define blkbyt(fs, b)  ((BYTE_OFF_T)(b) << (fs)->bshift)
 #define secblk(fs, s)  ((s) >> ((fs)->bshift - SSHIFT))
 #define blksec(fs, b)  ((b) << ((fs)->bshift - SSHIFT))
 
@@ -146,7 +152,7 @@ static off_t fsize(DOS_FS *, struct direntry *);
 static int fatcnt(DOS_FS *, u_int);
 static int fatget(DOS_FS *, u_int *);
 static int fatend(u_int, u_int);
-static int ioread(DOS_FS *, u_int, void *, u_int);
+static int ioread(DOS_FS *, BYTE_OFF_T, void *, u_int);
 static int iobuf(DOS_FS *, u_int);
 static int ioget(struct open_file *, u_int, void *, u_int);
 
@@ -282,7 +288,8 @@ dosfs_read(struct open_file *fd, void *vbuf, size_t nbyte, size_t *resid)
 	nb = (u_int) nbyte;
 	if ((size = fsize(f->fs, &f->de)) == -1)
 		return EINVAL;
-	if (nb > (n = size - f->offset))
+	n = (u_int)(size - f->offset);
+	if (nb > n)
 		nb = n;
 	off = f->offset;
 	if ((clus = stclus(f->fs->fatsz, &f->de)))
@@ -441,7 +448,7 @@ parsebs(DOS_FS *fs, DOS_BS *bs)
 	if (!(fs->spc = bs->bpb.bpbSecPerClust) || fs->spc & (fs->spc - 1))
 		return EINVAL;
 	fs->bsize = secbyt(fs->spc);
-	fs->bshift = ffs(fs->bsize) - 1;
+	fs->bshift = (u_int)ffs((int)fs->bsize) - 1;
 	if ((fs->spf = getushort(bs->bpb.bpbFATsecs))) {
 		if (bs->bpb.bpbFATs != 2)
 			return EINVAL;
@@ -492,7 +499,8 @@ namede(DOS_FS *fs, const char *path, const struct direntry **dep)
 	while (*path) {
 		if (!(s = strchr(path, '/')))
 			s = strchr(path, 0);
-		if ((n = s - path) > 255)
+		n = (size_t)(s - path);
+		if (n > 255)
 			return ENAMETOOLONG;
 		memcpy(name, path, n);
 		name[n] = 0;
@@ -575,11 +583,12 @@ lookup(DOS_FS *fs, u_int clus, const char *name, const struct direntry **dep)
 						}
 					} else if (!(dir[ent].de.deAttributes &
 						     ATTR_VOLUME)) {
-						if ((ok = xdn == 1)) {
+						ok = xdn == 1;
+						if (ok) {
 							for (x = 0, i = 0;
 							     i < 11; i++)
 								x = ((((x & 1) << 7) | (x >> 1)) +
-								    msdos_dirchar(&dir[ent].de,i)) & 0xff;
+								    (size_t)msdos_dirchar(&dir[ent].de,(size_t)i)) & 0xff;
 							ok = chk == x &&
 							    !strcasecmp(name, (const char *)lfn);
 						}
@@ -637,7 +646,7 @@ cp_xdnm(u_char *lfn, struct winentry *xde)
 		    p += 2, x--) {
 			if ((c = getushort(p)) && (c < 32 || c > 127))
 				c = '?';
-			if (!(*lfn++ = c))
+			if (!(*lfn++ = (u_char)c))
 				return;
 		}
 	if (xde->weCnt & WIN_LAST)
@@ -676,7 +685,7 @@ cp_sfn(u_char *sfn, struct direntry *de)
 static  off_t
 fsize(DOS_FS *fs, struct direntry *de)
 {
-	u_long  size;
+	size_t  size;
 	u_int   c;
 	int     n;
 
@@ -687,10 +696,10 @@ fsize(DOS_FS *fs, struct direntry *de)
 		} else {
 			if ((n = fatcnt(fs, c)) == -1)
 				return n;
-			size = blkbyt(fs, n);
+			size = (size_t)blkbyt(fs, n);
 		}
 	}
-	return size;
+	return (off_t)size;
 }
 
 /*
@@ -739,7 +748,7 @@ fatend(u_int sz, u_int c)
  * Offset-based I/O primitive
  */
 static int
-ioread(DOS_FS *fs, u_int offset, void *buf, u_int nbyte)
+ioread(DOS_FS *fs, BYTE_OFF_T offset, void *buf, u_int nbyte)
 {
 	char   *s;
 	u_int   off, n;

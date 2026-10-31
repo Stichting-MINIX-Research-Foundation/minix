@@ -80,8 +80,7 @@ void push_ignore_pats(char *);
 void read_excludes_file(char *file);
 void set_argstr(char **, char **);
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	char *ep, **oargv;
 	long  l;
@@ -270,8 +269,7 @@ main(int argc, char **argv)
 	exit(status);
 }
 
-void
-set_argstr(char **av, char **ave)
+void set_argstr(char **av, char **ave)
 {
 	size_t argsize;
 	char **ap;
@@ -290,8 +288,7 @@ set_argstr(char **av, char **ave)
 /*
  * Read in an excludes file and push each line.
  */
-void
-read_excludes_file(char *file)
+void read_excludes_file(char *file)
 {
 	FILE *fp;
 	char *buf, *pattern;
@@ -316,8 +313,7 @@ read_excludes_file(char *file)
 /*
  * Push a pattern onto the excludes list.
  */
-void
-push_excludes(char *pattern)
+void push_excludes(char *pattern)
 {
 	struct excludes *entry;
 
@@ -327,8 +323,7 @@ push_excludes(char *pattern)
 	excludes_list = entry;
 }
 
-void
-push_ignore_pats(char *pattern)
+void push_ignore_pats(char *pattern)
 {
 	size_t len;
 
@@ -343,16 +338,14 @@ push_ignore_pats(char *pattern)
 	}
 }
 
-void
-print_only(const char *path, size_t dirlen, const char *entry)
+void print_only(const char *path, size_t dirlen, const char *entry)
 {
 	if (dirlen > 1)
 		dirlen--;
 	printf("Only in %.*s: %s\n", (int)dirlen, path, entry);
 }
 
-void
-print_status(int val, char *path1, char *path2, char *entry)
+void print_status(int val, char *path1, char *path2, char *entry)
 {
 	switch (val) {
 	case D_ONLY:

@@ -111,9 +111,7 @@ void quit(void);
 /*****************************************************************************
  *                              TEST                                         *
  ****************************************************************************/
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int n, mask, i;
   pid_t child;
@@ -146,8 +144,7 @@ char *argv[];
   return(-1);			/* impossible */
 }
 
-void test(mask)
-int mask;
+void test(int mask)
 {
   umask(0);			/* not honest, but i always forget */
 
@@ -509,8 +506,7 @@ void test10()
 
 }				/* test10 */
 
-int link_alot(bigboss)
-char *bigboss;
+int link_alot(char *bigboss)
 {
   int i;
   static char employee[6] = "aaaaa";
@@ -526,8 +522,7 @@ char *bigboss;
   return(i - 1);		/* number of linked files */
 }				/* link_alot */
 
-int unlink_alot(number)
-int number;			/* number of files to be unlinked */
+int unlink_alot(int number)
 {
   int j;
   static char employee[6] = "aaaaa";
@@ -542,8 +537,7 @@ int number;			/* number of files to be unlinked */
   return(j);			/* return number of unlinked files */
 }				/* unlink_alot */
 
-void get_new(name)
-char name[];
+void get_new(char name[])
  /* Every call changes string 'name' to a string alphabetically          *
   * higher. Start with "aaaaa", next value: "aaaab" .                    *
   * N.B. after "aaaaz" comes "aaabz" and not "aaaba" (not needed).       *
@@ -675,9 +669,7 @@ void test03()
 
 }				/* test03 */
 
-void put_file_in_dir(dirname, mode)
-char *dirname;
-int mode;
+void put_file_in_dir(char *dirname, int mode)
  /* Fill directory 'dirname' with file with mode 'mode'.   */
 {
   int nr;
@@ -703,8 +695,7 @@ int mode;
 *                                                                            *
 *****************************************************************************/
 
-void init_array(a)
-char *a;
+void init_array(char *a)
 {
   int i;
 
@@ -712,8 +703,7 @@ char *a;
   while (i++ < ARSIZE) *a++ = 'a' + (i % 26);
 }				/* init_array */
 
-void clear_array(b)
-char *b;
+void clear_array(char *b)
 {
   int i;
 
@@ -722,9 +712,7 @@ char *b;
 
 }				/* clear_array */
 
-int comp_array(a, b, range)
-char *a, *b;
-int range;
+int comp_array(char *a, char *b, int range)
 {
   assert(range >= 0 && range <= ARSIZE);
   while (range-- && (*a++ == *b++));
@@ -734,29 +722,23 @@ int range;
 	return(FAIL);
 }				/* comp_array */
 
-void try_close(filedes, name)
-int filedes;
-char *name;
+void try_close(int filedes, char *name)
 {
   if (close(filedes) != OK) e(90);
 }				/* try_close */
 
-void try_unlink(fname)
-char *fname;
+void try_unlink(char *fname)
 {
   if (unlink(fname) != 0) e(91);
 }				/* try_unlink */
 
-void Remove(fdes, fname)
-int fdes;
-char *fname;
+void Remove(int fdes, char *fname)
 {
   try_close(fdes, fname);
   try_unlink(fname);
 }				/* Remove */
 
-int get_mode(name)
-char *name;
+int get_mode(char *name)
 {
   struct stat stbf1;
 
@@ -786,8 +768,7 @@ int open_alot()
   return(i);
 }				/* open_alot */
 
-int close_alot(number)
-int number;
+int close_alot(int number)
 {
   int i, count = 0;
 
@@ -846,9 +827,7 @@ void clean_up_the_mess()
   /* FINISH */
 }				/* clean_up_the_mess */
 
-void chmod_8_dirs(sw)
-int sw;				/* if switch == 8, give all different
-			 * mode,else the same mode */
+void chmod_8_dirs(int sw)
 {
   int mode;
   int i;

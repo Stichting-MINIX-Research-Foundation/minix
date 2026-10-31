@@ -87,8 +87,7 @@ struct mib_newp {
  * of data that is to be copied out.  This call can be used to test whether
  * certain bits of data need to be prepared for copying at all.
  */
-int
-mib_inrange(struct mib_oldp * oldp, size_t off)
+int mib_inrange(struct mib_oldp * oldp, size_t off)
 {
 
 	if (oldp == NULL)
@@ -102,8 +101,7 @@ mib_inrange(struct mib_oldp * oldp, size_t off)
  * directly except in highly unusual cases, such as particular node requests
  * where the request semantics blatantly violate overall sysctl(2) semantics.
  */
-size_t
-mib_getoldlen(struct mib_oldp * oldp)
+size_t mib_getoldlen(struct mib_oldp * oldp)
 {
 
 	if (oldp == NULL)
@@ -117,8 +115,7 @@ mib_getoldlen(struct mib_oldp * oldp)
  * the range of data requested by the user.  Return the requested length on
  * success (for the caller's convenience) or an error code on failure.
  */
-ssize_t
-mib_copyout(struct mib_oldp * __restrict oldp, size_t off,
+ssize_t mib_copyout(struct mib_oldp * __restrict oldp, size_t off,
 	const void * __restrict buf, size_t size)
 {
 	size_t len;
@@ -144,8 +141,7 @@ mib_copyout(struct mib_oldp * __restrict oldp, size_t off,
  * Override the oldlen value returned from the call, in situations where an
  * error is thrown as well.
  */
-void
-mib_setoldlen(struct mib_call * call, size_t oldlen)
+void mib_setoldlen(struct mib_call * call, size_t oldlen)
 {
 
 	call->call_reslen = oldlen;
@@ -155,8 +151,7 @@ mib_setoldlen(struct mib_call * call, size_t oldlen)
  * Return the new data length as provided by the user, or 0 if the user did not
  * supply new data.
  */
-size_t
-mib_getnewlen(struct mib_newp * newp)
+size_t mib_getnewlen(struct mib_newp * newp)
 {
 
 	if (newp == NULL)
@@ -169,8 +164,7 @@ mib_getnewlen(struct mib_newp * newp)
  * Copy in data from the user.  The given length must match exactly the length
  * given by the user.  Return OK or an error code.
  */
-int
-mib_copyin(struct mib_newp * __restrict newp, void * __restrict buf,
+int mib_copyin(struct mib_newp * __restrict newp, void * __restrict buf,
 	size_t len)
 {
 
@@ -188,8 +182,7 @@ mib_copyin(struct mib_newp * __restrict newp, void * __restrict buf,
  * Copy in auxiliary data from the user, based on a user pointer obtained from
  * data copied in earlier through mib_copyin().
  */
-int
-mib_copyin_aux(struct mib_newp * __restrict newp, vir_bytes addr,
+int mib_copyin_aux(struct mib_newp * __restrict newp, vir_bytes addr,
 	void * __restrict buf, size_t len)
 {
 
@@ -207,8 +200,7 @@ mib_copyin_aux(struct mib_newp * __restrict newp, vir_bytes addr,
  * length in lenp, and return OK.  On error, return an error code that must not
  * be ENOMEM.
  */
-int
-mib_relay_oldp(endpoint_t endpt, struct mib_oldp * __restrict oldp,
+int mib_relay_oldp(endpoint_t endpt, struct mib_oldp * __restrict oldp,
 	cp_grant_id_t * grantp, size_t * __restrict lenp)
 {
 
@@ -232,8 +224,7 @@ mib_relay_oldp(endpoint_t endpt, struct mib_oldp * __restrict oldp,
  * length in lenp, and return OK.  On error, return an error code that must not
  * be ENOMEM.
  */
-int
-mib_relay_newp(endpoint_t endpt, struct mib_newp * __restrict newp,
+int mib_relay_newp(endpoint_t endpt, struct mib_newp * __restrict newp,
 	cp_grant_id_t * grantp, size_t * __restrict lenp)
 {
 
@@ -256,8 +247,7 @@ mib_relay_newp(endpoint_t endpt, struct mib_newp * __restrict newp,
  * function returns a nonzero value if this is the case, and zero otherwise.
  * Authorization is performed only once per call.
  */
-int
-mib_authed(struct mib_call * call)
+int mib_authed(struct mib_call * call)
 {
 
 	if ((call->call_flags & (MIB_FLAG_AUTH | MIB_FLAG_NOAUTH)) == 0) {
@@ -274,8 +264,7 @@ mib_authed(struct mib_call * call)
 /*
  * Implement the sysctl(2) system call.
  */
-static int
-mib_sysctl(message * __restrict m_in, int ipc_status,
+static int mib_sysctl(message * __restrict m_in, int ipc_status,
 	message * __restrict m_out)
 {
 	vir_bytes oldaddr, newaddr;
@@ -381,8 +370,7 @@ mib_sysctl(message * __restrict m_in, int ipc_status,
 /*
  * Initialize the service.
  */
-static int
-mib_init(int type __unused, sef_init_info_t * info __unused)
+static int mib_init(int type __unused, sef_init_info_t * info __unused)
 {
 
 	/*
@@ -412,8 +400,7 @@ mib_init(int type __unused, sef_init_info_t * info __unused)
 /*
  * Perform SEF startup.
  */
-static void
-mib_startup(void)
+static void mib_startup(void)
 {
 
 	sef_setcb_init_fresh(mib_init);
@@ -430,8 +417,7 @@ mib_startup(void)
 /*
  * The Management Information Base (MIB) service.
  */
-int
-main(void)
+int main(void)
 {
 	message m_in, m_out;
 	int r, ipc_status;

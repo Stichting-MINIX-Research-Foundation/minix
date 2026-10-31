@@ -70,8 +70,7 @@ static char                 AcpiGbl_HexToAscii[] =
  *
  ******************************************************************************/
 
-char
-AcpiUtHexToAsciiChar (
+char AcpiUtHexToAsciiChar (
     UINT64                  Integer,
     UINT32                  Position)
 {

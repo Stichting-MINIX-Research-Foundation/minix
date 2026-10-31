@@ -719,8 +719,8 @@ void memory_init(void)
 /*===========================================================================*
  *				arch_proc_init				     *
  *===========================================================================*/
-void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp,
-	const u32_t ps_str, char *name)
+void arch_proc_init(struct proc *pr, const vir_bytes ip, const vir_bytes sp,
+	const vir_bytes ps_str, char *name)
 {
 	arch_proc_reset(pr);
 	strlcpy(pr->p_name, name, sizeof(pr->p_name));
@@ -962,10 +962,10 @@ int arch_enable_paging(struct proc * caller)
 			io_apic[i].addr = io_apic[i].vaddr;
 		}
 	}
-#if CONFIG_SMP
+#ifdef CONFIG_SMP
 	barrier();
 
-	wait_for_APs_to_finish_booting();
+	//wait_for_APs_to_finish_booting();
 #endif
 #endif
 

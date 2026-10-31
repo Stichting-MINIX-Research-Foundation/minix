@@ -10,8 +10,7 @@
 
 static u32_t Hz;
 
-u32_t
-sys_hz(void)
+u32_t sys_hz(void)
 {
 	if(Hz <= 0) {
 		int r;
@@ -26,8 +25,7 @@ sys_hz(void)
 	return Hz;
 }
 
-u32_t
-micros_to_ticks(u32_t micros)
+u32_t micros_to_ticks(u32_t micros)
 {
         u32_t ticks;
 

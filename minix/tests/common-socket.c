@@ -1560,8 +1560,7 @@ void test_msg_dgram(const struct socket_test_info *info)
 #define check_select_cond(sd, rd, wr, block, allchecks) \
 	check_select_internal(sd, rd, wr, block, allchecks, __LINE__)
 
-static void
-check_select_internal(int sd, int rd, int wr, int block, int allchecks, int line)
+static void check_select_internal(int sd, int rd, int wr, int block, int allchecks, int line)
 {
 	fd_set read_set, write_set;
 	struct timeval tv;
@@ -1603,8 +1602,7 @@ check_select_internal(int sd, int rd, int wr, int block, int allchecks, int line
  * - doing a nonblocking read on a connected socket with no pending data yields
  *   EAGAIN.
  */
-void
-test_nonblock(const struct socket_test_info *info)
+void test_nonblock(const struct socket_test_info *info)
 {
 	char buf[BUFSIZE];
 	socklen_t len;
@@ -1743,8 +1741,7 @@ test_nonblock(const struct socket_test_info *info)
  * Verify that a nonblocking connect for which there is an accepter, succeeds
  * immediately.  A pretty lame test, only here for completeness.
  */
-void
-test_connect_nb(const struct socket_test_info *info)
+void test_connect_nb(const struct socket_test_info *info)
 {
 	socklen_t len;
 	int server_sd, client_sd;
@@ -1805,8 +1802,7 @@ test_connect_nb(const struct socket_test_info *info)
 	debug("leaving test_connect_nb()");
 }
 
-static void
-dummy_handler(int sig)
+static void dummy_handler(int sig)
 {
 	/* Nothing. */
 }
@@ -1820,8 +1816,7 @@ dummy_handler(int sig)
  * - doing a nonblocking write on a connected socket with lots of pending data
  *   yields EAGAIN.
  */
-void
-test_intr(const struct socket_test_info *info)
+void test_intr(const struct socket_test_info *info)
 {
 	struct sigaction act, oact;
 	char buf[BUFSIZE];
@@ -1954,8 +1949,7 @@ test_intr(const struct socket_test_info *info)
  * Verify that closing a connecting socket before it is accepted will result in
  * no activity on the accepting side later.
  */
-void
-test_connect_close(const struct socket_test_info *info)
+void test_connect_close(const struct socket_test_info *info)
 {
 	int server_sd, client_sd, sd, on;
 	struct sockaddr_storage addr;
@@ -2020,8 +2014,7 @@ test_connect_close(const struct socket_test_info *info)
  * works only if the connect(2) does not succeed before accept(2) is called at
  * all, which means it is limited to UDS with LOCAL_CONNWAIT right now.
  */
-void
-test_listen_close(const struct socket_test_info *info)
+void test_listen_close(const struct socket_test_info *info)
 {
 	int server_sd, client_sd;
 	int status, on;
@@ -2091,8 +2084,7 @@ test_listen_close(const struct socket_test_info *info)
  * result in the socket becoming readable and writable, and yielding ECONNRESET
  * and EPIPE on the next two writes, respectively.
  */
-void
-test_listen_close_nb(const struct socket_test_info *info)
+void test_listen_close_nb(const struct socket_test_info *info)
 {
 	int server_sd, client_sd;
 	int status, on;

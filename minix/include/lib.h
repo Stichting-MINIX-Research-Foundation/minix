@@ -33,7 +33,7 @@ void minix_stack_params(const char *path, char * const *argv,
 	int *envc);
 void minix_stack_fill(const char *path, int argc, char * const *argv,
 	int envc, char * const *envp, size_t stack_size, char *frame,
-	int *vsp, struct ps_strings **psp);
+	vir_bytes *vsp, struct ps_strings **psp);
 
 int __execve(const char *_path, char *const _argv[], char *const
 	_envp[], int _nargs, int _nenvps);

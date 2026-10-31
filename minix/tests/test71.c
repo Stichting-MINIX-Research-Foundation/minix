@@ -23,8 +23,7 @@
 #include "common.h"
 #include "testcache.h"
 
-int
-dowriteblock(int b, int blocksize, u32_t seed, char *data)
+int dowriteblock(int b, int blocksize, u32_t seed, char *data)
 {
 	u64_t offset;
 	int fd;
@@ -39,8 +38,7 @@ dowriteblock(int b, int blocksize, u32_t seed, char *data)
 	return blocksize;
 }
 
-int
-readblock(int b, int blocksize, u32_t seed, char *data)
+int readblock(int b, int blocksize, u32_t seed, char *data)
 {
 	u64_t offset;
 	int fd;
@@ -57,8 +55,7 @@ readblock(int b, int blocksize, u32_t seed, char *data)
 
 void testend(void) { }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int iter = 2;
 

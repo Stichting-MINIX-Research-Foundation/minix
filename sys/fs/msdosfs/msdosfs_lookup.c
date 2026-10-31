@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $");
 
 #include <sys/param.h>
 
@@ -140,7 +140,7 @@ msdosfs_lookup(void *v)
 #endif
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred)) != 0)
 		return (error);
@@ -161,6 +161,10 @@ msdosfs_lookup(void *v)
 		return *vpp == NULLVP ? ENOENT: 0;
 	}
 
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE)
+		return ENOLCK;
+
 	/*
 	 * If they are going after the . or .. entry in the root directory,
 	 * they won't find it.  DOS filesystems don't have them in the root
@@ -179,20 +183,20 @@ msdosfs_lookup(void *v)
 		goto foundroot;
 	}
 
-	switch (unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
+	switch (msdosfs_unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
 	    cnp->cn_namelen, 0)) {
 	case 0:
 		return (EINVAL);
 	case 1:
 		break;
 	case 2:
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		wincnt = msdosfs_winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	case 3:
 		olddos = 0;
-		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		wincnt = msdosfs_winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	}
 	if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
@@ -226,7 +230,8 @@ msdosfs_lookup(void *v)
 	 */
 	diroff = 0;
 	for (frcn = 0; diroff < dp->de_FileSize; frcn++) {
-		if ((error = pcbmap(dp, frcn, &bn, &cluster, &blsize)) != 0) {
+		if ((error = msdosfs_pcbmap(dp, frcn, &bn, &cluster,
+		    &blsize)) != 0) {
 			if (error == E2BIG)
 				break;
 			return (error);
@@ -279,10 +284,11 @@ msdosfs_lookup(void *v)
 					if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 						continue;
 
-					chksum = winChkName((const u_char *)cnp->cn_nameptr,
+					chksum = msdosfs_winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum);
+							    chksum,
+							    pmp->pm_flags & MSDOSFSMNT_UTF8);
 					continue;
 				}
 
@@ -298,7 +304,8 @@ msdosfs_lookup(void *v)
 				/*
 				 * Check for a checksum or name match
 				 */
-				chksum_ok = (chksum == winChksum(dep->deName));
+				chksum_ok =
+				    (chksum == msdosfs_winChksum(dep->deName));
 				if (!chksum_ok && (
 					!olddos ||
 					memcmp(&dosfilename[0],dep->deName,8) ||
@@ -315,21 +322,21 @@ msdosfs_lookup(void *v)
 				 * entry came from for whoever did
 				 * this lookup.
 				 */
-				dp->de_fndoffset = diroff;
+				dp->de_crap.mlr_fndoffset = diroff;
 				if (chksum_ok && nameiop == RENAME) {
 					/*
 					 * Target had correct long name
 					 * directory entries, reuse them
 					 * as needed.
 					 */
-					dp->de_fndcnt = wincnt - 1;
+					dp->de_crap.mlr_fndcnt = wincnt - 1;
 				} else {
 					/*
 					 * Long name directory entries
 					 * not present or corrupt, can only
 					 * reuse dos directory entry.
 					 */
-					dp->de_fndcnt = 0;
+					dp->de_crap.mlr_fndcnt = 0;
 				}
 
 				goto found;
@@ -384,8 +391,8 @@ notfound:
 		 * Return an indication of where the new directory
 		 * entry should be put.
 		 */
-		dp->de_fndoffset = slotoffset;
-		dp->de_fndcnt = wincnt - 1;
+		dp->de_crap.mlr_fndoffset = slotoffset;
+		dp->de_crap.mlr_fndcnt = wincnt - 1;
 
 		/*
 		 * We return with the directory locked, so that
@@ -490,7 +497,7 @@ foundroot:
 			*vpp = vdp;
 			return (0);
 		}
-		error = deget(pmp, cluster, blkoff, vpp);
+		error = msdosfs_deget(pmp, cluster, blkoff, vpp);
 		return error;
 	}
 
@@ -519,14 +526,14 @@ foundroot:
 		if (dp->de_StartCluster == scn && isadir)
 			return (EISDIR);
 
-		error = deget(pmp, cluster, blkoff, vpp);
+		error = msdosfs_deget(pmp, cluster, blkoff, vpp);
 		return error;
 	}
 
 	if (dp->de_StartCluster == scn && isadir) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
-	} else if ((error = deget(pmp, cluster, blkoff, vpp)) != 0) {
+	} else if ((error = msdosfs_deget(pmp, cluster, blkoff, vpp)) != 0) {
 		return error;
 	}
 
@@ -547,7 +554,9 @@ foundroot:
  * cnp  - componentname needed for Win95 long filenames
  */
 int
-createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct componentname *cnp)
+msdosfs_createde(struct denode *dep, struct denode *ddep,
+    const struct msdosfs_lookup_results *mlr,
+    struct denode **depp, struct componentname *cnp)
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
@@ -576,12 +585,14 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * to extend the root directory.  We just return an error in that
 	 * case.
 	 */
-	if (ddep->de_fndoffset >= ddep->de_FileSize) {
-		u_long needlen = ddep->de_fndoffset + sizeof(struct direntry)
-		    - ddep->de_FileSize;
+	if (mlr->mlr_fndoffset >= ddep->de_FileSize) {
+		u_long needlen = ddep->de_crap.mlr_fndoffset
+		    + sizeof(struct direntry) - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, needlen);
-		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
-			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED);
+		if ((error = msdosfs_extendfile(ddep, dirclust, 0, 0,
+		    DE_CLEAR)) != 0) {
+			(void)msdosfs_detrunc(ddep, ddep->de_FileSize, 0,
+			    NOCRED);
 			goto err_norollback;
 		}
 
@@ -596,11 +607,11 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * entry in.  Then write it to disk. NOTE:  DOS directories
 	 * do not get smaller as clusters are emptied.
 	 */
-	error = pcbmap(ddep, de_cluster(pmp, ddep->de_fndoffset),
+	error = msdosfs_pcbmap(ddep, de_cluster(pmp, mlr->mlr_fndoffset),
 		       &bn, &dirclust, &blsize);
 	if (error)
 		goto err_norollback;
-	clusoffset = ddep->de_fndoffset;
+	clusoffset = mlr->mlr_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		clusoffset &= pmp->pm_crbomask;
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
@@ -614,14 +625,14 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	/*
 	 * Now write the Win95 long name
 	 */
-	if (ddep->de_fndcnt > 0) {
-		u_int8_t chksum = winChksum(ndep->deName);
+	if (mlr->mlr_fndcnt > 0) {
+		u_int8_t chksum = msdosfs_winChksum(ndep->deName);
 		const u_char *un = (const u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
 		u_long xhavecnt;
 
-		fndoffset = ddep->de_fndoffset;
-		xhavecnt = ddep->de_fndcnt + 1;
+		fndoffset = mlr->mlr_fndoffset;
+		xhavecnt = mlr->mlr_fndcnt + 1;
 
 		for(; wcnt < xhavecnt; wcnt++) {
 			if ((fndoffset & pmp->pm_crbomask) == 0) {
@@ -634,7 +645,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 					goto rollback;
 
 				fndoffset -= sizeof(struct direntry);
-				error = pcbmap(ddep,
+				error = msdosfs_pcbmap(ddep,
 					       de_cluster(pmp, fndoffset),
 					       &bn, 0, &blsize);
 				if (error)
@@ -651,8 +662,10 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				ndep--;
 				fndoffset -= sizeof(struct direntry);
 			}
-			if (!unix2winfn(un, unlen, (struct winentry *)ndep,
-						wcnt, chksum))
+			if (!msdosfs_unix2winfn(un, unlen,
+					(struct winentry *)ndep,
+					wcnt, chksum,
+					ddep->de_pmp->pm_flags & MSDOSFSMNT_UTF8))
 				break;
 		}
 	}
@@ -678,11 +691,11 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				diroffset = 0;
 		}
 #ifdef MAKEFS
-		error = deget(pmp, dirclust, diroffset, depp);
+		error = msdosfs_deget(pmp, dirclust, diroffset, depp);
 #else
 		struct vnode *vp;
 
-		error = deget(pmp, dirclust, diroffset, &vp);
+		error = msdosfs_deget(pmp, dirclust, diroffset, &vp);
 		if (error == 0)
 			*depp = VTODE(vp);
 		else
@@ -699,8 +712,8 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * can't just call removede(), since directory is not in
 	 * consistent state.
 	 */
-	fndoffset = ddep->de_fndoffset;
-	rberror = pcbmap(ddep, de_cluster(pmp, fndoffset),
+	fndoffset = mlr->mlr_fndoffset;
+	rberror = msdosfs_pcbmap(ddep, de_cluster(pmp, fndoffset),
 	       &bn, NULL, &blsize);
 	if (rberror)
 		goto err_norollback;
@@ -710,7 +723,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	}
 	ndep = bptoep(pmp, bp, clusoffset);
 
-	havecnt = ddep->de_fndcnt + 1;
+	havecnt = mlr->mlr_fndcnt + 1;
 	for(i = wcnt; i <= havecnt; i++) {
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
@@ -725,7 +738,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				goto err_norollback;
 
 			fndoffset -= sizeof(struct direntry);
-			rberror = pcbmap(ddep,
+			rberror = msdosfs_pcbmap(ddep,
 				       de_cluster(pmp, fndoffset),
 				       &bn, 0, &blsize);
 			if (rberror)
@@ -758,7 +771,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
  * return 0 if not empty or error.
  */
 int
-dosdirempty(struct denode *dep)
+msdosfs_dosdirempty(struct denode *dep)
 {
 	int blsize;
 	int error;
@@ -774,7 +787,7 @@ dosdirempty(struct denode *dep)
 	 * we hit end of file.
 	 */
 	for (cn = 0;; cn++) {
-		if ((error = pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
+		if ((error = msdosfs_pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
 			if (error == E2BIG)
 				return (1);	/* it's empty */
 			return (0);
@@ -822,122 +835,13 @@ dosdirempty(struct denode *dep)
 }
 
 /*
- * Check to see if the directory described by target is in some
- * subdirectory of source.  This prevents something like the following from
- * succeeding and leaving a bunch or files and directories orphaned. mv
- * /a/b/c /a/b/c/d/e/f Where c and f are directories.
- *
- * source - the inode for /a/b/c
- * target - the inode for /a/b/c/d/e/f
- *
- * Returns 0 if target is NOT a subdirectory of source.
- * Otherwise returns a non-zero error number.
- * The target inode is always unlocked on return.
- */
-int
-doscheckpath(struct denode *source, struct denode *target)
-{
-	u_long scn;
-	struct msdosfsmount *pmp;
-	struct direntry *ep;
-	struct denode *dep;
-	struct buf *bp = NULL;
-	int error = 0;
-
-	dep = target;
-	if ((target->de_Attributes & ATTR_DIRECTORY) == 0 ||
-	    (source->de_Attributes & ATTR_DIRECTORY) == 0) {
-		error = ENOTDIR;
-		goto out;
-	}
-	if (dep->de_StartCluster == source->de_StartCluster) {
-		error = EEXIST;
-		goto out;
-	}
-	if (dep->de_StartCluster == MSDOSFSROOT)
-		goto out;
-	pmp = dep->de_pmp;
-#ifdef	DIAGNOSTIC
-	if (pmp != source->de_pmp)
-		panic("doscheckpath: source and target on different filesystems");
-#endif
-	if (FAT32(pmp) && dep->de_StartCluster == pmp->pm_rootdirblk)
-		goto out;
-
-	for (;;) {
-		if ((dep->de_Attributes & ATTR_DIRECTORY) == 0) {
-			error = ENOTDIR;
-			break;
-		}
-		scn = dep->de_StartCluster;
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, cntobn(pmp, scn)),
-			      pmp->pm_bpcluster, 0, &bp);
-		if (error)
-			break;
-
-		ep = (struct direntry *) bp->b_data + 1;
-		if ((ep->deAttributes & ATTR_DIRECTORY) == 0 ||
-		    memcmp(ep->deName, "..         ", 11) != 0) {
-			error = ENOTDIR;
-			break;
-		}
-		scn = getushort(ep->deStartCluster);
-		if (FAT32(pmp))
-			scn |= getushort(ep->deHighClust) << 16;
-
-		if (scn == source->de_StartCluster) {
-			error = EINVAL;
-			break;
-		}
-		if (scn == MSDOSFSROOT)
-			break;
-		if (FAT32(pmp) && scn == pmp->pm_rootdirblk) {
-			/*
-			 * scn should be 0 in this case,
-			 * but we silently ignore the error.
-			 */
-			break;
-		}
-
-		vput(DETOV(dep));
-		brelse(bp, 0);
-		bp = NULL;
-#ifdef MAKEFS
-		/* NOTE: deget() clears dep on error */
-		if ((error = deget(pmp, scn, 0, &dep)) != 0)
-			break;
-#else
-		struct vnode *vp;
-
-		dep = NULL;
-		error = deget(pmp, scn, 0, &vp);
-		if (error)
-			break;
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error) {
-			vrele(vp);
-			break;
-		}
-		dep = VTODE(vp);
-#endif
-	}
-out:
-	if (bp)
-		brelse(bp, 0);
-	if (error == ENOTDIR)
-		printf("doscheckpath(): .. not a directory?\n");
-	if (dep != NULL)
-		vput(DETOV(dep));
-	return (error);
-}
-
-/*
  * Read in the disk block containing the directory entry (dirclu, dirofs)
  * and return the address of the buf header, and the address of the
  * directory entry within the block.
  */
 int
-readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf **bpp, struct direntry **epp)
+msdosfs_readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
+    struct buf **bpp, struct direntry **epp)
 {
 	int error;
 	daddr_t bn;
@@ -964,9 +868,9 @@ readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf *
  * entry within the block.
  */
 int
-readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
+msdosfs_readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
 {
-	return (readep(dep->de_pmp, dep->de_dirclust, dep->de_diroffset,
+	return (msdosfs_readep(dep->de_pmp, dep->de_dirclust, dep->de_diroffset,
 			bpp, epp));
 }
 
@@ -979,9 +883,11 @@ readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
  * msdosfs_reclaim() which will remove the denode from the denode cache.
  */
 int
-removede(struct denode *pdep, struct denode *dep)
+msdosfs_removede(struct denode *pdep, struct denode *dep,
+    const struct msdosfs_lookup_results *mlr)
 	/* pdep:	 directory where the entry is removed */
 	/* dep:	 file to be removed */
+	/* mlr:	 position of dep in pdep from lookup */
 {
 	int error;
 	struct direntry *ep;
@@ -989,7 +895,7 @@ removede(struct denode *pdep, struct denode *dep)
 	daddr_t bn;
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
-	u_long offset = pdep->de_fndoffset;
+	u_long offset = mlr->mlr_fndoffset;
 #ifdef _KERNEL
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 #else
@@ -1018,7 +924,8 @@ removede(struct denode *pdep, struct denode *dep)
 	offset += sizeof(struct direntry);
 	do {
 		offset -= sizeof(struct direntry);
-		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
+		error = msdosfs_pcbmap(pdep, de_cluster(pmp, offset), &bn, 0,
+		    &blsize);
 		if (error)
 			return error;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
@@ -1033,14 +940,14 @@ removede(struct denode *pdep, struct denode *dep)
 		 * entry in this block is a longfilename entry, too.
 		 */
 		if (ep->deAttributes != ATTR_WIN95
-		    && offset != pdep->de_fndoffset) {
+		    && offset != mlr->mlr_fndoffset) {
 			brelse(bp, 0);
 			break;
 		}
 		offset += sizeof(struct direntry);
 		while (1) {
 			/*
-			 * We are a bit agressive here in that we delete any Win95
+			 * We are a bit aggressive here in that we delete any Win95
 			 * entries preceding this entry, not just the ones we "own".
 			 * Since these presumably aren't valid anyway,
 			 * there should be no harm.
@@ -1066,7 +973,7 @@ removede(struct denode *pdep, struct denode *dep)
  * Create a unique DOS name in dvp
  */
 int
-uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
+msdosfs_uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
@@ -1081,7 +988,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 		/*
 		 * Generate DOS name with generation number
 		 */
-		if (!unix2dosfn((const u_char *)cnp->cn_nameptr, cp,
+		if (!msdosfs_unix2dosfn((const u_char *)cnp->cn_nameptr, cp,
 		    cnp->cn_namelen, gen))
 			return gen == 1 ? EINVAL : EEXIST;
 
@@ -1089,7 +996,8 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 		 * Now look for a dir entry with this exact name
 		 */
 		for (cn = error = 0; !error; cn++) {
-			if ((error = pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
+			if ((error = msdosfs_pcbmap(dep, cn, &bn, 0,
+			    &blsize)) != 0) {
 				if (error == E2BIG)	/* EOF reached and not found */
 					return 0;
 				return error;
@@ -1128,7 +1036,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
  * Find any Win'95 long filename entry in directory dep
  */
 int
-findwin95(struct denode *dep)
+msdosfs_findwin95(struct denode *dep)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
@@ -1143,7 +1051,7 @@ findwin95(struct denode *dep)
 	 * XXX Note: Error currently handled just as EOF
 	 */
 	for (cn = 0;; cn++) {
-		if (pcbmap(dep, cn, &bn, 0, &blsize))
+		if (msdosfs_pcbmap(dep, cn, &bn, 0, &blsize))
 			return win95;
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp)) {

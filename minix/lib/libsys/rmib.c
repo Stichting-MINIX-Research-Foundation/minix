@@ -61,8 +61,7 @@ static struct {
  * of data that is to be copied out.  This call can be used to test whether
  * certain bits of data need to be prepared for copying at all.
  */
-int
-rmib_inrange(struct rmib_oldp * oldp, size_t off)
+int rmib_inrange(struct rmib_oldp * oldp, size_t off)
 {
 
 	if (oldp == NULL)
@@ -76,8 +75,7 @@ rmib_inrange(struct rmib_oldp * oldp, size_t off)
  * directly except in highly unusual cases, such as particular node requests
  * where the request semantics blatantly violate overall sysctl(2) semantics.
  */
-size_t
-rmib_getoldlen(struct rmib_oldp * oldp)
+size_t rmib_getoldlen(struct rmib_oldp * oldp)
 {
 
 	if (oldp == NULL)
@@ -91,8 +89,7 @@ rmib_getoldlen(struct rmib_oldp * oldp)
  * the range of data requested by the user.  Return the requested length on
  * success (for the caller's convenience) or an error code on failure.
  */
-ssize_t
-rmib_copyout(struct rmib_oldp * __restrict oldp, size_t off,
+ssize_t rmib_copyout(struct rmib_oldp * __restrict oldp, size_t off,
 	const void * __restrict buf, size_t size)
 {
 	size_t len;
@@ -120,8 +117,7 @@ rmib_copyout(struct rmib_oldp * __restrict oldp, size_t off,
  * requested by the user.  Return the total requested length on success or an
  * error code on failure.
  */
-ssize_t
-rmib_vcopyout(struct rmib_oldp * oldp, size_t off, const iovec_t * iov,
+ssize_t rmib_vcopyout(struct rmib_oldp * oldp, size_t off, const iovec_t * iov,
 	unsigned int iovcnt)
 {
 	static struct vscp_vec vec[RMIB_IOV_MAX];
@@ -172,8 +168,7 @@ rmib_vcopyout(struct rmib_oldp * oldp, size_t off, const iovec_t * iov,
  * Copy in data from the user.  The given length must match exactly the length
  * given by the user.  Return OK or an error code.
  */
-int
-rmib_copyin(struct rmib_newp * __restrict newp, void * __restrict buf,
+int rmib_copyin(struct rmib_newp * __restrict newp, void * __restrict buf,
 	size_t len)
 {
 
@@ -193,8 +188,7 @@ rmib_copyin(struct rmib_newp * __restrict newp, void * __restrict buf,
  * node falls outside the requested data range, would be) copied out on
  * success, or a negative error code on failure.
  */
-static ssize_t
-rmib_copyout_node(struct rmib_call * call, struct rmib_oldp * oldp,
+static ssize_t rmib_copyout_node(struct rmib_call * call, struct rmib_oldp * oldp,
 	ssize_t off, unsigned int id, const struct rmib_node * rnode)
 {
 	struct sysctlnode scn;
@@ -264,8 +258,7 @@ rmib_copyout_node(struct rmib_call * call, struct rmib_oldp * oldp,
  * Given a query on a non-leaf (parent) node, provide the user with an array of
  * this node's children.
  */
-static ssize_t
-rmib_query(struct rmib_call * call, struct rmib_node * rparent,
+static ssize_t rmib_query(struct rmib_call * call, struct rmib_node * rparent,
 	struct rmib_oldp * oldp, struct rmib_newp * newp)
 {
 	struct sysctlnode scn;
@@ -321,8 +314,7 @@ rmib_query(struct rmib_call * call, struct rmib_node * rparent,
  * range, would be) copied out on success, or a negative error code on failure.
  * The function may return 0 to indicate that nothing was copied out after all.
  */
-static ssize_t
-rmib_copyout_desc(struct rmib_call * call, struct rmib_oldp * oldp,
+static ssize_t rmib_copyout_desc(struct rmib_call * call, struct rmib_oldp * oldp,
 	ssize_t off, unsigned int id, const struct rmib_node * rnode)
 {
 	struct sysctldesc scd;
@@ -411,8 +403,7 @@ rmib_lookup(struct rmib_node * rparent, unsigned int id)
  * Retrieve node descriptions in bulk, or retrieve a particular node's
  * description.
  */
-static ssize_t
-rmib_describe(struct rmib_call * call, struct rmib_node * rparent,
+static ssize_t rmib_describe(struct rmib_call * call, struct rmib_node * rparent,
 	struct rmib_oldp * oldp, struct rmib_newp * newp)
 {
 	struct sysctlnode scn;
@@ -512,8 +503,7 @@ rmib_getptr(struct rmib_node * rnode)
  * Read current (old) data from a regular data node, if requested.  Return the
  * old data length.
  */
-static ssize_t
-rmib_read(struct rmib_node * rnode, struct rmib_oldp * oldp)
+static ssize_t rmib_read(struct rmib_node * rnode, struct rmib_oldp * oldp)
 {
 	void *ptr;
 	size_t oldlen;
@@ -541,8 +531,7 @@ rmib_read(struct rmib_node * rnode, struct rmib_oldp * oldp)
 /*
  * Write new data into a regular data node, if requested.
  */
-static int
-rmib_write(struct rmib_call * call, struct rmib_node * rnode,
+static int rmib_write(struct rmib_call * call, struct rmib_node * rnode,
 	struct rmib_newp * newp)
 {
 	bool b[(sizeof(bool) == sizeof(char)) ? 1 : -1]; /* for sanitizing */
@@ -649,8 +638,7 @@ rmib_write(struct rmib_call * call, struct rmib_node * rnode,
  * case this function will be used instead.  In addition, this function may be
  * used from handler functions as part of their functionality.
  */
-ssize_t
-rmib_readwrite(struct rmib_call * call, struct rmib_node * rnode,
+ssize_t rmib_readwrite(struct rmib_call * call, struct rmib_node * rnode,
 	struct rmib_oldp * oldp, struct rmib_newp * newp)
 {
 	ssize_t len;
@@ -675,8 +663,7 @@ rmib_readwrite(struct rmib_call * call, struct rmib_node * rnode,
  * when applicable, so we do not have to do that here.  If the call fails,
  * return a negative error code.
  */
-static ssize_t
-rmib_call(const message * m_in)
+static ssize_t rmib_call(const message * m_in)
 {
 	struct rmib_node *rnode, *rparent;
 	struct rmib_call call;
@@ -827,8 +814,7 @@ rmib_call(const message * m_in)
  * Initialize the given node and recursively all its node-type children,
  * assigning the proper child length value to each of them.
  */
-static void
-rmib_init(struct rmib_node * rparent)
+static void rmib_init(struct rmib_node * rparent)
 {
 	struct rmib_node *rnode;
 	unsigned int i;
@@ -859,8 +845,7 @@ rmib_init(struct rmib_node * rparent)
  * identifier.  This is a one-way request, so we never hear whether mounting
  * succeeds.  There is not that much we can do if it fails anyway though.
  */
-static void
-rmib_send_reg(int id)
+static void rmib_send_reg(int id)
 {
 	message m;
 	int r;
@@ -885,8 +870,7 @@ rmib_send_reg(int id)
  * Register a MIB subtree.  Initialize the subtree, add it to the local set,
  * and send a registration request for it to the MIB service.
  */
-int
-rmib_register(const int * name, unsigned int namelen, struct rmib_node * rnode)
+int rmib_register(const int * name, unsigned int namelen, struct rmib_node * rnode)
 {
 	unsigned int id, free_id;
 
@@ -930,8 +914,7 @@ rmib_register(const int * name, unsigned int namelen, struct rmib_node * rnode)
  * which case the given subtree is guaranteed to no longer be accessed.  Return
  * a negative error code on failure.
  */
-int
-rmib_deregister(struct rmib_node * rnode)
+int rmib_deregister(struct rmib_node * rnode)
 {
 	message m;
 	unsigned int id;
@@ -969,8 +952,7 @@ rmib_deregister(struct rmib_node * rnode)
  * called after the main program has determined that the MIB service has been
  * restarted.
  */
-void
-rmib_reregister(void)
+void rmib_reregister(void)
 {
 	unsigned int id;
 
@@ -983,8 +965,7 @@ rmib_reregister(void)
  * Reset all registrations, without involving MIB communication.  This routine
  * exists for testing purposes only, and may disappear in the future.
  */
-void
-rmib_reset(void)
+void rmib_reset(void)
 {
 
 	memset(rnodes, 0, sizeof(rnodes));
@@ -994,8 +975,7 @@ rmib_reset(void)
  * Process a request from the MIB service for information about the root node
  * of a subtree, specifically its name and description.
  */
-static int
-rmib_info(const message * m_in)
+static int rmib_info(const message * m_in)
 {
 	struct rmib_node *rnode;
 	unsigned int id;
@@ -1033,8 +1013,7 @@ rmib_info(const message * m_in)
  * Process a request from the MIB service.  The given message should originate
  * from the MIB service and have one of the COMMON_MIB_ requests as type.
  */
-void
-rmib_process(const message * m_in, int ipc_status)
+void rmib_process(const message * m_in, int ipc_status)
 {
 	message m_out;
 	uint32_t req_id;

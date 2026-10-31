@@ -254,6 +254,24 @@ void arch_init(void)
 	 * configuration does this in smp_init() for all cpus at once
 	 */
 	tss_init(0, get_k_stack_top(0));
+#else
+	/*
+	 * Under SMP the BSP runs the whole bootstrap on the separate boot stack
+	 * (k_boot_stk) until smp_init() switches to its per-CPU stack.
+	 * tss_init_all() seeds the cpuid slot (top-of-stack[-1]) only on the
+	 * per-CPU stacks, so until that switch every get_cpulocal_var() on the
+	 * boot stack -- in arch_post_init() (ptproc = vm), memory_init(),
+	 * system_init(), and the LAPIC-calibration clock IRQ -- would index by a
+	 * garbage cpuid read from an uninitialized boot-stack word.  The
+	 * bootstrap CPU is index 0; seed the boot stack's slot now.  The slot is
+	 * the topmost boot-stack word, only written by the entry frame, so this
+	 * value persists for the rest of the boot-stack phase.  The cpuid macro
+	 * is an lvalue using the same %ebp-rounded computation as every reader.
+	 * (On i386 the stale slot does not fault like amd64 does -- the 32-bit
+	 * OOB index wraps into mapped memory -- but it still mis-indexes per-CPU
+	 * state; seed it.)
+	 */
+	cpuid = 0;
 #endif
 
 #if !CONFIG_OXPCIE
@@ -273,9 +291,11 @@ void arch_init(void)
 	}
 #endif
 
+   	if (kinfo.boot_mode == 0) {
 	/* Reserve some BIOS ranges */
 	cut_memmap(&kinfo, BIOS_MEM_BEGIN, BIOS_MEM_END);
 	cut_memmap(&kinfo, BASE_MEM_TOP, UPPER_MEM_END);
+	}
 }
 
 /*===========================================================================*

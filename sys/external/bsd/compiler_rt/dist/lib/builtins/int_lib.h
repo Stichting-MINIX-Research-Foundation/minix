@@ -37,7 +37,7 @@
 # define COMPILER_RT_ABI COMPILER_RT_EXPORT
 #endif
 
-#if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
+#if (defined(__NetBSD__) || defined(__minix)) && (defined(_KERNEL) || defined(_STANDALONE))
 /*
  * Kernel and boot environment can't use normal headers,
  * so use the equivalent system headers.

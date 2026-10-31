@@ -1,0 +1,7 @@
+#define	NWSFONT_GLUE	0
+#define	NRASOPS_ROTATION	0
+#define	NRASTERCONSOLE	0
+#define	NWSDISPLAY	1
+#define	NWSFONT	1
+#define	NVCONS	1
+

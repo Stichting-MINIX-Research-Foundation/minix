@@ -986,8 +986,7 @@ static const struct {
 /*
  * Process a list of 'domain' protocol families for socket drivers.
  */
-static void
-do_domain(config_t * cpe, struct rs_start * rs_start)
+static void do_domain(config_t * cpe, struct rs_start * rs_start)
 {
 	unsigned int i;
 	int nr_domain, domain;

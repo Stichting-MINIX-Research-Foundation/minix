@@ -41,7 +41,9 @@ __RCSID("$NetBSD: show.c,v 1.48 2015/03/23 18:33:17 roy Exp $");
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#ifndef __minix
 #include <sys/mbuf.h>
+#endif
 
 #include <arpa/inet.h>
 #include <net/if.h>

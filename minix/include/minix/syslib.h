@@ -59,7 +59,7 @@ int sys_vm_setbuf(phys_bytes base, phys_bytes size, phys_bytes high);
 int sys_vm_map(endpoint_t proc_ep, int do_map, phys_bytes base,
 	phys_bytes size, phys_bytes offset);
 int sys_vmctl(endpoint_t who, int param, u32_t value);
-int sys_vmctl_get_pdbr(endpoint_t who, u32_t *pdbr);
+int sys_vmctl_get_pdbr(endpoint_t who, phys_bytes *pdbr);
 int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem, vir_bytes
 	*len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s, endpoint_t *);
 int sys_vmctl_enable_paging(void * data);
@@ -84,13 +84,13 @@ int sys_vmctl_set_addrspace(endpoint_t who, phys_bytes ptroot, void
 #define sys_outsw(port, proc_ep, buffer, count) \
   sys_sdevio(DIO_OUTPUT_WORD, port, proc_ep, buffer, count, 0)
 #define sys_safe_insb(port, ept, grant, offset, count) \
-  sys_sdevio(DIO_SAFE_INPUT_BYTE, port, ept, (void*)grant, count, offset)
+  sys_sdevio(DIO_SAFE_INPUT_BYTE, port, ept, (void*)(uintptr_t)(grant), count, offset)
 #define sys_safe_outsb(port, ept, grant, offset, count) \
-  sys_sdevio(DIO_SAFE_OUTPUT_BYTE, port, ept, (void*)grant, count, offset)
+  sys_sdevio(DIO_SAFE_OUTPUT_BYTE, port, ept, (void*)(uintptr_t)(grant), count, offset)
 #define sys_safe_insw(port, ept, grant, offset, count) \
-  sys_sdevio(DIO_SAFE_INPUT_WORD, port, ept, (void*)grant, count, offset)
+  sys_sdevio(DIO_SAFE_INPUT_WORD, port, ept, (void*)(uintptr_t)(grant), count, offset)
 #define sys_safe_outsw(port, ept, grant, offset, count) \
-  sys_sdevio(DIO_SAFE_OUTPUT_WORD, port, ept, (void*)grant, count, offset)
+  sys_sdevio(DIO_SAFE_OUTPUT_WORD, port, ept, (void*)(uintptr_t)(grant), count, offset)
 int sys_sdevio(int req, long port, endpoint_t proc_ep, void *buffer, int
 	count, vir_bytes offset);
 void *alloc_contig(size_t len, int flags, phys_bytes *phys);
@@ -247,7 +247,7 @@ char *pci_dev_name(u16_t vid, u16_t did);
 char *pci_slot_name(int devind);
 int pci_set_acl(struct rs_pci *rs_pci);
 int pci_del_acl(endpoint_t proc_ep);
-int pci_get_bar(int devind, int port, u32_t *base, u32_t *size, int
+int pci_get_bar(int devind, int port, u64_t *base, u32_t *size, int
 	*ioflag);
 
 /* Profiling. */

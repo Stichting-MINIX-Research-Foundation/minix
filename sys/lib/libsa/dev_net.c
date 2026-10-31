@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.26 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.27 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ net_close(struct open_file *f)
 	if (netdev_sock >= 0) {
 #ifdef NETIF_DEBUG
 		if (debug)
-			printf("net_close: calling netif_close()\n");
+			printf("%s: calling netif_close()\n", __func__);
 #endif
 		netif_close(netdev_sock);
 		netdev_sock = -1;
@@ -249,7 +249,7 @@ net_getparams(int sock)
 	smask = 0;
 	gateip.s_addr = 0;
 	if (bp_getfile(sock, "gateway", &gateip, buf)) {
-		printf("nfs_open: gateway bootparam missing\n");
+		printf("%s: gateway bootparam missing\n", __func__);
 	} else {
 		/* Got it!  Parse the netmask. */
 		smask = inet_addr(buf);

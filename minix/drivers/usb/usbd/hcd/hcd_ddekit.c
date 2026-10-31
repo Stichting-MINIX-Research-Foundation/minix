@@ -129,8 +129,7 @@ _ddekit_usb_get_interface_desc(struct ddekit_usb_dev * ddev, int inum)
 /*===========================================================================*
  *    ddekit_usb_dev_set_data                                                *
  *===========================================================================*/
-int
-ddekit_usb_dev_set_data(struct ddekit_usb_dev * dev, void * data)
+int ddekit_usb_dev_set_data(struct ddekit_usb_dev * dev, void * data)
 {
 	hcd_device_state * hcd_dev;
 
@@ -165,8 +164,7 @@ ddekit_usb_dev_get_data(struct ddekit_usb_dev * dev)
 /*===========================================================================*
  *    ddekit_usb_get_device_id                                               *
  *===========================================================================*/
-void
-ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
+void ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
 			struct ddekit_usb_device_id * id)
 {
 	DEBUG_DUMP;
@@ -181,8 +179,7 @@ ddekit_usb_get_device_id(struct ddekit_usb_dev * dev,
 /*===========================================================================*
  *    ddekit_usb_submit_urb                                                  *
  *===========================================================================*/
-int
-ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
+int ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 {
 	hcd_urb * urb;
 
@@ -203,8 +200,7 @@ ddekit_usb_submit_urb(struct ddekit_usb_urb * d_urb)
 /*===========================================================================*
  *    ddekit_usb_cancle_urb                                                  *
  *===========================================================================*/
-int
-ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
+int ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
 {
 	DEBUG_DUMP;
 	/* TODO: UNUSED for argument won't work */
@@ -218,8 +214,7 @@ ddekit_usb_cancle_urb(struct ddekit_usb_urb * d_urb)
 /*===========================================================================*
  *    ddekit_usb_info                                                        *
  *===========================================================================*/
-long
-ddekit_usb_info(struct ddekit_usb_dev * dev, long type, long value)
+long ddekit_usb_info(struct ddekit_usb_dev * dev, long type, long value)
 {
 	hcd_event event;
 	hcd_reg1 val;
@@ -243,8 +238,7 @@ ddekit_usb_info(struct ddekit_usb_dev * dev, long type, long value)
 /*===========================================================================*
  *    ddekit_usb_init                                                        *
  *===========================================================================*/
-int
-ddekit_usb_init(struct ddekit_usb_driver * drv,
+int ddekit_usb_init(struct ddekit_usb_driver * drv,
 		ddekit_usb_malloc_fn * _m,
 		ddekit_usb_free_fn * _f)
 {
@@ -264,8 +258,7 @@ ddekit_usb_init(struct ddekit_usb_driver * drv,
 /*===========================================================================*
  *    hcd_connect_cb                                                         *
  *===========================================================================*/
-void
-hcd_connect_cb(hcd_device_state * dev)
+void hcd_connect_cb(hcd_device_state * dev)
 {
 	unsigned int if_bitmask;
 
@@ -286,8 +279,7 @@ hcd_connect_cb(hcd_device_state * dev)
 /*===========================================================================*
  *    hcd_disconnect_cb                                                      *
  *===========================================================================*/
-void
-hcd_disconnect_cb(hcd_device_state * dev)
+void hcd_disconnect_cb(hcd_device_state * dev)
 {
 	DEBUG_DUMP;
 
@@ -298,8 +290,7 @@ hcd_disconnect_cb(hcd_device_state * dev)
 /*===========================================================================*
  *    hcd_completion_cb                                                      *
  *===========================================================================*/
-void
-hcd_completion_cb(hcd_urb * urb)
+void hcd_completion_cb(hcd_urb * urb)
 {
 	struct ddekit_usb_urb * d_urb;
 
@@ -325,8 +316,7 @@ hcd_completion_cb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_decode_urb                                                         *
  *===========================================================================*/
-static void
-hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
+static void hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 {
 	DEBUG_DUMP;
 
@@ -417,8 +407,7 @@ hcd_decode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 /*===========================================================================*
  *    hcd_encode_urb                                                         *
  *===========================================================================*/
-static void
-hcd_encode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
+static void hcd_encode_urb(hcd_urb * urb, struct ddekit_usb_urb * dde_urb)
 {
 	DEBUG_DUMP;
 
@@ -443,8 +432,7 @@ hcd_new_urb(void)
 /*===========================================================================*
  *    hcd_free_urb                                                           *
  *===========================================================================*/
-static void
-hcd_free_urb(hcd_urb * urb)
+static void hcd_free_urb(hcd_urb * urb)
 {
 	DEBUG_DUMP;
 	free(urb);
@@ -454,8 +442,7 @@ hcd_free_urb(hcd_urb * urb)
 /*===========================================================================*
  *    hcd_decode_info                                                        *
  *===========================================================================*/
-static void
-hcd_decode_info(long type, long invalue, hcd_event * event, hcd_reg1 * outvalue)
+static void hcd_decode_info(long type, long invalue, hcd_event * event, hcd_reg1 * outvalue)
 {
 	DEBUG_DUMP;
 

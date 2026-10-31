@@ -23,7 +23,7 @@ static int phys_pagefault(struct vmproc *vmp, struct vir_region *region,
         struct phys_region *ph, int write, vfs_callback_t cb, void *state,
 	int len, int *io);
 static int phys_copy(struct vir_region *vr, struct vir_region *newvr);
-static int phys_pt_flags(struct vir_region *vr);
+static u64_t phys_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_directphys = {
 	.name = "physical memory mapping",
@@ -34,7 +34,7 @@ struct mem_type mem_type_directphys = {
 	.pt_flags = phys_pt_flags
 };
 
-static int phys_pt_flags(struct vir_region *vr){
+static u64_t phys_pt_flags(struct vir_region *vr){
 #if defined(__arm__)
 	return ARM_VM_PTE_DEVICE;
 #else

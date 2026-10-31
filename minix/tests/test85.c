@@ -52,8 +52,7 @@ static int pipe_fd[2];
 /*
  * Fill the given buffer with random contents.
  */
-static void
-fill_buf(char * buf, size_t size)
+static void fill_buf(char * buf, size_t size)
 {
 
 	while (size--)
@@ -65,8 +64,7 @@ fill_buf(char * buf, size_t size)
  * order.  There are probably better ways to do this, but it is morning, and I
  * haven't had coffee yet, so go away.
  */
-static void
-scramble(int * dst, const int * src, int count)
+static void scramble(int * dst, const int * src, int count)
 {
 	int i, j, k;
 
@@ -86,8 +84,7 @@ scramble(int * dst, const int * src, int count)
  * Perform I/O using read(2) and check the returned results against the
  * expected result and the image reference data.
  */
-static void
-io_read(size_t pos, size_t len, size_t expected)
+static void io_read(size_t pos, size_t len, size_t expected)
 {
 	ssize_t bytes;
 
@@ -109,8 +106,7 @@ io_read(size_t pos, size_t len, size_t expected)
  * Perform I/O using write(2) and check the returned result against the
  * expected result.  Update the image reference data as appropriate.
  */
-static void
-io_write(size_t pos, size_t len, size_t expected)
+static void io_write(size_t pos, size_t len, size_t expected)
 {
 	ssize_t bytes;
 
@@ -136,8 +132,7 @@ io_write(size_t pos, size_t len, size_t expected)
  * Test if reading from the given pointer succeeds or not, and return the
  * result.
  */
-static int
-is_readable(char * ptr)
+static int is_readable(char * ptr)
 {
 	ssize_t r;
 	char byte;
@@ -166,8 +161,7 @@ is_readable(char * ptr)
  * device end are either zero (on the remainder of the last page) or
  * inaccessible on pages entirely beyond the device end.
  */
-static void
-io_peek(size_t pos, size_t len, size_t expected)
+static void io_peek(size_t pos, size_t len, size_t expected)
 {
 	size_t n, delta, mapped_size;
 	char *ptr;
@@ -240,8 +234,7 @@ io_peek(size_t pos, size_t len, size_t expected)
  * Perform one of the supported end-of-file access attempts using one I/O
  * operation.
  */
-static void
-do_one_io(int where, void (* io_proc)(size_t, size_t, size_t))
+static void do_one_io(int where, void (* io_proc)(size_t, size_t, size_t))
 {
 	size_t start, bytes;
 
@@ -301,8 +294,7 @@ do_one_io(int where, void (* io_proc)(size_t, size_t, size_t))
  * Perform I/O operations, testing all the supported end-of-file access
  * attempts in a random order so as to detect possible problems with caching.
  */
-static void
-do_io(void (* io_proc)(size_t, size_t, size_t))
+static void do_io(void (* io_proc)(size_t, size_t, size_t))
 {
 	static const int list[] = { BEFORE_EOF, UPTO_EOF, ACROSS_EOF,
 	    ONEPAST_EOF, FROM_EOF, BEYOND_EOF };
@@ -320,8 +312,7 @@ do_io(void (* io_proc)(size_t, size_t, size_t))
  * resulting block device.  The size is size_t because we keep a reference copy
  * of its entire contents in memory.
  */
-static void
-setup_image(size_t size)
+static void setup_image(size_t size)
 {
 	struct part_geom part;
 	size_t off;
@@ -365,8 +356,7 @@ setup_image(size_t size)
  * Clean up the VND we set up previously.  This function is also called in case
  * of an unexpected exit.
  */
-static void
-cleanup_device(void)
+static void cleanup_device(void)
 {
 	int status;
 
@@ -391,8 +381,7 @@ cleanup_device(void)
 /*
  * Signal handler for exceptions.
  */
-static void
-got_signal(int __unused sig)
+static void got_signal(int __unused sig)
 {
 
 	cleanup_device();
@@ -403,8 +392,7 @@ got_signal(int __unused sig)
 /*
  * Clean up the VND and image file we set up previously.
  */
-static void
-cleanup_image(void)
+static void cleanup_image(void)
 {
 	size_t off;
 	ssize_t bytes;
@@ -434,8 +422,7 @@ cleanup_image(void)
 /*
  * Run the full test for a block device with the given size.
  */
-static void
-do_test(size_t size)
+static void do_test(size_t size)
 {
 	int i;
 
@@ -484,8 +471,7 @@ do_test(size_t size)
 /*
  * Test program for end-of-file conditions during block device I/O.
  */
-int
-main(void)
+int main(void)
 {
 	static const unsigned int blocks[] = { 1, 4, 3, 5, 2 };
 	struct statvfs buf;

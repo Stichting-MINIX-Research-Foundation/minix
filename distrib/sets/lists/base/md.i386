@@ -58,6 +58,7 @@
 ./usr/mdec/biosboot_resetvideo.sym		base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootfd				base-obsolete		obsolete
+./usr/mdec/bootia32.efi				base-sysutil-bin
 ./usr/mdec/bootsd				base-obsolete		obsolete
 ./usr/mdec/bootwd				base-obsolete		obsolete
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin

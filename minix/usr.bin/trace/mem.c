@@ -6,8 +6,7 @@
  * 'addr' and put the result in the buffer pointed to by 'ptr'.  Return 0 on
  * success, or otherwise -1 with errno set appropriately.
  */
-int
-mem_get_data(pid_t pid, vir_bytes addr, void * ptr, size_t len)
+int mem_get_data(pid_t pid, vir_bytes addr, void * ptr, size_t len)
 {
 	struct ptrace_range pr;
 
@@ -26,8 +25,7 @@ mem_get_data(pid_t pid, vir_bytes addr, void * ptr, size_t len)
  * 'pid' at offset 'addr' and put the result in the buffer pointed to by 'ptr'.
  * Return 0 on success, or otherwise -1 with errno set appropriately.
  */
-int
-mem_get_user(pid_t pid, vir_bytes addr, void * ptr, size_t len)
+int mem_get_user(pid_t pid, vir_bytes addr, void * ptr, size_t len)
 {
 	long data;
 	char *p;

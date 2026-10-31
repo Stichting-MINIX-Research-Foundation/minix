@@ -53,8 +53,7 @@ static char ***p_environ = &environ;
  * Spawn routines
  */
 
-static int
-process_spawnattr(const posix_spawnattr_t * sa)
+static int process_spawnattr(const posix_spawnattr_t * sa)
 {
 	struct sigaction sigact = { .sa_flags = 0, .sa_handler = SIG_DFL };
 	int i;
@@ -108,8 +107,7 @@ process_spawnattr(const posix_spawnattr_t * sa)
 	return 0;
 }
 
-static int
-move_fd_up(int * statusfd)
+static int move_fd_up(int * statusfd)
 {
 	/*
 	 * Move given file descriptor on a higher fd number.
@@ -128,8 +126,7 @@ move_fd_up(int * statusfd)
 	return 0;
 }
 
-static int
-process_file_actions_entry(posix_spawn_file_actions_entry_t * fae,
+static int process_file_actions_entry(posix_spawn_file_actions_entry_t * fae,
 	int * statusfd)
 {
 	int fd;
@@ -183,8 +180,7 @@ process_file_actions_entry(posix_spawn_file_actions_entry_t * fae,
 	return 0;
 }
 
-static int
-process_file_actions(const posix_spawn_file_actions_t * fa, int * statusfd)
+static int process_file_actions(const posix_spawn_file_actions_t * fa, int * statusfd)
 {
 	posix_spawn_file_actions_entry_t *fae;
 	int error;
@@ -199,8 +195,7 @@ process_file_actions(const posix_spawn_file_actions_t * fa, int * statusfd)
 	return 0;
 }
 
-int
-posix_spawn(pid_t * __restrict pid, const char * __restrict path,
+int posix_spawn(pid_t * __restrict pid, const char * __restrict path,
 	const posix_spawn_file_actions_t * fa,
 	const posix_spawnattr_t * __restrict sa,
 	char * const * __restrict argv, char * const * __restrict envp)

@@ -15,8 +15,7 @@
 /*===========================================================================*
  *				do_get					     *
  *===========================================================================*/
-int
-do_get(void)
+int do_get(void)
 {
 /* Handle PM_GETUID, PM_GETGID, PM_GETGROUPS, PM_GETPID, PM_GETPGRP, PM_GETSID,
  * PM_ISSETUGID.
@@ -91,8 +90,7 @@ do_get(void)
 /*===========================================================================*
  *				do_set					     *
  *===========================================================================*/
-int
-do_set(void)
+int do_set(void)
 {
 /* Handle PM_SETUID, PM_SETEUID, PM_SETGID, PM_SETGROUPS, PM_SETEGID, and
  * SETSID. These calls have in common that, if successful, they will be

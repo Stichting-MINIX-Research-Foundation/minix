@@ -76,8 +76,7 @@ const ip_addr_t ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
  * @param addr conversion result is stored here
  * @return 1 on success, 0 on error
  */
-int
-ipaddr_aton(const char *cp, ip_addr_t *addr)
+int ipaddr_aton(const char *cp, ip_addr_t *addr)
 {
   if (cp != NULL) {
     const char* c;

@@ -71,8 +71,7 @@
 /** mem_init is not used when using pools instead of a heap or using
  * C library malloc().
  */
-void
-mem_init(void)
+void mem_init(void)
 {
 }
 
@@ -139,8 +138,7 @@ mem_malloc(mem_size_t size)
  *
  * @param rmem is the pointer as returned by a previous call to mem_malloc()
  */
-void
-mem_free(void *rmem)
+void mem_free(void *rmem)
 {
   LWIP_ASSERT("rmem != NULL", (rmem != NULL));
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
@@ -219,8 +217,7 @@ mem_malloc(mem_size_t size)
  *
  * @param rmem the memory element to free
  */
-void
-mem_free(void *rmem)
+void mem_free(void *rmem)
 {
   struct memp_malloc_helper *hmem;
 
@@ -340,8 +337,7 @@ static volatile u8_t mem_free_count;
  * This assumes access to the heap is protected by the calling function
  * already.
  */
-static void
-plug_holes(struct mem *mem)
+static void plug_holes(struct mem *mem)
 {
   struct mem *nmem;
   struct mem *pmem;
@@ -378,8 +374,7 @@ plug_holes(struct mem *mem)
 /**
  * Zero the heap and initialize start, end and lowest-free
  */
-void
-mem_init(void)
+void mem_init(void)
 {
   struct mem *mem;
 
@@ -415,8 +410,7 @@ mem_init(void)
  * @param rmem is the data portion of a struct mem as returned by a previous
  *             call to mem_malloc()
  */
-void
-mem_free(void *rmem)
+void mem_free(void *rmem)
 {
   struct mem *mem;
   LWIP_MEM_FREE_DECL_PROTECT();

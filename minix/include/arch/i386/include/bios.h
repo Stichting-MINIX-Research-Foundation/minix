@@ -116,10 +116,10 @@
  */
 
 /* Machine ID (we're interested in PS/2 and AT models). */
-#define MACHINE_ID_ADDR         0xFFFFE /* BIOS machine ID byte */
-#define MACHINE_ID_SIZE         1L
-#define   PS_386_MACHINE        0xF8    /* ID byte for PS/2 modela 70/80 */
-#define   PC_AT_MACHINE         0xFC    /* PC/AT, PC/XT286, PS/2 models 50/60 */
+//#define MACHINE_ID_ADDR         0xFFFFE /* BIOS machine ID byte */
+//#define MACHINE_ID_SIZE         1L
+//#define   PS_386_MACHINE        0xF8    /* ID byte for PS/2 modela 70/80 */
+//#define   PC_AT_MACHINE         0xFC    /* PC/AT, PC/XT286, PS/2 models 50/60 */
 
 #endif /* _BIOS_H */
 

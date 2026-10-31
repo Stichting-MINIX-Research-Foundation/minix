@@ -1,7 +1,7 @@
 /*	$OpenBSD: mmfile.c,v 1.14 2011/07/17 12:17:10 aschrijver Exp $	*/
 
 /*-
- * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1999 James Howard and Dag-Erling Coï¿½dan Smï¿½rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,8 +79,7 @@ ouch1:
 	return NULL;
 }
 
-void
-mmclose(mmf_t *mmf)
+void mmclose(mmf_t *mmf)
 {
 	munmap(mmf->base, mmf->len);
 	close(mmf->fd);

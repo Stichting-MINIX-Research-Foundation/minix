@@ -33,7 +33,7 @@ clock_time(struct timespec *tv)
 		 * We do not want to overflow, and system_hz can be as high as
 		 * 50kHz.
 		 */
-		if (system_hz < LONG_MAX / 40000)
+		if ((long)system_hz < LONG_MAX / 40000)
 			tv->tv_nsec = (realtime % system_hz) * 40000 /
 			    system_hz * 25000;
 		else

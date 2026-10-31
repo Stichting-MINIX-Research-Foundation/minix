@@ -53,12 +53,10 @@
 
 /* Local prototypes */
 
-static void
-AcpiUtDeleteInternalObj (
+static void AcpiUtDeleteInternalObj (
     ACPI_OPERAND_OBJECT     *Object);
 
-static void
-AcpiUtUpdateRefCount (
+static void AcpiUtUpdateRefCount (
     ACPI_OPERAND_OBJECT     *Object,
     UINT32                  Action);
 
@@ -76,8 +74,7 @@ AcpiUtUpdateRefCount (
  *
  ******************************************************************************/
 
-static void
-AcpiUtDeleteInternalObj (
+static void AcpiUtDeleteInternalObj (
     ACPI_OPERAND_OBJECT     *Object)
 {
     void                    *ObjPointer = NULL;
@@ -362,8 +359,7 @@ AcpiUtDeleteInternalObj (
  *
  ******************************************************************************/
 
-void
-AcpiUtDeleteInternalObjectList (
+void AcpiUtDeleteInternalObjectList (
     ACPI_OPERAND_OBJECT     **ObjList)
 {
     ACPI_OPERAND_OBJECT     **InternalObj;
@@ -399,8 +395,7 @@ AcpiUtDeleteInternalObjectList (
  *
  ******************************************************************************/
 
-static void
-AcpiUtUpdateRefCount (
+static void AcpiUtUpdateRefCount (
     ACPI_OPERAND_OBJECT     *Object,
     UINT32                  Action)
 {
@@ -728,8 +723,7 @@ ErrorExit:
  *
  ******************************************************************************/
 
-void
-AcpiUtAddReference (
+void AcpiUtAddReference (
     ACPI_OPERAND_OBJECT     *Object)
 {
 
@@ -766,8 +760,7 @@ AcpiUtAddReference (
  *
  ******************************************************************************/
 
-void
-AcpiUtRemoveReference (
+void AcpiUtRemoveReference (
     ACPI_OPERAND_OBJECT     *Object)
 {
 

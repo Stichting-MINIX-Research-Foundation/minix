@@ -133,8 +133,7 @@ static ip6_addr_t ethif_ip6addr_allnodes_ll;
 /*
  * Initialize the ethernet interfaces module.
  */
-void
-ethif_init(void)
+void ethif_init(void)
 {
 	unsigned int slot;
 
@@ -158,8 +157,7 @@ ethif_init(void)
  * As the result of some event, the NetBSD-style interface flags for this
  * interface may have changed.  Recompute and update the flags as appropriate.
  */
-static void
-ethif_update_ifflags(struct ethif * ethif)
+static void ethif_update_ifflags(struct ethif * ethif)
 {
 	unsigned int ifflags;
 
@@ -196,8 +194,7 @@ ethif_update_ifflags(struct ethif * ethif)
  * from receiving from listed multicast addresses to receiving from all
  * multicast addresses.
  */
-static int
-ethif_add_mcast(struct ndev_conf * nconf, unsigned int max,
+static int ethif_add_mcast(struct ndev_conf * nconf, unsigned int max,
 	struct ndev_hwaddr * hwaddr)
 {
 	unsigned int slot;
@@ -231,8 +228,7 @@ ethif_add_mcast(struct ndev_conf * nconf, unsigned int max,
  * Add the ethernet hardware address derived from the given IPv4 multicast
  * address, to the list of multicast addresses.
  */
-static int
-ethif_add_mcast_v4(struct ndev_conf * nconf, unsigned int max,
+static int ethif_add_mcast_v4(struct ndev_conf * nconf, unsigned int max,
 	const ip4_addr_t * ip4addr)
 {
 	struct ndev_hwaddr hwaddr;
@@ -252,8 +248,7 @@ ethif_add_mcast_v4(struct ndev_conf * nconf, unsigned int max,
  * Add the ethernet hardware address derived from the given IPv6 multicast
  * address, to the list of multicast addresses.
  */
-static int
-ethif_add_mcast_v6(struct ndev_conf * nconf, unsigned int max,
+static int ethif_add_mcast_v6(struct ndev_conf * nconf, unsigned int max,
 	const ip6_addr_t * ip6addr)
 {
 	struct ndev_hwaddr hwaddr;
@@ -271,8 +266,7 @@ ethif_add_mcast_v6(struct ndev_conf * nconf, unsigned int max,
  * network driver, generating a multicast receive address list for the driver
  * as applicable.
  */
-static void
-ethif_gen_mcast(struct ethif * ethif, struct ndev_conf * nconf)
+static void ethif_gen_mcast(struct ethif * ethif, struct ndev_conf * nconf)
 {
 	struct igmp_group *group4;
 	struct mld_group *group6;
@@ -330,8 +324,7 @@ ethif_gen_mcast(struct ethif * ethif, struct ndev_conf * nconf)
  * the "set" mask in the source, without changing the source fields, so that
  * the source will reflect the destination's contents.
  */
-static void
-ethif_merge_conf(struct ndev_conf * dconf, struct ndev_conf * sconf)
+static void ethif_merge_conf(struct ndev_conf * dconf, struct ndev_conf * sconf)
 {
 
 	dconf->nconf_set |= sconf->nconf_set;
@@ -355,8 +348,7 @@ ethif_merge_conf(struct ndev_conf * dconf, struct ndev_conf * sconf)
  * Return TRUE if we can and should try to pass a configuration request to the
  * ndev layer on this interface, or FALSE otherwise.
  */
-static int
-ethif_can_conf(struct ethif * ethif)
+static int ethif_can_conf(struct ethif * ethif)
 {
 
 	/* Is there a configuration change waiting?  The common case is no. */
@@ -382,8 +374,7 @@ ethif_can_conf(struct ethif * ethif)
  * Return TRUE if we can and should try to pass the next unsent packet send
  * request to the ndev layer on this interface, or FALSE otherwise.
  */
-static int
-ethif_can_send(struct ethif * ethif)
+static int ethif_can_send(struct ethif * ethif)
 {
 
 	/* Is there anything to hand to ndev at all?  The common case is no. */
@@ -409,8 +400,7 @@ ethif_can_send(struct ethif * ethif)
  * Return TRUE if we can and should try to receive packets on this interface
  * and are ready to accept received packets, or FALSE otherwise.
  */
-static int
-ethif_can_recv(struct ethif * ethif)
+static int ethif_can_recv(struct ethif * ethif)
 {
 
 	if ((ethif->ethif_flags & (ETHIFF_DISABLED | ETHIFF_FIRST_CONF)) != 0)
@@ -429,8 +419,7 @@ ethif_can_recv(struct ethif * ethif)
  * any configuration change or packets can be sent to the driver, and whether
  * any new packet receive requests can be enqueued at the driver.
  */
-static void
-ethif_poll(struct ifdev * ifdev)
+static void ethif_poll(struct ifdev * ifdev)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 	struct pbuf *pbuf, *pref;
@@ -517,8 +506,7 @@ ethif_poll(struct ifdev * ifdev)
  * This is relevant for BPF-generated packets only, and thus we can safely
  * modify the given pbuf.
  */
-static void
-ethif_hdrcmplt(struct ifdev * ifdev, struct pbuf * pbuf)
+static void ethif_hdrcmplt(struct ifdev * ifdev, struct pbuf * pbuf)
 {
 	struct netif *netif;
 
@@ -543,8 +531,7 @@ ethif_hdrcmplt(struct ifdev * ifdev, struct pbuf * pbuf)
  * enqueued pbuf.  The limit must be such that we do not impede normal traffic
  * but also do not spend the entire buffer pool on enqueued packets.
  */
-static int
-ethif_can_spare(unsigned int spares)
+static int ethif_can_spare(unsigned int spares)
 {
 	unsigned int max;
 
@@ -941,8 +928,7 @@ ethif_add(ndev_id_t id, const char * name, uint32_t caps)
 /*
  * The link status and/or media type of an ethernet interface has changed.
  */
-static void
-ethif_set_status(struct ethif * ethif, uint32_t link, uint32_t media)
+static void ethif_set_status(struct ethif * ethif, uint32_t link, uint32_t media)
 {
 	unsigned int iflink;
 
@@ -965,8 +951,7 @@ ethif_set_status(struct ethif * ethif, uint32_t link, uint32_t media)
  * if the interface could indeed be enabled, or FALSE if it should be forgotten
  * altogether after all.
  */
-int
-ethif_enable(struct ethif * ethif, const char * name,
+int ethif_enable(struct ethif * ethif, const char * name,
 	const struct ndev_hwaddr * hwaddr, uint8_t hwaddr_len, uint32_t caps,
 	uint32_t link, uint32_t media)
 {
@@ -1062,8 +1047,7 @@ ethif_enable(struct ethif * ethif, const char * name,
  * died, see ethif_disable()).  Apply changes to the "active" slot of the given
  * ethif object, as well as previously delayed changes to lwIP through netif.
  */
-static void
-ethif_post_conf(struct ethif * ethif)
+static void ethif_post_conf(struct ethif * ethif)
 {
 	struct ndev_conf *nconf;
 	unsigned int flags;
@@ -1112,8 +1096,7 @@ ethif_post_conf(struct ethif * ethif)
  * network device driver has been restarted or shut down.  Clear the receive
  * queue, freeing any packets in it.
  */
-static void
-ethif_drain(struct ethif * ethif)
+static void ethif_drain(struct ethif * ethif)
 {
 	struct pbuf *pbuf, **pnext;
 
@@ -1132,8 +1115,7 @@ ethif_drain(struct ethif * ethif)
  * The network device driver has stopped working (i.e., crashed), but has not
  * been shut down completely, and is expect to come back later.
  */
-void
-ethif_disable(struct ethif * ethif)
+void ethif_disable(struct ethif * ethif)
 {
 
 	/*
@@ -1186,8 +1168,7 @@ ethif_disable(struct ethif * ethif)
 /*
  * Dequeue and discard the packet at the head of the send queue.
  */
-static void
-ethif_dequeue_send(struct ethif * ethif)
+static void ethif_dequeue_send(struct ethif * ethif)
 {
 	struct pbuf *pref, *pbuf, **pnext;
 	unsigned int count, spares;
@@ -1253,8 +1234,7 @@ ethif_dequeue_send(struct ethif * ethif)
  * The ndev layer reports that a network device driver has been permanently
  * shut down.  Remove the corresponding ethernet interface from the system.
  */
-void
-ethif_remove(struct ethif * ethif)
+void ethif_remove(struct ethif * ethif)
 {
 	int r;
 
@@ -1276,8 +1256,7 @@ ethif_remove(struct ethif * ethif)
  * The ndev layer reports that the (oldest) pending configuration request has
  * completed with the given result.
  */
-void
-ethif_configured(struct ethif * ethif, int32_t result)
+void ethif_configured(struct ethif * ethif, int32_t result)
 {
 
 	/*
@@ -1320,8 +1299,7 @@ ethif_configured(struct ethif * ethif, int32_t result)
  * negative.  The latter may happen if the interface was taken down while there
  * were still packets in transit.
  */
-void
-ethif_sent(struct ethif * ethif, int32_t result)
+void ethif_sent(struct ethif * ethif, int32_t result)
 {
 
 	ethif_dequeue_send(ethif);
@@ -1337,8 +1315,7 @@ ethif_sent(struct ethif * ethif, int32_t result)
  * filled with a packet of 'result' bytes, or if 'result' is negative, the
  * receive request has been aborted.
  */
-void
-ethif_received(struct ethif * ethif, int32_t result)
+void ethif_received(struct ethif * ethif, int32_t result)
 {
 	struct pbuf *pbuf, *pwalk, **pnext;
 	size_t left;
@@ -1408,8 +1385,7 @@ ethif_received(struct ethif * ethif, int32_t result)
  * changed since the last status, we may have to take action.  The given
  * statistics counters are relative to the previous status report.
  */
-void
-ethif_status(struct ethif * ethif, uint32_t link, uint32_t media,
+void ethif_status(struct ethif * ethif, uint32_t link, uint32_t media,
 	uint32_t oerror, uint32_t coll, uint32_t ierror, uint32_t iqdrop)
 {
 	struct if_data *ifdata;
@@ -1426,8 +1402,7 @@ ethif_status(struct ethif * ethif, uint32_t link, uint32_t media,
 /*
  * Set NetBSD-style interface flags (IFF_) for an ethernet interface.
  */
-static int
-ethif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
+static int ethif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 	uint32_t mode, flags;
@@ -1495,8 +1470,7 @@ ethif_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
  * Convert a bitmask of ndev-layer capabilities (NDEV_CAP_) to NetBSD-style
  * interface capabilities (IFCAP_).
  */
-static uint64_t
-ethif_cap_to_ifcap(uint32_t caps)
+static uint64_t ethif_cap_to_ifcap(uint32_t caps)
 {
 	uint64_t ifcap;
 
@@ -1520,8 +1494,7 @@ ethif_cap_to_ifcap(uint32_t caps)
 /*
  * Retrieve potential and enabled NetBSD-style interface capabilities (IFCAP_).
  */
-static void
-ethif_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
+static void ethif_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 
@@ -1532,8 +1505,7 @@ ethif_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
 /*
  * Set NetBSD-style enabled interface capabilities (IFCAP_).
  */
-static int
-ethif_set_ifcap(struct ifdev * ifdev, uint64_t ifcap)
+static int ethif_set_ifcap(struct ifdev * ifdev, uint64_t ifcap)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 	unsigned int flags;
@@ -1611,8 +1583,7 @@ ethif_set_ifcap(struct ifdev * ifdev, uint64_t ifcap)
  * Retrieve NetBSD-style interface media type (IFM_).  Return both the current
  * media type selection and the driver-reported active media type.
  */
-static void
-ethif_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
+static void ethif_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 
@@ -1627,8 +1598,7 @@ ethif_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
 /*
  * Set current NetBSD-style interface media type (IFM_).
  */
-static int
-ethif_set_ifmedia(struct ifdev * ifdev, int ifmedia)
+static int ethif_set_ifmedia(struct ifdev * ifdev, int ifmedia)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 
@@ -1652,8 +1622,7 @@ ethif_set_ifmedia(struct ifdev * ifdev, int ifmedia)
 /*
  * Enable or disable promiscuous mode on the interface.
  */
-static void
-ethif_set_promisc(struct ifdev * ifdev, int promisc)
+static void ethif_set_promisc(struct ifdev * ifdev, int promisc)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 
@@ -1671,8 +1640,7 @@ ethif_set_promisc(struct ifdev * ifdev, int promisc)
 /*
  * Set the hardware address on the interface.
  */
-static int
-ethif_set_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr)
+static int ethif_set_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr)
 {
 	struct ethif *ethif = (struct ethif *)ifdev;
 
@@ -1692,8 +1660,7 @@ ethif_set_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr)
  * new value is acceptable, in which case the caller will do the rest.  Return
  * FALSE otherwise.
  */
-static int
-ethif_set_mtu(struct ifdev * ifdev __unused, unsigned int mtu)
+static int ethif_set_mtu(struct ifdev * ifdev __unused, unsigned int mtu)
 {
 
 	return (mtu <= ETHIF_MAX_MTU);

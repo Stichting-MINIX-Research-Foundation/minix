@@ -30,8 +30,10 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 
 	/* Get physical address, if requested. */
         if(phys != NULL && sys_umap(SELF, VM_D, (vir_bytes)buf, len,
-	    phys) != OK)
-		panic("sys_umap_data_fb failed");
+	    phys) != OK) {
+		free_contig(buf, len);
+		return NULL;
+	}
 
 	return buf;
 }

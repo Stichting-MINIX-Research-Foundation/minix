@@ -5,8 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int rmdir(name)
-const char *name;
+int rmdir(const char *name)
 {
   message m;
 

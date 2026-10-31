@@ -49,8 +49,7 @@
 
 struct stats_ lwip_stats;
 
-void
-stats_init(void)
+void stats_init(void)
 {
 #ifdef LWIP_DEBUG
 #if MEM_STATS
@@ -60,8 +59,7 @@ stats_init(void)
 }
 
 #if LWIP_STATS_DISPLAY
-void
-stats_display_proto(struct stats_proto *proto, const char *name)
+void stats_display_proto(struct stats_proto *proto, const char *name)
 {
   LWIP_PLATFORM_DIAG(("\n%s\n\t", name));
   LWIP_PLATFORM_DIAG(("xmit: %"STAT_COUNTER_F"\n\t", proto->xmit));
@@ -79,8 +77,7 @@ stats_display_proto(struct stats_proto *proto, const char *name)
 }
 
 #if IGMP_STATS || MLD6_STATS
-void
-stats_display_igmp(struct stats_igmp *igmp, const char *name)
+void stats_display_igmp(struct stats_igmp *igmp, const char *name)
 {
   LWIP_PLATFORM_DIAG(("\n%s\n\t", name));
   LWIP_PLATFORM_DIAG(("xmit: %"STAT_COUNTER_F"\n\t", igmp->xmit));
@@ -101,8 +98,7 @@ stats_display_igmp(struct stats_igmp *igmp, const char *name)
 #endif /* IGMP_STATS || MLD6_STATS */
 
 #if MEM_STATS || MEMP_STATS
-void
-stats_display_mem(struct stats_mem *mem, const char *name)
+void stats_display_mem(struct stats_mem *mem, const char *name)
 {
   LWIP_PLATFORM_DIAG(("\nMEM %s\n\t", name));
   LWIP_PLATFORM_DIAG(("avail: %"U32_F"\n\t", (u32_t)mem->avail));
@@ -112,8 +108,7 @@ stats_display_mem(struct stats_mem *mem, const char *name)
 }
 
 #if MEMP_STATS
-void
-stats_display_memp(struct stats_mem *mem, int idx)
+void stats_display_memp(struct stats_mem *mem, int idx)
 {
   if (idx < MEMP_MAX) {
     stats_display_mem(mem, mem->name);
@@ -123,8 +118,7 @@ stats_display_memp(struct stats_mem *mem, int idx)
 #endif /* MEM_STATS || MEMP_STATS */
 
 #if SYS_STATS
-void
-stats_display_sys(struct stats_sys *sys)
+void stats_display_sys(struct stats_sys *sys)
 {
   LWIP_PLATFORM_DIAG(("\nSYS\n\t"));
   LWIP_PLATFORM_DIAG(("sem.used:  %"U32_F"\n\t", (u32_t)sys->sem.used));
@@ -139,8 +133,7 @@ stats_display_sys(struct stats_sys *sys)
 }
 #endif /* SYS_STATS */
 
-void
-stats_display(void)
+void stats_display(void)
 {
   s16_t i;
 

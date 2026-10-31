@@ -155,9 +155,7 @@ static const fsm_callbacks ecp_callbacks = {
 /*
  * ecp_init - initialize ECP.
  */
-static void
-ecp_init(unit)
-    int unit;
+static void ecp_init(int unit)
 {
     fsm *f = &ecp_fsm[unit];
 
@@ -177,12 +175,8 @@ ecp_init(unit)
 
 
 #if PRINTPKT_SUPPORT
-static int
-ecp_printpkt(p, plen, printer, arg)
-    const u_char *p;
-    int plen;
-    void (*printer) (void *, char *, ...);
-    void *arg;
+static int ecp_printpkt(const u_char *p, int plen,
+    void (*printer)(void *, char *, ...), void *arg)
 {
     return 0;
 }

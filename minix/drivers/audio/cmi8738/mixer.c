@@ -7,7 +7,7 @@ u8_t mixer_value[] = {
 	0x7e, 0x3d, 0x01, 0x01, 0x00, 0x00, 0x03, 0x00,
 	0x00, 0x01
 };
-int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
+int get_set_volume(vir_bytes *base, struct volume_level *level, int flag) {
 	int max_level, cmd_left, cmd_right;
 
 	max_level = 0x1f;
@@ -76,7 +76,7 @@ int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
 #endif
 
 #ifdef MIXER_SB16
-int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
+int get_set_volume(vir_bytes *base, struct volume_level *level, int flag) {
 	int max_level, shift, cmd_left, cmd_right;
 
 	max_level = 0x0f;
@@ -155,7 +155,7 @@ int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
 #endif
 
 #ifdef MIXER_AC97
-int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
+int get_set_volume(vir_bytes *base, struct volume_level *level, int flag) {
 	int max_level, cmd, data;
 
 	max_level = 0x1f;
@@ -223,7 +223,7 @@ int get_set_volume(u32_t *base, struct volume_level *level, int flag) {
 #endif
 
 /* Set default mixer volume */
-void dev_set_default_volume(u32_t *base) {
+void dev_set_default_volume(vir_bytes *base) {
 	int i;
 #ifdef MIXER_AK4531
 	for (i = 0; i <= 0x19; i++)

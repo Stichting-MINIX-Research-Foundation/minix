@@ -259,8 +259,7 @@ AcpiOsPhysicalTableOverride (
  *
  *****************************************************************************/
 
-void
-AcpiOsRedirectOutput (
+void AcpiOsRedirectOutput (
     void                    *Destination)
 {
 	panic("NOTIMPLEMENTED %s\n", __func__);
@@ -311,8 +310,7 @@ AcpiOsPrintf (
  *
  *****************************************************************************/
 
-void
-AcpiOsVprintf (
+void AcpiOsVprintf (
     const char              *Fmt,
     va_list                 Args)
 {
@@ -385,8 +383,7 @@ AcpiOsMapMemory (
  *
  *****************************************************************************/
 
-void
-AcpiOsUnmapMemory (
+void AcpiOsUnmapMemory (
     void                    *where,
     ACPI_SIZE               length)
 {
@@ -433,8 +430,7 @@ AcpiOsAllocate (
  *
  *****************************************************************************/
 
-void
-AcpiOsFree (
+void AcpiOsFree (
     void                    *mem)
 {
 	free(mem);
@@ -538,8 +534,7 @@ AcpiOsCreateLock (
 	return AE_OK;
 }
 
-void
-AcpiOsDeleteLock (
+void AcpiOsDeleteLock (
     ACPI_SPINLOCK           Handle)
 {
 }
@@ -553,8 +548,7 @@ AcpiOsAcquireLock (
 }
 
 
-void
-AcpiOsReleaseLock (
+void AcpiOsReleaseLock (
     ACPI_SPINLOCK           Handle,
     ACPI_CPU_FLAGS          Flags)
 {
@@ -667,8 +661,7 @@ AcpiOsBreakpoint (
  *
  *****************************************************************************/
 
-void
-AcpiOsStall (
+void AcpiOsStall (
     UINT32                  microseconds)
 {
 	if (microseconds > 0)
@@ -690,8 +683,7 @@ AcpiOsStall (
  *
  *****************************************************************************/
 
-void
-AcpiOsSleep (
+void AcpiOsSleep (
     ACPI_INTEGER            milliseconds)
 {
 	if ((milliseconds / 1000) > 0)
@@ -748,8 +740,7 @@ AcpiOsValidateInterface (
 
 
 /* TEMPORARY STUB FUNCTION */
-void
-AcpiOsDerivePciId(
+void AcpiOsDerivePciId(
     ACPI_HANDLE             rhandle,
     ACPI_HANDLE             chandle,
     ACPI_PCI_ID             **PciId)
@@ -1041,8 +1032,7 @@ AcpiOsWritePciConfiguration (
  *
  *****************************************************************************/
 
-void
-AcpiOsWaitEventsComplete (
+void AcpiOsWaitEventsComplete (
     void)
 {
     return;

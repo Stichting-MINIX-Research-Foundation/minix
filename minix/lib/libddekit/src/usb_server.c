@@ -446,8 +446,7 @@ static void cancle_urb(message *msg)
 /*****************************************************************************
  *         get_info                                                          *
  *****************************************************************************/
-static void
-get_info(message * msg)
+static void get_info(message * msg)
 {
 	struct minix_usb_driver * drv;
 	endpoint_t ep;

@@ -27,9 +27,7 @@ static void set_ee_word(dpeth_t *dep, int a, u16_t w);
 static void ee_wds(dpeth_t *dep);
 #endif
 
-int rtl_probe(dep, skip)
-struct dpeth *dep;
-int skip;
+int rtl_probe(struct dpeth *dep, int skip)
 {
 	int r, devind;
 	u16_t vid, did;
@@ -77,10 +75,12 @@ int skip;
 	return TRUE;
 }
 
-static void rtl_init(dep)
-dpeth_t *dep;
+static void rtl_init(dpeth_t *dep)
 {
-	u8_t reg_a, reg_b, cr, config0, config2, config3;
+	u8_t cr, config2, config3;
+#if DEBUG
+	u8_t reg_a, reg_b, config0;
+#endif
 
 #if DEBUG
 	printf("rtl_init called\n");
@@ -89,20 +89,20 @@ dpeth_t *dep;
 
 	/* ID */
 	outb_reg0(dep, DP_CR, CR_PS_P0);
-	reg_a = inb_reg0(dep, DP_DUM1);
-	reg_b = inb_reg0(dep, DP_DUM2);
 
 #if DEBUG
+	reg_a = inb_reg0(dep, DP_DUM1);
+	reg_b = inb_reg0(dep, DP_DUM2);
 	printf("rtl_init: '%c', '%c'\n", reg_a, reg_b);
 #endif
 
 	outb_reg0(dep, DP_CR, CR_PS_P3);
-	config0 = inb_reg3(dep, 3);
 	config2 = inb_reg3(dep, 5);
 	config3 = inb_reg3(dep, 6);
 	outb_reg0(dep, DP_CR, CR_PS_P0);
 
 #if DEBUG
+	config0 = inb_reg3(dep, 3);
 	printf("rtl_init: config 0/2/3 = %x/%x/%x\n",
 		config0, config2, config3);
 #endif
@@ -170,9 +170,7 @@ dpeth_t *dep;
 }
 
 #if 0
-static u16_t get_ee_word(dep, a)
-dpeth_t *dep;
-int a;
+static u16_t get_ee_word(dpeth_t *dep, int a)
 {
 	int b, i, cmd;
 	u16_t w;
@@ -215,8 +213,7 @@ int a;
 	return w;
 }
 
-static void ee_wen(dep)
-dpeth_t *dep;
+static void ee_wen(dpeth_t *dep)
 {
 	int b, i, cmd;
 
@@ -240,10 +237,7 @@ dpeth_t *dep;
 	micro_delay(1);			/* Is this required? */
 }
 
-static void set_ee_word(dep, a, w)
-dpeth_t *dep;
-int a;
-u16_t w;
+static void set_ee_word(dpeth_t *dep, int a, u16_t w)
 {
 	int b, i, cmd;
 
@@ -282,8 +276,7 @@ u16_t w;
 		panic("set_ee_word: device remains busy");
 }
 
-static void ee_wds(dep)
-dpeth_t *dep;
+static void ee_wds(dpeth_t *dep)
 {
 	int b, i, cmd;
 

@@ -223,8 +223,7 @@ error:
 #endif /* LWIP_SNMP_V3_CRYPTO */
 
 /* A.2.1. Password to Key Sample Code for MD5 */
-void 
-snmpv3_password_to_key_md5(
+void snmpv3_password_to_key_md5(
     const u8_t *password,    /* IN */
     size_t      passwordlen, /* IN */
     const u8_t *engineID,    /* IN  - pointer to snmpEngineID  */
@@ -276,8 +275,7 @@ snmpv3_password_to_key_md5(
 }
 
 /* A.2.2. Password to Key Sample Code for SHA */
-void 
-snmpv3_password_to_key_sha(
+void snmpv3_password_to_key_sha(
     const u8_t *password,    /* IN */
     size_t      passwordlen, /* IN */
     const u8_t *engineID,    /* IN  - pointer to snmpEngineID  */

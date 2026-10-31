@@ -6,8 +6,7 @@
  * Return TRUE if the given socket address is of type AF_UNSPEC, or FALSE
  * otherwise.
  */
-int
-addr_is_unspec(const struct sockaddr * addr, socklen_t addr_len)
+int addr_is_unspec(const struct sockaddr * addr, socklen_t addr_len)
 {
 
 	return (addr_len >= offsetof(struct sockaddr, sa_data) &&
@@ -21,8 +20,7 @@ addr_is_unspec(const struct sockaddr * addr, socklen_t addr_len)
  * restrictions here to all provided source and destination addresses.  Return
  * TRUE if the address is an acceptable multicast address, or FALSE otherwise.
  */
-int
-addr_is_valid_multicast(const ip_addr_t * ipaddr)
+int addr_is_valid_multicast(const ip_addr_t * ipaddr)
 {
 	uint8_t scope;
 
@@ -72,8 +70,7 @@ addr_is_valid_multicast(const ip_addr_t * ipaddr)
  * otherwise, ignore the port number.  On any parsing failure, return an
  * appropriate negative error code.
  */
-int
-addr_get_inet(const struct sockaddr * addr, socklen_t addr_len, uint8_t type,
+int addr_get_inet(const struct sockaddr * addr, socklen_t addr_len, uint8_t type,
 	ip_addr_t * ipaddr, int kame, uint16_t * port)
 {
 	struct sockaddr_in sin;
@@ -199,8 +196,7 @@ addr_get_inet(const struct sockaddr * addr, socklen_t addr_len, uint8_t type,
  * sin6_scope_id.  If relevant, 'port' contains the port number in host-byte
  * order; otherwise it should be set to zone.
  */
-void
-addr_put_inet(struct sockaddr * addr, socklen_t * addr_len,
+void addr_put_inet(struct sockaddr * addr, socklen_t * addr_len,
 	const ip_addr_t * ipaddr, int kame, uint16_t port)
 {
 	struct sockaddr_in sin;
@@ -280,8 +276,7 @@ addr_put_inet(struct sockaddr * addr, socklen_t * addr_len,
  * present and exactly 'hwaddr_len' bytes long.  On any parsing failure, return
  * an appropriate negative error code.
  */
-int
-addr_get_link(const struct sockaddr * addr, socklen_t addr_len, char * name,
+int addr_get_link(const struct sockaddr * addr, socklen_t addr_len, char * name,
 	size_t name_max, uint8_t * hwaddr, size_t hwaddr_len)
 {
 	struct sockaddr_dlx sdlx;
@@ -356,8 +351,7 @@ addr_get_link(const struct sockaddr * addr, socklen_t addr_len, char * name,
  * If 'hwaddr' is not NULL, it must be a hardware address of length
  * 'hwaddr_len', which will also be included in the structure.
  */
-void
-addr_put_link(struct sockaddr * addr, socklen_t * addr_len, uint32_t ifindex,
+void addr_put_link(struct sockaddr * addr, socklen_t * addr_len, uint32_t ifindex,
 	uint32_t type, const char * name, const uint8_t * hwaddr,
 	size_t hwaddr_len)
 {
@@ -405,8 +399,7 @@ addr_put_link(struct sockaddr * addr, socklen_t * addr_len, uint32_t ifindex,
  * that this function does not support compressed IPv4 network masks; such
  * addresses must be expanded before a call to this function.
  */
-int
-addr_get_netmask(const struct sockaddr * addr, socklen_t addr_len,
+int addr_get_netmask(const struct sockaddr * addr, socklen_t addr_len,
 	uint8_t type, unsigned int * prefix, ip_addr_t * ipaddr)
 {
 	struct sockaddr_in sin;
@@ -499,8 +492,7 @@ addr_get_netmask(const struct sockaddr * addr, socklen_t addr_len,
 /*
  * Generate a raw network mask based on the given prefix length.
  */
-void
-addr_make_netmask(uint8_t * addr, socklen_t addr_len, unsigned int prefix)
+void addr_make_netmask(uint8_t * addr, socklen_t addr_len, unsigned int prefix)
 {
 	unsigned int byte, bit;
 
@@ -525,8 +517,7 @@ addr_make_netmask(uint8_t * addr, socklen_t addr_len, unsigned int prefix)
  * Upon return, 'addr_len' is set to the size of the resulting sockaddr
  * structure.
  */
-void
-addr_put_netmask(struct sockaddr * addr, socklen_t * addr_len, uint8_t type,
+void addr_put_netmask(struct sockaddr * addr, socklen_t * addr_len, uint8_t type,
 	unsigned int prefix)
 {
 	struct sockaddr_in sin;
@@ -578,8 +569,7 @@ addr_put_netmask(struct sockaddr * addr, socklen_t * addr_len, uint8_t type,
  * Normalize the given address in 'src' to the given number of prefix bits,
  * setting all other bits to zero.  Return the result in 'dst'.
  */
-void
-addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
+void addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
 {
 #if !defined(NDEBUG)
 	unsigned int addr_len;
@@ -636,8 +626,7 @@ addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
  * Return the number of common bits between the given two addresses, up to the
  * given maximum.  Thus, return a value between 0 and 'max' inclusive.
  */
-unsigned int
-addr_get_common_bits(const ip_addr_t * ipaddr1, const ip_addr_t * ipaddr2,
+unsigned int addr_get_common_bits(const ip_addr_t * ipaddr1, const ip_addr_t * ipaddr2,
 	unsigned int max)
 {
 	unsigned int addr_len, prefix, bit;
@@ -691,8 +680,7 @@ addr_get_common_bits(const ip_addr_t * ipaddr1, const ip_addr_t * ipaddr2,
 /*
  * Convert the given IPv4 address to an IPv4-mapped IPv6 address.
  */
-void
-addr_make_v4mapped_v6(ip_addr_t * dst, const ip4_addr_t * src)
+void addr_make_v4mapped_v6(ip_addr_t * dst, const ip4_addr_t * src)
 {
 
 	IP_ADDR6(dst, 0, 0, PP_HTONL(0x0000ffffUL), ip4_addr_get_u32(src));

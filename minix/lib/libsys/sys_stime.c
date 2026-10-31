@@ -1,7 +1,6 @@
 #include "syslib.h"
 
-int sys_stime(boottime)
-time_t boottime;		/* New boottime */
+int sys_stime(time_t boottime)
 {
   message m;
   int r;

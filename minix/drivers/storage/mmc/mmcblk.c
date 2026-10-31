@@ -58,8 +58,7 @@ static void sef_local_startup();
 static int block_system_event_cb(int type, sef_init_info_t * info);
 static void block_signal_handler_cb(int signo);
 
-void
-bdr_alarm(clock_t stamp)
+void bdr_alarm(clock_t stamp)
 {
 	log_debug(&log, "alarm %d\n", stamp);
 }
@@ -82,15 +81,13 @@ static struct blockdriver mmc_driver = {
 	.bdr_alarm	= bdr_alarm		/* no alarm processing */
 };
 
-static void
-hw_intr(unsigned int irqs)
+static void hw_intr(unsigned int irqs)
 {
 	log_debug(&log, "Hardware inter left over\n");
 	host.hw_intr(irqs);
 }
 
-static int
-apply_env()
+static int apply_env()
 {
 	long v;
 	/* apply the env setting passed to this driver parameters accepted
@@ -137,8 +134,7 @@ apply_env()
 /*===========================================================================*
  *                    block_open                                             *
  *===========================================================================*/
-static int
-block_open(devminor_t minor, int access)
+static int block_open(devminor_t minor, int access)
 {
 	struct sd_slot *slot;
 	slot = get_slot(minor);
@@ -209,8 +205,7 @@ block_open(devminor_t minor, int access)
 /*===========================================================================*
  *                    block_close                                            *
  *===========================================================================*/
-static int
-block_close(devminor_t minor)
+static int block_close(devminor_t minor)
 {
 	struct sd_slot *slot;
 
@@ -243,8 +238,7 @@ block_close(devminor_t minor)
 	return OK;
 }
 
-static int
-copyto(endpoint_t dst_e,
+static int copyto(endpoint_t dst_e,
     cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
 {
 	/* Helper function that used memcpy to copy data when the endpoint ==
@@ -259,8 +253,7 @@ copyto(endpoint_t dst_e,
 	}
 }
 
-static int
-copyfrom(endpoint_t src_e,
+static int copyfrom(endpoint_t src_e,
     cp_grant_id_t gr_id, vir_bytes offset, vir_bytes address, size_t bytes)
 {
 	/* Helper function that used memcpy to copy data when the endpoint ==
@@ -276,8 +269,7 @@ copyfrom(endpoint_t src_e,
 /*===========================================================================*
  *                    block_transfer                                         *
  *===========================================================================*/
-static int
-block_transfer(
+static int block_transfer(
     devminor_t minor,		/* minor device number */
     int do_write,		/* read or write? */
     u64_t position,		/* offset on device to read or write */
@@ -435,8 +427,7 @@ block_transfer(
 /*===========================================================================*
  *				block_ioctl		                     *
  *===========================================================================*/
-static int
-block_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int block_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	/* IOCTL handling */
@@ -527,8 +518,7 @@ block_part(devminor_t minor)
 /*===========================================================================*
  *                         sef_local_startup                                 *
  *===========================================================================*/
-static void
-sef_local_startup()
+static void sef_local_startup()
 {
 	log_info(&log, "Initializing the MMC block device\n");
 	if (apply_env()) {
@@ -556,8 +546,7 @@ sef_local_startup()
 /*===========================================================================*
  *                         block_system_event_cb                             *
  *===========================================================================*/
-static int
-block_system_event_cb(int type, sef_init_info_t * info)
+static int block_system_event_cb(int type, sef_init_info_t * info)
 {
 	/* 
 	 * Callbacks for the System event framework as registered in 
@@ -583,8 +572,7 @@ block_system_event_cb(int type, sef_init_info_t * info)
 /*===========================================================================*
  *                         block_signal_handler_cb                           *
  *===========================================================================*/
-static void
-block_signal_handler_cb(int signo)
+static void block_signal_handler_cb(int signo)
 {
 	struct sd_slot *slot;
 
@@ -639,8 +627,7 @@ get_slot(devminor_t minor)
 	}
 }
 
-static void
-set_log_level(int level)
+static void set_log_level(int level)
 {
 	if (level < 0 || level >= 4) {
 		return;
@@ -652,8 +639,7 @@ set_log_level(int level)
 	}
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
 	/* Set and apply the environment */

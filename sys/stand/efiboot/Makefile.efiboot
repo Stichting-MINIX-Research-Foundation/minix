@@ -1,0 +1,193 @@
+# $NetBSD: Makefile.efiboot,v 1.26 2022/03/25 21:23:00 jmcneill Exp $
+
+S=		${.CURDIR}/../../..
+
+NOMAN=		# defined
+NOPIE=		# defined
+NOLIBCSANITIZER=# defined
+NOSANITIZER=	# defined
+NORELRO=	# defined
+PROG?=		boot.efi
+NEWVERSWHAT?=	"efiboot"
+
+EFIDIR= ${S}/external/bsd/gnu-efi/dist
+GNUEFIARCH?= ${MACHINE_CPU}
+CPPFLAGS+= -I${EFIDIR}/inc -I${EFIDIR}/inc/${GNUEFIARCH}
+CPPFLAGS+= -I${EFIDIR}/inc/protocol
+
+.if defined(__MINIX)
+USE_BITCODE=no
+.endif # defined(__MINIX)
+
+.if defined(__MINIX) && (${GNUEFIARCH} == "ia32" || ${GNUEFIARCH} == "x86_64")
+LDSCRIPT?= ${EFIDIR}/gnuefi/elf_${GNUEFIARCH}_minix_efi.lds
+.else
+LDSCRIPT?= ${EFIDIR}/gnuefi/elf_${GNUEFIARCH}_efi.lds
+.endif
+
+AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+.PATH: ${EFIDIR}/gnuefi
+SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
+SOURCES+=	boot.c bootmenu.c conf.c console.c dev_net.c devopen.c exec.c \
+		lsext.c module.c panic.c prompt.c userconf.c
+SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c \
+		efifile.c efiblock.c efinet.c efipxe.c efirng.c \
+		efiwatchdog.c efigop.c smbios.c
+
+.if ${EFIBOOT_FDT:Uno} == "yes"
+CPPFLAGS+=	-DEFIBOOT_FDT
+SOURCES+=	efifdt.c overlay.c
+.PATH: ${S}/external/bsd/libfdt/dist
+CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
+SOURCES+=	fdt.c fdt_addresses.c fdt_empty_tree.c fdt_overlay.c
+SOURCES+=	fdt_ro.c fdt_rw.c fdt_strerror.c fdt_sw.c fdt_wip.c
+.endif
+
+.if ${EFIBOOT_ACPI:Uno} == "yes"
+CPPFLAGS+=	-DEFIBOOT_ACPI
+SOURCES+=	efiacpi.c
+.endif
+
+.if ${EFIBOOT_MULTIBOOT2:Uno} == "yes"
+CPPFLAGS+=	-DEFIBOOT_MULTIBOOT2
+SOURCES+=	exec_multiboot2.c
+.endif
+
+SRCS= ${SOURCES} ${EXTRA_SOURCES}
+
+.include <bsd.init.mk>
+
+STRIPFLAG=	# nothing
+
+LIBCRT0=	# nothing
+LIBCRTI=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+BINDIR=/usr/mdec
+BINMODE=444
+
+.PATH:	${.CURDIR} ${.CURDIR}/..
+.PATH:	${.CURDIR}/../../lib
+
+LDFLAGS+= --no-dynamic-linker --noinhibit-exec
+LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared
+CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/../common -I$S/lib/libsa
+CPPFLAGS+= -I${.OBJDIR}
+CPPFLAGS+= -I${.CURDIR}/../../lib
+CPPFLAGS+= -I${S}/../common/include
+
+COPTS+=	-fpic -g -O2
+COPTS+=	-fshort-wchar -fno-strict-aliasing
+COPTS+=	-ffreestanding -fno-stack-protector
+LDFLAGS+= --defsym=EFI_SUBSYSTEM=0xa
+
+
+COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
+CPPFLAGS+= -nostdinc -D_STANDALONE
+CPPFLAGS+= -DEFIBOOT
+CPPFLAGS+= -DPROGRESS_FN=efi_progress
+
+CPPFLAGS+= -Wall -Wmissing-prototypes
+CPPFLAGS+= -Wno-pointer-sign
+
+CPPFLAGS+= -DHEAP_VARIABLE
+CPPFLAGS+= -DSUPPORT_CD9660
+CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
+CPPFLAGS+= -DSUPPORT_DOSFS
+CPPFLAGS+= -DSUPPORT_EXT2FS
+CPPFLAGS+= -DSUPPORT_MINIXFS3
+CPPFLAGS+= -DSUPPORT_BOOTP
+CPPFLAGS+= -DSUPPORT_DHCP
+#CPPFLAGS+= -DSUPPORT_NFS
+CPPFLAGS+= -DSUPPORT_TFTP
+CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+CPPFLAGS+= -DLIBSA_FFS_EI
+CPPFLAGS+= -DLIBSA_DISKLABEL_EI
+
+EFIBOOT_TIMEOUT?=5
+CPPFLAGS+= -DDEFAULT_TIMEOUT=${EFIBOOT_TIMEOUT}
+
+#CPPFLAGS+= -DEFIBOOT_DEBUG
+#CPPFLAGS+= -DARP_DEBUG
+#CPPFLAGS+= -DBOOTP_DEBUG
+#CPPFLAGS+= -DNET_DEBUG
+#CPPFLAGS+= -DNETIF_DEBUG
+#CPPFLAGS+= -DNFS_DEBUG
+#CPPFLAGS+= -DRARP_DEBUG
+#CPPFLAGS+= -DRPC_DEBUG
+#CPPFLAGS+= -DMULTIBOOT2_DEBUG
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+#CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+#CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
+SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
+
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_BIENDIAN=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
+
+### find out what to use for libkern
+KERN_AS= library
+LIBKERN_ARCH?= ${MACHINE_ARCH}
+KERNMISCMAKEFLAGS+="LIBKERN_ARCH=${LIBKERN_ARCH}"
+.include "${S}/lib/libkern/Makefile.inc"
+CPPFLAGS+= -I${S}/../common/include/libc
+LIBKERN= ${KERNLIB}
+
+### find out what to use for libz
+Z_AS= library
+.include "${S}/lib/libz/Makefile.inc"
+CPPFLAGS+=	-I${S}/lib/libz -I${S}/../common/dist/zlib
+LIBZ= ${ZLIB}
+
+### find out what to use for libgnuefi
+GNUEFI_AS= library
+LIBGNUEFI_ARCH?= ${MACHINE_ARCH}
+GNUEFIMISCMAKEFLAGS+="LIBGNUEFI_ARCH=${LIBGNUEFI_ARCH}"
+GNUEFIMISCCPPFLAGS+= -I${EFIDIR}/lib
+.include "${S}/lib/libgnuefi/Makefile.inc"
+LIBGNUEFI= ${GNUEFILIB}
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
+
+VERSIONMACHINE=${MACHINE}
+.include "${S}/conf/newvers_stand.mk"
+
+CLEANFILES+=	${PROG}.so ${PROG}.tmp
+
+${PROG}: ${PROG}.so
+	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
+	    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+	    -j .reloc ${OBJCOPY_FORMAT} ${PROG}.so ${.TARGET}
+
+.include <bsd.prog.mk>
+
+${PROG}.so: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.efiboot
+	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LIBLIST}
+	@if ${OBJDUMP} -t ${.TARGET}.tmp | grep 'UND'; then		\
+	    (echo Undefined symbols; false);				\
+	fi
+	rm -f ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
+
+KLINK_MACHINE?=	${MACHINE}
+.include <bsd.klinks.mk>

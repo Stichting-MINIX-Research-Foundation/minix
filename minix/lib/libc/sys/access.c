@@ -5,9 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int access(name, mode)
-const char *name;
-int mode;
+int access(const char *name, int mode)
 {
   message m;
 

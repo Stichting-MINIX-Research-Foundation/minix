@@ -13,6 +13,7 @@
 #include <machine/cmos.h>
 #include <machine/bios.h>
 
+#include "kernel/kernel.h"
 #include "kernel/spinlock.h"
 #include "kernel/smp.h"
 #include "apic.h"
@@ -86,7 +87,7 @@ void copy_trampoline(void)
 	 */
 	assert(prot_init_done);
 	memcpy(&__ap_gdt_tab, gdt, sizeof(gdt));
-	memcpy(&__ap_idt_tab, gdt, sizeof(idt));
+	memcpy(&__ap_idt_tab, idt, sizeof(idt));
 	__ap_gdt.base = ap_lin_addr(&__ap_gdt_tab);
 	__ap_gdt.limit = sizeof(gdt)-1;
 	__ap_idt.base = ap_lin_addr(&__ap_idt_tab);
@@ -218,6 +219,9 @@ static void ap_finish_booting(void)
 	/* inform the world of our presence. */
 	ap_cpu_ready = cpu;
 
+	/* Set up sysenter/syscall. */
+	setup_sysenter_syscall();
+
 	/*
 	 * Finish processor initialisation.  CPUs must be excluded from running.
 	 * lapic timer calibration locks and unlocks the BKL because of the
@@ -298,12 +302,28 @@ void smp_init (void)
 	ioapic_enabled = 0;
 
 	tss_init_all();
+	setup_sysenter_syscall();
 
-	/* 
+	/*
 	 * we still run on the boot stack and we cannot use cpuid as its value
 	 * wasn't set yet. apicid2cpuid initialized in mps_init()
 	 */
 	bsp_cpu_id = apicid2cpuid[apicid()];
+
+	/*
+	 * tss_init_all() seeded the cpuid slot (top-of-stack[-1]) only on the
+	 * real per-CPU stacks (get_k_stack_top()); the BSP is still on the
+	 * separate boot stack (k_boot_stk), whose slot is uninitialized.
+	 * lapic_enable() below calibrates the LAPIC timer with interrupts
+	 * enabled, and the clock IRQ reads cpuid in context_stop() to index
+	 * kernel_ticks[] &c.  Seed the boot stack's slot with the BSP id now so
+	 * that read is valid until we switch_k_stack().  The cpuid macro is an
+	 * lvalue using the same %ebp-rounded computation, so this writes exactly
+	 * the slot the IRQ will read while we run on the boot stack.  (On i386
+	 * the stale slot does not fault like amd64 does -- the 32-bit OOB index
+	 * wraps into mapped memory -- but it is still a wild write; seed it.)
+	 */
+	cpuid = bsp_cpu_id;
 
 	if (!lapic_enable(bsp_cpu_id)) {
 		printf("ERROR : failed to initialize BSP Local APIC\n");

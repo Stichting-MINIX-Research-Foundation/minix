@@ -102,7 +102,7 @@ chfs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	assert(image != NULL);
 	assert(dir != NULL);
 	assert(root != NULL);
-	assert(fsopts != NULL);	
+	assert(fsopts != NULL);
 
 	TIMER_START(start);
 	chfs_validate(dir, root, fsopts);
@@ -114,7 +114,7 @@ chfs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		errx(EXIT_FAILURE, "Image file `%s' not created", image);
 	}
 	TIMER_RESULTS(start, "chfs_create_image");
-	
+
 	fsopts->curinode = CHFS_ROOTINO;
 	root->inode->ino = CHFS_ROOTINO;
 
@@ -162,7 +162,7 @@ chfs_create_image(const char *image, fsinfo_t *fsopts)
 {
 	assert(image != NULL);
 	assert(fsopts != NULL);
-	
+
 	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0666)) == -1) {
 		warn("Can't open `%s' for writing", image);
 		return -1;
@@ -180,8 +180,8 @@ chfs_populate_dir(const char *dir, fsnode *root, fsnode *parent,
 
 	assert(dir != NULL);
 	assert(root != NULL);
-	assert(fsopts != NULL);	
-	
+	assert(fsopts != NULL);
+
 	for (cur = root->next; cur != NULL; cur = cur->next) {
 		if ((cur->inode->flags & FI_ALLOCATED) == 0) {
 			cur->inode->flags |= FI_ALLOCATED;
@@ -203,7 +203,7 @@ chfs_populate_dir(const char *dir, fsnode *root, fsnode *parent,
 			write_file(fsopts, cur, dir);
 		}
 	}
-	
+
 	for (cur = root; cur != NULL; cur = cur->next) {
 		if (cur->child == NULL) {
 			continue;
@@ -219,4 +219,3 @@ chfs_populate_dir(const char *dir, fsnode *root, fsnode *parent,
 
 	return 1;
 }
-

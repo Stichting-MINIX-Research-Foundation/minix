@@ -55,8 +55,7 @@
 
 /* Local prototypes */
 
-static void
-AcpiNsResolveReferences (
+static void AcpiNsResolveReferences (
     ACPI_EVALUATE_INFO      *Info);
 
 
@@ -516,8 +515,7 @@ ACPI_EXPORT_SYMBOL (AcpiEvaluateObject)
  *
  ******************************************************************************/
 
-static void
-AcpiNsResolveReferences (
+static void AcpiNsResolveReferences (
     ACPI_EVALUATE_INFO      *Info)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc = NULL;

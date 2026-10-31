@@ -372,8 +372,7 @@ AcpiRsGetAddressCommon (
  *
  ******************************************************************************/
 
-void
-AcpiRsSetAddressCommon (
+void AcpiRsSetAddressCommon (
     AML_RESOURCE            *Aml,
     ACPI_RESOURCE           *Resource)
 {

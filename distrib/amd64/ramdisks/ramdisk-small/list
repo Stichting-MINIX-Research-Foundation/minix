@@ -1,0 +1,23 @@
+#	$NetBSD: list,v 1.3 2006/11/18 16:16:19 dsl Exp $
+
+PROG	bin/chio
+PROG	bin/dd
+PROG	bin/df
+PROG	bin/ed
+PROG	bin/mt
+PROG	bin/rcmd
+PROG	bin/sync
+
+PROG	sbin/fdisk
+PROG	sbin/mbrlabel
+PROG	sbin/restore	sbin/rrestore
+PROG	sbin/scsictl
+
+PROG	usr/bin/more	usr/bin/less
+PROG	usr/bin/tip
+
+PROG	usr/sbin/bad144
+
+SPECIAL	ed		srcdir	distrib/utils/x_ed
+SPECIAL	more		srcdir	distrib/utils/more
+SPECIAL	umount		srcdir	distrib/utils/x_umount

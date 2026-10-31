@@ -160,8 +160,7 @@ static void addcache_byino(struct cached_page *hb)
 	cache_hash_byino[hv_ino] = hb;
 }
 
-static void
-update_inohash(struct cached_page *hb, ino_t ino, u64_t ino_off)
+static void update_inohash(struct cached_page *hb, ino_t ino, u64_t ino_off)
 {
 	assert(ino != VMC_NO_INODE);
 	if(hb->ino != VMC_NO_INODE) {
@@ -309,8 +308,7 @@ int cache_freepages(int pages)
 /*
  * Remove all pages that are associated with the given device.
  */
-void
-clear_cache_bydev(dev_t dev)
+void clear_cache_bydev(dev_t dev)
 {
 	struct cached_page *cp, *ncp;
 	int h;

@@ -154,8 +154,7 @@ AcpiUtMatchPredefinedMethod (
  *
  ******************************************************************************/
 
-void
-AcpiUtGetExpectedReturnTypes (
+void AcpiUtGetExpectedReturnTypes (
     char                    *Buffer,
     UINT32                  ExpectedBtypes)
 {
@@ -294,8 +293,7 @@ AcpiUtMatchResourceName (
  *
  ******************************************************************************/
 
-void
-AcpiUtDisplayPredefinedMethod (
+void AcpiUtDisplayPredefinedMethod (
     char                        *Buffer,
     const ACPI_PREDEFINED_INFO  *ThisName,
     BOOLEAN                     MultiLine)

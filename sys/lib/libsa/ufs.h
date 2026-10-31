@@ -34,3 +34,11 @@
 FS_DEF(ufs);
 FS_DEF(ffsv1);
 FS_DEF(ffsv2);
+
+/* in libsa's ffs_bswap.c */
+struct fs;
+struct ufs1_dinode;
+struct ufs2_dinode;
+void ffs_sb_swap(const struct fs *, struct fs *);
+void ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
+void ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);

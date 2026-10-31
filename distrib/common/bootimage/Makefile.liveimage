@@ -43,7 +43,7 @@ LIVEIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/liveimage
 MKDIR?=		mkdir -p
 
 live_image: check_LIVEIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
-	${MKDIR} ${LIVEIMG_RELEASEDIR}
+	${MKDIR} ${MKDIRPERM} ${LIVEIMG_RELEASEDIR}
 	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${LIVEIMG_RELEASEDIR}
 	# note ${MAKESUM} will be calculated in src/etc/Makefile
 

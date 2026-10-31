@@ -119,8 +119,7 @@ int __wrap_main(int argc, char *argv[])
  * Receive a message unless one was already pending.  Process the message, and
  * send a reply if necessary.  Return whether puffs should keep running.
  */
-int
-lpuffs_pump(void)
+int lpuffs_pump(void)
 {
 
 	if (fs_pending == TRUE || get_work(&fs_msg, &fs_ipc_status) == OK) {
@@ -135,8 +134,7 @@ lpuffs_pump(void)
 /*
  * Initialize MINIX3-specific settings.
  */
-void
-lpuffs_init(struct puffs_usermount * pu)
+void lpuffs_init(struct puffs_usermount * pu)
 {
 
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH; /* XXX */

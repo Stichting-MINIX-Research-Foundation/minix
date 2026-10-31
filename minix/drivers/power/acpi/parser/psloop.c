@@ -67,8 +67,7 @@ AcpiPsGetArguments (
     UINT8                   *AmlOpStart,
     ACPI_PARSE_OBJECT       *Op);
 
-static void
-AcpiPsLinkModuleCode (
+static void AcpiPsLinkModuleCode (
     ACPI_PARSE_OBJECT       *ParentOp,
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
@@ -306,8 +305,7 @@ AcpiPsGetArguments (
  *
  ******************************************************************************/
 
-static void
-AcpiPsLinkModuleCode (
+static void AcpiPsLinkModuleCode (
     ACPI_PARSE_OBJECT       *ParentOp,
     UINT8                   *AmlStart,
     UINT32                  AmlLength,

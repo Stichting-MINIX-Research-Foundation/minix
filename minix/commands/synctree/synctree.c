@@ -126,7 +126,7 @@ struct mode {
 static char *arg0;	/* basename(argv[0]) */
 static int ex= 0;	/* exit status. */
 
-static void because()
+static void because(void)
 {
 	fprintf(stderr, ": %s\n", strerror(errno));
 	ex= 1;
@@ -255,7 +255,7 @@ static void sort(struct entry **ae)
 	}
 }
 
-static void enter()
+static void enter(void)
 /* Collect directory entries of E. */
 {
 	struct entry **last= &E->con, *new;
@@ -399,7 +399,7 @@ static char *link_islink(struct stat *stp, const char *file)
 
 #define cancellink()	((void) islink())
 
-static char *islink()
+static char *islink(void)
 /* Returns the name of the file path is linked to.  If no such link can be
  * found, then path is added to the list and nil is returned.  If all the
  * links of a file have been seen, then it is removed from the list.
@@ -464,7 +464,7 @@ static int getstat(char *name, struct stat *stp)
 	return 0;
 }
 
-static int advance()
+static int advance(void)
 /* Determine next pathname, return true on success. */
 {
 	for (;;) {
@@ -517,7 +517,7 @@ static int advance()
 	return 1;
 }
 
-static enum orders request()
+static enum orders request(void)
 /* Slave reads command sent by master. */
 {
 	static char buf[64], *bp;
@@ -547,7 +547,7 @@ static enum orders request()
 	return (enum orders) req;
 }
 
-static void report()
+static void report(void)
 {
 	int r;
 
@@ -614,7 +614,7 @@ static void sendstat(struct stat *stp)
 
 static int ask();
 
-static void slave()
+static void slave(void)
 /* Carry out orders from the master, such as transmitting path names.
  * Note that the slave uses path, not Spath, the master uses Spath.
  */
@@ -763,7 +763,7 @@ static void rread(char *buf, int n)
 	}
 }
 
-static enum answers answer()
+static enum answers answer(void)
 /* Master reads slave's reply. */
 {
 	char c;
@@ -777,7 +777,7 @@ static enum answers answer()
 	return (enum answers) a;
 }
 
-static long recnum()
+static long recnum(void)
 /* Read number as pack of bytes from least to most significant.  The data
  * is on the wire in little-endian format.  (Mostly run on PC's).
  */
@@ -822,7 +822,7 @@ static void recstat(struct stat *stp)
 	stp->st_mtime= recnum();
 }
 
-static int key()
+static int key(void)
 {
 	int c;
 	static int tty= -1;
@@ -1105,7 +1105,7 @@ static int delete(int update)
 	return 1;
 }
 
-static int different()
+static int different(void)
 /* Return true iff path and Spath are different. */
 {
 	if (! ( (linkpath == nil && Slinkpath == nil)
@@ -1136,7 +1136,7 @@ static int different()
 	}
 }
 
-static void compare()
+static void compare(void)
 /* See if path and Spath are same. */
 {
 	if (different()) {
@@ -1158,7 +1158,7 @@ static void compare()
 
 static int done= 0, Sdone= 0;
 
-static enum action { ADD, COMPARE, DELETE } action()
+static enum action { ADD, COMPARE, DELETE } action(void)
 /* Look at path's of master and slave, compare them alphabetically to see
  * who is ahead of who, then tell what is to be done.
  */
@@ -1178,7 +1178,7 @@ static enum action { ADD, COMPARE, DELETE } action()
 	return (c= strcmp(Sp, p)) == 0 ? COMPARE : c < 0 ? ADD : DELETE;
 }
 
-static void master()
+static void master(void)
 /* Synchronise file tree to that of its slave. */
 {
 	enum action a= COMPARE;	/* Trick first advances. */
@@ -1244,7 +1244,7 @@ static void master()
 	order(ex == 0 ? DIE : DIE_BAD);
 }
 
-static void mediator()
+static void mediator(void)
 /* Sits at the local machine and passes orders from master to slave, both
  * on remote machines.  Only diagnostics and questions are handled.
  */
@@ -1346,7 +1346,7 @@ void splitcolon(char *path, char **amach, char **adir)
 	}
 }
 
-static void Usage()
+static void Usage(void)
 {
 	fprintf(stderr,
 	    "Usage: %s [-iuf] [[user@]machine:]dir1 [[user@]machine:]dir2\n",

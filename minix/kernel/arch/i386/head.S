@@ -42,8 +42,9 @@ MINIX:
 
 .balign 8
 
-#define MULTIBOOT_FLAGS (MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_MODS_ALIGNED)
+#define MULTIBOOT_FLAGS (MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_HAS_VBE)
 
+_C_LABEL(Multiboot_Header):
 multiboot_magic:
 	.long MULTIBOOT_HEADER_MAGIC
 multiboot_flags:
@@ -57,13 +58,45 @@ multiboot_checksum:
 	.long 0
 /* Video mode */
 multiboot_mode_type:
-	.long MULTIBOOT_VIDEO_MODE_EGA
+	.long 1 /* MULTIBOOT_VIDEO_MODE_EGA */
 multiboot_width:
-	.long MULTIBOOT_CONSOLE_COLS
+	.long 80 /* MULTIBOOT_CONSOLE_COLS */
 multiboot_height:
-	.long MULTIBOOT_CONSOLE_LINES
+	.long 25 /* MULTIBOOT_CONSOLE_LINES */
 multiboot_depth:
 	.long 0
+	
+	.align	8
+	.globl	Multiboot2_Header
+_C_LABEL(Multiboot2_Header):
+	.long	MULTIBOOT2_HEADER_MAGIC
+	.long	MULTIBOOT2_ARCHITECTURE_I386
+	.long	Multiboot2_Header_end - Multiboot2_Header
+	.long	-(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT2_ARCHITECTURE_I386 \
+		+ (Multiboot2_Header_end - Multiboot2_Header))
+
+	.long	1	/* MULTIBOOT_HEADER_TAG_INFORMATION_REQUEST */
+	.long	32	/* sizeof(multiboot_header_tag_information_request) */
+			/* + sizeof(uint32_t) * requests */
+	.long	1	/* MULTIBOOT_TAG_TYPE_CMDLINE */
+	.long	3	/* MULTIBOOT_TAG_TYPE_MODULE */
+	.long	6	/* MULTIBOOT_TAG_TYPE_MMAP */
+	.long	8	/* MULTIBOOT_TAG_TYPE_FRAMEBUFFER */
+	.long	17	/* MULTIBOOT_TAG_TYPE_EFI_MMAP */
+	.long   0	/* pad for 8 bytes alignment */
+	.long	3	/* MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS */
+	.long	12	/* sizeof(multiboot_header_tag_entry_address) */
+	.long	multiboot_init
+	.long   0	/* pad for 8 bytes alignment */
+
+	/* UEFI don't support EGA console */
+	/* So dont't put 'MULTIBOOT_HEADER_TAG_CONSOLE_FLAGS' here */
+	
+	.long	0	/* MULTIBOOT_HEADER_TAG_END */
+	.long	8	/* sizeof(struct multiboot_tag) */
+	
+	.globl	Multiboot2_Header_end
+_C_LABEL(Multiboot2_Header_end):
 
 multiboot_init:
 	mov	$load_stack_start, %esp	/* make usable stack */
@@ -72,9 +105,9 @@ multiboot_init:
 	popf	/* esp, clear nested task and int enable */
 	push	$0
 
-        push    %ebx	/* multiboot information struct */
+	push    %ebx	/* multiboot information struct */
 	push	%eax	/* multiboot magic number */
-        call    _C_LABEL(pre_init)
+	call    _C_LABEL(pre_init)
 
 	/* Kernel is mapped high now and ready to go, with
 	 * the boot info pointer returnd in %eax. Set the
@@ -84,10 +117,11 @@ multiboot_init:
 	mov	$k_initial_stktop, %esp
 	push	$0	/* Terminate stack */
 	push	%eax
-        call    _C_LABEL(kmain)
+	call    _C_LABEL(kmain)
 
 	/* not reached */
 hang:
+	hlt
 	jmp hang
 
 .data

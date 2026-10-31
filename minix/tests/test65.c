@@ -23,8 +23,7 @@ void skip(char const *msg);
 void create_partition(void);
 void verify_tools(void);
 
-void
-basic_test(void)
+void basic_test(void)
 {
 /* Write a string to a file, read it back, and confirm it's identical */
 	int status;
@@ -58,16 +57,14 @@ basic_test(void)
 	if (strncmp(file_buf, TESTSTRING, strlen(TESTSTRING))) e(3);
 }
 
-void
-skip(char const *msg)
+void skip(char const *msg)
 {
 	system("umount " RAMDISK SILENT);
 	printf("%s\n", msg);
 	quit();
 }
 
-void
-bomb(char const *msg)
+void bomb(char const *msg)
 {
 	system("umount " RAMDISK SILENT);
 	printf("%s\n", msg);
@@ -75,8 +72,7 @@ bomb(char const *msg)
 	quit();
 }
 
-void
-create_partition(void)
+void create_partition(void)
 {
 	int status;
 	char mntcmd[1024];
@@ -102,8 +98,7 @@ create_partition(void)
 		bomb("Unable to mount NTFS partition (1)");
 }
 
-void
-verify_tools(void)
+void verify_tools(void)
 {
 	int status1, status2;
 
@@ -115,8 +110,7 @@ verify_tools(void)
 		skip("mkntfs or ntfs-3g not found, skipping test");
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	start(65);
 	verify_tools();

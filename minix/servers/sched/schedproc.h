@@ -11,8 +11,8 @@
 #define EXTERN
 #endif
 
-#ifndef CONFIG_SMP
-#define CONFIG_MAX_CPUS 1
+#ifndef CONFIG_MAX_CPUS
+#define CONFIG_MAX_CPUS	1
 #endif
 
 /**

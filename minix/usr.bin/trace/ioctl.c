@@ -20,8 +20,7 @@ static const struct {
  * Print an IOCTL request code, and save certain values in the corresponding
  * process structure in order to be able to print the IOCTL argument.
  */
-void
-put_ioctl_req(struct trace_proc * proc, const char * name, unsigned long req,
+void put_ioctl_req(struct trace_proc * proc, const char * name, unsigned long req,
 	int is_svrctl)
 {
 	const char *text;
@@ -99,8 +98,7 @@ put_ioctl_req(struct trace_proc * proc, const char * name, unsigned long req,
  * called for the corresponding IOCTL already, so that the necessary fields in
  * the given proc structure are set as expected.
  */
-int
-put_ioctl_arg_out(struct trace_proc * proc, const char * name,
+int put_ioctl_arg_out(struct trace_proc * proc, const char * name,
 	unsigned long req, vir_bytes addr, int is_svrctl)
 {
 	size_t size;
@@ -178,8 +176,7 @@ put_ioctl_arg_out(struct trace_proc * proc, const char * name,
  * function assumes that it is preceded by a call to put_ioctl_arg_out for this
  * process.
  */
-void
-put_ioctl_arg_in(struct trace_proc * proc, const char * name, int failed,
+void put_ioctl_arg_in(struct trace_proc * proc, const char * name, int failed,
 	unsigned long req, vir_bytes addr, int is_svrctl)
 {
 	size_t size;

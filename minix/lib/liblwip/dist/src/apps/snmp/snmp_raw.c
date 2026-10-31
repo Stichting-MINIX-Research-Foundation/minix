@@ -42,8 +42,7 @@
 #include "snmp_msg.h"
 
 /* lwIP UDP receive callback function */
-static void
-snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   LWIP_UNUSED_ARG(arg);
 
@@ -58,8 +57,7 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
   return udp_sendto((struct udp_pcb*)handle, p, dst, port);
 }
 
-u8_t
-snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
+u8_t snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 {
   struct udp_pcb* udp_pcb = (struct udp_pcb*)handle;
   struct netif *dst_if;
@@ -82,8 +80,7 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
  * Starts SNMP Agent.
  * Allocates UDP pcb and binds it to IP_ANY_TYPE port 161.
  */
-void
-snmp_init(void)
+void snmp_init(void)
 {
   err_t err;
   

@@ -56,6 +56,33 @@ int do_runctl(struct proc * caller, message * m_ptr)
 	  /* check if we must stop a process on a different CPU */
 	  if (rp->p_cpu != cpuid) {
 		  smp_schedule_stop_proc(rp);
+
+		  /*
+		   * The RTS_SENDING/MF_SC_DEFER test above was a snapshot taken
+		   * while the target could still be running -- or entering the
+		   * kernel to send a message -- on another CPU, so on SMP it may
+		   * miss a call that is in transit.  smp_schedule_stop_proc() is
+		   * synchronous: it returns only once this CPU has re-acquired
+		   * the BKL, by which time the target CPU has finished delivering
+		   * any message it was sending and would now be blocked SENDING.
+		   * Re-check, and if the process did send, turn this into a delay
+		   * call so PM waits for the send to complete (it gets SIGSNDELAY)
+		   * before delivering the signal -- exactly as the up-front EBUSY
+		   * path does on a uniprocessor.  We must undo the stop: PM takes
+		   * the EBUSY path as DELAY_CALL (not PROC_STOPPED), so it would
+		   * never issue the matching resume and the process would be
+		   * stranded.  Clearing RTS_PROC_STOP is safe -- the process stays
+		   * blocked SENDING, so it does not become runnable here; the
+		   * normal send-completion path reschedules it and fires
+		   * SIGSNDELAY, after which PM retries the stop.
+		   */
+		  if ((flags & RC_DELAY) &&
+		      (RTS_ISSET(rp, RTS_SENDING) ||
+		       (rp->p_misc_flags & MF_SC_DEFER))) {
+			  rp->p_misc_flags |= MF_SIG_DELAY;
+			  RTS_UNSET(rp, RTS_PROC_STOP);
+			  return (EBUSY);
+		  }
 		  break;
 	  }
 #endif

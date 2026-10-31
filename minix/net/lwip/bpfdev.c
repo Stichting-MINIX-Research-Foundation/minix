@@ -113,8 +113,7 @@ static struct rmib_node net_bpf_node =
 /*
  * Initialize the BPF module.
  */
-void
-bpfdev_init(void)
+void bpfdev_init(void)
 {
 	const int mib[] = { CTL_NET, NET_BPF };
 	unsigned int slot;
@@ -167,8 +166,7 @@ bpfdev_get_by_minor(devminor_t minor)
 /*
  * Open a BPF device, returning a cloned device instance.
  */
-static int
-bpfdev_open(devminor_t minor, int access __unused, endpoint_t user_endpt)
+static int bpfdev_open(devminor_t minor, int access __unused, endpoint_t user_endpt)
 {
 	struct bpfdev_link *bpfl;
 	struct bpfdev *bpf;
@@ -199,8 +197,7 @@ bpfdev_open(devminor_t minor, int access __unused, endpoint_t user_endpt)
 /*
  * Close a BPF device.
  */
-static int
-bpfdev_close(devminor_t minor)
+static int bpfdev_close(devminor_t minor)
 {
 	struct bpfdev *bpf;
 
@@ -259,8 +256,7 @@ bpfdev_close(devminor_t minor)
  * Rotate buffers for the BPF device, by swapping the store buffer and the hold
  * buffer.
  */
-static void
-bpfdev_rotate(struct bpfdev * bpf)
+static void bpfdev_rotate(struct bpfdev * bpf)
 {
 	char *buf;
 	size_t len;
@@ -283,8 +279,7 @@ bpfdev_rotate(struct bpfdev * bpf)
  * Test whether any of the given select operations are ready on the BPF device,
  * and return the set of ready operations.
  */
-static unsigned int
-bpfdev_test_select(struct bpfdev * bpf, unsigned int ops)
+static unsigned int bpfdev_test_select(struct bpfdev * bpf, unsigned int ops)
 {
 	unsigned int ready_ops;
 
@@ -320,8 +315,7 @@ bpfdev_test_select(struct bpfdev * bpf, unsigned int ops)
  * There has been a state change on the BPF device.  If now possible, resume a
  * pending select query, if any.
  */
-static void
-bpfdev_resume_select(struct bpfdev * bpf)
+static void bpfdev_resume_select(struct bpfdev * bpf)
 {
 	unsigned int ops, ready_ops;
 	endpoint_t endpt;
@@ -358,8 +352,7 @@ bpfdev_resume_select(struct bpfdev * bpf)
  * disappeared interface, and 'is_timeout' is not set.  In this case, the read
  * request must be resumed with an I/O error if no packets are available.
  */
-static void
-bpfdev_resume_read(struct bpfdev * bpf, int is_timeout)
+static void bpfdev_resume_read(struct bpfdev * bpf, int is_timeout)
 {
 	ssize_t r;
 
@@ -410,8 +403,7 @@ bpfdev_resume_read(struct bpfdev * bpf, int is_timeout)
  * A read timeout has triggered for the BPF device.  Wake up the pending read
  * request.
  */
-static void
-bpfdev_timeout(int arg)
+static void bpfdev_timeout(int arg)
 {
 	struct bpfdev *bpf;
 
@@ -427,8 +419,7 @@ bpfdev_timeout(int arg)
 /*
  * Read from a BPF device.
  */
-static ssize_t
-bpfdev_read(devminor_t minor, uint64_t position, endpoint_t endpt,
+static ssize_t bpfdev_read(devminor_t minor, uint64_t position, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
 {
 	struct bpfdev *bpf;
@@ -522,8 +513,7 @@ bpfdev_read(devminor_t minor, uint64_t position, endpoint_t endpt,
 /*
  * Write to a BPF device.
  */
-static ssize_t
-bpfdev_write(devminor_t minor, uint64_t position, endpoint_t endpt,
+static ssize_t bpfdev_write(devminor_t minor, uint64_t position, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
 {
 	struct bpfdev *bpf;
@@ -604,8 +594,7 @@ bpfdev_write(devminor_t minor, uint64_t position, endpoint_t endpt,
  * device was successfully attached to the interface, or a negative error code
  * otherwise.
  */
-static int
-bpfdev_attach(struct bpfdev * bpf, struct ifreq * ifr)
+static int bpfdev_attach(struct bpfdev * bpf, struct ifreq * ifr)
 {
 	struct ifdev *ifdev;
 	void *sbuf, *hbuf;
@@ -644,8 +633,7 @@ bpfdev_attach(struct bpfdev * bpf, struct ifreq * ifr)
 /*
  * Detach the BPF device from its interface, which is about to disappear.
  */
-void
-bpfdev_detach(struct bpfdev_link * bpfl)
+void bpfdev_detach(struct bpfdev_link * bpfl)
 {
 	struct bpfdev *bpf = (struct bpfdev *)bpfl;
 
@@ -677,8 +665,7 @@ bpfdev_detach(struct bpfdev_link * bpfl)
  * Flush the given BPF device, resetting its buffer contents and statistics
  * counters.
  */
-static void
-bpfdev_flush(struct bpfdev * bpf)
+static void bpfdev_flush(struct bpfdev * bpf)
 {
 
 	bpf->bpf_slen = 0;
@@ -695,8 +682,7 @@ bpfdev_flush(struct bpfdev * bpf)
  * perform a flush and return OK.  On failure, return a negative error code
  * without making any modifications to the current filter.
  */
-static int
-bpfdev_setfilter(struct bpfdev * bpf, endpoint_t endpt, cp_grant_id_t grant)
+static int bpfdev_setfilter(struct bpfdev * bpf, endpoint_t endpt, cp_grant_id_t grant)
 {
 	struct bpf_insn *filter;
 	unsigned int count;
@@ -748,8 +734,7 @@ bpfdev_setfilter(struct bpfdev * bpf, endpoint_t endpt, cp_grant_id_t grant)
 /*
  * Process an I/O control request on the BPF device.
  */
-static int
-bpfdev_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int bpfdev_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
 	struct bpfdev *bpf;
@@ -1041,8 +1026,7 @@ bpfdev_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
  * drivers are supposed to respond to the original request, character drivers
  * must respond to the original request from the cancel callback.
  */
-static int
-bpfdev_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
+static int bpfdev_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	struct bpfdev *bpf;
 
@@ -1065,8 +1049,7 @@ bpfdev_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 /*
  * Perform a select query on a BPF device.
  */
-static int
-bpfdev_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+static int bpfdev_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 {
 	struct bpfdev *bpf;
 	unsigned int r, notify;
@@ -1107,8 +1090,7 @@ bpfdev_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
  * suspended read and select requests as appropriate.  This function is also
  * called through bpfdev_output() below.
  */
-void
-bpfdev_input(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
+void bpfdev_input(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
 {
 	struct bpfdev *bpf = (struct bpfdev *)bpfl;
 	struct timespec ts;
@@ -1252,8 +1234,7 @@ bpfdev_input(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
  * attached.  If the BPF device is configured to capture outgoing packets as
  * well, attempt to capture the packet as per bpfdev_input().
  */
-void
-bpfdev_output(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
+void bpfdev_output(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
 {
 	struct bpfdev *bpf = (struct bpfdev *)bpfl;
 
@@ -1264,8 +1245,7 @@ bpfdev_output(struct bpfdev_link * bpfl, const struct pbuf * pbuf)
 /*
  * Fill the given 'bde' structure with information about BPF device 'bpf'.
  */
-static void
-bpfdev_get_info(struct bpf_d_ext * bde, const struct bpfdev * bpf)
+static void bpfdev_get_info(struct bpf_d_ext * bde, const struct bpfdev * bpf)
 {
 
 	bde->bde_bufsize = bpf->bpf_size;
@@ -1294,8 +1274,7 @@ bpfdev_get_info(struct bpf_d_ext * bde, const struct bpfdev * bpf)
  * Obtain statistics about open BPF devices ("peers").  This node may be
  * accessed by the superuser only.  Used by netstat(1).
  */
-static ssize_t
-bpfdev_peers(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t bpfdev_peers(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 	struct bpfdev *bpf;
@@ -1357,8 +1336,7 @@ static const struct chardriver bpfdev_tab = {
  * Process a character driver request.  Since the LWIP service offers character
  * devices for BPF only, it must be a request for a BPF device.
  */
-void
-bpfdev_process(message * m_ptr, int ipc_status)
+void bpfdev_process(message * m_ptr, int ipc_status)
 {
 
 	chardriver_process(&bpfdev_tab, m_ptr, ipc_status);

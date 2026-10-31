@@ -11,8 +11,7 @@
 #endif
 
 /** Remove all pcbs on the given list. */
-static void
-tcp_remove(struct tcp_pcb* pcb_list)
+static void tcp_remove(struct tcp_pcb* pcb_list)
 {
   struct tcp_pcb *pcb = pcb_list;
   struct tcp_pcb *pcb2;
@@ -25,8 +24,7 @@ tcp_remove(struct tcp_pcb* pcb_list)
 }
 
 /** Remove all pcbs on listen-, active- and time-wait-list (bound- isn't exported). */
-void
-tcp_remove_all(void)
+void tcp_remove_all(void)
 {
   tcp_remove(tcp_listen_pcbs.pcbs);
   tcp_remove(tcp_active_pcbs);
@@ -137,8 +135,7 @@ struct pbuf* tcp_create_rx_segment_wnd(struct tcp_pcb* pcb, void* data, size_t d
 }
 
 /** Safely bring a tcp_pcb into the requested state */
-void
-tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, ip_addr_t* local_ip,
+void tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, ip_addr_t* local_ip,
                    ip_addr_t* remote_ip, u16_t local_port, u16_t remote_port)
 {
   u32_t iss;
@@ -174,8 +171,7 @@ tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, ip_addr_t* local_ip,
   }
 }
 
-void
-test_tcp_counters_err(void* arg, err_t err)
+void test_tcp_counters_err(void* arg, err_t err)
 {
   struct test_tcp_counters* counters = (struct test_tcp_counters*)arg;
   EXPECT_RET(arg != NULL);
@@ -183,8 +179,7 @@ test_tcp_counters_err(void* arg, err_t err)
   counters->last_err = err;
 }
 
-static void
-test_tcp_counters_check_rxdata(struct test_tcp_counters* counters, struct pbuf* p)
+static void test_tcp_counters_check_rxdata(struct test_tcp_counters* counters, struct pbuf* p)
 {
   struct pbuf* q;
   u32_t i, received;

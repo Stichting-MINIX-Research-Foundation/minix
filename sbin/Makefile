@@ -8,15 +8,15 @@
 
 SUBDIR= \
 	chown \
-	fsck ifconfig init \
+	fsck gpt ifconfig init \
 	mknod nologin \
 	ping \
 	reboot rcorder route \
 	shutdown sysctl \
 
+.if !defined(__MINIX)
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs newfs_msdos newfs_udf newfs_v7fs
-.if !defined(__MINIX)
 SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs resize_ffs
 SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
 SUBDIR+= newfs_msdos fsck_msdos

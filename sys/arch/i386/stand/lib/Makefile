@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2015/09/07 03:44:19 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.45.8.2 2019/09/17 19:32:00 martin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -37,10 +37,16 @@ AFLAGS.putstr32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .endif # defined(__MINIX)
 AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
+.if defined(__MINIX)
+CPPFLAGS+= -DNO_RAIDFRAME
+.endif
+
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
 #CPPFLAGS+= -DNO_DISKLABEL
 #CPPFLAGS+= -DNO_GPT
+CPPFLAGS+= -DNO_RAIDFRAME
+#CPPFLAGS+= -DNO_MULTIBOOT2
 #CPPFLAGS+= -DSAVE_MEMORY
 
 SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S

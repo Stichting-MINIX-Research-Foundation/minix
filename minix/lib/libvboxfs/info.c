@@ -5,8 +5,7 @@
 /*
  * Get or set file information.
  */
-int
-vboxfs_getset_info(vboxfs_handle_t handle, u32_t flags, void *data,
+int vboxfs_getset_info(vboxfs_handle_t handle, u32_t flags, void *data,
 	size_t size)
 {
 	vbox_param_t param[5];
@@ -23,8 +22,7 @@ vboxfs_getset_info(vboxfs_handle_t handle, u32_t flags, void *data,
 /*
  * Query volume information.
  */
-int
-vboxfs_query_vol(const char *path, vboxfs_volinfo_t *volinfo)
+int vboxfs_query_vol(const char *path, vboxfs_volinfo_t *volinfo)
 {
 	vboxfs_handle_t h;
 	int r;
@@ -43,8 +41,7 @@ vboxfs_query_vol(const char *path, vboxfs_volinfo_t *volinfo)
 /*
  * Query volume information.
  */
-int
-vboxfs_queryvol(const char *path, u64_t *free, u64_t *total)
+int vboxfs_queryvol(const char *path, u64_t *free, u64_t *total)
 {
 	vboxfs_volinfo_t volinfo;
 	int r;

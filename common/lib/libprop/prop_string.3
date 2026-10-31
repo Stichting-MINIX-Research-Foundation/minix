@@ -1,6 +1,6 @@
-.\"	$NetBSD: prop_string.3,v 1.8 2011/02/26 12:56:36 wiz Exp $
+.\"	$NetBSD: prop_string.3,v 1.10 2020/06/06 21:25:59 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,24 +27,22 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2008
+.Dd June 2, 2020
 .Dt PROP_STRING 3
 .Os
 .Sh NAME
 .Nm prop_string ,
-.Nm prop_string_create ,
-.Nm prop_string_create_cstring ,
-.Nm prop_string_create_cstring_nocopy ,
+.Nm prop_string_create_copy ,
+.Nm prop_string_create_format ,
+.Nm prop_string_create_nocopy ,
+.Nm prop_string_value ,
+.Nm prop_string_copy_value ,
 .Nm prop_string_copy ,
-.Nm prop_string_copy_mutable ,
 .Nm prop_string_size ,
-.Nm prop_string_mutable ,
-.Nm prop_string_cstring ,
-.Nm prop_string_cstring_nocopy ,
-.Nm prop_string_append ,
-.Nm prop_string_append_cstring ,
 .Nm prop_string_equals ,
-.Nm prop_string_equals_cstring
+.Nm prop_string_equals_string ,
+.Nm prop_string_compare ,
+.Nm prop_string_compare_string
 .Nd string value property object
 .Sh LIBRARY
 .Lb libprop
@@ -52,131 +50,112 @@
 .In prop/proplib.h
 .\"
 .Ft prop_string_t
-.Fn prop_string_create "void"
+.Fn prop_string_create_copy "const char *cstring"
 .Ft prop_string_t
-.Fn prop_string_create_cstring "const char *cstring"
+.Fn prop_string_create_format "const char *fmt" "..."
 .Ft prop_string_t
-.Fn prop_string_create_cstring_nocopy "const char *cstring"
+.Fn prop_string_create_nocopy "const char *cstring"
 .\"
 .Ft prop_string_t
 .Fn prop_string_copy "prop_string_t string"
-.Ft prop_string_t
-.Fn prop_string_copy_mutable "prop_string_t string"
+.Ft bool
+.Fn prop_string_copy_value "prop_string_t string" "char *buf" "size_t buflen"
 .\"
 .Ft size_t
 .Fn prop_string_size "prop_string_t string"
-.Ft bool
-.Fn prop_string_mutable "prop_string_t string"
 .\"
-.Ft char *
-.Fn prop_string_cstring "prop_string_t string"
 .Ft const char *
-.Fn prop_string_cstring_nocopy "prop_string_t string"
-.\"
-.Ft bool
-.Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
-.Ft bool
-.Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
+.Fn prop_string_value "prop_string_t string"
 .\"
 .Ft bool
 .Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
 .Ft bool
-.Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
+.Fn prop_string_equals_string "prop_string_t string" "const char *cstring"
+.\"
+.Ft int
+.Fn prop_string_compare "prop_string_t str1" "prop_string_t str2"
+.Ft int
+.Fn prop_string_compare_string "prop_string_t string" "const char *cstring"
 .Sh DESCRIPTION
 The
-.Nm prop_string
+.Nm
 family of functions operate on a string value property object type.
 .Bl -tag -width "xxxxx"
-.It Fn prop_string_create "void"
-Create an empty mutable string.
-Returns
-.Dv NULL
-on failure.
-.It Fn prop_string_create_cstring "const char *cstring"
-Create a mutable string that contains a copy of
+.It Fn prop_string_create_copy "const char *cstring"
+Create a string object that contains a copy of
 .Fa cstring .
 Returns
 .Dv NULL
 on failure.
-.It Fn prop_string_create_cstring_nocopy "const char *cstring"
-Create an immutable string that contains a reference to
-.Fa cstring .
+.It Fn prop_string_create_format "const char *fmt" "..."
+Similar to
+.Fn prop_string_create_copy ,
+but creates the string using the specified
+.Xr printf 3
+format.
+.It Fn prop_string_create_nocopy "const char *cstring"
+Similar to
+.Fn prop_string_create_copy ,
+but is allowed to not create an internal copy of the string data, instead
+referencing the string data passed by the caller.
+Caution must be exercised because string objects can have an indefinite
+lifespan.
+The caller must therefore ensure that the provided string data
+reference will also be valid indefinitely.
+This is provided only as a memory optimization; it is not guaranteed that
+the returned string object will reference the provided string data, and
+thus callers should not rely on this behavior.
 Returns
 .Dv NULL
 on failure.
 .It Fn prop_string_copy "prop_string_t string"
-Copy a string.
-If the string being copied is an immutable external C string reference,
-then the copy is also immutable and references the same external C string.
-Returns
-.Dv NULL
-on failure.
-.It Fn prop_string_copy_mutable "prop_string_t string"
-Copy a string, always creating a mutable copy.
+Copy a string object.
+If the string object being copied has an external string buffer reference,
+then the copy also references the same external string buffer.
 Returns
 .Dv NULL
 on failure.
 .It Fn prop_string_size "prop_string_t string"
-Returns the size of the string, not including the terminating NUL.
+Returns the size of the string, not including the terminating NUL;
+equivalent semantics to
+.Xr strlen 3 .
 If the supplied object isn't a string, zero is returned.
-.It Fn prop_string_mutable "prop_string_t string"
-Returns
-.Dv true
-if the string is mutable.
-If the supplied object isn't a string,
-.Dv false
-is returned.
-.It Fn prop_string_cstring "prop_string_t string"
-Returns a copy of the string's contents as a C string.
-The caller is responsible for freeing the returned buffer.
-.Pp
-In user space, the buffer is allocated using
-.Xr malloc 3 .
-In the kernel, the buffer is allocated using
-.Xr malloc 9
-using the malloc type
-.Dv M_TEMP .
-.Pp
-Returns
-.Dv NULL
-on failure.
-.It Fn prop_string_cstring_nocopy "prop_string_t string"
-Returns an immutable reference to the contents of the string as a
-C string.
+.It Fn prop_string_value "prop_string_t string"
+Returns an reference to the contents of the string as a C string.
 If the supplied object isn't a string,
 .Dv NULL
 is returned.
-.It Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
-Append the contents of
-.Fa str2
-to
-.Fa str1 ,
-which must be mutable.
+.It Fn prop_string_copy_value "prop_string_t string" "void *buf" "size_t buflen"
+Copies the contents of the string object including the terminating NUL
+into the supplied buffer of the specified size.
 Returns
 .Dv true
-upon success and
+if the copy succeeds
+and
 .Dv false
-otherwise.
-.It Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
-Append the C string
-.Fa cstring
-to
-.Fa string ,
-which must be mutable.
-Returns
-.Dv true
-upon success and
-.Dv false
-otherwise.
+if the supplied buffer is not large enough or if the object is not a
+string object.
 .It Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
 Returns
 .Dv true
 if the two string objects are equivalent.
-.It Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
+.It Fn prop_string_equals_string "prop_string_t string" "const char *cstring"
 Returns
 .Dv true
 if the string's value is equivalent to
 .Fa cstring .
+.It Fn prop_string_compare "prop_string_t str1" "prop_string_t str2"
+Compares two strings using
+.Xr strcmp 3
+semantics.
+If either of the two objects are not string objects, an arbitrary
+non-matching value will be returned.
+.It Fn prop_string_compare_string "prop_string_t string" "const char *cstring"
+Compares the a string object to the specified C string using
+.Xr strcmp 3
+semantics.
+If either the object is not a string object, an arbitrary
+non-matching value will be returned.
 .El
 .Sh SEE ALSO
 .Xr prop_array 3 ,
@@ -188,6 +167,8 @@ if the string's value is equivalent to
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .
+Support for mutable string objects was deprecated in
+.Nx 10.0 .

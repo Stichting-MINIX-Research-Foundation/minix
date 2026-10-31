@@ -67,8 +67,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiUtDumpBuffer (
+void AcpiUtDumpBuffer (
     UINT8                   *Buffer,
     UINT32                  Count,
     UINT32                  Display,
@@ -198,8 +197,7 @@ AcpiUtDumpBuffer (
  *
  ******************************************************************************/
 
-void
-AcpiUtDebugDumpBuffer (
+void AcpiUtDebugDumpBuffer (
     UINT8                   *Buffer,
     UINT32                  Count,
     UINT32                  Display,
@@ -239,8 +237,7 @@ AcpiUtDebugDumpBuffer (
  *
  ******************************************************************************/
 
-void
-AcpiUtDumpBufferToFile (
+void AcpiUtDumpBufferToFile (
     ACPI_FILE               File,
     UINT8                   *Buffer,
     UINT32                  Count,

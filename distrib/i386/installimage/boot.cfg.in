@@ -1,0 +1,14 @@
+banner=Welcome to the Minix/@@MACHINE@@ @@VERSION@@ installation image
+banner================================================================================
+banner=
+menu=Start MINIX 3:load_mods /boot/minix_default/mod*; multiboot /boot/minix_default/kernel rootdevname=c0d0p0 acpi=yes cttyline=0 no_smp=0 no_apic=0
+menu=Start latest MINIX 3:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0 acpi=yes cttyline=0 no_smp=0 no_apic=0
+menu=Start latest MINIX 3 in single user mode:load_mods /boot/minix_latest/mod*; multiboot /boot/minix_latest/kernel rootdevname=c0d0p0 bootopts=-s
+menu=Start MINIX 3 ALIX:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel rootdevname=c0d0p0 console=tty00 consdev=com0 ata_no_dma=1
+menu=Edit menu option:edit
+menu=Drop to boot prompt:prompt
+menu=Start MINIX 3 ($RELEASE_VERSION):load_mods /boot/minix/$RELEASE_VERSION/mod*; multiboot /boot/minix/$RELEASE_VERSION/kernel rootdevname=c0d0p0
+clear=1
+timeout=5
+default=1
+

@@ -1643,6 +1643,7 @@
 ./usr/include/sys/gmon.h                                minix-comp
 ./usr/include/sys/gpio.h                                minix-comp
 ./usr/include/sys/hash.h                                minix-comp
+#./usr/include/sys/idtype.h                              minix-comp
 ./usr/include/sys/ieee754.h                             minix-comp
 ./usr/include/sys/intr.h                                minix-comp
 ./usr/include/sys/intrio.h                              minix-comp
@@ -1661,16 +1662,19 @@
 ./usr/include/sys/ioctl_compat.h                        minix-comp
 ./usr/include/sys/iostat.h                              minix-comp
 ./usr/include/sys/ipc.h                                 minix-comp
+#./usr/include/sys/ipmi.h                                minix-comp
 ./usr/include/sys/jmp_buf.h                             minix-comp      obsolete
 ./usr/include/sys/joystick.h                            minix-comp
 ./usr/include/sys/kbdio.h                               minix-comp
 ./usr/include/sys/kcore.h                               minix-comp
+#./usr/include/sys/kcov.h                                minix-comp
 ./usr/include/sys/kcpuset.h                             minix-comp
 ./usr/include/sys/kgdb.h                                minix-comp
 ./usr/include/sys/kmem.h                                minix-comp
 ./usr/include/sys/ksem.h                                minix-comp
 ./usr/include/sys/ksyms.h                               minix-comp
 ./usr/include/sys/ktrace.h                              minix-comp
+#./usr/include/sys/localcount.h                          minix-comp
 ./usr/include/sys/localedef.h                           minix-comp
 ./usr/include/sys/lock.h                                minix-comp
 ./usr/include/sys/lockf.h                               minix-comp
@@ -1696,7 +1700,8 @@
 ./usr/include/sys/param.h                               minix-comp
 ./usr/include/sys/pcu.h                                 minix-comp
 ./usr/include/sys/pipe.h                                minix-comp
-./usr/include/sys/pmc.h                                 minix-comp
+./usr/include/sys/pmc.h                                 minix-comp      obsolete
+#./usr/include/sys/pmf.h                                 minix-comp
 ./usr/include/sys/poll.h                                minix-comp
 ./usr/include/sys/pool.h                                minix-comp
 ./usr/include/sys/power.h                               minix-comp
@@ -1704,6 +1709,7 @@
 ./usr/include/sys/procfs.h                              minix-comp
 ./usr/include/sys/protosw.h                             minix-comp
 ./usr/include/sys/pset.h                                minix-comp
+#./usr/include/sys/psref.h                               minix-comp
 ./usr/include/sys/ptrace.h                              minix-comp
 ./usr/include/sys/ptree.h                               minix-comp
 ./usr/include/sys/queue.h                               minix-comp
@@ -1726,8 +1732,10 @@
 ./usr/include/sys/select.h                              minix-comp
 ./usr/include/sys/selinfo.h                             minix-comp
 ./usr/include/sys/sem.h                                 minix-comp
+#./usr/include/sys/semaphore.h                           minix-comp
 ./usr/include/sys/sha1.h                                minix-comp
 ./usr/include/sys/sha2.h                                minix-comp
+#./usr/include/sys/sha3.h                                minix-comp
 ./usr/include/sys/shm.h                                 minix-comp
 ./usr/include/sys/siginfo.h                             minix-comp
 ./usr/include/sys/signal.h                              minix-comp
@@ -1778,10 +1786,10 @@
 ./usr/include/sys/un.h                                  minix-comp
 ./usr/include/sys/unistd.h                              minix-comp
 ./usr/include/sys/unpcb.h                               minix-comp
-./usr/include/sys/user.h                                minix-comp
+./usr/include/sys/user.h                                minix-comp      obsolete
 ./usr/include/sys/utsname.h                             minix-comp
 ./usr/include/sys/uuid.h                                minix-comp
-./usr/include/sys/vadvise.h                             minix-comp
+./usr/include/sys/vadvise.h                             minix-comp      obsolete
 ./usr/include/sys/verified_exec.h                       minix-comp
 ./usr/include/sys/video.h                               minix-comp
 ./usr/include/sys/videoio.h                             minix-comp
@@ -1812,6 +1820,7 @@
 ./usr/include/ufs/ext2fs/ext2fs.h                       minix-comp
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h                minix-comp
 ./usr/include/ufs/ext2fs/ext2fs_dir.h                   minix-comp
+./usr/include/ufs/ext2fs/ext2fs_extents.h                minix-comp
 ./usr/include/ufs/ext2fs/ext2fs_extern.h                minix-comp
 ./usr/include/ufs/ffs                                   minix-comp
 ./usr/include/ufs/ffs/ffs_extern.h                      minix-comp

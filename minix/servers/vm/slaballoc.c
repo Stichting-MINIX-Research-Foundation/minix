@@ -26,7 +26,10 @@
 #include "util.h"
 #include "sanitycheck.h"
 
-#define SLABSIZES 200
+/* Largest slab object is MAXSIZE = SLABSIZES-1+MINSIZE bytes. On amd64 (LP64)
+ * VM structs are larger (64-bit pointers, 96-byte messages); e.g. struct
+ * vfs_request_node is 224 bytes, so 200 (max 207) was too small. */
+#define SLABSIZES 256
 
 #define ITEMSPERPAGE(bytes) (int)(DATABYTES / (bytes))
 

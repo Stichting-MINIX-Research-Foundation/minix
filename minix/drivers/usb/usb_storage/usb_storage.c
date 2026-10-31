@@ -164,8 +164,7 @@ static unsigned char buffer[BUFFER_SIZE];
 /*===========================================================================*
  *    main                                                                   *
  *===========================================================================*/
-int
-main(int argc, char * argv[])
+int main(int argc, char * argv[])
 {
 	MASS_DEBUG_MSG("Starting...");
 
@@ -226,8 +225,7 @@ main(int argc, char * argv[])
 /*===========================================================================*
  *    mass_storage_send_scsi_cbw_out                                         *
  *===========================================================================*/
-static int
-mass_storage_send_scsi_cbw_out(int scsi_cmd, scsi_transfer * info)
+static int mass_storage_send_scsi_cbw_out(int scsi_cmd, scsi_transfer * info)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -262,8 +260,7 @@ mass_storage_send_scsi_cbw_out(int scsi_cmd, scsi_transfer * info)
 /*===========================================================================*
  *    mass_storage_send_scsi_data_in                                         *
  *===========================================================================*/
-static int
-mass_storage_send_scsi_data_in(void * buf, unsigned int in_len)
+static int mass_storage_send_scsi_data_in(void * buf, unsigned int in_len)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -288,8 +285,7 @@ mass_storage_send_scsi_data_in(void * buf, unsigned int in_len)
 /*===========================================================================*
  *    mass_storage_send_scsi_data_out                                        *
  *===========================================================================*/
-static int
-mass_storage_send_scsi_data_out(void * buf, unsigned int out_len)
+static int mass_storage_send_scsi_data_out(void * buf, unsigned int out_len)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -314,8 +310,7 @@ mass_storage_send_scsi_data_out(void * buf, unsigned int out_len)
 /*===========================================================================*
  *    mass_storage_send_scsi_csw_in                                          *
  *===========================================================================*/
-static int
-mass_storage_send_scsi_csw_in(void)
+static int mass_storage_send_scsi_csw_in(void)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -351,8 +346,7 @@ mass_storage_send_scsi_csw_in(void)
 /*===========================================================================*
  *    mass_storage_reset_recovery                                            *
  *===========================================================================*/
-static int
-mass_storage_reset_recovery(void)
+static int mass_storage_reset_recovery(void)
 {
 	MASS_DEBUG_DUMP;
 
@@ -387,8 +381,7 @@ mass_storage_reset_recovery(void)
 /*===========================================================================*
  *    mass_storage_send_bulk_reset                                           *
  *===========================================================================*/
-static int
-mass_storage_send_bulk_reset(void)
+static int mass_storage_send_bulk_reset(void)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -437,8 +430,7 @@ mass_storage_send_bulk_reset(void)
 /*===========================================================================*
  *    mass_storage_send_clear_feature                                        *
  *===========================================================================*/
-static int
-mass_storage_send_clear_feature(int ep_num, int direction)
+static int mass_storage_send_clear_feature(int ep_num, int direction)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -493,8 +485,7 @@ mass_storage_send_clear_feature(int ep_num, int direction)
 /*===========================================================================*
  *    mass_storage_sef_hdlr                                                  *
  *===========================================================================*/
-static int
-mass_storage_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
+static int mass_storage_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 {
 	int env_res;
 
@@ -535,8 +526,7 @@ mass_storage_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 /*===========================================================================*
  *    mass_storage_signal_handler                                            *
  *===========================================================================*/
-static void
-mass_storage_signal_handler(int this_signal)
+static void mass_storage_signal_handler(int this_signal)
 {
 	MASS_DEBUG_DUMP;
 
@@ -559,8 +549,7 @@ mass_storage_signal_handler(int this_signal)
 /*===========================================================================*
  *    ddekit_usb_task                                                        *
  *===========================================================================*/
-static void
-ddekit_usb_task(void * UNUSED(arg))
+static void ddekit_usb_task(void * UNUSED(arg))
 {
 	MASS_DEBUG_DUMP;
 
@@ -573,8 +562,7 @@ ddekit_usb_task(void * UNUSED(arg))
 /*===========================================================================*
  *    mass_storage_task                                                      *
  *===========================================================================*/
-static void
-mass_storage_task(void * UNUSED(unused))
+static void mass_storage_task(void * UNUSED(unused))
 {
 	message m;
 	int ipc_status;
@@ -594,8 +582,7 @@ mass_storage_task(void * UNUSED(unused))
 /*===========================================================================*
  *    mass_storage_test                                                      *
  *===========================================================================*/
-static int
-mass_storage_test(void)
+static int mass_storage_test(void)
 {
 	int repeat;
 	int error;
@@ -639,8 +626,7 @@ mass_storage_test(void)
 /*===========================================================================*
  *    mass_storage_check_error                                               *
  *===========================================================================*/
-static int
-mass_storage_check_error(void)
+static int mass_storage_check_error(void)
 {
 	/* SCSI sense structure for local use */
 	typedef struct MASS_PACKED scsi_sense {
@@ -719,8 +705,7 @@ mass_storage_check_error(void)
 /*===========================================================================*
  *    mass_storage_try_first_open                                            *
  *===========================================================================*/
-static int
-mass_storage_try_first_open()
+static int mass_storage_try_first_open()
 {
 	unsigned int llba;
 	unsigned int blen;
@@ -791,8 +776,7 @@ mass_storage_try_first_open()
 /*===========================================================================*
  *    mass_storage_transfer_restrictions                                     *
  *===========================================================================*/
-static int
-mass_storage_transfer_restrictions(u64_t pos, unsigned long bytes)
+static int mass_storage_transfer_restrictions(u64_t pos, unsigned long bytes)
 {
 	MASS_DEBUG_DUMP;
 
@@ -829,8 +813,7 @@ mass_storage_transfer_restrictions(u64_t pos, unsigned long bytes)
 /*===========================================================================*
  *    mass_storage_write                                                     *
  *===========================================================================*/
-static ssize_t
-mass_storage_write(unsigned long sector_number,
+static ssize_t mass_storage_write(unsigned long sector_number,
 		endpoint_t endpt,
 		iovec_t * iov,
 		unsigned int iov_count,
@@ -982,8 +965,7 @@ mass_storage_write(unsigned long sector_number,
 /*===========================================================================*
  *    mass_storage_read                                                      *
  *===========================================================================*/
-static ssize_t
-mass_storage_read(unsigned long sector_number,
+static ssize_t mass_storage_read(unsigned long sector_number,
 		endpoint_t endpt,
 		iovec_t * iov,
 		unsigned int iov_count,
@@ -1141,8 +1123,7 @@ mass_storage_read(unsigned long sector_number,
 /*===========================================================================*
  *    mass_storage_open                                                      *
  *===========================================================================*/
-static int
-mass_storage_open(devminor_t minor, int UNUSED(access))
+static int mass_storage_open(devminor_t minor, int UNUSED(access))
 {
 	mass_storage_drive * d;
 	int r;
@@ -1248,8 +1229,7 @@ static int mass_storage_close(devminor_t minor)
 /*===========================================================================*
  *    mass_storage_transfer                                                  *
  *===========================================================================*/
-static ssize_t
-mass_storage_transfer(devminor_t minor,		/* device minor number */
+static ssize_t mass_storage_transfer(devminor_t minor,		/* device minor number */
 		int do_write,			/* 1 write, 0 read */
 		u64_t pos,			/* position of starting point */
 		endpoint_t endpt,		/* endpoint */
@@ -1333,8 +1313,7 @@ mass_storage_transfer(devminor_t minor,		/* device minor number */
 /*===========================================================================*
  *    mass_storage_ioctl                                                     *
  *===========================================================================*/
-static int
-mass_storage_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int mass_storage_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 			cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	MASS_DEBUG_DUMP;
@@ -1472,8 +1451,7 @@ mass_storage_part(devminor_t minor)
 /* This command is optional for most mass storage devices
  * It should rather be used with USB floppy disk reader */
 #ifdef MASS_USE_GEOMETRY
-static void
-mass_storage_geometry(devminor_t minor, struct part_geom * part)
+static void mass_storage_geometry(devminor_t minor, struct part_geom * part)
 {
 	char flexible_disk_page[SCSI_MODE_SENSE_FLEX_DATA_LEN];
 
@@ -1501,8 +1479,7 @@ mass_storage_geometry(devminor_t minor, struct part_geom * part)
 				&(part->heads), &(part->sectors)))
 		return;
 #else
-static void
-mass_storage_geometry(devminor_t UNUSED(minor), struct part_geom * part)
+static void mass_storage_geometry(devminor_t UNUSED(minor), struct part_geom * part)
 {
 	MASS_DEBUG_DUMP;
 
@@ -1516,8 +1493,7 @@ mass_storage_geometry(devminor_t UNUSED(minor), struct part_geom * part)
 /*===========================================================================*
  *    usb_driver_completion                                                  *
  *===========================================================================*/
-static void
-usb_driver_completion(void * UNUSED(priv))
+static void usb_driver_completion(void * UNUSED(priv))
 {
 	/* Last request was completed so allow continuing
 	 * execution from place where semaphore was downed */
@@ -1528,8 +1504,7 @@ usb_driver_completion(void * UNUSED(priv))
 /*===========================================================================*
  *    usb_driver_connect                                                     *
  *===========================================================================*/
-static void
-usb_driver_connect(struct ddekit_usb_dev * dev,
+static void usb_driver_connect(struct ddekit_usb_dev * dev,
 		unsigned int interfaces)
 {
 	MASS_DEBUG_DUMP;
@@ -1552,8 +1527,7 @@ usb_driver_connect(struct ddekit_usb_dev * dev,
 /*===========================================================================*
  *    usb_driver_disconnect                                                  *
  *===========================================================================*/
-static void
-usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
+static void usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
 {
 	MASS_DEBUG_DUMP;
 
@@ -1574,8 +1548,7 @@ usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
 /*===========================================================================*
  *    mass_storage_get_endpoints                                             *
  *===========================================================================*/
-static int
-mass_storage_get_endpoints(urb_ep_config * ep_in, urb_ep_config * ep_out)
+static int mass_storage_get_endpoints(urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -1636,8 +1609,7 @@ mass_storage_get_endpoints(urb_ep_config * ep_in, urb_ep_config * ep_out)
 /*===========================================================================*
  *    mass_storage_parse_endpoint                                            *
  *===========================================================================*/
-static int
-mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
+static int mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
 			urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	usb_endpoint_descriptor_t * ep_desc;
@@ -1684,8 +1656,7 @@ mass_storage_parse_endpoint(usb_descriptor_t * cur_desc,
 /*===========================================================================*
  *    mass_storage_parse_descriptors                                         *
  *===========================================================================*/
-static int
-mass_storage_parse_descriptors(char * desc_buf, unsigned int buf_len,
+static int mass_storage_parse_descriptors(char * desc_buf, unsigned int buf_len,
 				urb_ep_config * ep_in, urb_ep_config * ep_out)
 {
 	/* Currently parsed, descriptors */

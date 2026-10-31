@@ -31,8 +31,7 @@ static int sighups;		/* number of SIGHUP signals received */
 /*
  * Signal handler for SIGHUP and SIGUSR1.
  */
-static void
-signal_handler(int sig)
+static void signal_handler(int sig)
 {
 	if (sig == SIGHUP)
 		sighups++;
@@ -42,8 +41,7 @@ signal_handler(int sig)
  * Set the slave side of the pseudo terminal to raw mode.  This simplifies
  * testing communication.
  */
-static void
-make_raw(int slavefd)
+static void make_raw(int slavefd)
 {
 	struct termios tios;
 
@@ -58,8 +56,7 @@ make_raw(int slavefd)
  * See if the given pseudo terminal can successfully perform basic
  * communication between master and slave.
  */
-static void
-test_comm(int masterfd, int slavefd)
+static void test_comm(int masterfd, int slavefd)
 {
 	char c;
 
@@ -95,8 +92,7 @@ test_comm(int masterfd, int slavefd)
  * master.  In that case, we make the assumption that nobody snatches the pair
  * while we are running.  For Unix98 PTYs, the master must be kept open.
  */
-static int
-get_pty(int *pfd, char pname[PATH_MAX], char tname[PATH_MAX])
+static int get_pty(int *pfd, char pname[PATH_MAX], char tname[PATH_MAX])
 {
 	char *name;
 	int len, masterfd, slavefd;
@@ -147,8 +143,7 @@ get_pty(int *pfd, char pname[PATH_MAX], char tname[PATH_MAX])
  * pseudo terminal, as well as opening/closing one side without ever opening
  * the other.  This test is meaningful mainly for old-style pseudoterminals.
  */
-static void
-test77a(void)
+static void test77a(void)
 {
 	struct sigaction act, oact;
 	char pname[PATH_MAX], tname[PATH_MAX];
@@ -261,8 +256,7 @@ test77a(void)
 /*
  * Test opening a single side multiple times.
  */
-static void
-test77b(void)
+static void test77b(void)
 {
 	char pname[PATH_MAX], tname[PATH_MAX];
 	int oldstyle, masterfd, slavefd, extrafd;
@@ -310,8 +304,7 @@ test77b(void)
 /*
  * Test communication on half-open pseudo terminals.
  */
-static void
-test77c(void)
+static void test77c(void)
 {
 	struct sigaction act, oact;
 	char pname[PATH_MAX], tname[PATH_MAX];
@@ -401,8 +394,7 @@ test77c(void)
  * Wait for a child process to terminate.  Return 0 if the child exited without
  * errors, -1 otherwise.
  */
-static int
-waitchild(void)
+static int waitchild(void)
 {
 	int status;
 
@@ -416,8 +408,7 @@ waitchild(void)
 /*
  * Test opening the slave side with and without the O_NOCTTY flag.
  */
-static void
-test77d(void)
+static void test77d(void)
 {
 	char pname[PATH_MAX], tname[PATH_MAX];
 	int masterfd, slavefd;
@@ -489,8 +480,7 @@ test77d(void)
  * ignored SIGHUP, and probably would not have received one anyway, since the
  * process was not its own session leader.  Time to test this aspect.
  */
-static void
-test77e(void)
+static void test77e(void)
 {
 	struct sigaction act, hup_oact, usr_oact;
 	sigset_t set, oset;
@@ -564,8 +554,7 @@ test77e(void)
  * Test basic select functionality on /dev/tty.  While this test should not be
  * part of this test set, we already have all the infrastructure we need here.
  */
-static void
-test77f(void)
+static void test77f(void)
 {
 	struct sigaction act, oact;
 	char c, tname[PATH_MAX];
@@ -715,8 +704,7 @@ test77f(void)
  * running, although we assume that those programs do not open or close PTYs
  * while we are running.
  */
-static void
-test_getdents(int nindex, int array[3], int present[3])
+static void test_getdents(int nindex, int array[3], int present[3])
 {
 	struct group *group;
 	DIR *dirp;
@@ -798,8 +786,7 @@ test_getdents(int nindex, int array[3], int present[3])
  * Obtain a Unix98 PTY.  Return an open file descriptor for the master side,
  * and store the name of the slave side in 'tptr'.
  */
-static int
-get_unix98_pty(char ** tptr)
+static int get_unix98_pty(char ** tptr)
 {
 	int masterfd;
 
@@ -818,8 +805,7 @@ get_unix98_pty(char ** tptr)
 /*
  * Test for Unix98 PTY support and PTYFS.
  */
-static void
-test77g(void)
+static void test77g(void)
 {
 	char *tname;
 	struct stat buf;
@@ -943,8 +929,7 @@ test77g(void)
  * allocated through Unix98 PTY allocation.  This test is not foolproof, but it
  * does the job well enough.
  */
-static void
-test_overlap(int m)
+static void test_overlap(int m)
 {
 	char *tname;
 	size_t len;
@@ -975,8 +960,7 @@ test_overlap(int m)
  * to implement checks to prevent that a PTY opened as one type is also
  * accessed through the other type.  We test some of those checks here.
  */
-static void
-test77h(void)
+static void test77h(void)
 {
 	char *tname, ptest[PATH_MAX], ttest[PATH_MAX];
 	struct sigaction act, oact;
@@ -1121,8 +1105,7 @@ test77h(void)
 	if (sigaction(SIGHUP, &oact, NULL) < 0) e(0);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, m;
 

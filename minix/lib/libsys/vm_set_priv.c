@@ -3,8 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int
-vm_set_priv(endpoint_t ep, void *buf, int sys_proc)
+int vm_set_priv(endpoint_t ep, void *buf, int sys_proc)
 {
 	message m;
 

@@ -41,8 +41,7 @@ static hcd_device_state * dev_list = NULL;
 /*===========================================================================*
  *    hcd_os_interrupt_attach                                                *
  *===========================================================================*/
-int
-hcd_os_interrupt_attach(int irq, void (*init)(void *),
+int hcd_os_interrupt_attach(int irq, void (*init)(void *),
 			void (*isr)(void *), void *priv)
 {
 	DEBUG_DUMP;
@@ -59,8 +58,7 @@ hcd_os_interrupt_attach(int irq, void (*init)(void *),
 /*===========================================================================*
  *    hcd_os_interrupt_detach                                                *
  *===========================================================================*/
-void
-hcd_os_interrupt_detach(int irq)
+void hcd_os_interrupt_detach(int irq)
 {
 	DEBUG_DUMP;
 	ddekit_interrupt_detach(irq);
@@ -70,8 +68,7 @@ hcd_os_interrupt_detach(int irq)
 /*===========================================================================*
  *    hcd_os_interrupt_enable                                                *
  *===========================================================================*/
-void
-hcd_os_interrupt_enable(int irq)
+void hcd_os_interrupt_enable(int irq)
 {
 	DEBUG_DUMP;
 	ddekit_interrupt_enable(irq);
@@ -81,8 +78,7 @@ hcd_os_interrupt_enable(int irq)
 /*===========================================================================*
  *    hcd_os_interrupt_disable                                               *
  *===========================================================================*/
-void
-hcd_os_interrupt_disable(int irq)
+void hcd_os_interrupt_disable(int irq)
 {
 	DEBUG_DUMP;
 	ddekit_interrupt_disable(irq);
@@ -135,8 +131,7 @@ hcd_os_regs_init(hcd_addr phys_addr, unsigned long addr_len)
 /*===========================================================================*
  *    hcd_os_regs_deinit                                                     *
  *===========================================================================*/
-int
-hcd_os_regs_deinit(hcd_addr virt_addr, unsigned long addr_len)
+int hcd_os_regs_deinit(hcd_addr virt_addr, unsigned long addr_len)
 {
 	DEBUG_DUMP;
 
@@ -149,8 +144,7 @@ hcd_os_regs_deinit(hcd_addr virt_addr, unsigned long addr_len)
 /*===========================================================================*
  *    hcd_os_clkconf                                                         *
  *===========================================================================*/
-int
-hcd_os_clkconf(unsigned long clk, unsigned long mask, unsigned long value)
+int hcd_os_clkconf(unsigned long clk, unsigned long mask, unsigned long value)
 {
 	DEBUG_DUMP;
 
@@ -165,8 +159,7 @@ hcd_os_clkconf(unsigned long clk, unsigned long mask, unsigned long value)
 /*===========================================================================*
  *    hcd_os_clkconf_release                                                 *
  *===========================================================================*/
-int
-hcd_os_clkconf_release(void)
+int hcd_os_clkconf_release(void)
 {
 	DEBUG_DUMP;
 	return clkconf_release();
@@ -176,8 +169,7 @@ hcd_os_clkconf_release(void)
 /*===========================================================================*
  *    hcd_os_nanosleep                                                       *
  *===========================================================================*/
-void
-hcd_os_nanosleep(int nanosec)
+void hcd_os_nanosleep(int nanosec)
 {
 	struct timespec nanotm;
 	int r;
@@ -203,8 +195,7 @@ hcd_os_nanosleep(int nanosec)
 /*===========================================================================*
  *    hcd_connect_device                                                     *
  *===========================================================================*/
-int
-hcd_connect_device(hcd_device_state * this_device, hcd_thread_function funct)
+int hcd_connect_device(hcd_device_state * this_device, hcd_thread_function funct)
 {
 	DEBUG_DUMP;
 
@@ -256,8 +247,7 @@ hcd_connect_device(hcd_device_state * this_device, hcd_thread_function funct)
 /*===========================================================================*
  *    hcd_disconnect_device                                                  *
  *===========================================================================*/
-void
-hcd_disconnect_device(hcd_device_state * this_device)
+void hcd_disconnect_device(hcd_device_state * this_device)
 {
 	DEBUG_DUMP;
 
@@ -285,8 +275,7 @@ hcd_disconnect_device(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_device_wait                                                        *
  *===========================================================================*/
-void
-hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
+void hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
 	DEBUG_DUMP;
 
@@ -302,8 +291,7 @@ hcd_device_wait(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 /*===========================================================================*
  *    hcd_device_continue                                                    *
  *===========================================================================*/
-void
-hcd_device_continue(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
+void hcd_device_continue(hcd_device_state * device, hcd_event event, hcd_reg1 ep)
 {
 	DEBUG_DUMP;
 
@@ -350,8 +338,7 @@ hcd_new_device(void)
 /*===========================================================================*
  *    hcd_delete_device                                                      *
  *===========================================================================*/
-void
-hcd_delete_device(hcd_device_state * d)
+void hcd_delete_device(hcd_device_state * d)
 {
 	hcd_device_state * temp;
 
@@ -385,8 +372,7 @@ hcd_delete_device(hcd_device_state * d)
 /*===========================================================================*
  *    hcd_dump_devices                                                       *
  *===========================================================================*/
-void
-hcd_dump_devices(void)
+void hcd_dump_devices(void)
 {
 	hcd_device_state * temp;
 
@@ -406,8 +392,7 @@ hcd_dump_devices(void)
 /*===========================================================================*
  *    hcd_check_device                                                       *
  *===========================================================================*/
-int
-hcd_check_device(hcd_device_state * d)
+int hcd_check_device(hcd_device_state * d)
 {
 	hcd_device_state * temp;
 
@@ -431,8 +416,7 @@ hcd_check_device(hcd_device_state * d)
 /*===========================================================================*
  *    hcd_buffer_to_tree                                                     *
  *===========================================================================*/
-int
-hcd_buffer_to_tree(hcd_reg1 * buf, int len, hcd_configuration * c)
+int hcd_buffer_to_tree(hcd_reg1 * buf, int len, hcd_configuration * c)
 {
 	hcd_interface * i;
 	hcd_endpoint * e;
@@ -516,8 +500,7 @@ hcd_buffer_to_tree(hcd_reg1 * buf, int len, hcd_configuration * c)
 /*===========================================================================*
  *    hcd_tree_cleanup                                                       *
  *===========================================================================*/
-void
-hcd_tree_cleanup(hcd_configuration * c)
+void hcd_tree_cleanup(hcd_configuration * c)
 {
 	int if_idx;
 
@@ -575,8 +558,7 @@ hcd_tree_find_ep(hcd_configuration * c, hcd_reg1 ep)
 /*===========================================================================*
  *    hcd_fill_configuration                                                 *
  *===========================================================================*/
-static int
-hcd_fill_configuration(hcd_reg1 * buf, int len, hcd_configuration * c, int num)
+static int hcd_fill_configuration(hcd_reg1 * buf, int len, hcd_configuration * c, int num)
 {
 	hcd_config_descriptor * desc;
 	int interfaces_size;
@@ -630,8 +612,7 @@ hcd_fill_configuration(hcd_reg1 * buf, int len, hcd_configuration * c, int num)
 /*===========================================================================*
  *    hcd_fill_interface                                                     *
  *===========================================================================*/
-static int
-hcd_fill_interface(hcd_reg1 * buf, int len, hcd_interface * i, int num)
+static int hcd_fill_interface(hcd_reg1 * buf, int len, hcd_interface * i, int num)
 {
 	hcd_interface_descriptor * desc;
 	int endpoints_size;
@@ -685,8 +666,7 @@ hcd_fill_interface(hcd_reg1 * buf, int len, hcd_interface * i, int num)
 /*===========================================================================*
  *    hcd_fill_endpoint                                                      *
  *===========================================================================*/
-static int
-hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e)
+static int hcd_fill_endpoint(hcd_reg1 * buf, int len, hcd_endpoint * e)
 {
 	hcd_endpoint_descriptor * desc;
 
@@ -746,8 +726,7 @@ hcd_reserve_addr(hcd_driver_state * driver)
 /*===========================================================================*
  *    hcd_release_addr                                                       *
  *===========================================================================*/
-static void
-hcd_release_addr(hcd_driver_state * driver, hcd_reg1 addr)
+static void hcd_release_addr(hcd_driver_state * driver, hcd_reg1 addr)
 {
 	DEBUG_DUMP;
 

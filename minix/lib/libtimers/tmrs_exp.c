@@ -5,8 +5,7 @@
  * Run the watchdog functions for all expired timers and deactivate them.
  * The caller is responsible for scheduling a new alarm if needed.
  */
-int
-tmrs_exptimers(minix_timer_t ** tmrs, clock_t now, clock_t * new_head)
+int tmrs_exptimers(minix_timer_t ** tmrs, clock_t now, clock_t * new_head)
 {
 	minix_timer_t *tp;
 	tmr_func_t func;

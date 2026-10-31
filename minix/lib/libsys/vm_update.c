@@ -3,8 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int
-vm_update(endpoint_t src_e, endpoint_t dst_e, int flags)
+int vm_update(endpoint_t src_e, endpoint_t dst_e, int flags)
 {
 	message m;
 

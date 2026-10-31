@@ -24,8 +24,7 @@ static struct node_data root_data = {
 /*
  * Mount the file system.
  */
-static int
-ptyfs_mount(dev_t __unused dev, unsigned int flags,
+static int ptyfs_mount(dev_t __unused dev, unsigned int flags,
 	struct fsdriver_node * root_node, unsigned int * res_flags)
 {
 
@@ -51,8 +50,7 @@ ptyfs_mount(dev_t __unused dev, unsigned int flags,
  * OK on success, with the null-terminated name stored in the buffer 'name'
  * which is 'size' bytes in size.  Return an error code on failure.
  */
-static int
-make_name(char * name, size_t size, node_t index)
+static int make_name(char * name, size_t size, node_t index)
 {
 	ssize_t r;
 
@@ -72,8 +70,7 @@ make_name(char * name, size_t size, node_t index)
  * as a slave node number (which may or may not actually be allocated), with
  * the number stored in 'indexp'.  Return FALSE if the name is not a number.
  */
-static int
-parse_name(const char * name, node_t * indexp)
+static int parse_name(const char * name, node_t * indexp)
 {
 	node_t index;
 	const char *p;
@@ -104,8 +101,7 @@ parse_name(const char * name, node_t * indexp)
  * lookup, the given name must either be a single dot, which resolves to the
  * file system root directory, or the number of an allocated slave node.
  */
-static int
-ptyfs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node,
+static int ptyfs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node,
 	int * is_mountpt)
 {
 	struct node_data *data;
@@ -149,8 +145,7 @@ ptyfs_lookup(ino_t dir_nr, char * name, struct fsdriver_node * node,
 /*
  * Enumerate directory contents.
  */
-static ssize_t
-ptyfs_getdents(ino_t ino_nr, struct fsdriver_data * data,
+static ssize_t ptyfs_getdents(ino_t ino_nr, struct fsdriver_data * data,
 	size_t bytes, off_t * posp)
 {
 	struct fsdriver_dentry fsdentry;
@@ -221,8 +216,7 @@ get_data(ino_t ino_nr)
 /*
  * Change file ownership.
  */
-static int
-ptyfs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
+static int ptyfs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 {
 	struct node_data *data;
 
@@ -241,8 +235,7 @@ ptyfs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 /*
  * Change file mode.
  */
-static int
-ptyfs_chmod(ino_t ino_nr, mode_t * mode)
+static int ptyfs_chmod(ino_t ino_nr, mode_t * mode)
 {
 	struct node_data *data;
 
@@ -259,8 +252,7 @@ ptyfs_chmod(ino_t ino_nr, mode_t * mode)
 /*
  * Return node details.
  */
-static int
-ptyfs_stat(ino_t ino_nr, struct stat * buf)
+static int ptyfs_stat(ino_t ino_nr, struct stat * buf)
 {
 	struct node_data *data;
 
@@ -282,8 +274,7 @@ ptyfs_stat(ino_t ino_nr, struct stat * buf)
 /*
  * Return file system statistics.
  */
-static int
-ptyfs_statvfs(struct statvfs * buf)
+static int ptyfs_statvfs(struct statvfs * buf)
 {
 
 	buf->f_flag = ST_NOTRUNC;
@@ -296,8 +287,7 @@ ptyfs_statvfs(struct statvfs * buf)
  * Process non-filesystem messages, in particular slave node creation and
  * deletion requests from the PTY service.
  */
-static void
-ptyfs_other(const message * m_ptr, int ipc_status)
+static void ptyfs_other(const message * m_ptr, int ipc_status)
 {
 	char label[DS_MAX_KEYLEN];
 	struct node_data data;
@@ -374,8 +364,7 @@ ptyfs_other(const message * m_ptr, int ipc_status)
 /*
  * Initialize the service.
  */
-static int
-ptyfs_init(int __unused type, sef_init_info_t * __unused info)
+static int ptyfs_init(int __unused type, sef_init_info_t * __unused info)
 {
 
 	init_nodes();
@@ -388,8 +377,7 @@ ptyfs_init(int __unused type, sef_init_info_t * __unused info)
 /*
  * Process an incoming signal.
  */
-static void
-ptyfs_signal(int sig)
+static void ptyfs_signal(int sig)
 {
 
 	if (sig == SIGTERM)
@@ -399,8 +387,7 @@ ptyfs_signal(int sig)
 /*
  * Perform SEF initialization.
  */
-static void
-ptyfs_startup(void)
+static void ptyfs_startup(void)
 {
 
 	sef_setcb_init_fresh(ptyfs_init);
@@ -422,8 +409,7 @@ static struct fsdriver ptyfs_table = {
 /*
  * The PTYFS service.
  */
-int
-main(void)
+int main(void)
 {
 
 	ptyfs_startup();

@@ -43,8 +43,7 @@ static int tabs_valid = TRUE;		/* FALSE if obtaining tables failed */
  * VFS, but only every so often and only if it has not failed before.  Return
  * TRUE iff the tables are now valid.
  */
-static int
-update_tables(void)
+static int update_tables(void)
 {
 	clock_t now;
 	pid_t pid;
@@ -140,8 +139,7 @@ update_tables(void)
  * Return the PM slot number for the given PID, or NO_SLOT if the PID is not in
  * use by a process.
  */
-static int
-get_mslot(pid_t pid)
+static int get_mslot(pid_t pid)
 {
 	int mslot;
 
@@ -160,8 +158,7 @@ get_mslot(pid_t pid)
 /*
  * Store the given number of clock ticks as a timeval structure.
  */
-static void
-ticks_to_timeval(struct timeval * tv, clock_t ticks)
+static void ticks_to_timeval(struct timeval * tv, clock_t ticks)
 {
 	clock_t hz;
 
@@ -182,8 +179,7 @@ ticks_to_timeval(struct timeval * tv, clock_t ticks)
  * enclosed in parentheses.  If no name can be obtained, we use the endpoint of
  * the other process instead.
  */
-static void
-fill_wmesg(char * wmesg, size_t wmsz, endpoint_t endpt, int ipc)
+static void fill_wmesg(char * wmesg, size_t wmsz, endpoint_t endpt, int ipc)
 {
 	const char *name;
 	int mslot;
@@ -221,8 +217,7 @@ fill_wmesg(char * wmesg, size_t wmsz, endpoint_t endpt, int ipc)
  * what the process is sleeping on, and possibly a flag field modification to
  * indicate that the sleep is interruptible.
  */
-static int
-get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
+static int get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 	int32_t * flag)
 {
 	struct mproc *mp;
@@ -395,8 +390,7 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
  * user processes.  Also return a CPU estimate in 'estcpu', because we generate
  * the value as a side effect here, and the LWP structure has no estcpu field.
  */
-static void
-fill_lwp_common(struct kinfo_lwp * l, int kslot, uint32_t * estcpu)
+static void fill_lwp_common(struct kinfo_lwp * l, int kslot, uint32_t * estcpu)
 {
 	struct proc *kp;
 	struct timeval tv;
@@ -458,8 +452,7 @@ fill_lwp_common(struct kinfo_lwp * l, int kslot, uint32_t * estcpu)
  * Fill a LWP structure for a kernel task.  Each kernel task has its own LWP,
  * and all of them have negative PIDs.
  */
-static void
-fill_lwp_kern(struct kinfo_lwp * l, int kslot)
+static void fill_lwp_kern(struct kinfo_lwp * l, int kslot)
 {
 	uint32_t estcpu;
 
@@ -484,8 +477,7 @@ fill_lwp_kern(struct kinfo_lwp * l, int kslot)
 /*
  * Fill a LWP structure for a user process.
  */
-static void
-fill_lwp_user(struct kinfo_lwp * l, int mslot)
+static void fill_lwp_user(struct kinfo_lwp * l, int mslot)
 {
 	struct mproc *mp;
 	uint32_t estcpu;
@@ -506,8 +498,7 @@ fill_lwp_user(struct kinfo_lwp * l, int mslot)
 /*
  * Implementation of CTL_KERN KERN_LWP.
  */
-ssize_t
-mib_kern_lwp(struct mib_call * call, struct mib_node * node __unused,
+ssize_t mib_kern_lwp(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	struct kinfo_lwp lwp;
@@ -597,8 +588,7 @@ mib_kern_lwp(struct mib_call * call, struct mib_node * node __unused,
  * Fill the part of a process structure that is common between kernel tasks and
  * user processes.
  */
-static void
-fill_proc2_common(struct kinfo_proc2 * p, int kslot)
+static void fill_proc2_common(struct kinfo_proc2 * p, int kslot)
 {
 	struct vm_usage_info vui;
 	struct timeval tv;
@@ -654,8 +644,7 @@ fill_proc2_common(struct kinfo_proc2 * p, int kslot)
 /*
  * Fill a process structure for the kernel pseudo-process (with PID 0).
  */
-static void
-fill_proc2_kern(struct kinfo_proc2 * p)
+static void fill_proc2_kern(struct kinfo_proc2 * p)
 {
 
 	memset(p, 0, sizeof(*p));
@@ -684,8 +673,7 @@ fill_proc2_kern(struct kinfo_proc2 * p)
 /*
  * Fill a process structure for a user process.
  */
-static void
-fill_proc2_user(struct kinfo_proc2 * p, int mslot)
+static void fill_proc2_user(struct kinfo_proc2 * p, int mslot)
 {
 	struct mproc *mp;
 	struct fproc_light *fp;
@@ -788,8 +776,7 @@ fill_proc2_user(struct kinfo_proc2 * p, int mslot)
 /*
  * Implementation of CTL_KERN KERN_PROC2.
  */
-ssize_t
-mib_kern_proc2(struct mib_call * call, struct mib_node * node __unused,
+ssize_t mib_kern_proc2(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	struct kinfo_proc2 proc2;
@@ -915,8 +902,7 @@ mib_kern_proc2(struct mib_call * call, struct mib_node * node __unused,
 /*
  * Implementation of CTL_KERN KERN_PROC_ARGS.
  */
-ssize_t
-mib_kern_proc_args(struct mib_call * call, struct mib_node * node __unused,
+ssize_t mib_kern_proc_args(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	char vbuf[PAGE_SIZE], sbuf[PAGE_SIZE], obuf[PAGE_SIZE];
@@ -1174,8 +1160,7 @@ mib_kern_proc_args(struct mib_call * call, struct mib_node * node __unused,
 /*
  * Implementation of CTL_MINIX MINIX_PROC PROC_LIST.
  */
-ssize_t
-mib_minix_proc_list(struct mib_call * call __unused,
+ssize_t mib_minix_proc_list(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -1213,8 +1198,7 @@ mib_minix_proc_list(struct mib_call * call __unused,
 /*
  * Implementation of CTL_MINIX MINIX_PROC PROC_DATA.
  */
-ssize_t
-mib_minix_proc_data(struct mib_call * call, struct mib_node * node __unused,
+ssize_t mib_minix_proc_data(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	struct minix_proc_data mpd;

@@ -23,7 +23,7 @@ static void shared_delete(struct vir_region *region);
 static u32_t shared_regionid(struct vir_region *region);
 static int shared_copy(struct vir_region *vr, struct vir_region *newvr);
 static int shared_refcount(struct vir_region *vr);
-static int shared_pt_flags(struct vir_region *vr);
+static u64_t shared_pt_flags(struct vir_region *vr);
 
 struct mem_type mem_type_shared = {
 	.name = "shared memory",
@@ -38,7 +38,7 @@ struct mem_type mem_type_shared = {
 	.pt_flags = shared_pt_flags,
 };
 
-static int shared_pt_flags(struct vir_region *vr){
+static u64_t shared_pt_flags(struct vir_region *vr){
 #if defined(__arm__)
 	return ARM_VM_PTE_CACHED;
 #else

@@ -65,9 +65,9 @@ static struct group_desc *ondisk_group_descs;
 
 /*===========================================================================*
  *                              read_super                                   *
+ *                              sp: pointer to superblock					 *
  *===========================================================================*/
-int read_super(sp)
-register struct super_block *sp; /* pointer to a superblock */
+int read_super(register struct super_block *sp)
 {
   /* Read a superblock. */
   dev_t dev;
@@ -216,10 +216,10 @@ register struct super_block *sp; /* pointer to a superblock */
 
 
 /*===========================================================================*
- *                              write_super				     *
+ *                              write_super									 *
+ *                              super_block: pointer to a superblock		 *
  *===========================================================================*/
-void write_super(sp)
-struct super_block *sp; /* pointer to a superblock */
+void write_super(struct super_block *sp)
 {
 /* Write a superblock and gdt. */
   int r;

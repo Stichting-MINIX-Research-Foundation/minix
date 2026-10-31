@@ -12,11 +12,30 @@ struct cpu cpus[CONFIG_MAX_CPUS];
 
 /* info passed to another cpu along with a sched ipi */
 struct sched_ipi_data {
-	volatile u32_t	flags;
-	volatile u32_t	data;
+	volatile u32_t		flags;
+	volatile vir_bytes	data;	/* holds a struct proc *; must be
+					 * pointer-wide (64-bit on x86_64) */
 };
 
 static struct sched_ipi_data  sched_ipi_data[CONFIG_MAX_CPUS];
+
+/*
+ * True while any cross-CPU scheduling request (STOP_PROC / VM_INHIBIT /
+ * SAVE_CTX / migrate) is in flight.  smp_schedule_sync() drops the BKL and
+ * spin-waits for the target CPU to ack, so during that window another CPU can
+ * enter the kernel and observe the run queues / proc table mid-transition.
+ * The DEBUG_SANITYCHECKS run-queue walk must not treat that transient as an
+ * error.
+ */
+int smp_sched_ipi_pending(void)
+{
+	unsigned c;
+
+	for (c = 0; c < ncpus; c++)
+		if (sched_ipi_data[c].flags != 0)
+			return 1;
+	return 0;
+}
 
 #define SCHED_IPI_STOP_PROC	1
 #define SCHED_IPI_VM_INHIBIT	2
@@ -94,7 +113,7 @@ static void smp_schedule_sync(struct proc * p, unsigned task)
 		BKL_LOCK();
 	}
 
-	sched_ipi_data[cpu].data = (u32_t) p;
+	sched_ipi_data[cpu].data = (vir_bytes) p;
 	sched_ipi_data[cpu].flags |= task;
 	__insn_barrier();
 	arch_send_smp_schedule_ipi(cpu);

@@ -131,8 +131,7 @@ void test36d()
   System("rm -rf ../DIR_36/*");
 }
 
-int not_provided_option(option)
-int option;
+int not_provided_option(int option)
 {
   char **p;
 
@@ -142,8 +141,7 @@ int option;
   return 0;
 }
 
-int provided_option(option, minimum)
-int option, minimum;
+int provided_option(int option, int minimum)
 {
   char **p;
 
@@ -162,8 +160,7 @@ int option, minimum;
   return 0;
 }
 
-int variating_option(option, minimum)
-int option, minimum;
+int variating_option(int option, int minimum)
 {
   char **p;
 

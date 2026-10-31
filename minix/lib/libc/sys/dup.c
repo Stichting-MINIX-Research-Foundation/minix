@@ -5,8 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-int dup(fd)
-int fd;
+int dup(int fd)
 {
   return(fcntl(fd, F_DUPFD, 0));
 }

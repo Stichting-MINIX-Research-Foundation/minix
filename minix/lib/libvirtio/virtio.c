@@ -15,14 +15,65 @@
 #include <string.h>				/* memset() */
 #include <stdlib.h>				/* malloc() */
 
+#include <sys/mman.h>				/* MAP_FAILED */
+
 #include <machine/pci.h>			/* PCI_ILR, PCI_BAR... */
 #include <machine/vmparam.h>			/* PAGE_SIZE */
 
 #include <minix/syslib.h>			/* umap, vumap, alloc_..*/
 #include <minix/sysutil.h>			/* panic(), at least */
+#include <minix/vm.h>				/* vm_map_phys() */
 #include <minix/virtio.h>			/* virtio system include */
 
 #include "virtio_ring.h"			/* virtio types / helper */
+
+/*
+ * Modern (virtio-1.0) PCI interface. Devices on a PCIe bus (e.g. QEMU's q35)
+ * are presented as non-transitional virtio-1.0 devices: registers live in MMIO
+ * BARs described by vendor-specific PCI capabilities instead of the legacy flat
+ * I/O register block. libvirtio supports both; init_device() probes for the
+ * modern capabilities first and falls back to the legacy I/O BAR.
+ */
+#define PCI_CAP_ID_VNDR			0x09	/* vendor-specific capability */
+
+/* virtio_pci_cap.cfg_type values */
+#define VIRTIO_PCI_CAP_COMMON_CFG	1
+#define VIRTIO_PCI_CAP_NOTIFY_CFG	2
+#define VIRTIO_PCI_CAP_ISR_CFG		3
+#define VIRTIO_PCI_CAP_DEVICE_CFG	4
+#define VIRTIO_PCI_CAP_PCI_CFG		5
+
+/* Field offsets within a virtio_pci_cap (relative to the capability pointer) */
+#define VPCI_CAP_CFG_TYPE		3	/* u8  cfg_type */
+#define VPCI_CAP_BAR			4	/* u8  bar index */
+#define VPCI_CAP_OFFSET			8	/* le32 offset within bar */
+#define VPCI_CAP_LENGTH			12	/* le32 length */
+#define VPCI_CAP_NOTIFY_MULT		16	/* le32 notify_off_multiplier */
+
+/* Offsets within the modern common configuration structure */
+#define VPCI_COMMON_DFSELECT		0x00	/* le32 device_feature_select */
+#define VPCI_COMMON_DF			0x04	/* le32 device_feature */
+#define VPCI_COMMON_GFSELECT		0x08	/* le32 driver_feature_select */
+#define VPCI_COMMON_GF			0x0c	/* le32 driver_feature */
+#define VPCI_COMMON_MSIX		0x10	/* le16 msix_config */
+#define VPCI_COMMON_NUMQ		0x12	/* le16 num_queues */
+#define VPCI_COMMON_STATUS		0x14	/* u8   device_status */
+#define VPCI_COMMON_CFGGEN		0x15	/* u8   config_generation */
+#define VPCI_COMMON_Q_SELECT		0x16	/* le16 queue_select */
+#define VPCI_COMMON_Q_SIZE		0x18	/* le16 queue_size */
+#define VPCI_COMMON_Q_MSIX		0x1a	/* le16 queue_msix_vector */
+#define VPCI_COMMON_Q_ENABLE		0x1c	/* le16 queue_enable */
+#define VPCI_COMMON_Q_NOFF		0x1e	/* le16 queue_notify_off */
+#define VPCI_COMMON_Q_DESCLO		0x20	/* le32 queue_desc low */
+#define VPCI_COMMON_Q_DESCHI		0x24	/* le32 queue_desc high */
+#define VPCI_COMMON_Q_AVAILLO		0x28	/* le32 queue_driver low */
+#define VPCI_COMMON_Q_AVAILHI		0x2c	/* le32 queue_driver high */
+#define VPCI_COMMON_Q_USEDLO		0x30	/* le32 queue_device low */
+#define VPCI_COMMON_Q_USEDHI		0x34	/* le32 queue_device high */
+
+#define VPCI_MSIX_NO_VECTOR		0xffff
+
+#define PCI_CR_INT_DIS			0x0400	/* Interrupt Disable (not in pci.h) */
 
 /*
  * About indirect descriptors:
@@ -59,6 +110,7 @@ struct virtio_queue {
 
 	u16_t num;				/* number of descriptors */
 	u32_t ring_size;			/* size of ring in bytes */
+	u16_t notify_off;			/* modern: queue_notify_off */
 	struct vring vring;
 
 	u16_t free_num;				/* free descriptors */
@@ -73,7 +125,14 @@ struct virtio_device {
 
 	const char *name;			/* for debugging */
 
-	u16_t  port;				/* io port */
+	u16_t  port;				/* io port (legacy) */
+
+	int modern;				/* modern (virtio-1.0) device? */
+	volatile u8_t *common;			/* modern: common config region */
+	volatile u8_t *notify;			/* modern: notify region base */
+	volatile u8_t *isr;			/* modern: ISR status region */
+	volatile u8_t *dcfg;			/* modern: device-specific config */
+	u32_t notify_mult;			/* modern: notify_off_multiplier */
 
 	struct virtio_feature *features;	/* host / guest features */
 	u8_t num_features;			/* max 32 */
@@ -91,8 +150,14 @@ struct virtio_device {
 	int num_indirect;
 };
 
-static int is_matching_device(u16_t expected_sdid, u16_t vid, u16_t sdid);
+static int is_matching_device(u16_t expected_sdid, u16_t vid, u16_t did,
+				u16_t sdid);
 static int init_device(int devind, struct virtio_device *dev);
+static int init_modern(int devind, struct virtio_device *dev);
+static volatile u8_t *map_cap_region(int devind, u8_t bar_idx, u32_t off,
+				u32_t len);
+static void virtio_set_status(struct virtio_device *dev, u8_t status);
+static u8_t virtio_get_status(struct virtio_device *dev);
 static int init_phys_queues(struct virtio_device *dev);
 static int exchange_features(struct virtio_device *dev);
 static int alloc_phys_queue(struct virtio_queue *q);
@@ -124,7 +189,7 @@ virtio_setup_device(u16_t subdevid, const char *name,
 
 	while (r > 0) {
 		sdid = pci_attr_r16(devind, PCI_SUBDID);
-		if (is_matching_device(subdevid, vid, sdid)) {
+		if (is_matching_device(subdevid, vid, did, sdid)) {
 
 			/* this is the device we are looking for */
 			if (skip == 0)
@@ -160,21 +225,32 @@ virtio_setup_device(u16_t subdevid, const char *name,
 		goto err;
 	}
 
-	/* Ack the device */
-	virtio_write8(ret, VIRTIO_DEV_STATUS_OFF, VIRTIO_STATUS_ACK);
+	/* Reset, then acknowledge the device and announce the driver. The
+	 * status bits accumulate, so each step ORs in the next one. */
+	virtio_set_status(ret, 0);
+	virtio_set_status(ret, VIRTIO_STATUS_ACK);
+	virtio_set_status(ret, VIRTIO_STATUS_ACK | VIRTIO_STATUS_DRV);
 
 	if (exchange_features(ret) != OK) {
 		printf("%s: Could not exchange features\n", ret->name);
 		goto err;
 	}
 
+	/* Modern devices require the driver to set FEATURES_OK and then verify
+	 * the device still accepts the negotiated feature set. */
+	if (ret->modern) {
+		virtio_set_status(ret, VIRTIO_STATUS_ACK | VIRTIO_STATUS_DRV |
+					VIRTIO_STATUS_FEATURES_OK);
+		if (!(virtio_get_status(ret) & VIRTIO_STATUS_FEATURES_OK)) {
+			printf("%s: Device rejected feature set\n", ret->name);
+			goto err;
+		}
+	}
+
 	if (init_indirect_desc_tables(ret) != OK) {
 		printf("%s: Could not initialize indirect tables\n", ret->name);
 		goto err;
 	}
-
-	/* We know how to drive the device... */
-	virtio_write8(ret, VIRTIO_DEV_STATUS_OFF, VIRTIO_STATUS_DRV);
 
 	return ret;
 
@@ -184,14 +260,128 @@ err:
 	return NULL;
 }
 
-static int
-init_device(int devind, struct virtio_device *dev)
+/*
+ * Map a region described by a virtio PCI capability (a window at byte offset
+ * `off` of length `len` inside BAR `bar_idx`) into our address space. The BAR
+ * must be MMIO. Handles a non-page-aligned offset by mapping from the enclosing
+ * page boundary and returning a pointer to the requested start.
+ */
+static volatile u8_t *
+map_cap_region(int devind, u8_t bar_idx, u32_t off, u32_t len)
 {
-	u32_t base, size;
+	u64_t base;
+	u32_t size;
+	int iof, r;
+	phys_bytes phys, mapphys;
+	size_t pad, maplen;
+	void *vaddr;
+
+	r = pci_get_bar(devind, PCI_BAR + bar_idx * 4, &base, &size, &iof);
+	if (r != OK || iof)
+		return NULL;
+
+	if ((u64_t)off + len > size)
+		return NULL;
+
+	phys = (phys_bytes)base + off;
+	mapphys = phys & ~((phys_bytes)PAGE_SIZE - 1);
+	pad = phys - mapphys;
+	maplen = (pad + len + PAGE_SIZE - 1) & ~((size_t)PAGE_SIZE - 1);
+
+	vaddr = vm_map_phys(SELF, (void *)(uintptr_t)mapphys, maplen);
+	if (vaddr == MAP_FAILED)
+		return NULL;
+
+	return (volatile u8_t *)vaddr + pad;
+}
+
+/*
+ * Probe for the modern (virtio-1.0) PCI capabilities and, if present, map the
+ * register regions. Returns OK on a modern device (dev->modern set), ENXIO if
+ * the device has no virtio capabilities (caller falls back to legacy I/O).
+ */
+static int init_modern(int devind, struct virtio_device *dev)
+{
+	u16_t status, cr;
+	u8_t capptr, cfgtype, bar;
+	u32_t off, len;
+
+	status = pci_attr_r16(devind, PCI_SR);
+	if (!(status & PSR_CAPPTR))
+		return ENXIO;
+
+	capptr = pci_attr_r8(devind, PCI_CAPPTR) & 0xFC;
+
+	while (capptr != 0) {
+		if (pci_attr_r8(devind, capptr + CAP_TYPE) == PCI_CAP_ID_VNDR) {
+			cfgtype = pci_attr_r8(devind, capptr + VPCI_CAP_CFG_TYPE);
+			bar = pci_attr_r8(devind, capptr + VPCI_CAP_BAR);
+			off = pci_attr_r32(devind, capptr + VPCI_CAP_OFFSET);
+			len = pci_attr_r32(devind, capptr + VPCI_CAP_LENGTH);
+
+			switch (cfgtype) {
+			case VIRTIO_PCI_CAP_COMMON_CFG:
+				dev->common = map_cap_region(devind, bar, off,
+								len);
+				break;
+			case VIRTIO_PCI_CAP_NOTIFY_CFG:
+				dev->notify = map_cap_region(devind, bar, off,
+								len);
+				dev->notify_mult = pci_attr_r32(devind,
+						capptr + VPCI_CAP_NOTIFY_MULT);
+				break;
+			case VIRTIO_PCI_CAP_ISR_CFG:
+				dev->isr = map_cap_region(devind, bar, off, len);
+				break;
+			case VIRTIO_PCI_CAP_DEVICE_CFG:
+				dev->dcfg = map_cap_region(devind, bar, off, len);
+				break;
+			}
+		}
+		capptr = pci_attr_r8(devind, capptr + CAP_NEXT) & 0xFC;
+	}
+
+	/* No common config capability -> not a modern device. */
+	if (dev->common == NULL)
+		return ENXIO;
+
+	if (dev->notify == NULL || dev->isr == NULL) {
+		printf("%s: incomplete virtio-1.0 capabilities\n", dev->name);
+		return EINVAL;
+	}
+
+	dev->modern = 1;
+
+	/* Enable memory space + bus mastering and make sure INTx is not
+	 * disabled (pci_reserve() does not touch the command register). */
+	cr = pci_attr_r16(devind, PCI_CR);
+	cr |= PCI_CR_MEM_EN | PCI_CR_MAST_EN;
+	cr &= ~PCI_CR_INT_DIS;
+	pci_attr_w16(devind, PCI_CR, cr);
+
+	dev->irq = pci_attr_r8(devind, PCI_ILR);
+
+	/* Reset the device. */
+	virtio_set_status(dev, 0);
+
+	return OK;
+}
+
+static int init_device(int devind, struct virtio_device *dev)
+{
+	u64_t base;
+	u32_t size;
 	int iof, r;
 
 	pci_reserve(devind);
 
+	/* Prefer the modern (virtio-1.0) interface if the device offers it. */
+	if ((r = init_modern(devind, dev)) == OK)
+		return OK;
+	if (r != ENXIO)
+		return r;
+
+	/* Legacy interface: a flat register block behind an I/O BAR. */
 	if ((r = pci_get_bar(devind, PCI_BAR, &base, &size, &iof)) != OK) {
 		printf("%s: Could not get BAR (%d)", dev->name, r);
 		return r;
@@ -203,7 +393,7 @@ init_device(int devind, struct virtio_device *dev)
 	}
 
 	if (base & 0xFFFF0000) {
-		printf("%s: IO port weird (%08x)", dev->name, base);
+		printf("%s: IO port weird (%08llx)", dev->name, (unsigned long long)base);
 		return EINVAL;
 	}
 
@@ -219,13 +409,75 @@ init_device(int devind, struct virtio_device *dev)
 	return OK;
 }
 
-static int
-exchange_features(struct virtio_device *dev)
+/* MMIO accessors for the modern common config region. */
+static u16_t
+common_read16(struct virtio_device *dev, u32_t off)
+{
+	return *(volatile u16_t *)(dev->common + off);
+}
+
+static void
+common_write16(struct virtio_device *dev, u32_t off, u16_t val)
+{
+	*(volatile u16_t *)(dev->common + off) = val;
+}
+
+static u32_t
+common_read32(struct virtio_device *dev, u32_t off)
+{
+	return *(volatile u32_t *)(dev->common + off);
+}
+
+static void
+common_write32(struct virtio_device *dev, u32_t off, u32_t val)
+{
+	*(volatile u32_t *)(dev->common + off) = val;
+}
+
+/* Write a 64-bit value as a low/high dword pair (modern queue addresses). */
+static void
+common_write64(struct virtio_device *dev, u32_t off_lo, u32_t off_hi, u64_t val)
+{
+	common_write32(dev, off_lo, (u32_t)val);
+	common_write32(dev, off_hi, (u32_t)(val >> 32));
+}
+
+static void
+virtio_set_status(struct virtio_device *dev, u8_t status)
+{
+	if (dev->modern)
+		*(volatile u8_t *)(dev->common + VPCI_COMMON_STATUS) = status;
+	else
+		virtio_write8(dev, VIRTIO_DEV_STATUS_OFF, status);
+}
+
+static u8_t
+virtio_get_status(struct virtio_device *dev)
+{
+	if (dev->modern)
+		return *(volatile u8_t *)(dev->common + VPCI_COMMON_STATUS);
+
+	return virtio_read8(dev, VIRTIO_DEV_STATUS_OFF);
+}
+
+int virtio_is_modern(struct virtio_device *dev)
+{
+	assert(dev != NULL);
+	return dev->modern;
+}
+
+static int exchange_features(struct virtio_device *dev)
 {
 	u32_t guest_features = 0, host_features = 0;
 	struct virtio_feature *f;
 
-	host_features = virtio_read32(dev, VIRTIO_HOST_F_OFF);
+	if (dev->modern) {
+		/* Read the low 32 device feature bits (select 0). */
+		common_write32(dev, VPCI_COMMON_DFSELECT, 0);
+		host_features = common_read32(dev, VPCI_COMMON_DF);
+	} else {
+		host_features = virtio_read32(dev, VIRTIO_HOST_F_OFF);
+	}
 
 	for (int i = 0; i < dev->num_features; i++) {
 		f = &dev->features[i];
@@ -237,14 +489,24 @@ exchange_features(struct virtio_device *dev)
 		f->host_support =  ((host_features >> f->bit) & 1);
 	}
 
-	/* let the device know about our features */
-	virtio_write32(dev, VIRTIO_GUEST_F_OFF, guest_features);
+	if (dev->modern) {
+		/* Driver features, low 32 bits (select 0). */
+		common_write32(dev, VPCI_COMMON_GFSELECT, 0);
+		common_write32(dev, VPCI_COMMON_GF, guest_features);
+		/* High 32 bits (select 1): the modern interface requires the
+		 * driver to acknowledge VIRTIO_F_VERSION_1 (bit 32). */
+		common_write32(dev, VPCI_COMMON_GFSELECT, 1);
+		common_write32(dev, VPCI_COMMON_GF,
+				1u << (VIRTIO_F_VERSION_1 - 32));
+	} else {
+		/* let the device know about our features */
+		virtio_write32(dev, VIRTIO_GUEST_F_OFF, guest_features);
+	}
 
 	return OK;
 }
 
-int
-virtio_alloc_queues(struct virtio_device *dev, int num_queues)
+int virtio_alloc_queues(struct virtio_device *dev, int num_queues)
 {
 	int r = OK;
 
@@ -272,8 +534,7 @@ virtio_alloc_queues(struct virtio_device *dev, int num_queues)
 	return r;
 }
 
-static int
-init_phys_queues(struct virtio_device *dev)
+static int init_phys_queues(struct virtio_device *dev)
 {
 	/* Initialize all queues */
 	int i, j, r;
@@ -282,10 +543,15 @@ init_phys_queues(struct virtio_device *dev)
 	for (i = 0; i < dev->num_queues; i++) {
 		q = &dev->queues[i];
 		/* select the queue */
-		virtio_write16(dev, VIRTIO_QSEL_OFF, i);
-		q->num = virtio_read16(dev, VIRTIO_QSIZE_OFF);
+		if (dev->modern) {
+			common_write16(dev, VPCI_COMMON_Q_SELECT, i);
+			q->num = common_read16(dev, VPCI_COMMON_Q_SIZE);
+		} else {
+			virtio_write16(dev, VIRTIO_QSEL_OFF, i);
+			q->num = virtio_read16(dev, VIRTIO_QSIZE_OFF);
+		}
 
-		if (q->num & (q->num - 1)) {
+		if (q->num == 0 || (q->num & (q->num - 1))) {
 			printf("%s: Queue %d num=%d not ^2", dev->name, i,
 							     q->num);
 			r = EINVAL;
@@ -297,8 +563,35 @@ init_phys_queues(struct virtio_device *dev)
 
 		init_phys_queue(q);
 
-		/* Let the host know about the guest physical page */
-		virtio_write32(dev, VIRTIO_QADDR_OFF, q->page);
+		if (dev->modern) {
+			/* The split vring is one contiguous allocation; derive
+			 * the desc/avail/used physical addresses from the ring
+			 * pointers set up by init_phys_queue(). */
+			phys_bytes desc_p, avail_p, used_p;
+
+			desc_p = q->paddr + ((u8_t *)q->vring.desc -
+							(u8_t *)q->vaddr);
+			avail_p = q->paddr + ((u8_t *)q->vring.avail -
+							(u8_t *)q->vaddr);
+			used_p = q->paddr + ((u8_t *)q->vring.used -
+							(u8_t *)q->vaddr);
+
+			common_write16(dev, VPCI_COMMON_Q_SIZE, q->num);
+			common_write64(dev, VPCI_COMMON_Q_DESCLO,
+					VPCI_COMMON_Q_DESCHI, desc_p);
+			common_write64(dev, VPCI_COMMON_Q_AVAILLO,
+					VPCI_COMMON_Q_AVAILHI, avail_p);
+			common_write64(dev, VPCI_COMMON_Q_USEDLO,
+					VPCI_COMMON_Q_USEDHI, used_p);
+			/* No MSI-X: leave the queue vector as NO_VECTOR. */
+			common_write16(dev, VPCI_COMMON_Q_MSIX,
+					VPCI_MSIX_NO_VECTOR);
+			q->notify_off = common_read16(dev, VPCI_COMMON_Q_NOFF);
+			common_write16(dev, VPCI_COMMON_Q_ENABLE, 1);
+		} else {
+			/* Let the host know about the guest physical page */
+			virtio_write32(dev, VIRTIO_QADDR_OFF, q->page);
+		}
 	}
 
 	return OK;
@@ -311,8 +604,7 @@ free_phys_queues:
 	return r;
 }
 
-static int
-alloc_phys_queue(struct virtio_queue *q)
+static int alloc_phys_queue(struct virtio_queue *q)
 {
 	assert(q != NULL);
 
@@ -336,20 +628,18 @@ alloc_phys_queue(struct virtio_queue *q)
 	return OK;
 }
 
-void
-virtio_device_ready(struct virtio_device *dev)
+void virtio_device_ready(struct virtio_device *dev)
 {
 	assert(dev != NULL);
 
 	/* Register IRQ line */
 	virtio_irq_register(dev);
 
-	/* Driver is ready to go! */
-	virtio_write8(dev, VIRTIO_DEV_STATUS_OFF, VIRTIO_STATUS_DRV_OK);
+	/* Driver is ready to go! Preserve the bits already set. */
+	virtio_set_status(dev, virtio_get_status(dev) | VIRTIO_STATUS_DRV_OK);
 }
 
-void
-virtio_free_queues(struct virtio_device *dev)
+void virtio_free_queues(struct virtio_device *dev)
 {
 	int i;
 	assert(dev != NULL);
@@ -363,8 +653,7 @@ virtio_free_queues(struct virtio_device *dev)
 	dev->queues = NULL;
 }
 
-static void
-free_phys_queue(struct virtio_queue *q)
+static void free_phys_queue(struct virtio_queue *q)
 {
 	assert(q != NULL);
 	assert(q->vaddr != NULL);
@@ -377,8 +666,7 @@ free_phys_queue(struct virtio_queue *q)
 	q->data = NULL;
 }
 
-static void
-init_phys_queue(struct virtio_queue *q)
+static void init_phys_queue(struct virtio_queue *q)
 {
 	memset(q->vaddr, 0, q->ring_size);
 	memset(q->data, 0, sizeof(q->data[0]) * q->num);
@@ -403,8 +691,7 @@ init_phys_queue(struct virtio_queue *q)
 	return;
 }
 
-void
-virtio_free_device(struct virtio_device *dev)
+void virtio_free_device(struct virtio_device *dev)
 {
 	int i;
 	struct indirect_desc_table *desc;
@@ -427,8 +714,7 @@ virtio_free_device(struct virtio_device *dev)
 	free(dev);
 }
 
-static int
-init_indirect_desc_table(struct indirect_desc_table *desc)
+static int init_indirect_desc_table(struct indirect_desc_table *desc)
 {
 	desc->in_use = 0;
 	desc->len = (MAPVEC_NR + MAPVEC_NR / 2) * sizeof(struct vring_desc);
@@ -442,8 +728,7 @@ init_indirect_desc_table(struct indirect_desc_table *desc)
 	return OK;
 }
 
-static int
-init_indirect_desc_tables(struct virtio_device *dev)
+static int init_indirect_desc_tables(struct virtio_device *dev)
 {
 	int i, j, r;
 	struct indirect_desc_table *desc;
@@ -476,8 +761,7 @@ init_indirect_desc_tables(struct virtio_device *dev)
 	return OK;
 }
 
-static void
-clear_indirect_table(struct virtio_device *dev, struct vring_desc *vd)
+static void clear_indirect_table(struct virtio_device *dev, struct vring_desc *vd)
 {
 	int i;
 	struct indirect_desc_table *desc;
@@ -513,8 +797,7 @@ use_vring_desc(struct vring_desc *vd, struct vumap_phys *vp)
 		vd->flags |= VRING_DESC_F_WRITE;
 }
 
-static void
-set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
+static void set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 	struct vumap_phys *bufs, size_t num)
 {
 	/* Indirect descriptor tables are simply filled from left to right */
@@ -568,8 +851,7 @@ set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 	q->free_head = vd->next;
 }
 
-static void
-set_direct_descriptors(struct virtio_queue *q, struct vumap_phys *bufs,
+static void set_direct_descriptors(struct virtio_queue *q, struct vumap_phys *bufs,
 	size_t num)
 {
 	u16_t i;
@@ -602,8 +884,7 @@ set_direct_descriptors(struct virtio_queue *q, struct vumap_phys *bufs,
 	q->free_head = i;
 }
 
-int
-virtio_to_queue(struct virtio_device *dev, int qidx, struct vumap_phys *bufs,
+int virtio_to_queue(struct virtio_device *dev, int qidx, struct vumap_phys *bufs,
 	size_t num, void *data)
 {
 	u16_t free_first;
@@ -645,8 +926,7 @@ virtio_to_queue(struct virtio_device *dev, int qidx, struct vumap_phys *bufs,
 	return 0;
 }
 
-int
-virtio_from_queue(struct virtio_device *dev, int qidx, void **data,
+int virtio_from_queue(struct virtio_device *dev, int qidx, void **data,
 	size_t *len)
 {
 	struct virtio_queue *q;
@@ -732,78 +1012,91 @@ virtio_from_queue(struct virtio_device *dev, int qidx, void **data,
 	return 0;
 }
 
-int
-virtio_had_irq(struct virtio_device *dev)
+int virtio_had_irq(struct virtio_device *dev)
 {
+	if (dev->modern)
+		return *(volatile u8_t *)(dev->isr) & 1;
+
 	return virtio_read8(dev, VIRTIO_ISR_STATUS_OFF) & 1;
 }
 
-void
-virtio_reset_device(struct virtio_device *dev)
+void virtio_reset_device(struct virtio_device *dev)
 {
 	virtio_irq_unregister(dev);
-	virtio_write8(dev, VIRTIO_DEV_STATUS_OFF, 0);
+	virtio_set_status(dev, 0);
 }
 
 
-void
-virtio_irq_enable(struct virtio_device *dev)
+void virtio_irq_enable(struct virtio_device *dev)
 {
 	int r;
 	if ((r = sys_irqenable(&dev->irq_hook)) != OK)
 		panic("%s Unable to enable IRQ %d", dev->name, r);
 }
 
-void
-virtio_irq_disable(struct virtio_device *dev)
+void virtio_irq_disable(struct virtio_device *dev)
 {
 	int r;
 	if ((r = sys_irqdisable(&dev->irq_hook)) != OK)
 		panic("%s: Unable to disable IRQ %d", dev->name, r);
 }
 
-static int
-wants_kick(struct virtio_queue *q)
+static int wants_kick(struct virtio_queue *q)
 {
 	assert(q != NULL);
 	return !(q->vring.used->flags & VRING_USED_F_NO_NOTIFY);
 }
 
-static void
-kick_queue(struct virtio_device *dev, int qidx)
+static void kick_queue(struct virtio_device *dev, int qidx)
 {
 	assert(0 <= qidx && qidx < dev->num_queues);
 
-	if (wants_kick(&dev->queues[qidx]))
+	if (!wants_kick(&dev->queues[qidx]))
+		return;
+
+	if (dev->modern) {
+		/* Notify address = notify_base + queue_notify_off * mult. */
+		volatile u16_t *na = (volatile u16_t *)(dev->notify +
+			(u32_t)dev->queues[qidx].notify_off * dev->notify_mult);
+		*na = (u16_t)qidx;
+	} else {
 		virtio_write16(dev, VIRTIO_QNOTFIY_OFF, qidx);
+	}
 
 	return;
 }
 
-static int
-is_matching_device(u16_t expected_sdid, u16_t vid, u16_t sdid)
+static int is_matching_device(u16_t expected_sdid, u16_t vid, u16_t did,
+				u16_t sdid)
 {
-	return vid == VIRTIO_VENDOR_ID && sdid == expected_sdid;
+	if (vid != VIRTIO_VENDOR_ID)
+		return 0;
+
+	/* Legacy/transitional devices use PCI device IDs 0x1000-0x103f and
+	 * identify their type through the subsystem device ID. */
+	if (did >= 0x1000 && did <= 0x103f)
+		return sdid == expected_sdid;
+
+	/* Modern (virtio-1.0) devices encode the type in the PCI device ID
+	 * itself: 0x1040 + virtio device type (== expected subsystem id). */
+	return did == (u16_t)(0x1040 + expected_sdid);
 }
 
-static void
-virtio_irq_register(struct virtio_device *dev)
+static void virtio_irq_register(struct virtio_device *dev)
 {
 	int r;
 	if ((r = sys_irqsetpolicy(dev->irq, 0, &dev->irq_hook)) != OK)
 		panic("%s: Unable to register IRQ %d", dev->name, r);
 }
 
-static void
-virtio_irq_unregister(struct virtio_device *dev)
+static void virtio_irq_unregister(struct virtio_device *dev)
 {
 	int r;
 	if ((r = sys_irqrmpolicy(&dev->irq_hook)) != OK)
 		panic("%s: Unable to unregister IRQ %d", dev->name, r);
 }
 
-static int
-_supports(struct virtio_device *dev, int bit, int host)
+static int _supports(struct virtio_device *dev, int bit, int host)
 {
 	for (int i = 0; i < dev->num_features; i++) {
 		struct virtio_feature *f = &dev->features[i];
@@ -815,14 +1108,12 @@ _supports(struct virtio_device *dev, int bit, int host)
 	panic("%s: Feature not found bit=%d", dev->name, bit);
 }
 
-int
-virtio_host_supports(struct virtio_device *dev, int bit)
+int virtio_host_supports(struct virtio_device *dev, int bit)
 {
 	return _supports(dev, bit, 1);
 }
 
-int
-virtio_guest_supports(struct virtio_device *dev, int bit)
+int virtio_guest_supports(struct virtio_device *dev, int bit)
 {
 	return _supports(dev, bit, 0);
 }
@@ -865,13 +1156,21 @@ VIRTIO_WRITE_XX(32, l)
 VIRTIO_WRITE_XX(16, w)
 VIRTIO_WRITE_XX(8, b)
 
-/* Just some wrappers around sys_read */
+/*
+ * Device-specific configuration access. On the modern interface this is the
+ * mapped device-config MMIO region; on the legacy interface it is the I/O
+ * register block at VIRTIO_DEV_SPECIFIC_OFF (shifted by 4 when MSI is enabled).
+ */
 #define VIRTIO_SREAD_XX(xx, suff)					\
 u##xx##_t								\
 virtio_sread##xx(struct virtio_device *dev, i32_t off)			\
 {									\
 	int r;								\
 	u32_t ret;							\
+									\
+	if (dev->modern)						\
+		return *(volatile u##xx##_t *)(dev->dcfg + off);	\
+									\
 	off += VIRTIO_DEV_SPECIFIC_OFF; 				\
 									\
 	if (dev->msi)							\
@@ -896,6 +1195,12 @@ void									\
 virtio_swrite##xx(struct virtio_device *dev, i32_t off, u##xx##_t val)	\
 {									\
 	int r;								\
+									\
+	if (dev->modern) {						\
+		*(volatile u##xx##_t *)(dev->dcfg + off) = val;		\
+		return;							\
+	}								\
+									\
 	off += VIRTIO_DEV_SPECIFIC_OFF; 				\
 									\
 	if (dev->msi)							\

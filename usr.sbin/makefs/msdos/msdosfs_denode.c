@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.7 2015/03/29 05:52:59 agc Exp $
  * depp	     - returns the address of the gotten denode.
  */
 int
-deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
+msdosfs_deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
     struct denode **depp)
 	/* pmp:	 so we know the maj/min number */
 	/* dirclust:		 cluster this dir entry came from */
@@ -114,7 +114,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 	ldep->de_pmp = pmp;
 	ldep->de_devvp = pmp->pm_devvp;
 	ldep->de_refcnt = 1;
-	fc_purge(ldep, 0);
+	msdosfs_fc_purge(ldep, 0);
 	/*
 	 * Copy the directory entry into the denode area of the vnode.
 	 */
@@ -153,7 +153,8 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 		ldep->de_MDate = ldep->de_CDate;
 		/* leave the other fields as garbage */
 	} else {
-		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
+		error = msdosfs_readep(pmp, dirclust, diroffset, &bp,
+		    &direntptr);
 		if (error) {
 			ldep->de_devvp = NULL;
 			ldep->de_Name[0] = SLOT_DELETED;
@@ -177,7 +178,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
 		u_long size;
 
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
-			error = pcbmap(ldep, CLUST_END, 0, &size, 0);
+			error = msdosfs_pcbmap(ldep, CLUST_END, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
@@ -193,7 +194,8 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
+msdosfs_detrunc(struct denode *dep, u_long length, int flags,
+    struct kauth_cred *cred)
 {
 	int error;
 	int allerror = 0;
@@ -224,7 +226,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 	}
 
 	if (dep->de_FileSize < length)
-		return (deextend(dep, length, cred));
+		return (msdosfs_deextend(dep, length, cred));
 	lastblock = de_clcount(pmp, length) - 1;
 
 	/*
@@ -241,7 +243,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		error = pcbmap(dep, lastblock, 0, &eofentry, 0);
+		error = msdosfs_pcbmap(dep, lastblock, 0, &eofentry, 0);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
@@ -292,7 +294,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 	 * now.
 	 */
 	if (eofentry != (u_long)~0) {
-		error = fatentry(FAT_GET_AND_SET, pmp, eofentry,
+		error = msdosfs_fatentry(FAT_GET_AND_SET, pmp, eofentry,
 				 &chaintofree, CLUST_EOFE);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
@@ -307,7 +309,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
 	 * truncation.
 	 */
 	if (chaintofree != 0 && !MSDOSFSEOF(chaintofree, pmp->pm_fatmask))
-		freeclusterchain(pmp, chaintofree);
+		msdosfs_freeclusterchain(pmp, chaintofree);
 
 	return (allerror);
 }
@@ -316,7 +318,7 @@ detrunc(struct denode *dep, u_long length, int flags, struct kauth_cred *cred)
  * Extend the file described by dep to length specified by length.
  */
 int
-deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
+msdosfs_deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count;
@@ -344,10 +346,10 @@ deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 	if (count > 0) {
 		if (count > pmp->pm_freeclustercount)
 			return (ENOSPC);
-		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
+		error = msdosfs_extendfile(dep, count, NULL, NULL, DE_CLEAR);
 		if (error) {
 			/* truncate the added clusters away again */
-			(void) detrunc(dep, dep->de_FileSize, 0, cred);
+			(void) msdosfs_detrunc(dep, dep->de_FileSize, 0, cred);
 			return (error);
 		}
 	}

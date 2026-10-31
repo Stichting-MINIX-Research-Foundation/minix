@@ -82,8 +82,7 @@ static struct rmib_node net_route_node =
 /*
  * Initialize the routing sockets module.
  */
-void
-rtsock_init(void)
+void rtsock_init(void)
 {
 	const int mib[] = { CTL_NET, PF_ROUTE };
 	unsigned int slot;
@@ -134,8 +133,7 @@ rtsock_alloc(size_t size)
 /*
  * Initialize a routing addresses map.
  */
-static void
-rtsock_rta_init(struct rtsock_rta * rta)
+static void rtsock_rta_init(struct rtsock_rta * rta)
 {
 
 	memset(rta, 0, sizeof(*rta));
@@ -145,8 +143,7 @@ rtsock_rta_init(struct rtsock_rta * rta)
  * Set an entry in a routing addresses map.  When computing sizes, 'ptr' may be
  * NULL.
  */
-static void
-rtsock_rta_set(struct rtsock_rta * rta, unsigned int rtax, const void * ptr,
+static void rtsock_rta_set(struct rtsock_rta * rta, unsigned int rtax, const void * ptr,
 	socklen_t len)
 {
 
@@ -168,8 +165,7 @@ rtsock_rta_set(struct rtsock_rta * rta, unsigned int rtax, const void * ptr,
  * ('hdr', 'msglen', 'addrs', and the pointers in 'rta') may be NULL or even
  * invalid, even though the corresponding sizes should still be supplied.
  */
-static ssize_t
-rtsock_rta_finalize(void * hdr, size_t hdrlen, u_short * msglen, int * addrs,
+static ssize_t rtsock_rta_finalize(void * hdr, size_t hdrlen, u_short * msglen, int * addrs,
 	const struct rtsock_rta * rta, struct pbuf ** pbuf,
 	struct rmib_oldp * oldp, ssize_t off)
 {
@@ -240,8 +236,7 @@ rtsock_rta_finalize(void * hdr, size_t hdrlen, u_short * msglen, int * addrs,
  * doubtful that this extra complexity pays off in any form, but it is what the
  * BSDs historically do.  We currently implement compression for IPv4 only.
  */
-static void
-rtsock_compress_netmask(struct sockaddr * sa)
+static void rtsock_compress_netmask(struct sockaddr * sa)
 {
 	struct sockaddr_in sin;
 	uint32_t addr;
@@ -272,8 +267,7 @@ rtsock_compress_netmask(struct sockaddr * sa)
  * appropriate size for its address family.  Return FALSE if expansion failed
  * and an error should be returned to the caller.
  */
-static int
-rtsock_expand_netmask(union sockaddr_any * mask, const struct sockaddr * sa)
+static int rtsock_expand_netmask(union sockaddr_any * mask, const struct sockaddr * sa)
 {
 
 	if (sa->sa_len > sizeof(*mask))
@@ -348,8 +342,7 @@ rtsock_socket(int type, int protocol, struct sock ** sockp,
  * Enqueue data on the receive queue of a routing socket.  The caller must have
  * checked whether the receive buffer size allows for the receipt of the data.
  */
-static void
-rtsock_enqueue(struct rtsock * rt, struct pbuf * pbuf)
+static void rtsock_enqueue(struct rtsock * rt, struct pbuf * pbuf)
 {
 
 	*rt->rt_rcvtailp = pbuf;
@@ -365,8 +358,7 @@ rtsock_enqueue(struct rtsock * rt, struct pbuf * pbuf)
  * 'rt'.  Return TRUE if the message should be sent to this socket, or FALSE
  * if it should not.
  */
-static int
-rtsock_can_send(struct rtsock *rt, struct rtsock *rtsrc, int family)
+static int rtsock_can_send(struct rtsock *rt, struct rtsock *rtsrc, int family)
 {
 
 	/* Do not send anything on sockets shut down for reading. */
@@ -411,8 +403,7 @@ rtsock_can_send(struct rtsock *rt, struct rtsock *rtsrc, int family)
  * the socket would take the message or FALSE if not.  If 'family' is not
  * AF_UNSPEC, it is to be the address family of the message.
  */
-static int
-rtsock_msg_one(struct rtsock * rt, int family, struct pbuf * pbuf)
+static int rtsock_msg_one(struct rtsock * rt, int family, struct pbuf * pbuf)
 {
 
 	if (rtsock_can_send(rt, rt, family)) {
@@ -437,8 +428,7 @@ rtsock_msg_one(struct rtsock * rt, int family, struct pbuf * pbuf)
  * that is the source of the message.  If 'family' is not AF_UNSPEC, it is to
  * be the address family of the message.
  */
-static int
-rtsock_msg_match(struct rtsock * rtsrc, int family, struct pbuf * pbuf)
+static int rtsock_msg_match(struct rtsock * rtsrc, int family, struct pbuf * pbuf)
 {
 	struct rtsock *rt, *rtprev;
 	struct pbuf *pcopy;
@@ -489,8 +479,7 @@ rtsock_msg_match(struct rtsock * rtsrc, int family, struct pbuf * pbuf)
 /*
  * Dequeue and free the head of the receive queue of a routing socket.
  */
-static void
-rtsock_dequeue(struct rtsock * rt)
+static void rtsock_dequeue(struct rtsock * rt)
 {
 	struct pbuf *pbuf, **pnext;
 	size_t size;
@@ -517,8 +506,7 @@ rtsock_dequeue(struct rtsock * rt)
  * user and possibly other routing sockets.  Return a negative error code on
  * failure, in which case the caller will send the reply to the user instead.
  */
-static int
-rtsock_process(struct rtsock *rt, struct rt_msghdr * rtm, char * buf,
+static int rtsock_process(struct rtsock *rt, struct rt_msghdr * rtm, char * buf,
 	size_t len, int is_root)
 {
 	struct rtsock_request rtr;
@@ -630,8 +618,7 @@ rtsock_process(struct rtsock *rt, struct rt_msghdr * rtm, char * buf,
 /*
  * Perform preliminary checks on a send request.
  */
-static int
-rtsock_pre_send(struct sock * sock __unused, size_t len,
+static int rtsock_pre_send(struct sock * sock __unused, size_t len,
 	socklen_t ctl_len __unused, const struct sockaddr * addr,
 	socklen_t addr_len __unused, endpoint_t user_endpt __unused, int flags)
 {
@@ -657,8 +644,7 @@ rtsock_pre_send(struct sock * sock __unused, size_t len,
 /*
  * Send data on a routing socket.
  */
-static int
-rtsock_send(struct sock * sock, const struct sockdriver_data * data,
+static int rtsock_send(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * offp, const struct sockdriver_data * ctl __unused,
 	socklen_t ctl_len __unused, socklen_t * ctl_off __unused,
 	const struct sockaddr * addr __unused, socklen_t addr_len __unused,
@@ -723,8 +709,7 @@ rtsock_send(struct sock * sock, const struct sockdriver_data * data,
 /*
  * Perform preliminary checks on a receive request.
  */
-static int
-rtsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
+static int rtsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
 	int flags)
 {
 
@@ -741,8 +726,7 @@ rtsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
 /*
  * Receive data on a routing socket.
  */
-static int
-rtsock_recv(struct sock * sock, const struct sockdriver_data * data,
+static int rtsock_recv(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * off, const struct sockdriver_data * ctl __unused,
 	socklen_t ctl_len __unused, socklen_t * ctl_off __unused,
 	struct sockaddr * addr, socklen_t * addr_len,
@@ -785,8 +769,7 @@ rtsock_recv(struct sock * sock, const struct sockdriver_data * data,
  * Test whether data can be received on a routing socket, and if so, how many
  * bytes of data.
  */
-static int
-rtsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
+static int rtsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
 
@@ -801,8 +784,7 @@ rtsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
 /*
  * Set socket options on a routing socket.
  */
-static int
-rtsock_setsockopt(struct sock * sock, int level, int name,
+static int rtsock_setsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
@@ -842,8 +824,7 @@ rtsock_setsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve socket options on a routing socket.
  */
-static int
-rtsock_getsockopt(struct sock * sock, int level, int name,
+static int rtsock_getsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
@@ -871,8 +852,7 @@ rtsock_getsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve the local or remote socket address of a routing socket.
  */
-static int
-rtsock_getname(struct sock * sock __unused, struct sockaddr * addr,
+static int rtsock_getname(struct sock * sock __unused, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 
@@ -887,8 +867,7 @@ rtsock_getname(struct sock * sock __unused, struct sockaddr * addr,
 /*
  * Drain the receive queue of a routing socket.
  */
-static void
-rtsock_drain(struct rtsock * rt)
+static void rtsock_drain(struct rtsock * rt)
 {
 
 	while (rt->rt_rcvhead != NULL)
@@ -898,8 +877,7 @@ rtsock_drain(struct rtsock * rt)
 /*
  * Shut down a routing socket for reading and/or writing.
  */
-static int
-rtsock_shutdown(struct sock * sock, unsigned int mask)
+static int rtsock_shutdown(struct sock * sock, unsigned int mask)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
 
@@ -912,8 +890,7 @@ rtsock_shutdown(struct sock * sock, unsigned int mask)
 /*
  * Close a routing socket.
  */
-static int
-rtsock_close(struct sock * sock, int force __unused)
+static int rtsock_close(struct sock * sock, int force __unused)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
 
@@ -925,8 +902,7 @@ rtsock_close(struct sock * sock, int force __unused)
 /*
  * Free up a closed routing socket.
  */
-static void
-rtsock_free(struct sock * sock)
+static void rtsock_free(struct sock * sock)
 {
 	struct rtsock *rt = (struct rtsock *)sock;
 
@@ -955,8 +931,7 @@ static const struct sockevent_ops rtsock_ops = {
  * 'arrival' is set, the interface has just been created; otherwise, the
  * interface is about to be destroyed.
  */
-void
-rtsock_msg_ifannounce(struct ifdev * ifdev, int arrival)
+void rtsock_msg_ifannounce(struct ifdev * ifdev, int arrival)
 {
 	struct if_announcemsghdr ifan;
 	struct pbuf *pbuf;
@@ -982,8 +957,7 @@ rtsock_msg_ifannounce(struct ifdev * ifdev, int arrival)
 /*
  * Send an interface information routing message.
  */
-void
-rtsock_msg_ifinfo(struct ifdev * ifdev)
+void rtsock_msg_ifinfo(struct ifdev * ifdev)
 {
 	struct if_msghdr ifm;
 	struct pbuf *pbuf;
@@ -1011,8 +985,7 @@ rtsock_msg_ifinfo(struct ifdev * ifdev)
  * Set up a RTA map and an interface address structure for use in a RTM_xxxADDR
  * routing message.
  */
-static void
-rtsock_rta_init_ifam(struct rtsock_rta * rta, struct ifa_msghdr * ifam,
+static void rtsock_rta_init_ifam(struct rtsock_rta * rta, struct ifa_msghdr * ifam,
 	struct ifdev * ifdev, unsigned int type, struct sockaddr_dlx * sdlx)
 {
 
@@ -1033,8 +1006,7 @@ rtsock_rta_init_ifam(struct rtsock_rta * rta, struct ifa_msghdr * ifam,
 /*
  * Add a specific link-layer address for an interface to the given RTA map.
  */
-static void
-rtsock_rta_add_dl(struct rtsock_rta * rta, struct ifdev * ifdev,
+static void rtsock_rta_add_dl(struct rtsock_rta * rta, struct ifdev * ifdev,
 	ifaddr_dl_num_t num, struct sockaddr_dlx * sdlx)
 {
 
@@ -1054,8 +1026,7 @@ rtsock_rta_add_dl(struct rtsock_rta * rta, struct ifdev * ifdev,
  * Send a routing message about a new, changed, or deleted datalink address for
  * the given interface.
  */
-void
-rtsock_msg_addr_dl(struct ifdev * ifdev, unsigned int type,
+void rtsock_msg_addr_dl(struct ifdev * ifdev, unsigned int type,
 	ifaddr_dl_num_t num)
 {
 	struct rtsock_rta rta;
@@ -1078,8 +1049,7 @@ rtsock_msg_addr_dl(struct ifdev * ifdev, unsigned int type,
 /*
  * Add a specific IPv4 address for an interface to the given RTA map.
  */
-static void
-rtsock_rta_add_v4(struct rtsock_rta * rta, struct ifdev * ifdev,
+static void rtsock_rta_add_v4(struct rtsock_rta * rta, struct ifdev * ifdev,
 	ifaddr_v4_num_t num, struct sockaddr_in sin[4])
 {
 
@@ -1105,8 +1075,7 @@ rtsock_rta_add_v4(struct rtsock_rta * rta, struct ifdev * ifdev,
  * Send a routing message about a new or deleted IPv4 address for the given
  * interface.
  */
-void
-rtsock_msg_addr_v4(struct ifdev * ifdev, unsigned int type,
+void rtsock_msg_addr_v4(struct ifdev * ifdev, unsigned int type,
 	ifaddr_v4_num_t num)
 {
 	struct rtsock_rta rta;
@@ -1130,8 +1099,7 @@ rtsock_msg_addr_v4(struct ifdev * ifdev, unsigned int type,
 /*
  * Add a specific IPv6 address for an interface to the given RTA map.
  */
-static void
-rtsock_rta_add_v6(struct rtsock_rta * rta, struct ifdev * ifdev,
+static void rtsock_rta_add_v6(struct rtsock_rta * rta, struct ifdev * ifdev,
 	ifaddr_v6_num_t num, struct sockaddr_in6 sin6[3])
 {
 
@@ -1155,8 +1123,7 @@ rtsock_rta_add_v6(struct rtsock_rta * rta, struct ifdev * ifdev,
  * Send a routing message about a new or deleted IPv6 address for the given
  * interface.
  */
-void
-rtsock_msg_addr_v6(struct ifdev * ifdev, unsigned int type,
+void rtsock_msg_addr_v6(struct ifdev * ifdev, unsigned int type,
 	ifaddr_v6_num_t num)
 {
 	struct rtsock_rta rta;
@@ -1182,8 +1149,7 @@ rtsock_msg_addr_v6(struct ifdev * ifdev, unsigned int type,
  * found.  The caller must provide the address in the appropriate form and
  * perform any per-address rate limiting.
  */
-void
-rtsock_msg_miss(const struct sockaddr * addr)
+void rtsock_msg_miss(const struct sockaddr * addr)
 {
 	struct rt_msghdr rtm;
 	struct rtsock_rta rta;
@@ -1219,8 +1185,7 @@ rtsock_msg_miss(const struct sockaddr * addr)
  * and optionally (if not NULL) 'ifp' and 'ifa'.  The caller is responsible for
  * combining the results into an appropriate routing message.
  */
-static void
-rtsock_get_route(struct rt_msghdr * rtm, struct rtsock_rta * rta,
+static void rtsock_get_route(struct rt_msghdr * rtm, struct rtsock_rta * rta,
 	union sockaddr_any * addr, union sockaddr_any * mask,
 	union sockaddr_any * gateway, union sockaddr_any * ifp,
 	union sockaddr_any * ifa, const struct route_entry * route,
@@ -1265,8 +1230,7 @@ rtsock_get_route(struct rt_msghdr * rtm, struct rtsock_rta * rta,
  * any), various fields that should be echoed, and (for RTM_GET) whether to
  * add interface information to the output.
  */
-void
-rtsock_msg_route(const struct route_entry * route, unsigned int type,
+void rtsock_msg_route(const struct route_entry * route, unsigned int type,
 	const struct rtsock_request * rtr)
 {
 	union sockaddr_any addr, mask, gateway, ifp, ifa;
@@ -1305,8 +1269,7 @@ rtsock_msg_route(const struct route_entry * route, unsigned int type,
  * success, return the byte size of the output.  If the route was not a match
  * for the filter, return zero.  On failure, return a negative error code.
  */
-static ssize_t
-rtsock_info_rtable_entry(const struct route_entry * route, unsigned int filter,
+static ssize_t rtsock_info_rtable_entry(const struct route_entry * route, unsigned int filter,
 	socklen_t addr_len, struct rmib_oldp * oldp, size_t off)
 {
 	union sockaddr_any addr, mask, gateway;
@@ -1342,8 +1305,7 @@ rtsock_info_rtable_entry(const struct route_entry * route, unsigned int filter,
 /*
  * Obtain routing table entries.
  */
-static ssize_t
-rtsock_info_rtable(struct rmib_oldp * oldp, int family, int filter)
+static ssize_t rtsock_info_rtable(struct rmib_oldp * oldp, int family, int filter)
 {
 	struct route_entry *route;
 	ssize_t r, off;
@@ -1383,8 +1345,7 @@ rtsock_info_rtable(struct rmib_oldp * oldp, int family, int filter)
  * 'gateway'.  The caller is responsible for combining the results into an
  * appropriate routing message.
  */
-static void
-rtsock_get_arp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
+static void rtsock_get_arp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
 	struct sockaddr_in * addr, struct sockaddr_dlx * gateway,
 	lldata_arp_num_t num, unsigned int type)
 {
@@ -1417,8 +1378,7 @@ rtsock_get_arp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
  * information about the routing socket that was the source of the request (if
  * any) and various fields that should be echoed.
  */
-void
-rtsock_msg_arp(lldata_arp_num_t num, unsigned int type,
+void rtsock_msg_arp(lldata_arp_num_t num, unsigned int type,
 	const struct rtsock_request * rtr)
 {
 	struct sockaddr_in addr;
@@ -1455,8 +1415,7 @@ rtsock_msg_arp(lldata_arp_num_t num, unsigned int type,
 /*
  * Obtain ARP table entries.
  */
-static ssize_t
-rtsock_info_lltable_arp(struct rmib_oldp * oldp)
+static ssize_t rtsock_info_lltable_arp(struct rmib_oldp * oldp)
 {
 	struct sockaddr_in addr;
 	struct sockaddr_dlx gateway;
@@ -1499,8 +1458,7 @@ rtsock_info_lltable_arp(struct rmib_oldp * oldp)
  * 'gateway'.  The caller is responsible for combining the results into an
  * appropriate routing message.
  */
-static void
-rtsock_get_ndp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
+static void rtsock_get_ndp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
 	struct sockaddr_in6 * addr, struct sockaddr_dlx * gateway,
 	lldata_ndp_num_t num, unsigned int type)
 {
@@ -1529,8 +1487,7 @@ rtsock_get_ndp(struct rt_msghdr * rtm, struct rtsock_rta * rta,
  * information about the routing socket that was the source of the request (if
  * any) and various fields that should be echoed.
  */
-void
-rtsock_msg_ndp(lldata_ndp_num_t num, unsigned int type,
+void rtsock_msg_ndp(lldata_ndp_num_t num, unsigned int type,
 	const struct rtsock_request * rtr)
 {
 	struct sockaddr_in6 addr;
@@ -1567,8 +1524,7 @@ rtsock_msg_ndp(lldata_ndp_num_t num, unsigned int type,
 /*
  * Obtain NDP table entries.
  */
-static ssize_t
-rtsock_info_lltable_ndp(struct rmib_oldp * oldp)
+static ssize_t rtsock_info_lltable_ndp(struct rmib_oldp * oldp)
 {
 	struct rt_msghdr rtm;
 	struct rtsock_rta rta;
@@ -1605,8 +1561,7 @@ rtsock_info_lltable_ndp(struct rmib_oldp * oldp)
 /*
  * Obtain link-layer (ARP, NDP) table entries.
  */
-static ssize_t
-rtsock_info_lltable(struct rmib_oldp * oldp, int family)
+static ssize_t rtsock_info_lltable(struct rmib_oldp * oldp, int family)
 {
 
 	switch (family) {
@@ -1624,8 +1579,7 @@ rtsock_info_lltable(struct rmib_oldp * oldp, int family)
 /*
  * Obtain link-layer address information for one specific interface.
  */
-static ssize_t
-rtsock_info_if_dl(struct ifdev * ifdev, struct ifa_msghdr * ifam,
+static ssize_t rtsock_info_if_dl(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 	struct rmib_oldp * oldp, ssize_t off)
 {
 	struct rtsock_rta rta;
@@ -1659,8 +1613,7 @@ rtsock_info_if_dl(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 /*
  * Obtain IPv4 address information for one specific interface.
  */
-static ssize_t
-rtsock_info_if_v4(struct ifdev * ifdev, struct ifa_msghdr * ifam,
+static ssize_t rtsock_info_if_v4(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 	struct rmib_oldp * oldp, ssize_t off)
 {
 	struct sockaddr_in sin[4];
@@ -1701,8 +1654,7 @@ rtsock_info_if_v4(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 /*
  * Obtain IPv6 address information for one specific interface.
  */
-static ssize_t
-rtsock_info_if_v6(struct ifdev * ifdev, struct ifa_msghdr * ifam,
+static ssize_t rtsock_info_if_v6(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 	struct rmib_oldp * oldp, ssize_t off)
 {
 	struct sockaddr_in6 sin6[3];
@@ -1738,8 +1690,7 @@ rtsock_info_if_v6(struct ifdev * ifdev, struct ifa_msghdr * ifam,
 /*
  * Obtain information for one specific interface.
  */
-static ssize_t
-rtsock_info_if(struct ifdev * ifdev, struct rmib_oldp * oldp, ssize_t off,
+static ssize_t rtsock_info_if(struct ifdev * ifdev, struct rmib_oldp * oldp, ssize_t off,
 	int family)
 {
 	struct rtsock_rta rta;
@@ -1820,8 +1771,7 @@ rtsock_info_if(struct ifdev * ifdev, struct rmib_oldp * oldp, ssize_t off,
 /*
  * Obtain interface information.
  */
-static ssize_t
-rtsock_info_iflist(struct rmib_oldp * oldp, int family, uint32_t ifindex)
+static ssize_t rtsock_info_iflist(struct rmib_oldp * oldp, int family, uint32_t ifindex)
 {
 	struct ifdev *ifdev;
 	ssize_t r, off;
@@ -1862,8 +1812,7 @@ rtsock_info_iflist(struct rmib_oldp * oldp, int family, uint32_t ifindex)
  * sysctl(7).  Return the (produced, or if oldp is NULL, estimated) byte size
  * of the output on success, or a negative error code on failure.
  */
-static ssize_t
-rtsock_info(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t rtsock_info(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 	int family, filter;

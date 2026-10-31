@@ -696,8 +696,7 @@ int req_newdriver(
 /*===========================================================================*
  *				req_putnode				     *
  *===========================================================================*/
-int
-req_putnode(int fs_e, ino_t inode_nr, int count)
+int req_putnode(int fs_e, ino_t inode_nr, int count)
 {
   message m;
 
@@ -923,8 +922,7 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
 /*===========================================================================*
  *				req_rename	     			     *
  *===========================================================================*/
-int
-req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir, char *new_name)
+int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir, char *new_name)
 {
   int r;
   cp_grant_id_t gid_old, gid_new;
@@ -963,8 +961,7 @@ req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir, char *
 /*===========================================================================*
  *				req_rmdir	      			     *
  *===========================================================================*/
-int
-req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc)
+int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -1130,8 +1127,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 /*===========================================================================*
  *				req_sync	       			     *
  *===========================================================================*/
-int
-req_sync(endpoint_t fs_e)
+int req_sync(endpoint_t fs_e)
 {
   message m;
 
@@ -1146,8 +1142,7 @@ req_sync(endpoint_t fs_e)
 /*===========================================================================*
  *				req_unlink	     			     *
  *===========================================================================*/
-int
-req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc)
+int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc)
 {
   cp_grant_id_t grant_id;
   size_t len;
@@ -1176,8 +1171,7 @@ req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc)
 /*===========================================================================*
  *				req_unmount	    			     *
  *===========================================================================*/
-int
-req_unmount(endpoint_t fs_e)
+int req_unmount(endpoint_t fs_e)
 {
   message m;
 

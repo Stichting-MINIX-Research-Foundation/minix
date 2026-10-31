@@ -1,0 +1,4 @@
+#	$NetBSD: ttyaction,v 1.1 2003/04/26 19:08:18 fvdl Exp $
+#
+# tty	action	command...
+ttyE0	*	chown ${USER}:tty /dev/console

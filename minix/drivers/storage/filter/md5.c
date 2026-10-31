@@ -44,8 +44,7 @@ getu32 (const unsigned char *addr)
 		| addr[1]) << 8 | addr[0];
 }
 
-static void
-putu32 (uint32 data, unsigned char *addr)
+static void putu32 (uint32 data, unsigned char *addr)
 {
 	addr[0] = (unsigned char)data;
 	addr[1] = (unsigned char)(data >> 8);
@@ -57,8 +56,7 @@ putu32 (uint32 data, unsigned char *addr)
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-void
-MD5Init (ctx)
+void MD5Init (ctx)
      struct MD5Context *ctx;
 {
 	ctx->buf[0] = 0x67452301;
@@ -74,8 +72,7 @@ MD5Init (ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void
-MD5Update (ctx, buf, len)
+void MD5Update (ctx, buf, len)
      struct MD5Context *ctx;
      unsigned char const *buf;
      unsigned len;
@@ -125,8 +122,7 @@ MD5Update (ctx, buf, len)
  * Final wrapup - pad to 64-byte boundary with the bit pattern 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-void
-MD5Final (digest, ctx)
+void MD5Final (digest, ctx)
      unsigned char digest[16];
      struct MD5Context *ctx;
 {
@@ -188,8 +184,7 @@ MD5Final (digest, ctx)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void
-MD5Transform (buf, inraw)
+void MD5Transform (buf, inraw)
      uint32 buf[4];
      const unsigned char inraw[64];
 {
@@ -285,8 +280,7 @@ MD5Transform (buf, inraw)
    RFC1321 for example.  */
 #include <stdio.h>
 
-int
-main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	struct MD5Context context;
 	unsigned char checksum[16];

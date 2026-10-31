@@ -4,6 +4,10 @@
 #include <minix/const.h>
 #include <sys/cdefs.h>
 
+#ifndef CONFIG_MAX_CPUS
+#define CONFIG_MAX_CPUS	1
+#endif
+
 #ifndef __ASSEMBLY__
 
 /* Here is the declaration of the process table.  It contains all process
@@ -219,7 +223,7 @@ struct proc {
 		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
 		if(!rts_f_is_runnable(rts) && proc_is_runnable(rp)) {	\
-			enqueue(rp);					\
+		(rp)->p_cpu_time_left > 1 ? enqueue(rp) : enqueue(rp);\
 		}							\
 	} while(0)
 

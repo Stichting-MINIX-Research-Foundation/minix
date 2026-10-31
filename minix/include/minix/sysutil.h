@@ -2,6 +2,7 @@
 #define _MINIX_SYSUTIL_H 1
 
 #include <minix/ipc.h>
+#include <minix/param.h>
 #include <sys/cdefs.h>
 
 /* Extra system library definitions to support device drivers and servers.
@@ -74,6 +75,7 @@ void read_frclock_64(u64_t *frclk);
 u64_t delta_frclock_64(u64_t base, u64_t cur);
 u32_t frclock_64_to_micros(u64_t tsc);
 void ser_putc(char c);
+void ser_puts(char *p);
 void get_randomness(struct k_randomness *, int);
 u32_t sqrt_approx(u32_t);
 

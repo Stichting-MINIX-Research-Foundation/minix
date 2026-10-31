@@ -5,8 +5,7 @@
 /*
  * Retrieve a symbolic link target.
  */
-ssize_t
-fs_rdlink(ino_t ino_nr, struct fsdriver_data * data, size_t bytes)
+ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data * data, size_t bytes)
 {
 	char path[PATH_MAX];
 	struct inode *node;
@@ -42,8 +41,7 @@ fs_rdlink(ino_t ino_nr, struct fsdriver_data * data, size_t bytes)
 /*
  * Create a symbolic link.
  */
-int
-fs_slink(ino_t dir_nr, char * name, uid_t uid, gid_t gid,
+int fs_slink(ino_t dir_nr, char * name, uid_t uid, gid_t gid,
 	struct fsdriver_data * data, size_t bytes)
 {
 	char path[PATH_MAX];
@@ -81,8 +79,7 @@ fs_slink(ino_t dir_nr, char * name, uid_t uid, gid_t gid,
 /*
  * Create a device node.
  */
-int
-fs_mknod(ino_t dir_nr, char * name, mode_t mode, uid_t uid, gid_t gid,
+int fs_mknod(ino_t dir_nr, char * name, mode_t mode, uid_t uid, gid_t gid,
 	dev_t rdev)
 {
 	struct inode *node;
@@ -111,8 +108,7 @@ fs_mknod(ino_t dir_nr, char * name, mode_t mode, uid_t uid, gid_t gid,
 /*
  * Unlink a node.
  */
-int
-fs_unlink(ino_t dir_nr, char * name, int __unused call)
+int fs_unlink(ino_t dir_nr, char * name, int __unused call)
 {
 	struct inode *dir_node, *node;
 

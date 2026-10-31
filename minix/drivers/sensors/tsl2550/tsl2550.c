@@ -125,8 +125,7 @@ static const uint32_t ratio_lut[129] = {
 	30
 };
 
-static int
-measure_lux(uint32_t * lux)
+static int measure_lux(uint32_t * lux)
 {
 	int r;
 	uint8_t adc0_val, adc1_val;
@@ -171,8 +170,7 @@ measure_lux(uint32_t * lux)
 	return OK;
 }
 
-static int
-adc_read(int adc, uint8_t * val)
+static int adc_read(int adc, uint8_t * val)
 {
 	int r;
 	spin_t spin;
@@ -236,8 +234,7 @@ adc_read(int adc, uint8_t * val)
 	}
 }
 
-static int
-tsl2550_init(void)
+static int tsl2550_init(void)
 {
 	int r;
 	uint8_t val;
@@ -273,8 +270,7 @@ tsl2550_init(void)
 	return OK;
 }
 
-static ssize_t
-tsl2550_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
+static ssize_t tsl2550_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
     cp_grant_id_t grant, size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	u64_t dev_size;
@@ -300,8 +296,7 @@ tsl2550_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
 	return (r != OK) ? r : size;
 }
 
-static void
-tsl2550_other(message * m, int ipc_status)
+static void tsl2550_other(message * m, int ipc_status)
 {
 	int r;
 
@@ -318,16 +313,14 @@ tsl2550_other(message * m, int ipc_status)
 	log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -343,8 +336,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -390,8 +382,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -409,8 +400,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc.c,v 1.11 2008/04/28 20:24:16 martin Exp $ */
+/*	$NetBSD: sparc.c,v 1.12 2019/05/07 04:35:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: sparc.c,v 1.11 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: sparc.c,v 1.12 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -65,9 +65,13 @@ static int sparc_setheader(ib_params *, struct bbinfo_params *, uint8_t *);
 static int sparc_clearboot(ib_params *);
 static int sparc_setboot(ib_params *);
 
-struct ib_mach ib_mach_sparc =
-	{ "sparc", sparc_setboot, sparc_clearboot, no_editboot,
-		IB_STAGE2START };
+struct ib_mach ib_mach_sparc = {
+	.name		=	"sparc",
+	.setboot	=	sparc_setboot,
+	.clearboot	=	sparc_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_STAGE2START,
+};
 
 static int
 sparc_clearboot(ib_params *params)

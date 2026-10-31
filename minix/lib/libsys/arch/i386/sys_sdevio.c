@@ -3,13 +3,7 @@
 /*===========================================================================*
  *                                sys_sdevio				     *
  *===========================================================================*/
-int sys_sdevio(req, port, proc_nr, buffer, count, offset)
-int req;				/* request: DIO_{IN,OUT}PUT_* */
-long port; 				/* port address to read from */
-endpoint_t proc_nr;			/* process where buffer is */
-void *buffer;				/* pointer to buffer */
-int count;				/* number of elements */
-vir_bytes offset;			/* offset from grant */
+int sys_sdevio(int req, long port, endpoint_t proc_nr, void *buffer, int count, vir_bytes offset)
 {
     message m_io;
 

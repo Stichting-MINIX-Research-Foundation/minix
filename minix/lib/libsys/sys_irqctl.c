@@ -3,11 +3,7 @@
 /*===========================================================================*
  *                               sys_irqctl				     *
  *===========================================================================*/
-int sys_irqctl(req, irq_vec, policy, hook_id)
-int req;				/* IRQ control request */
-int irq_vec;				/* IRQ vector to control */
-int policy;				/* bit mask for policy flags */
-int *hook_id;				/* ID of IRQ hook at kernel */
+int sys_irqctl(int req, int irq_vec, int policy, int *hook_id)
 {
     message m_irq;
     int s;

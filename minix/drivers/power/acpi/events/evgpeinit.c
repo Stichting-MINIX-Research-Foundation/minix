@@ -232,8 +232,7 @@ Cleanup:
  *
  ******************************************************************************/
 
-void
-AcpiEvUpdateGpes (
+void AcpiEvUpdateGpes (
     ACPI_OWNER_ID           TableOwnerId)
 {
     ACPI_GPE_XRUPT_INFO     *GpeXruptInfo;

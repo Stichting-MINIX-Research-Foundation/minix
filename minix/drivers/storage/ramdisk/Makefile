@@ -58,8 +58,10 @@ dir.umount:=	minix/commands/umount
 RAMDISK_SMALL=		1
 .endif
 
-.if ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.  if ${MACHINE_ARCH} == "i386"
 ETC+=			rs.single
+.  endif # ${MACHINE_ARCH} == "i386"
 PROGRAMS+=		at_wini
 dir.at_wini:=	minix/drivers/storage/at_wini
 PROGRAMS+=		floppy
@@ -89,7 +91,7 @@ RAMDISK_INC_ACPI= 1
 PROGRAMS+=		acpi
 dir.acpi:=	minix/drivers/power/acpi
 .endif
-.endif # ${MACHINE_ARCH} == "i386"
+.endif # ${MACHINE_ARCH} == "i386" || x86_64
 
 .if ${MACHINE_ARCH} == "earm"
 PROGRAMS+=		mmc

@@ -18,8 +18,7 @@ static struct smap *pfmap[PF_MAX];
 /*
  * Initialize the socket device map table.
  */
-void
-init_smap(void)
+void init_smap(void)
 {
 	unsigned int i;
 
@@ -43,8 +42,7 @@ init_smap(void)
  * array, which contains 'ndomains' elements.  Return OK upon successful
  * registration, or an error code otherwise.
  */
-int
-smap_map(const char * label, endpoint_t endpt, const int * domains,
+int smap_map(const char * label, endpoint_t endpt, const int * domains,
 	unsigned int ndomains)
 {
 	struct smap *sp;
@@ -144,8 +142,7 @@ smap_map(const char * label, endpoint_t endpt, const int * domains,
  * The process with the given endpoint has exited.  If the endpoint identifies
  * a socket driver, deregister the driver and invalidate any sockets it owned.
  */
-void
-smap_unmap_by_endpt(endpoint_t endpt)
+void smap_unmap_by_endpt(endpoint_t endpt)
 {
 	struct smap *sp;
 	unsigned int i;
@@ -169,8 +166,7 @@ smap_unmap_by_endpt(endpoint_t endpt)
 /*
  * The given endpoint has announced itself as a socket driver.
  */
-void
-smap_endpt_up(endpoint_t endpt)
+void smap_endpt_up(endpoint_t endpt)
 {
 	struct smap *sp;
 
@@ -197,8 +193,7 @@ smap_endpt_up(endpoint_t endpt)
  * namespaces, and numbers may overlap (even though this is currently
  * practically impossible), so one must always test the file type first.
  */
-dev_t
-make_smap_dev(struct smap * sp, sockid_t sockid)
+dev_t make_smap_dev(struct smap * sp, sockid_t sockid)
 {
 
 	assert(sp->smap_endpt != NONE);

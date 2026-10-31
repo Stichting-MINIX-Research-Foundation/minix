@@ -34,9 +34,7 @@ void test19g(void);
 void clraa(void);
 void pipecatcher(int s);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m;
 
@@ -471,8 +469,7 @@ void clraa()
   for (i = 0; i < 100; i++) aa[i] = 0;
 }
 
-void pipecatcher(s)
-int s;				/* it is supposed to have an arg */
+void pipecatcher(int s)
 {
   pipesigs++;
 }

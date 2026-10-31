@@ -48,8 +48,7 @@ find_handler(endpoint_t endpt, int call_nr)
 /*
  * Print an endpoint.
  */
-void
-put_endpoint(struct trace_proc * proc, const char * name, endpoint_t endpt)
+void put_endpoint(struct trace_proc * proc, const char * name, endpoint_t endpt)
 {
 	const char *text = NULL;
 
@@ -86,8 +85,7 @@ put_endpoint(struct trace_proc * proc, const char * name, endpoint_t endpt)
  * Print a message structure.  The source field will be printed only if the
  * PF_ALT flag is given.
  */
-static void
-put_message(struct trace_proc * proc, const char * name, int flags,
+static void put_message(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	message m;
@@ -108,8 +106,7 @@ put_message(struct trace_proc * proc, const char * name, int flags,
  * the call has been fully printed and the corresponding closing parenthesis
  * may have to be printed, if it has not been printed already.
  */
-void
-put_equals(struct trace_proc * proc)
+void put_equals(struct trace_proc * proc)
 {
 
 	/*
@@ -148,8 +145,7 @@ put_equals(struct trace_proc * proc)
  * negative return values *not* signifying an error are currently not supported
  * since they are not present in MINIX3.
  */
-void
-put_result(struct trace_proc * proc)
+void put_result(struct trace_proc * proc)
 {
 	const char *errname;
 	int value;
@@ -192,8 +188,7 @@ put_result(struct trace_proc * proc)
  * The default enter-call (out) printer, which prints no parameters and is thus
  * immediately done with printing parameters.
  */
-int
-default_out(struct trace_proc * __unused proc, const message * __unused m_out)
+int default_out(struct trace_proc * __unused proc, const message * __unused m_out)
 {
 
 	return CT_DONE;
@@ -205,8 +200,7 @@ default_out(struct trace_proc * __unused proc, const message * __unused m_out)
  * reasons, if the handler's out printer returned CT_NOTDONE, this default
  * printer must not be used.
  */
-void
-default_in(struct trace_proc * proc, const message * __unused m_out,
+void default_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * __unused m_in, int __unused failed)
 {
 
@@ -259,8 +253,7 @@ sendrec_prepare(struct trace_proc * proc, endpoint_t endpt, vir_bytes addr,
  * handler for the call, let the handler generate output.  Otherwise, print the
  * sendrec call at the kernel IPC level.  Return the resulting call flags.
  */
-static unsigned int
-sendrec_out(struct trace_proc * proc, endpoint_t endpt, vir_bytes addr)
+static unsigned int sendrec_out(struct trace_proc * proc, endpoint_t endpt, vir_bytes addr)
 {
 
 	if (proc->call_handler != NULL) {
@@ -284,8 +277,7 @@ sendrec_out(struct trace_proc * proc, endpoint_t endpt, vir_bytes addr)
  * the call handler do the rest.  If no call handler was found, print an
  * IPC-level result.
  */
-static void
-sendrec_in(struct trace_proc * proc, int failed)
+static void sendrec_in(struct trace_proc * proc, int failed)
 {
 	message m_in;
 
@@ -359,8 +351,7 @@ call_prepare(struct trace_proc * proc, reg_t reg[3], int * trace_class)
  * Print the outgoing (request) part of a system call.  Return the resulting
  * call flags.
  */
-static unsigned int
-call_out(struct trace_proc * proc, reg_t reg[3])
+static unsigned int call_out(struct trace_proc * proc, reg_t reg[3])
 {
 
 	switch (proc->call_type) {
@@ -404,8 +395,7 @@ call_out(struct trace_proc * proc, reg_t reg[3])
 /*
  * Print the incoming (reply) part of a call.
  */
-static void
-call_in(struct trace_proc * proc, int failed)
+static void call_in(struct trace_proc * proc, int failed)
 {
 
 	switch (proc->call_type) {
@@ -439,8 +429,7 @@ call_in(struct trace_proc * proc, int failed)
 /*
  * Determine whether to skip printing the given call, based on its name.
  */
-static int
-call_hide(const char * __unused name)
+static int call_hide(const char * __unused name)
 {
 
 	/*
@@ -456,8 +445,7 @@ call_hide(const char * __unused name)
  * call: TC_EXEC for an execve() call, TC_SIGRET for a sigreturn() call, or
  * TC_NORMAL for a call that requires no exceptions in the trace engine.
  */
-int
-call_enter(struct trace_proc * proc, int show_stack)
+int call_enter(struct trace_proc * proc, int show_stack)
 {
 	const char *name;
 	reg_t reg[3];
@@ -575,8 +563,7 @@ call_enter(struct trace_proc * proc, int show_stack)
  * The given process left a system call, or if skip is set, the leave phase of
  * the current system call should be ended.
  */
-void
-call_leave(struct trace_proc * proc, int skip)
+void call_leave(struct trace_proc * proc, int skip)
 {
 	reg_t retreg;
 	int hide, failed;
@@ -650,8 +637,7 @@ call_leave(struct trace_proc * proc, int skip)
  * Replay the recorded text, if any, for the enter phase of the given process.
  * If there is no recorded text, start a new line anyway.
  */
-void
-call_replay(struct trace_proc * proc)
+void call_replay(struct trace_proc * proc)
 {
 
 	/*
@@ -692,8 +678,7 @@ call_name(struct trace_proc * proc)
  * level, and if so, return the error code as well.  May be called during the
  * leave phase of a call only.
  */
-int
-call_errno(struct trace_proc * proc, int * err)
+int call_errno(struct trace_proc * proc, int * err)
 {
 
 	if (proc->call_flags & (CF_REG_ERR | CF_MSG_ERR | CF_IPC_ERR))

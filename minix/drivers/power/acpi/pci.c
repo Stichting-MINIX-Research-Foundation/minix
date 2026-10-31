@@ -122,7 +122,13 @@ void do_get_irq(message *m)
 	unsigned dev = ((struct acpi_get_irq_req *)m)->dev;
 	unsigned pin = ((struct acpi_get_irq_req *)m)->pin;
 
-	assert(dev < PCI_MAX_DEVICES && pin < PCI_MAX_PINS);
+	/* TEMP debug + graceful handling: a bad dev/pin should not crash ACPI. */
+	if (!(dev < PCI_MAX_DEVICES && pin < PCI_MAX_PINS)) {
+		printf("ACPI: do_get_irq: out of range bus=%u dev=%u pin=%u\n",
+			bus, dev, pin);
+		((struct acpi_get_irq_resp *)m)->irq = -1;
+		return;
+	}
 
 	bridge = find_bridge(&pci_root_bridge, -1, -1, bus);
 
@@ -169,28 +175,33 @@ static ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 {
 	ACPI_STATUS status;
 	ACPI_BUFFER abuff;
-	char buff[4096];
 	ACPI_PCI_ROUTING_TABLE *tbl;
 	ACPI_DEVICE_INFO *info;
 	int i;
 
-	abuff.Length = sizeof(buff);
-	abuff.Pointer = buff;
+	/* Let ACPICA allocate a buffer of exactly the required size. A fixed
+	 * buffer is fragile: the _PRT on some chipsets (e.g. q35) exceeds 4 KB,
+	 * which made AcpiGetIrqRoutingTable fail with AE_BUFFER_OVERFLOW and
+	 * left every PCI interrupt unrouted. */
+	abuff.Length = ACPI_ALLOCATE_BUFFER;
+	abuff.Pointer = NULL;
 
 	status = AcpiGetIrqRoutingTable(bridge->handle, &abuff);
-	if (ACPI_FAILURE(status)) {
-		return AE_OK;
-	}
-
-	info = abuff.Pointer;
-	status = AcpiGetObjectInfo(bridge->handle, &info);
 	if (ACPI_FAILURE(status))
+		return AE_OK;
+
+	info = NULL;
+	status = AcpiGetObjectInfo(bridge->handle, &info);
+	if (ACPI_FAILURE(status)) {
+		ACPI_FREE(abuff.Pointer);
 		return status;
+	}
 	/*
 	 * Decode the device number (upper half of the address) and attach the
 	 * new bridge in the children list of its parent
 	 */
 	bridge->device = info->Address >> 16;
+	ACPI_FREE(info);
 	if (bridge != &pci_root_bridge) {
 		bridge->parent->children[bridge->device] = bridge;
 		bridge->primary_bus = bridge->secondary_bus = -1;
@@ -227,6 +238,7 @@ static ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 		}
 	}
 
+	ACPI_FREE(abuff.Pointer);
 	return AE_OK;
 }
 

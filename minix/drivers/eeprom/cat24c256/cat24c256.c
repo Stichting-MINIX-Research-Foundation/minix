@@ -72,8 +72,7 @@ static struct log log = {
 	.log_func = default_log
 };
 
-static int
-cat24c256_blk_open(devminor_t minor, int access)
+static int cat24c256_blk_open(devminor_t minor, int access)
 {
 	log_trace(&log, "cat24c256_blk_open(%d,%d)\n", minor, access);
 	if (cat24c256_blk_part(minor) == NULL) {
@@ -85,8 +84,7 @@ cat24c256_blk_open(devminor_t minor, int access)
 	return OK;
 }
 
-static int
-cat24c256_blk_close(devminor_t minor)
+static int cat24c256_blk_close(devminor_t minor)
 {
 	log_trace(&log, "cat24c256_blk_close(%d)\n", minor);
 	if (cat24c256_blk_part(minor) == NULL) {
@@ -102,8 +100,7 @@ cat24c256_blk_close(devminor_t minor)
 	return OK;
 }
 
-static ssize_t
-cat24c256_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
+static ssize_t cat24c256_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
     endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags)
 {
 	/* Read or write one the driver's block devices. */
@@ -202,8 +199,7 @@ cat24c256_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
 	return total;
 }
 
-static int
-cat24c256_blk_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int cat24c256_blk_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	log_trace(&log, "cat24c256_blk_ioctl(%d)\n", minor);
@@ -223,8 +219,7 @@ cat24c256_blk_part(devminor_t minor)
 	return &geom[minor];
 }
 
-static void
-cat24c256_blk_other(message * m, int ipc_status)
+static void cat24c256_blk_other(message * m, int ipc_status)
 {
 	log_trace(&log, "cat24c256_blk_other(0x%x)\n", m->m_type);
 
@@ -247,8 +242,7 @@ cat24c256_blk_other(message * m, int ipc_status)
  * until all of the requested EEPROM locations have been read.
  */
 
-static int
-cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags)
+static int cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	minix_i2c_ioctl_exec_t ioctl_exec;
@@ -292,8 +286,7 @@ cat24c256_read128(uint16_t memaddr, void *buf, size_t buflen, int flags)
 	return OK;
 }
 
-int
-cat24c256_read(uint16_t memaddr, void *buf, size_t buflen, int flags)
+int cat24c256_read(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	uint16_t i;
@@ -318,8 +311,7 @@ cat24c256_read(uint16_t memaddr, void *buf, size_t buflen, int flags)
 	return OK;
 }
 
-static int
-cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen, int flags)
+static int cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	int addrlen;
@@ -363,8 +355,7 @@ cat24c256_write16(uint16_t memaddr, void *buf, size_t buflen, int flags)
 	return OK;
 }
 
-int
-cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags)
+int cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags)
 {
 	int r;
 	uint16_t i;
@@ -389,16 +380,14 @@ cat24c256_write(uint16_t memaddr, void *buf, size_t buflen, int flags)
 	return OK;
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -414,8 +403,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -459,8 +447,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -478,8 +465,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

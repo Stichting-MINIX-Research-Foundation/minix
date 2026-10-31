@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.48 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: nfs.c,v 1.49 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -145,7 +145,7 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_getrootfh: %s\n", path);
+		printf("%s: %s\n", __func__, path);
 #endif
 
 	args = &sdata.d;
@@ -208,7 +208,7 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("lookupfh: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	args = &sdata.d;
@@ -259,7 +259,7 @@ nfs_readlink(struct nfs_iodesc *d, char *buf)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("readlink: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	(void)memcpy(sdata.fh, d->fh, NFS_FHSIZE);
@@ -335,7 +335,7 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
 	if (rlen < (size_t)x) {
-		printf("nfsread: short packet, %lu < %ld\n", (u_long) rlen, x);
+		printf("%s: short packet, %zu < %ld\n", __func__, rlen, x);
 		errno = EBADRPC;
 		return -1;
 	}
@@ -372,7 +372,7 @@ nfs_mount(int sock, struct in_addr ip, char *path)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_mount: got fh for %s\n", path);
+		printf("%s: got fh for %s\n", __func__, path);
 #endif
 
 	return 0;
@@ -398,10 +398,10 @@ nfs_open(const char *path, struct open_file *f)
 
 #ifdef NFS_DEBUG
  	if (debug)
-		printf("nfs_open: %s\n", path);
+		printf("%s: %s\n", __func__, path);
 #endif
 	if (nfs_root_node.iodesc == NULL) {
-		printf("nfs_open: must mount first.\n");
+		printf("%s: must mount first.\n", __func__);
 		return ENXIO;
 	}
 
@@ -526,7 +526,7 @@ out:
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_open: %s lookupfh failed: %s\n",
+		printf("%s: %s lookupfh failed: %s\n", __func__,
 		    path, strerror(error));
 #endif
 	if (currfd != &nfs_root_node)
@@ -544,7 +544,7 @@ nfs_close(struct open_file *f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_close: fp=0x%lx\n", (u_long)fp);
+		printf("%s: fp=%p\n", __func__, fp);
 #endif
 
 	if (fp)
@@ -566,8 +566,7 @@ nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_read: size=%lu off=%d\n", (u_long)size,
-		    (int)fp->off);
+		printf("%s: size=%zu off=%td\n", __func__, size, fp->off);
 #endif
 	while ((int)size > 0) {
 #if !defined(LIBSA_NO_TWIDDLE)
@@ -578,15 +577,15 @@ nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 		if (cc == -1) {
 #ifdef NFS_DEBUG
 			if (debug)
-				printf("nfs_read: read: %s\n",
-				       strerror(errno));
+				printf("%s: read: %s\n", __func__, 
+				    strerror(errno));
 #endif
 			return errno;	/* XXX - from nfs_readdata */
 		}
 		if (cc == 0) {
 #ifdef NFS_DEBUG
 			if (debug)
-				printf("nfs_read: hit EOF unexpectantly\n");
+				printf("%s: hit EOF unexpectedly\n", __func__);
 #endif
 			goto ret;
 		}

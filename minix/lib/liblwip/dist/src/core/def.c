@@ -72,8 +72,7 @@
  * @param n u16_t in host byte order
  * @return n in network byte order
  */
-u16_t
-lwip_htons(u16_t n)
+u16_t lwip_htons(u16_t n)
 {
   return (u16_t)PP_HTONS(n);
 }
@@ -86,8 +85,7 @@ lwip_htons(u16_t n)
  * @param n u32_t in host byte order
  * @return n in network byte order
  */
-u32_t
-lwip_htonl(u32_t n)
+u32_t lwip_htonl(u32_t n)
 {
   return (u32_t)PP_HTONL(n);
 }
@@ -124,8 +122,7 @@ lwip_strnstr(const char* buffer, const char* token, size_t n)
  * lwIP default implementation for stricmp() non-standard function.
  * This can be \#defined to stricmp() depending on your platform port.
  */
-int
-lwip_stricmp(const char* str1, const char* str2)
+int lwip_stricmp(const char* str1, const char* str2)
 {
   char c1, c2;
 
@@ -159,8 +156,7 @@ lwip_stricmp(const char* str1, const char* str2)
  * lwIP default implementation for strnicmp() non-standard function.
  * This can be \#defined to strnicmp() depending on your platform port.
  */
-int
-lwip_strnicmp(const char* str1, const char* str2, size_t len)
+int lwip_strnicmp(const char* str1, const char* str2, size_t len)
 {
   char c1, c2;
 
@@ -194,8 +190,7 @@ lwip_strnicmp(const char* str1, const char* str2, size_t len)
  * lwIP default implementation for itoa() non-standard function.
  * This can be \#defined to itoa() or snprintf(result, bufsize, "%d", number) depending on your platform port.
  */
-void
-lwip_itoa(char* result, size_t bufsize, int number)
+void lwip_itoa(char* result, size_t bufsize, int number)
 {
   const int base = 10;
   char* ptr = result, *ptr1 = result, tmp_char;

@@ -13,7 +13,7 @@ MINIX_RELEASE!=	uname -r
 # PKGSRC
 ########################################################################
 PKGSRC_REPO_DIR:= ${.CURDIR}/pkgsrc
-PKGSRC_REPO_URL:= git://git.minix3.org/pkgsrc-ng.git
+PKGSRC_REPO_URL:= https://github.com/Stichting-MINIX-Research-Foundation/pkgsrc-ng.git
 PKGSRC_BRANCH:=	${MINIX_RELEASE}
 MSG_RENAMED_BRANCH:= "\
 \n======================================================================== \
@@ -69,7 +69,7 @@ pkgsrc: git
 # MINIX SRC
 ########################################################################
 SRC_REPO_DIR:= ${.CURDIR}/src
-SRC_REPO_URL:= git://git.minix3.org/minix.git
+SRC_REPO_URL:= https://github.com/Stichting-MINIX-Research-Foundation/pkgsrc-ng.git
 SRC_BRANCH:= master
 MSG_WRONG_BRANCH_SRC:= "\
 \n======================================================================== \

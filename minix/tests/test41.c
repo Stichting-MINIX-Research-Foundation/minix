@@ -67,9 +67,7 @@ static long system_hz;
 static int sigs[] = { SIGALRM, SIGVTALRM, SIGPROF };
 static const char *names[] = { "REAL", "VIRTUAL", "PROF" };
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   int i, m = 0xFFFF, n = 0xF;
   char cp_cmd[NAME_MAX+10];
@@ -102,9 +100,7 @@ char **argv;
   return(-1);			/* impossible */
 }
 
-void test(m, t)
-int m;
-int t;
+void test(int m, int t)
 {
   timer = t;
 
@@ -364,8 +360,7 @@ int do_check()
   return(83);
 }
 
-void busy_wait(secs)
-int secs;
+void busy_wait(int secs)
 {
   time_t now, exp;
   int i;
@@ -379,8 +374,7 @@ int secs;
   }
 }
 
-void got_alarm(sig)
-int sig;
+void got_alarm(int sig)
 {
   if (sig != sigs[timer]) my_e(1001);
 

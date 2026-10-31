@@ -58,27 +58,22 @@
 
 /* Local prototypes */
 
-static void
-AcpiExOutString (
+static void AcpiExOutString (
     char                    *Title,
     char                    *Value);
 
-static void
-AcpiExOutPointer (
+static void AcpiExOutPointer (
     char                    *Title,
     void                    *Value);
 
-static void
-AcpiExDumpObject (
+static void AcpiExDumpObject (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_EXDUMP_INFO        *Info);
 
-static void
-AcpiExDumpReferenceObj (
+static void AcpiExDumpReferenceObj (
     ACPI_OPERAND_OBJECT     *ObjDesc);
 
-static void
-AcpiExDumpPackageObj (
+static void AcpiExDumpPackageObj (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Level,
     UINT32                  Index);
@@ -373,8 +368,7 @@ static ACPI_EXDUMP_INFO     *AcpiExDumpInfo[] =
  *
  ******************************************************************************/
 
-static void
-AcpiExDumpObject (
+static void AcpiExDumpObject (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_EXDUMP_INFO        *Info)
 {
@@ -615,8 +609,7 @@ AcpiExDumpObject (
  *
  ******************************************************************************/
 
-void
-AcpiExDumpOperand (
+void AcpiExDumpOperand (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Depth)
 {
@@ -907,8 +900,7 @@ AcpiExDumpOperand (
  *
  ******************************************************************************/
 
-void
-AcpiExDumpOperands (
+void AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     const char              *OpcodeName,
     UINT32                  NumOperands)
@@ -958,16 +950,14 @@ AcpiExDumpOperands (
  *
  ******************************************************************************/
 
-static void
-AcpiExOutString (
+static void AcpiExOutString (
     char                    *Title,
     char                    *Value)
 {
     AcpiOsPrintf ("%20s : %s\n", Title, Value);
 }
 
-static void
-AcpiExOutPointer (
+static void AcpiExOutPointer (
     char                    *Title,
     void                    *Value)
 {
@@ -986,8 +976,7 @@ AcpiExOutPointer (
  *
  ******************************************************************************/
 
-void
-AcpiExDumpNamespaceNode (
+void AcpiExDumpNamespaceNode (
     ACPI_NAMESPACE_NODE     *Node,
     UINT32                  Flags)
 {
@@ -1024,8 +1013,7 @@ AcpiExDumpNamespaceNode (
  *
  ******************************************************************************/
 
-static void
-AcpiExDumpReferenceObj (
+static void AcpiExDumpReferenceObj (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
     ACPI_BUFFER             RetBuf;
@@ -1085,8 +1073,7 @@ AcpiExDumpReferenceObj (
  *
  ******************************************************************************/
 
-static void
-AcpiExDumpPackageObj (
+static void AcpiExDumpPackageObj (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Level,
     UINT32                  Index)
@@ -1185,8 +1172,7 @@ AcpiExDumpPackageObj (
  *
  ******************************************************************************/
 
-void
-AcpiExDumpObjectDescriptor (
+void AcpiExDumpObjectDescriptor (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Flags)
 {

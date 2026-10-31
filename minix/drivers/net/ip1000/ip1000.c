@@ -29,33 +29,33 @@ static void dev_handler(NDR_driver *pdev);
 static void dev_check_ints(NDR_driver *pdev);
 
 /* developer interface */
-static int dev_real_reset(u32_t *base);
-static int dev_init_io(u32_t *base);
-static int dev_init_mii(u32_t *base);
-static void dev_intr_control(u32_t *base, int flag);
-static void dev_rx_tx_control(u32_t *base, int flag);
-static void dev_get_addr(u32_t *base, u8_t *pa);
-static int dev_check_link(u32_t *base);
-static void dev_set_rec_mode(u32_t *base, int mode);
-static void dev_start_tx(u32_t *base);
-static u32_t dev_read_clear_intr_status(u32_t *base);
+static int dev_real_reset(vir_bytes *base);
+static int dev_init_io(vir_bytes *base);
+static int dev_init_mii(vir_bytes *base);
+static void dev_intr_control(vir_bytes *base, int flag);
+static void dev_rx_tx_control(vir_bytes *base, int flag);
+static void dev_get_addr(vir_bytes *base, u8_t *pa);
+static int dev_check_link(vir_bytes *base);
+static void dev_set_rec_mode(vir_bytes *base, int mode);
+static void dev_start_tx(vir_bytes *base);
+static u32_t dev_read_clear_intr_status(vir_bytes *base);
 static void dev_init_rx_desc(NDR_desc *desc_start, int index, size_t buf_size,
 			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
 static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
 			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
-static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+static void dev_set_desc_reg(vir_bytes *base, phys_bytes rx_addr,
 								phys_bytes tx_addr);
-static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index);
-static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index);
-static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index);
-static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+static int dev_rx_ok_desc(vir_bytes *base, NDR_desc *desc, int index);
+static int dev_rx_len_desc(vir_bytes *base, NDR_desc *desc, int index);
+static void dev_set_rx_desc_done(vir_bytes *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_prepare(vir_bytes *base, NDR_desc *desc, int index,
 										size_t data_size);
-static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index);
-static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index);
+static int dev_tx_ok_desc(vir_bytes *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_done(vir_bytes *base, NDR_desc *desc, int index);
 
 /* ======= Developer implemented function ======= */
 /* ====== Self-defined function ======*/
-static u16_t read_eeprom(u32_t base, int addr) {
+static u16_t read_eeprom(vir_bytes base, int addr) {
 	u32_t ret, data, val;
 	int i;
 
@@ -74,7 +74,7 @@ static u16_t read_eeprom(u32_t base, int addr) {
 	return ret;
 }
 
-static u16_t read_phy_reg(u32_t base, int phy_addr, int phy_reg) {
+static u16_t read_phy_reg(vir_bytes base, int phy_addr, int phy_reg) {
 	int i, j, fieldlen[8];
 	u32_t field[8];
 	u8_t data, polar;
@@ -127,7 +127,7 @@ static u16_t read_phy_reg(u32_t base, int phy_addr, int phy_reg) {
 	return field[6];
 }
 
-static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
+static void write_phy_reg(vir_bytes base, int phy_addr, int phy_reg, u16_t val) {
 	int i, j, fieldlen[8];
 	u32_t field[8];
 	u8_t data, polar;
@@ -165,8 +165,8 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 /* ====== Developer interface ======*/
 /* Real hardware reset (### RESET_HARDWARE_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int dev_real_reset(u32_t *base) {
-	u32_t data, base0 = base[0];
+static int dev_real_reset(vir_bytes *base) {
+	u32_t data; vir_bytes base0 = base[0];
 	data = ndr_in32(base0, REG_ASIC_CTRL);
 	ndr_out32(base0, REG_ASIC_CTRL, data | AC_RESET_ALL);
 	micro_delay(5000);
@@ -177,8 +177,8 @@ static int dev_real_reset(u32_t *base) {
 
 /* Intialize other hardware I/O registers (### INIT_HARDWARE_IO_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int dev_init_io(u32_t *base) {
-	u32_t mac_ctrl, physet, mode0, mode1, base0 = base[0];
+static int dev_init_io(vir_bytes *base) {
+	u32_t mac_ctrl, physet, mode0, mode1; vir_bytes base0 = base[0];
 	mode0 = read_eeprom(base0, 6);
 	mode1 = ndr_in16(base0, REG_ASIC_CTRL);
 	mode1 &= ~(AC_LED_MODE_B1 | AC_LED_MODE | AC_LED_SPEED);
@@ -210,12 +210,12 @@ static int dev_init_io(u32_t *base) {
 
 /* Intialize MII interface (### MII_INIT_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int dev_init_mii(u32_t *base) {
+static int dev_init_mii(vir_bytes *base) {
 	int i, phyaddr;
 	u8_t revision;
 	u16_t phyctrl, cr1000, length, address, value;
 	u16_t *param;
-	u32_t status, base0 = base[0];
+	u32_t status; vir_bytes base0 = base[0];
 
 	for (i = 0; i < 32; i++) {
 		phyaddr = (i + 0x01) % 32;
@@ -259,8 +259,8 @@ static int dev_init_mii(u32_t *base) {
 }
 
 /* Enable or disable interrupt (### INTR_ENABLE_DISABLE ###) */
-static void dev_intr_control(u32_t *base, int flag) {
-	u32_t base0 = base[0];
+static void dev_intr_control(vir_bytes *base, int flag) {
+	vir_bytes base0 = base[0];
 	if (flag == INTR_ENABLE)
 		ndr_out16(base0, REG_IMR, CMD_INTR_ENABLE);
 	else if (flag == INTR_DISABLE)
@@ -268,8 +268,8 @@ static void dev_intr_control(u32_t *base, int flag) {
 }
 
 /* Enable or disable Rx/Tx (### RX_TX_ENABLE_DISABLE ###) */
-static void dev_rx_tx_control(u32_t *base, int flag) {
-	u32_t data, base0 = base[0];
+static void dev_rx_tx_control(vir_bytes *base, int flag) {
+	u32_t data; vir_bytes base0 = base[0];
 	data = ndr_in32(base0, REG_MAC_CTRL);
 	if (flag == RX_TX_ENABLE)
 		ndr_out32(base0, REG_MAC_CTRL, data | (MC_RX_ENABLE | MC_TX_ENABLE));
@@ -280,8 +280,8 @@ static void dev_rx_tx_control(u32_t *base, int flag) {
 }
 
 /* Get MAC address to the array 'pa' (### GET_MAC_ADDR ###) */
-static void dev_get_addr(u32_t *base, u8_t *pa) {
-	u32_t i, sta_addr[3], base0 = base[0];
+static void dev_get_addr(vir_bytes *base, u8_t *pa) {
+	u32_t i, sta_addr[3]; vir_bytes base0 = base[0];
 	for (i = 0; i < 3; i++)	 {
 		sta_addr[i] = read_eeprom(base0, 16 + i);
 		ndr_out16(base0, (REG_STA_ADDR0 + i * 2), sta_addr[i]);
@@ -296,8 +296,8 @@ static void dev_get_addr(u32_t *base, u8_t *pa) {
 
 /* Check link status (### CHECK_LINK ###)
  * -- Return LINK_UP or LINK_DOWN */
-static int dev_check_link(u32_t *base) {
-	u32_t phy_ctrl, mac_ctrl, base0 = base[0];
+static int dev_check_link(vir_bytes *base) {
+	u32_t phy_ctrl, mac_ctrl; vir_bytes base0 = base[0];
 	int ret;
 	char speed[20], duplex[20];
 
@@ -335,8 +335,8 @@ static int dev_check_link(u32_t *base) {
 }
 
 /* Set driver receive mode (### SET_REC_MODE ###) */
-static void dev_set_rec_mode(u32_t *base, int mode) {
-	u32_t data, base0 = base[0];
+static void dev_set_rec_mode(vir_bytes *base, int mode) {
+	u32_t data; vir_bytes base0 = base[0];
 	data = ndr_in8(base0, REG_RCR);
 	data &= ~(CMD_RCR_UNICAST | CMD_RCR_MULTICAST | CMD_RCR_BROADCAST);
 	if (mode & NDEV_MODE_PROMISC)
@@ -350,14 +350,14 @@ static void dev_set_rec_mode(u32_t *base, int mode) {
 }
 
 /* Start Tx channel (### START_TX_CHANNEL ###) */
-static void dev_start_tx(u32_t *base) {
-	u32_t base0 = base[0];
+static void dev_start_tx(vir_bytes *base) {
+	vir_bytes base0 = base[0];
 	ndr_out32(base0, REG_DMA_CTRL, CMD_TX_START);
 }
 
 /* Read and clear interrupt (### READ_CLEAR_INTR_STS ###) */
-static u32_t dev_read_clear_intr_status(u32_t *base) {
-	u32_t data, base0 = base[0];
+static u32_t dev_read_clear_intr_status(vir_bytes *base) {
+	u32_t data; vir_bytes base0 = base[0];
 	data = ndr_in16(base0, REG_ISR);
 	ndr_out16(base0, REG_ISR, 0);
 	return data;
@@ -390,9 +390,9 @@ static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
 }
 
 /* Set Rx/Tx descriptor address into device register (### SET_DESC_REG ###) */
-static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+static void dev_set_desc_reg(vir_bytes *base, phys_bytes rx_addr,
 								phys_bytes tx_addr) {
-	u32_t base0 = base[0];
+	vir_bytes base0 = base[0];
 	ndr_out32(base0, REG_RX_DESC_BASEL, rx_addr);
 	ndr_out32(base0, REG_RX_DESC_BASEU, 0);
 	ndr_out32(base0, REG_TX_DESC_BASEL, tx_addr);
@@ -402,7 +402,7 @@ static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
 /* Check whether Rx is OK from Rx descriptor (### CHECK_RX_OK_FROM_DESC ###)
  * -- Current buffer number is index
  * -- Return RX_OK or RX_SUSPEND or RX_ERROR */
-static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
+static int dev_rx_ok_desc(vir_bytes *base, NDR_desc *desc, int index) {
 	if (desc->status & RFS_RFD_DONE) {
 		if (desc->status & RFS_ERROR)
 			return RX_ERROR;
@@ -415,7 +415,7 @@ static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
 /* Get length from Rx descriptor (### GET_RX_LENGTH_FROM_DESC ###)
  * -- Current buffer number is index
  * -- Return the length */
-static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index) {
+static int dev_rx_len_desc(vir_bytes *base, NDR_desc *desc, int index) {
 	int totlen;
 	totlen = (int)(desc->status & RFS_FRAME_LEN);
 	return totlen;
@@ -423,13 +423,13 @@ static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index) {
 
 /* Set Rx descriptor after Rx done (### SET_RX_DESC_DONE ###)
  * -- Current buffer number is index */
-static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+static void dev_set_rx_desc_done(vir_bytes *base, NDR_desc *desc, int index) {
 	desc->status = 0;
 }
 
 /* Set Tx descriptor to prepare transmitting (### SET_TX_DESC_PREPARE)
  * -- Current buffer number is index */
-static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+static void dev_set_tx_desc_prepare(vir_bytes *base, NDR_desc *desc, int index,
 									size_t data_size) {
 	desc->status = TFS_TFD_DONE;
 	desc->status |= (u64_t)(TFS_WORD_ALIGN | (TFS_FRAMEID & index)
@@ -442,7 +442,7 @@ static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
 /* Check whether Tx is OK from Tx descriptor (### CHECK_TX_OK_FROM_DESC ###)
  * -- Current buffer number is index
  * -- Return TX_OK or TX_SUSPEND or TX_ERROR */
-static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
+static int dev_tx_ok_desc(vir_bytes *base, NDR_desc *desc, int index) {
 	if (desc->status & TFS_TFD_DONE)
 		return TX_OK;
 	return TX_SUSPEND;
@@ -450,7 +450,7 @@ static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
 
 /* Set Tx descriptor after Tx done (### SET_TX_DESC_DONE ###)
  * -- Current buffer number is index */
-static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+static void dev_set_tx_desc_done(vir_bytes *base, NDR_desc *desc, int index) {
 	desc->status = 0;
 }
 
@@ -471,8 +471,7 @@ int main(int argc, char *argv[]) {
 }
 
 /* Initialize the driver */
-static int
-NDR_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+static int NDR_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 	unsigned int * ticks __unused)
 {
 	int i, ret = 0;
@@ -539,8 +538,7 @@ static void NDR_stop(void) {
 }
 
 /* Set driver mode */
-static void
-NDR_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+static void NDR_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
 	unsigned int mcast_count __unused)
 {
 	g_driver.mode = mode;
@@ -654,7 +652,8 @@ static void NDR_intr(unsigned int mask) {
 static int dev_probe(NDR_driver *pdev, int instance) {
 	int devind, ioflag, i;
 	u16_t cr, vid, did;
-	u32_t bar, size, base;
+	u64_t bar, base;
+	u32_t size;
 	u8_t irq, rev;
 	u8_t *reg;
 
@@ -689,7 +688,7 @@ static int dev_probe(NDR_driver *pdev, int instance) {
 			printf("NDR: Fail to map hardware registers from PCI\n");
 			return -EIO;
 		}
-		pdev->base[i] = (u32_t)reg;
+		pdev->base[i] = (vir_bytes)reg;
 	}
 #else
 	for (i = 0; i < 6; i++)

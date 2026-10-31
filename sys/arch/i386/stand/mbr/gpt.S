@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.S,v 1.1 2011/01/06 01:08:49 jakllsch Exp $ */
+/*	$NetBSD: gpt.S,v 1.3 2018/05/19 18:19:37 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  *
  * NO_LBA_CHECK	- no check if bios supports LBA reads
  * NO_CRC_CHECK	- disable crc checks for GPT
- * NO_BANNER    - do not output title line 'banner'
+ * NO_BANNER	- do not output title line 'banner'
  */
 
 #ifdef COM_PORT
@@ -143,7 +143,7 @@ ENTRY(start)
 	mov	%ax, %es
 	mov	%ax, %ds
 	movw	$mbr, %di
-	mov     $BOOTADDR + (mbr - start), %si
+	mov	$BOOTADDR + (mbr - start), %si
 	push	%ax			/* zero for %cs of lret */
 	push	%di
 	movw	$(bss_start - mbr), %cx
@@ -428,21 +428,14 @@ message_1:
  * %ebx		crc (returned)
  */
 crc32:
-	push	%dx			/* preserve drive number */
-	push	%ax			/* preserve original CRC */
-
-	xorl	%ebx, %ebx
-	decl	%ebx			/* init value */
+	orl	 $-1, %ebx		/* init value */
 1:
-	lodsb				/* load next message byte to %al */
+	xorb	(%si), %bl		/* xoring next message byte with previous result */
+	inc	%si
 	movb	$8, %cl			/* set bit counter */
 2:
-	movb	%al, %dl
-	xorb	%bl, %dl		/* xoring with previous result */
 	shrl	$1, %ebx
-	shrb	$1, %al
-	testb	$1, %dl
-	jz	3f
+	jnc	3f
 crc32_poly = . + 3			/* gross, but saves a few bytes */
 	xorl	$0xedb88320, %ebx	/* EFI CRC32 Polynomial */
 3:
@@ -451,8 +444,6 @@ crc32_poly = . + 3			/* gross, but saves a few bytes */
 	jne	1b
 	notl	%ebx			/* result correction */
 
-	pop	%ax
-	pop	%dx
 	ret
 #endif
 

@@ -50,8 +50,7 @@ static unsigned int ifdev_vtypes;	/* number of in-use vtype slots */
  * before any virtual interfaces are initialized, because the virtual types
  * array is initialized here.
  */
-void
-ifdev_init(void)
+void ifdev_init(void)
 {
 
 	memset(ifdev_table, 0, sizeof(ifdev_table));
@@ -66,8 +65,7 @@ ifdev_init(void)
  * Check all active interfaces to see if any tasks need to be performed.  This
  * function is called as part of each message loop iteration.
  */
-void
-ifdev_poll(void)
+void ifdev_poll(void)
 {
 	struct ifdev *ifdev;
 
@@ -89,8 +87,7 @@ ifdev_poll(void)
  * other packets, 'ifdev' is the actual interface and 'netif' is NULL.  The
  * packet is passed to BPF devices only if 'to_bpf' is set.
  */
-void
-ifdev_input(struct ifdev * ifdev, struct pbuf * pbuf, struct netif * netif,
+void ifdev_input(struct ifdev * ifdev, struct pbuf * pbuf, struct netif * netif,
 	int to_bpf)
 {
 	struct bpfdev_link *bpfl;
@@ -277,8 +274,7 @@ ifdev_output_v6(struct netif * netif, struct pbuf * pbuf,
  * lwIP.  Currently, netif state changes are rare and it takes us little effort
  * to find out whether anything changed, so there is no immediate need.
  */
-static void
-ifdev_status_callback(struct netif * netif)
+static void ifdev_status_callback(struct netif * netif)
 {
 	struct ifdev *ifdev = netif_get_ifdev(netif);
 
@@ -357,8 +353,7 @@ ifdev_enum(struct ifdev * last)
 /*
  * Attach a BPF device as listener to this interface.
  */
-void
-ifdev_attach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
+void ifdev_attach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
 {
 
 	TAILQ_INSERT_TAIL(&ifdev->ifdev_bpf, bpfl, bpfl_next);
@@ -367,8 +362,7 @@ ifdev_attach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
 /*
  * Detach a previously attached BPF device from this interface.
  */
-void
-ifdev_detach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
+void ifdev_detach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
 {
 
 	TAILQ_REMOVE(&ifdev->ifdev_bpf, bpfl, bpfl_next);
@@ -381,8 +375,7 @@ ifdev_detach_bpf(struct ifdev * ifdev, struct bpfdev_link * bpfl)
  * later.  If possible, the interface is put in promiscuous mode if there is at
  * least one interested party.  Return TRUE on success, or FALSE on failure.
  */
-int
-ifdev_set_promisc(struct ifdev * ifdev)
+int ifdev_set_promisc(struct ifdev * ifdev)
 {
 
 	/*
@@ -408,8 +401,7 @@ ifdev_set_promisc(struct ifdev * ifdev)
  * in promiscuous mode.  Once the last party deregisters, the device is pulled
  * out of promiscuous mode.
  */
-void
-ifdev_clear_promisc(struct ifdev * ifdev)
+void ifdev_clear_promisc(struct ifdev * ifdev)
 {
 
 	assert(ifdev->ifdev_promisc > 0);
@@ -426,8 +418,7 @@ ifdev_clear_promisc(struct ifdev * ifdev)
 /*
  * Set NetBSD-style interface flags (IFF_) for an interface.
  */
-int
-ifdev_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
+int ifdev_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
 {
 	int r;
 
@@ -468,8 +459,7 @@ ifdev_set_ifflags(struct ifdev * ifdev, unsigned int ifflags)
  * bypasses all input checks and directly changes the flags field to exactly
  * the given set of flags.
  */
-void
-ifdev_update_ifflags(struct ifdev * ifdev, unsigned int ifflags)
+void ifdev_update_ifflags(struct ifdev * ifdev, unsigned int ifflags)
 {
 	struct netif *netif;
 
@@ -510,8 +500,7 @@ ifdev_update_ifflags(struct ifdev * ifdev, unsigned int ifflags)
  * Retrieve NetBSD-style interface capabilities (IFCAP_) for an interface: both
  * the supported and the enabled capabilities.
  */
-void
-ifdev_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
+void ifdev_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
 {
 
 	*ifcap = 0;
@@ -524,8 +513,7 @@ ifdev_get_ifcap(struct ifdev * ifdev, uint64_t * ifcap, uint64_t * ifena)
 /*
  * Set enabled NetBSD-style interface capabilities (IFCAP_) for an interface.
  */
-int
-ifdev_set_ifcap(struct ifdev * ifdev, uint64_t ifena)
+int ifdev_set_ifcap(struct ifdev * ifdev, uint64_t ifena)
 {
 
 	if (ifdev->ifdev_ops->iop_set_ifcap != NULL)
@@ -540,8 +528,7 @@ ifdev_set_ifcap(struct ifdev * ifdev, uint64_t ifena)
  * driver-reported active media type in 'ifactive', and the link status in
  * 'ifstatus'.  Return a negative error code on failure.
  */
-int
-ifdev_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
+int ifdev_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
 {
 
 	if (ifdev->ifdev_ops->iop_get_ifmedia == NULL)
@@ -556,8 +543,7 @@ ifdev_get_ifmedia(struct ifdev * ifdev, int * ifcurrent, int * ifactive)
  * Set NetBSD-style media type (IFM_) for an interface.  Return OK on success,
  * or a negative error code on failure.
  */
-int
-ifdev_set_ifmedia(struct ifdev * ifdev, int ifmedia)
+int ifdev_set_ifmedia(struct ifdev * ifdev, int ifmedia)
 {
 
 	if (ifdev->ifdev_ops->iop_set_ifmedia == NULL)
@@ -573,8 +559,7 @@ ifdev_set_ifmedia(struct ifdev * ifdev, int ifmedia)
  * Set the Maximum Transmission Unit for an interface.  Return OK on success,
  * or a negative error code on failure.
  */
-int
-ifdev_set_mtu(struct ifdev * ifdev, unsigned int mtu)
+int ifdev_set_mtu(struct ifdev * ifdev, unsigned int mtu)
 {
 
 	if (ifdev->ifdev_ops->iop_set_mtu == NULL)
@@ -593,8 +578,7 @@ ifdev_set_mtu(struct ifdev * ifdev, unsigned int mtu)
 /*
  * Set IPv6 Neighbor Discovery related flags.
  */
-int
-ifdev_set_nd6flags(struct ifdev * ifdev, uint32_t nd6flags)
+int ifdev_set_nd6flags(struct ifdev * ifdev, uint32_t nd6flags)
 {
 
 	/* For now, refuse setting any flags that are not even known. */
@@ -634,8 +618,7 @@ ifdev_set_nd6flags(struct ifdev * ifdev, uint32_t nd6flags)
  * interface modules, to update the internal state to their current external
  * state.
  */
-void
-ifdev_update_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr,
+void ifdev_update_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr,
 	int is_factory)
 {
 
@@ -646,8 +629,7 @@ ifdev_update_hwaddr(struct ifdev * ifdev, const uint8_t * hwaddr,
  * Insert a new interface device into the list of interface devices, at a
  * location determined by policy.
  */
-static void
-ifdev_insert(struct ifdev * ifdev)
+static void ifdev_insert(struct ifdev * ifdev)
 {
 	struct ifdev *ifdev2;
 	const char *p;
@@ -729,8 +711,7 @@ ifdev_insert(struct ifdev * ifdev)
 /*
  * Add and initialize an interface device.
  */
-void
-ifdev_add(struct ifdev * ifdev, const char * name, unsigned int ifflags,
+void ifdev_add(struct ifdev * ifdev, const char * name, unsigned int ifflags,
 	unsigned int iftype, size_t hdrlen, size_t addrlen, unsigned int dlt,
 	unsigned int mtu, uint32_t nd6flags, const struct ifdev_ops * iop)
 {
@@ -823,8 +804,7 @@ ifdev_add(struct ifdev * ifdev, const char * name, unsigned int ifflags,
  * Remove an interface device.  Return OK on success, or a negative error code
  * on failure.  Only loopback interfaces may be refused for removal.
  */
-int
-ifdev_remove(struct ifdev * ifdev)
+int ifdev_remove(struct ifdev * ifdev)
 {
 	struct bpfdev_link *bpfl;
 
@@ -906,8 +886,7 @@ ifdev_get_loopback(void)
  * sockets.  This function is for use by interface modules, to update the
  * internal state to their current external state.
  */
-void
-ifdev_update_link(struct ifdev * ifdev, int iflink)
+void ifdev_update_link(struct ifdev * ifdev, int iflink)
 {
 	struct netif *netif;
 	int was_up, is_up;
@@ -942,8 +921,7 @@ ifdev_update_link(struct ifdev * ifdev, int iflink)
  * Register a virtual interface type, using a name prefix and a function that
  * is called when creation of a virtual interface of that type is requested.
  */
-void
-ifdev_register(const char * name, int (* create)(const char *))
+void ifdev_register(const char * name, int (* create)(const char *))
 {
 
 	if (ifdev_vtypes == __arraycount(ifdev_vtype))
@@ -969,8 +947,7 @@ ifdev_register(const char * name, int (* create)(const char *))
  * module, external callers must always pass in NULL.  This function returns OK
  * on succes or a negative error code on error.
  */
-int
-ifdev_check_name(const char * name, unsigned int * vtype_slot)
+int ifdev_check_name(const char * name, unsigned int * vtype_slot)
 {
 	const char *p;
 	size_t namelen;
@@ -1021,8 +998,7 @@ ifdev_check_name(const char * name, unsigned int * vtype_slot)
  * been successfully created, or a negative error code otherwise.  This
  * function is used both for the SIOCIFCREATE ioctl and internally.
  */
-int
-ifdev_create(const char * name)
+int ifdev_create(const char * name)
 {
 	unsigned int slot;
 	int r;
@@ -1038,8 +1014,7 @@ ifdev_create(const char * name)
 /*
  * Destroy an interface, if possible.
  */
-int
-ifdev_destroy(struct ifdev * ifdev)
+int ifdev_destroy(struct ifdev * ifdev)
 {
 
 	if (ifdev->ifdev_ops->iop_destroy == NULL)

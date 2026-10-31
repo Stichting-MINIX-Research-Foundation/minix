@@ -32,8 +32,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static void
-print_rule(struct fbd_rule * rule)
+static void print_rule(struct fbd_rule * rule)
 {
 	printf("%-2d %04lX%08lX-%04lX%08lX %-4d %-5d %c%c ",
 	    rule->num, ex64hi(rule->start), ex64lo(rule->start),
@@ -88,8 +87,7 @@ print_rule(struct fbd_rule * rule)
 	printf("\n");
 }
 
-static int
-do_list(int fd)
+static int do_list(int fd)
 {
 	struct fbd_rule rule;
 	int i;
@@ -111,8 +109,7 @@ do_list(int fd)
 	return EXIT_SUCCESS;
 }
 
-static int
-scan_hex64(char * input, u64_t * val)
+static int scan_hex64(char * input, u64_t * val)
 {
 	u32_t lo, hi;
 	char buf[9];
@@ -138,8 +135,7 @@ scan_hex64(char * input, u64_t * val)
 	return 1;
 }
 
-static int
-scan_range(char * input, u64_t * start, u64_t * end, int need_end)
+static int scan_range(char * input, u64_t * start, u64_t * end, int need_end)
 {
 	char *p;
 
@@ -153,8 +149,7 @@ scan_range(char * input, u64_t * start, u64_t * end, int need_end)
 	return scan_hex64(input, start);
 }
 
-static int
-do_add(int fd, int argc, char ** argv, int off)
+static int do_add(int fd, int argc, char ** argv, int off)
 {
 	struct fbd_rule rule;
 	int c, r;
@@ -267,8 +262,7 @@ do_add(int fd, int argc, char ** argv, int off)
 	return EXIT_SUCCESS;
 }
 
-static int
-do_del(int fd, int argc, char ** argv, int off)
+static int do_del(int fd, int argc, char ** argv, int off)
 {
 	fbd_rulenum_t num;
 
@@ -288,8 +282,7 @@ do_del(int fd, int argc, char ** argv, int off)
 	return EXIT_SUCCESS;
 }
 
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int r, fd, off = 1;
 	const char *dev = PATH_DEV_FBD;

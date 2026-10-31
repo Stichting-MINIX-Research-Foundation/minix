@@ -103,6 +103,29 @@ do {						\
  * Since we don't need .init or .fini sections, just code them in C
  * to make life easier.
  */
+#ifdef __minix
+/*
+ * MINIX/clang folds a loop bounded by a __weak_reference()'d symbol to nothing
+ * at -O2 (the undefined weak symbol is taken as 0, so start >= end), and a weak
+ * reference does not trigger the linker script's PROVIDE_HIDDEN, leaving
+ * __init_array_start/end undefined.  Use strong hidden references instead: the
+ * loop is kept, and the strong reference makes PROVIDE_HIDDEN materialize the
+ * boundary symbols around .init_array (where the linker collects the .ctors the
+ * compiler emits).
+ */
+extern const fptr_t preinit_array_start[]
+    __asm("__preinit_array_start") __dso_hidden;
+extern const fptr_t preinit_array_end[]
+    __asm("__preinit_array_end") __dso_hidden;
+extern const fptr_t init_array_start[]
+    __asm("__init_array_start") __dso_hidden;
+extern const fptr_t init_array_end[]
+    __asm("__init_array_end") __dso_hidden;
+extern const fptr_t fini_array_start[]
+    __asm("__fini_array_start") __dso_hidden;
+extern const fptr_t fini_array_end[]
+    __asm("__fini_array_end") __dso_hidden;
+#else
 __weakref_visible const fptr_t preinit_array_start[1]
     __weak_reference(__preinit_array_start);
 __weakref_visible const fptr_t preinit_array_end[1]
@@ -115,6 +138,7 @@ __weakref_visible const fptr_t fini_array_start[1]
     __weak_reference(__fini_array_start);
 __weakref_visible const fptr_t fini_array_end[1]
     __weak_reference(__fini_array_end);
+#endif /* __minix */
 
 static inline void
 _preinit(void)

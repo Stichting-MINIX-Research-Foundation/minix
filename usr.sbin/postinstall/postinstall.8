@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall.8,v 1.18 2014/12/21 21:10:13 wiz Exp $
+.\"	$NetBSD: postinstall.8,v 1.20 2018/11/21 20:13:09 martin Exp $
 .\"
 .\" Copyright (c) 2005-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 21, 2014
+.Dd November 20, 2018
 .Dt POSTINSTALL 8
 .Os
 .Sh NAME
@@ -91,14 +91,20 @@ extracted from a binary distribution of
 .Nx .
 The files that are distributed in the
 .Dq Pa etc.tgz
+or
+.Dq Pa etc.tar.xz
 set file must be present.
 The files that are distributed in the
 .Dq Pa xetc.tgz
+or
+.Dq Pa xetc.tar.xz
 set file are optional.
 .It Fl s Ar tgzfile
 The location of a set file
 (or
-.Dq "tgz file" )
+.Dq "tgz file"
+or
+.Dq "tar.xz file" )
 such as
 .Dq Pa etc.tgz
 or
@@ -166,7 +172,7 @@ Same as
 .Sh EXIT STATUS
 The
 .Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs
+utility exits 0 on success, and >0 if an error occurs
 or a problem was found.
 .Sh SEE ALSO
 .Xr etcupdate 8

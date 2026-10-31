@@ -106,14 +106,16 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap(struct denode *, u_long, daddr_t *, u_long *, int *);
-int clusterfree(struct msdosfsmount *, u_long, u_long *);
-int clusteralloc(struct msdosfsmount *, u_long, u_long,u_long *,u_long *);
-int extendfile(struct denode *, u_long, struct buf **, u_long *, int);
-int fatentry(int, struct msdosfsmount *, u_long, u_long *, u_long);
-void fc_purge(struct denode *, u_int);
-void fc_lookup(struct denode *, u_long, u_long *, u_long *);
-int fillinusemap(struct msdosfsmount *);
-int freeclusterchain(struct msdosfsmount *, u_long);
+int	msdosfs_pcbmap(struct denode *, u_long, daddr_t *, u_long *, int *);
+int	msdosfs_clusterfree(struct msdosfsmount *, u_long, u_long *);
+int	msdosfs_clusteralloc(struct msdosfsmount *, u_long, u_long, u_long *,
+	    u_long *);
+int	msdosfs_extendfile(struct denode *, u_long, struct buf **, u_long *,
+	    int);
+int	msdosfs_fatentry(int, struct msdosfsmount *, u_long, u_long *, u_long);
+void	msdosfs_fc_purge(struct denode *, u_int);
+void	msdosfs_fc_lookup(struct denode *, u_long, u_long *, u_long *);
+int	msdosfs_fillinusemap(struct msdosfsmount *);
+int	msdosfs_freeclusterchain(struct msdosfsmount *, u_long);
 #endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_FAT_H_ */

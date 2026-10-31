@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.35 2014/03/20 03:13:18 christos Exp $	 */
+/*	$NetBSD: tftp.c,v 1.36 2019/03/31 20:08:45 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -309,8 +309,8 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 			res = tftp_getnextblock(tftpfile);
 			if (res) {	/* no answer */
 #ifdef DEBUG
-				printf("tftp: read error (block %d->%d)\n",
-				       tftpfile->currblock, needblock);
+				printf("%s: read error (block %d->%d)\n",
+				    __func__, tftpfile->currblock, needblock);
 #endif
 				return res;
 			}
@@ -323,9 +323,9 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 
 			offinblock = tftpfile->off % SEGSIZE;
 
-			if (offinblock > tftpfile->validsize) {
+			if ((int)offinblock > tftpfile->validsize) {
 #ifdef DEBUG
-				printf("tftp: invalid offset %d\n",
+				printf("%s: invalid offset %d\n", __func__,
 				    tftpfile->off);
 #endif
 				return EINVAL;
@@ -344,7 +344,8 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 				break;	/* EOF */
 		} else {
 #ifdef DEBUG
-			printf("tftp: block %d not found\n", needblock);
+			printf("%s: block %d not found\n",
+			    __func__, needblock);
 #endif
 			return EINVAL;
 		}
@@ -402,15 +403,15 @@ tftp_size_of_file(struct tftp_handle *tftpfile)
 		res = tftp_getnextblock(tftpfile);
 		if (res) {	/* no answer */
 #ifdef DEBUG
-			printf("tftp: read error (block %d)\n",
-					tftpfile->currblock);
+			printf("%s: read error (block %d)\n",
+			    __func__, tftpfile->currblock);
 #endif
 			return -1;
 		}
 		filesize += tftpfile->validsize;
 	}
 #ifdef DEBUG
-	printf("tftp_size_of_file: file is %zu bytes\n", filesize);
+	printf("%s: file is %zu bytes\n", __func__, filesize);
 #endif
 	return filesize;
 }

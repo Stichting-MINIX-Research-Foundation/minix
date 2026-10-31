@@ -5,8 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int unlink(name)
-const char *name;
+int unlink(const char *name)
 {
   message m;
 

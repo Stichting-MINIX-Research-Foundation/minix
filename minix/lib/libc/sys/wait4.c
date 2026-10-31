@@ -9,8 +9,7 @@
 __weak_alias(wait4, __wait450)
 #endif
 
-pid_t
-wait4(pid_t pid, int * status, int options, struct rusage * rusage)
+pid_t wait4(pid_t pid, int * status, int options, struct rusage * rusage)
 {
 	message m;
 

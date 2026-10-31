@@ -30,6 +30,11 @@
 struct device {
 	u64_t dv_base;
 	u64_t dv_size;
+	int     fstype;
+	// from disklabel_gpt.h
+	uint8_t		ent_guid[16];	/* unique partition GUID */
+	uint64_t	ent_attr;	/* partition attributes */
+	uint16_t	ent_name[36];	/* partition name in UNICODE-16 */
 };
 
 /* Generic receive function for all drivers. */

@@ -159,7 +159,7 @@
 ./usr/man/man1/isodir.1                                 minix-man
 ./usr/man/man1/isoinfo.1                                minix-man
 ./usr/man/man1/isoread.1                                minix-man
-./usr/man/man1/jobs.1                                   minix-man       obsolete
+./usr/man/man1/jobs.1                                   minix-man       
 ./usr/man/man1/join.1                                   minix-man
 ./usr/man/man1/jot.1                                    minix-man
 ./usr/man/man1/kill.1                                   minix-man
@@ -241,7 +241,6 @@
 ./usr/man/man1/netpgp.1                                 minix-man       crypto
 ./usr/man/man1/netpgpkeys.1                             minix-man       crypto
 ./usr/man/man1/netpgpverify.1                           minix-man       crypto
-./usr/man/man1/netstat.1                                minix-man
 ./usr/man/man1/newfs_mfs.1                              minix-man
 ./usr/man/man1/newgrp.1                                 minix-man
 ./usr/man/man1/nice.1                                   minix-man
@@ -2724,11 +2723,13 @@
 ./usr/man/man3/recno.3                                  minix-man
 ./usr/man/man3/refresh.3                                minix-man
 ./usr/man/man3/refuse.3                                 minix-man
+#./usr/man/man3/regasub.3                                minix-man
 ./usr/man/man3/regcomp.3                                minix-man
 ./usr/man/man3/regerror.3                               minix-man
 ./usr/man/man3/regex.3                                  minix-man
 ./usr/man/man3/regexec.3                                minix-man
 ./usr/man/man3/regfree.3                                minix-man
+#./usr/man/man3/regnsub.3                                minix-man
 ./usr/man/man3/remainder.3                              minix-man
 ./usr/man/man3/remainderf.3                             minix-man
 ./usr/man/man3/remove.3                                 minix-man
@@ -3514,7 +3515,7 @@
 ./usr/man/man8/inet.8                                   minix-man       obsolete
 ./usr/man/man8/inetd.8                                  minix-man
 ./usr/man/man8/init.8                                   minix-man
-./usr/man/man8/installboot_nbsd.8                       minix-man
+./usr/man/man8/installboot.8                            minix-man
 ./usr/man/man8/intr.8                                   minix-man
 ./usr/man/man8/irdpd.8                                  minix-man       obsolete
 ./usr/man/man8/link.8                                   minix-man
@@ -3619,6 +3620,7 @@
 ./usr/man/man9/prop_dictionary_copyin_ioctl.9           minix-man
 ./usr/man/man9/prop_dictionary_copyout_ioctl.9          minix-man
 ./usr/man/whatis.db                                     minix-man
+#./usr/share/info/flex.info                              minix-man
 ./var                                                   minix-man
 ./var/db                                                minix-man
 ./var/db/obsolete                                       minix-man

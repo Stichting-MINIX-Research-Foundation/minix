@@ -14,8 +14,7 @@ static const struct flags rss_flags[] = {
 	FLAG(RSS_NO_BIN_EXP),
 };
 
-static void
-put_struct_rs_start(struct trace_proc * proc, const char * name,
+static void put_struct_rs_start(struct trace_proc * proc, const char * name,
 	vir_bytes addr)
 {
 	struct rs_start buf;
@@ -54,8 +53,7 @@ put_struct_rs_start(struct trace_proc * proc, const char * name,
 }
 
 /* This function is shared between rs_up and rs_edit. */
-static int
-rs_up_out(struct trace_proc * proc, const message * m_out)
+static int rs_up_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_struct_rs_start(proc, "addr", (vir_bytes)m_out->m_rs_req.addr);
@@ -67,8 +65,7 @@ rs_up_out(struct trace_proc * proc, const message * m_out)
  * This function is shared between rs_down, rs_refresh, rs_restart, and
  * rs_clone.
  */
-static int
-rs_label_out(struct trace_proc * proc, const message * m_out)
+static int rs_label_out(struct trace_proc * proc, const message * m_out)
 {
 
 	/*
@@ -82,8 +79,7 @@ rs_label_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-rs_update_out(struct trace_proc * proc, const message * m_out)
+static int rs_update_out(struct trace_proc * proc, const message * m_out)
 {
 
 	/*
@@ -99,8 +95,7 @@ rs_update_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-rs_lookup_out(struct trace_proc * proc, const message * m_out)
+static int rs_lookup_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "label", PF_STRING, (vir_bytes)m_out->m_rs_req.name,
@@ -109,8 +104,7 @@ rs_lookup_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-rs_lookup_in(struct trace_proc * proc, const message * __unused m_out,
+static void rs_lookup_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 

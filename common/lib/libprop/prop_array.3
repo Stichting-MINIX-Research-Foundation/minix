@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.13 2011/09/30 22:08:18 jym Exp $
+.\"	$NetBSD: prop_array.3,v 1.15 2020/06/06 21:25:59 thorpej Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@
 .Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 .Sh DESCRIPTION
 The
-.Nm prop_array
+.Nm
 family of functions operate on the array property collection object type.
 An array is an ordered set; an iterated array will return objects in the
 same order with which they were stored.
@@ -294,6 +294,7 @@ is returned.
 Note: Objects contained in the array are compared by value, not by reference.
 .El
 .Sh SEE ALSO
+.Xr prop_array_util 3 ,
 .Xr prop_bool 3 ,
 .Xr prop_data 3 ,
 .Xr prop_dictionary 3 ,
@@ -303,6 +304,6 @@ Note: Objects contained in the array are compared by value, not by reference.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

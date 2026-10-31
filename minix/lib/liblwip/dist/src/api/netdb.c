@@ -158,8 +158,7 @@ lwip_gethostbyname(const char *name)
  * @return 0 on success, non-zero on error, additional error information
  *         is stored in *h_errnop instead of h_errno to be thread-safe
  */
-int
-lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
+int lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
                 size_t buflen, struct hostent **result, int *h_errnop)
 {
   err_t err;
@@ -232,8 +231,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
  *
  * @param ai struct addrinfo to free
  */
-void
-lwip_freeaddrinfo(struct addrinfo *ai)
+void lwip_freeaddrinfo(struct addrinfo *ai)
 {
   struct addrinfo *next;
 
@@ -265,8 +263,7 @@ lwip_freeaddrinfo(struct addrinfo *ai)
  *
  * @todo: implement AI_V4MAPPED, AI_ADDRCONFIG
  */
-int
-lwip_getaddrinfo(const char *nodename, const char *servname,
+int lwip_getaddrinfo(const char *nodename, const char *servname,
        const struct addrinfo *hints, struct addrinfo **res)
 {
   err_t err;

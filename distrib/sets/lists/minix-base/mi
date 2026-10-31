@@ -64,6 +64,8 @@
 ./boot/minix                                            minix-base
 ./boot/minix_default                                    minix-base
 ./dev                                                   minix-base
+./dev/MAKEDEV                                           minix-base
+./dev/MAKEDEV.local                                     minix-base
 ./dev/pts                                               minix-base
 ./etc                                                   minix-base
 ./etc/X11                                               minix-base      xorg
@@ -246,7 +248,9 @@
 ./sbin/dhcpcd                                           minix-base
 ./sbin/fsck                                             minix-base
 ./sbin/fsck_ext2fs                                      minix-base
+./sbin/fsck_ffs                                         minix-base
 ./sbin/fsck_mfs                                         minix-base
+./sbin/gpt                                              minix-base
 ./sbin/halt                                             minix-base
 ./sbin/ifconfig                                         minix-base
 ./sbin/init                                             minix-base
@@ -254,6 +258,7 @@
 ./sbin/mkfs.mfs                                         minix-base
 ./sbin/mknod                                            minix-base
 ./sbin/newfs_ext2fs                                     minix-base
+./sbin/newfs_ffs                                        minix-base
 ./sbin/newfs_msdos                                      minix-base
 ./sbin/newfs_udf                                        minix-base
 ./sbin/newfs_v7fs                                       minix-base
@@ -273,6 +278,7 @@
 ./service/devman                                        minix-base
 ./service/ds                                            minix-base
 ./service/ext2                                          minix-base
+./service/ffs                                           minix-base
 ./service/hello                                         minix-base
 ./service/inet                                          minix-base      obsolete
 ./service/input                                         minix-base
@@ -497,7 +503,6 @@
 ./usr/bin/netpgp                                        minix-base      crypto
 ./usr/bin/netpgpkeys                                    minix-base      crypto
 ./usr/bin/netpgpverify                                  minix-base      crypto
-./usr/bin/netstat                                       minix-base
 ./usr/bin/newgrp                                        minix-base
 ./usr/bin/nice                                          minix-base
 ./usr/bin/nl                                            minix-base
@@ -804,8 +809,8 @@
 ./usr/lib/libatf-c.so.0                                 minix-base      atf
 ./usr/lib/libatf-c.so                                   minix-base      atf
 ./usr/lib/libatf-c_pic.a                                minix-base      atf
-./usr/lib/libbfd.so.13.0                                minix-base      binutils
-./usr/lib/libbfd.so.13                                  minix-base      binutils
+./usr/lib/libbfd.so.17.0                                minix-base      binutils
+./usr/lib/libbfd.so.17                                  minix-base      binutils
 ./usr/lib/libbind9.so                                   minix-base
 ./usr/lib/libbind9.so.8                                 minix-base
 ./usr/lib/libbind9.so.8.2                               minix-base
@@ -882,6 +887,8 @@
 ./usr/lib/libgcc_s.so                                   minix-base
 ./usr/lib/libgcc_s.so.1                                 minix-base
 ./usr/lib/libgcc_s.so.1.0                               minix-base
+./usr/lib/libgnuctf.so.0                                minix-base      binutils
+./usr/lib/libgnuctf.so.0.0                              minix-base      binutils
 ./usr/lib/libintl.so                                    minix-base
 ./usr/lib/libintl.so.1                                  minix-base
 ./usr/lib/libintl.so.1.1                                minix-base
@@ -957,8 +964,8 @@
 ./usr/lib/libobjc.so.4                                  minix-base      gcc=5
 ./usr/lib/libobjc.so                                    minix-base      gcc
 ./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
-./usr/lib/libopcodes.so.6.0                             minix-base      binutils
-./usr/lib/libopcodes.so.6                               minix-base      binutils
+./usr/lib/libopcodes.so.10.0                            minix-base      binutils
+./usr/lib/libopcodes.so.10                              minix-base      binutils
 ./usr/lib/libpcap.so                                    minix-base
 ./usr/lib/libpcap.so.5                                  minix-base
 ./usr/lib/libpcap.so.5.1                                minix-base
@@ -1074,8 +1081,8 @@
 ./usr/libexec/telnetd                                   minix-base
 ./usr/libexec/virecover                                 minix-base
 ./usr/log                                               minix-base
-./usr/log/messages                                      minix-base
-./usr/log/syslog                                        minix-base
+#./usr/log/messages                                      minix-base
+#./usr/log/syslog                                        minix-base
 ./usr/pkg                                               minix-base
 ./usr/pkg/etc                                           minix-base
 ./usr/pkg/etc/rc.d                                      minix-base
@@ -1112,7 +1119,7 @@
 ./usr/sbin/groupmod                                     minix-base
 ./usr/sbin/i2cscan                                      minix-base
 ./usr/sbin/inetd                                        minix-base
-./usr/sbin/installboot_nbsd                             minix-base
+./usr/sbin/installboot                                  minix-base
 ./usr/sbin/kernel                                       minix-base
 ./usr/sbin/link                                         minix-base
 ./usr/sbin/lwresd                                       minix-base
@@ -2008,6 +2015,11 @@
 ./usr/share/info/ld.info                                minix-base      binutils
 ./usr/share/info/texinfo.info                           minix-base
 ./usr/share/info/vi.info                                minix-base
+./usr/share/installboot                                 minix-base
+./usr/share/installboot/evbarm                          minix-base
+./usr/share/installboot/evbarm/boards.plist             minix-base
+./usr/share/installboot/evbmips                         minix-base
+./usr/share/installboot/evbmips/boards.plist            minix-base
 ./usr/share/keymaps                                     minix-base
 ./usr/share/legal                                       minix-base
 ./usr/share/legal/COPYRIGHT                             minix-base
@@ -3960,6 +3972,8 @@
 ./var/db/xkb                                            minix-base      xorg
 ./var/heimdal                                           minix-base      crypto
 ./var/log                                               minix-base
+./var/log/messages                                      minix-base
+./var/log/syslog                                        minix-base
 ./var/mail                                              minix-base
 ./var/run                                               minix-base
 ./var/run/lwresd                                        minix-base

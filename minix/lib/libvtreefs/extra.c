@@ -14,8 +14,7 @@ static size_t extra_size = 0; /* per inode */
 /*
  * Initialize memory to store extra data.
  */
-int
-init_extra(unsigned int nr_inodes, size_t inode_extra)
+int init_extra(unsigned int nr_inodes, size_t inode_extra)
 {
 
 	if (inode_extra == 0)
@@ -32,8 +31,7 @@ init_extra(unsigned int nr_inodes, size_t inode_extra)
 /*
  * Initialize the extra data for the given inode to zero.
  */
-void
-clear_inode_extra(struct inode * node)
+void clear_inode_extra(struct inode * node)
 {
 
 	if (extra_size == 0)

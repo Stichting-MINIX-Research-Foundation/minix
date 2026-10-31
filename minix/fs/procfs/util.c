@@ -5,8 +5,7 @@
 /*
  * Retrieve system load average information.
  */
-int
-procfs_getloadavg(struct load * loadavg, int nelem)
+int procfs_getloadavg(struct load * loadavg, int nelem)
 {
 	struct loadinfo loadinfo;
 	u32_t system_hz, ticks_per_slot;

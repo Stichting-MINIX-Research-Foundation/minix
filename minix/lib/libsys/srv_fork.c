@@ -2,8 +2,7 @@
 
 #include <string.h>
 
-pid_t
-srv_fork(uid_t reuid, gid_t regid)
+pid_t srv_fork(uid_t reuid, gid_t regid)
 {
 	message m;
 

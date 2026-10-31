@@ -96,8 +96,7 @@ u8_t netconn_aborted;
  *
  * @see raw.h (struct raw_pcb.recv) for parameters and return value
  */
-static u8_t
-recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
+static u8_t recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     const ip_addr_t *addr)
 {
   struct pbuf *q;
@@ -162,8 +161,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  *
  * @see udp.h (struct udp_pcb.recv) for parameters
  */
-static void
-recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+static void recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
    const ip_addr_t *addr, u16_t port)
 {
   struct netbuf *buf;
@@ -372,8 +370,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
  *
  * @see tcp.h (struct tcp_pcb.err) for parameters
  */
-static void
-err_tcp(void *arg, err_t err)
+static void err_tcp(void *arg, err_t err)
 {
   struct netconn *conn;
   enum netconn_state old_state;
@@ -446,8 +443,7 @@ err_tcp(void *arg, err_t err)
  *
  * @param conn the TCP netconn to setup
  */
-static void
-setup_tcp(struct netconn *conn)
+static void setup_tcp(struct netconn *conn)
 {
   struct tcp_pcb *pcb;
 
@@ -542,8 +538,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
  *
  * @param msg the api_msg_msg describing the connection type
  */
-static void
-pcb_new(struct api_msg *msg)
+static void pcb_new(struct api_msg *msg)
 {
   enum lwip_ip_addr_type iptype = IPADDR_TYPE_V4;
 
@@ -613,8 +608,7 @@ pcb_new(struct api_msg *msg)
  *
  * @param m the api_msg_msg describing the connection type
  */
-void
-lwip_netconn_do_newconn(void *m)
+void lwip_netconn_do_newconn(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -723,8 +717,7 @@ free_and_return:
  *
  * @param conn the netconn to free
  */
-void
-netconn_free(struct netconn *conn)
+void netconn_free(struct netconn *conn)
 {
   LWIP_ASSERT("PCB must be deallocated outside this function", conn->pcb.tcp == NULL);
   LWIP_ASSERT("recvmbox must be deallocated before calling this function",
@@ -750,8 +743,7 @@ netconn_free(struct netconn *conn)
  * @bytes_drained bytes drained from recvmbox
  * @accepts_drained pending connections drained from acceptmbox
  */
-static void
-netconn_drain(struct netconn *conn)
+static void netconn_drain(struct netconn *conn)
 {
   void *mem;
 #if LWIP_TCP
@@ -1008,8 +1000,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_delconn(void *m)
+void lwip_netconn_do_delconn(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1108,8 +1099,7 @@ lwip_netconn_do_delconn(void *m)
  * @param m the api_msg_msg pointing to the connection and containing
  *          the IP address and port to bind to
  */
-void
-lwip_netconn_do_bind(void *m)
+void lwip_netconn_do_bind(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1199,8 +1189,7 @@ lwip_netconn_do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
  * @param m the api_msg_msg pointing to the connection and containing
  *          the IP address and port to connect to
  */
-void
-lwip_netconn_do_connect(void *m)
+void lwip_netconn_do_connect(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1270,8 +1259,7 @@ lwip_netconn_do_connect(void *m)
  *
  * @param m the api_msg_msg pointing to the connection to disconnect
  */
-void
-lwip_netconn_do_disconnect(void *m)
+void lwip_netconn_do_disconnect(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1294,8 +1282,7 @@ lwip_netconn_do_disconnect(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_listen(void *m)
+void lwip_netconn_do_listen(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1378,8 +1365,7 @@ lwip_netconn_do_listen(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_send(void *m)
+void lwip_netconn_do_send(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1433,8 +1419,7 @@ lwip_netconn_do_send(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_recv(void *m)
+void lwip_netconn_do_recv(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1458,8 +1443,7 @@ lwip_netconn_do_recv(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_accepted(void *m)
+void lwip_netconn_do_accepted(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1658,8 +1642,7 @@ err_mem:
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_write(void *m)
+void lwip_netconn_do_write(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1712,8 +1695,7 @@ lwip_netconn_do_write(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_getaddr(void *m)
+void lwip_netconn_do_getaddr(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1779,8 +1761,7 @@ lwip_netconn_do_getaddr(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_close(void *m)
+void lwip_netconn_do_close(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1856,8 +1837,7 @@ lwip_netconn_do_close(void *m)
  *
  * @param m the api_msg_msg pointing to the connection
  */
-void
-lwip_netconn_do_join_leave_group(void *m)
+void lwip_netconn_do_join_leave_group(void *m)
 {
   struct api_msg *msg = (struct api_msg*)m;
 
@@ -1910,8 +1890,7 @@ lwip_netconn_do_join_leave_group(void *m)
  * (or on timeout). A waiting application thread is waked up by
  * signaling the semaphore.
  */
-static void
-lwip_netconn_do_dns_found(const char *name, const ip_addr_t *ipaddr, void *arg)
+static void lwip_netconn_do_dns_found(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
@@ -1936,8 +1915,7 @@ lwip_netconn_do_dns_found(const char *name, const ip_addr_t *ipaddr, void *arg)
  *
  * @param arg the dns_api_msg pointing to the query
  */
-void
-lwip_netconn_do_gethostbyname(void *arg)
+void lwip_netconn_do_gethostbyname(void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
   u8_t addrtype =

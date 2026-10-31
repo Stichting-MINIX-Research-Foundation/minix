@@ -40,8 +40,7 @@ static const struct flags fbd_flags[] = {
 	FLAG(FBD_FLAG_WRITE),
 };
 
-static void
-put_fbd_action(struct trace_proc * proc, const char * name, int action)
+static void put_fbd_action(struct trace_proc * proc, const char * name, int action)
 {
 	const char *text = NULL;
 
@@ -66,8 +65,7 @@ static const struct flags vnd_flags[] = {
 	FLAG(VNDIOF_FORCE),
 };
 
-int
-block_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
+int block_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 	int dir)
 {
 	struct part_geom *part;

@@ -1,8 +1,8 @@
-/* $NetBSD: ecma167-udf.h,v 1.14 2011/07/07 17:45:38 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.16 2018/08/09 13:49:30 reinoud Exp $ */
 
 /*-
- * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009
- * 	Reinoud Zandijk * <reinoud@NetBSD.org>
+ * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009, 2017, 2018
+ * 	Reinoud Zandijk <reinoud@NetBSD.org>
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
  * All rights reserved.
  *
@@ -203,14 +203,14 @@ union icb {
 
 
 /* short/long/ext extent have flags encoded in length */
-#define UDF_EXT_ALLOCATED              (0<<30)
-#define UDF_EXT_FREED                  (1<<30)
-#define UDF_EXT_ALLOCATED_BUT_NOT_USED (1<<30)
-#define UDF_EXT_FREE                   (2<<30)
-#define UDF_EXT_REDIRECT               (3<<30)
-#define UDF_EXT_FLAGS(len) ((len) & (3<<30))
-#define UDF_EXT_LEN(len)   ((len) & ((1<<30)-1))
-#define UDF_EXT_MAXLEN     ((1<<30)-1)
+#define UDF_EXT_ALLOCATED              (0U<<30)
+#define UDF_EXT_FREED                  (1U<<30)
+#define UDF_EXT_ALLOCATED_BUT_NOT_USED (1U<<30)
+#define UDF_EXT_FREE                   (2U<<30)
+#define UDF_EXT_REDIRECT               (3U<<30)
+#define UDF_EXT_FLAGS(len) ((len) & (3U<<30))
+#define UDF_EXT_LEN(len)   ((len) & ((1U<<30)-1))
+#define UDF_EXT_MAXLEN     ((1U<<30)-1)
 
 
 /* Character set spec [1/7.2.1] */
@@ -264,7 +264,10 @@ struct regid {
 struct icb_tag {
 	uint32_t	prev_num_dirs;
 	uint16_t	strat_type;
-	uint8_t		strat_param[2];
+	union {
+		uint8_t	 strat_param[2];
+		uint16_t strat_param16;
+	};
 	uint16_t	max_num_entries;
 	uint8_t		reserved;
 	uint8_t		file_type;
@@ -682,7 +685,10 @@ struct impl_extattr_entry {
 	struct extattr_entry    hdr;
 	uint32_t		iu_l;
 	struct regid		imp_id;
-	uint8_t			data[1];
+	union {
+		uint8_t	 data[1];
+		uint16_t data16;
+	};
 } __packed;
 
 
@@ -832,4 +838,3 @@ union dscrptr {
 
 
 #endif /* !_FS_UDF_ECMA167_UDF_H_ */
-

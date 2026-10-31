@@ -45,9 +45,10 @@ int fs_lookup(ino_t dir_nr, char *name, struct fsdriver_node *node,
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-struct inode *advance(dirp, string)
-struct inode *dirp;		/* inode for directory to be searched */
-const char *string;		/* component name to look for */
+struct inode *advance(
+  struct inode *dirp,		/* inode for directory to be searched */
+  const char *string		/* component name to look for */
+)
 {
 /* Given a directory and a component of a path, look up the component in
  * the directory, find the inode, open it, and return a pointer to its inode
@@ -89,11 +90,12 @@ const char *string;		/* component name to look for */
 /*===========================================================================*
  *				search_dir				     *
  *===========================================================================*/
-int search_dir(ldir_ptr, string, numb, flag)
-register struct inode *ldir_ptr; /* ptr to inode for dir to search */
-const char *string;		 /* component to search for */
-ino_t *numb;			 /* pointer to inode number */
-int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
+int search_dir(
+  register struct inode *ldir_ptr, /* ptr to inode for dir to search */
+  const char *string,		 /* component to search for */
+  ino_t *numb,			 /* pointer to inode number */
+  int flag			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
+)
 {
 /* This function searches the directory whose inode is pointed to by 'ldip':
  * if (flag == ENTER)  enter 'string' in the directory with inode # '*numb';

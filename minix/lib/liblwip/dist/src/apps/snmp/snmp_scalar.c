@@ -190,8 +190,7 @@ snmp_scalar_array_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, st
   return SNMP_ERR_NOERROR;
 }
 
-static s16_t
-snmp_scalar_array_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t snmp_scalar_array_get_value(struct snmp_node_instance* instance, void* value)
 {
   const struct snmp_scalar_array_node* array_node = (const struct snmp_scalar_array_node*)(const void*)instance->node;
   const struct snmp_scalar_array_node_def* array_node_def = (const struct snmp_scalar_array_node_def*)instance->reference.const_ptr;

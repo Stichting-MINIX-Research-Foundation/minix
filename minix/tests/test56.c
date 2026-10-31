@@ -359,8 +359,7 @@ static void callback_xfer_peercred(int sd) {
 	}
 }
 
-static void
-callback_set_listen_opt(int sd)
+static void callback_set_listen_opt(int sd)
 {
 	int val;
 
@@ -1443,8 +1442,7 @@ static void test_fchmod(void)
  * there should be tests for the entire range of file system path and access
  * related error codes (TODO).
  */
-static void
-test_file(void)
+static void test_file(void)
 {
 	struct sockaddr_un addr, saddr, saddr2;
 	char buf[1];

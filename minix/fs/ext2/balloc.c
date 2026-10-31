@@ -146,11 +146,12 @@ static void check_block_number(block_t block, struct super_block *sp,
 
 /*===========================================================================*
  *                              alloc_block_bit                              *
+ *                              sp: the file system to allocate from
+ *                              goal: try to allocate near this block
+ *                              rip: used for preallocation
  *===========================================================================*/
-static block_t alloc_block_bit(sp, goal, rip)
-struct super_block *sp;		/* the filesystem to allocate from */
-block_t goal;			/* try to allocate near this block */
-struct inode *rip;		/* used for preallocation */
+static block_t alloc_block_bit(struct super_block *sp, block_t goal,
+							   struct inode *rip)
 {
   block_t block = NO_BLOCK;	/* allocated block */
   int word;			/* word in block bitmap */

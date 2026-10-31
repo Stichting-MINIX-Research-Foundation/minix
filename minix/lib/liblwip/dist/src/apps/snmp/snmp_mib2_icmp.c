@@ -55,8 +55,7 @@
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
 
-static s16_t
-icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
+static s16_t icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   u32_t *uint_ptr = (u32_t*)value;
 

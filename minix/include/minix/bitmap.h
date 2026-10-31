@@ -17,8 +17,14 @@
 #define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) ))
 #define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) ))
 
-#if defined(CONFIG_SMP) && defined(__GNUC__)
+#if defined(CONFIG_SMP)
 #ifndef __ASSEMBLY__
+
+#define __minix 3
+#define _NETBSD_SOURCE 1
+#include <sys/types.h>
+#include <limits.h>
+
 static inline void bits_fill(bitchunk_t * chunks, unsigned bits)
 {
 	unsigned c, cnt;

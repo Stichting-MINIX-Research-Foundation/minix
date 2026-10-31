@@ -46,8 +46,7 @@ static LIST_HEAD(, inode) free_inodes;	/* list of free inodes */
 /*
  * Mount the pipe file server.
  */
-static int
-pfs_mount(dev_t __unused dev, unsigned int __unused flags,
+static int pfs_mount(dev_t __unused dev, unsigned int __unused flags,
 	struct fsdriver_node * node, unsigned int * res_flags)
 {
 	struct inode *rip;
@@ -84,8 +83,7 @@ pfs_mount(dev_t __unused dev, unsigned int __unused flags,
 /*
  * Unmount the pipe file server.
  */
-static void
-pfs_unmount(void)
+static void pfs_unmount(void)
 {
 	unsigned int i;
 
@@ -122,8 +120,7 @@ pfs_findnode(ino_t ino_nr)
 /*
  * Create a new, unlinked node.  It must be either a pipe or a device file.
  */
-static int
-pfs_newnode(mode_t mode, uid_t uid, gid_t gid, dev_t dev,
+static int pfs_newnode(mode_t mode, uid_t uid, gid_t gid, dev_t dev,
 	struct fsdriver_node * node)
 {
 	struct inode *rip;
@@ -143,7 +140,7 @@ pfs_newnode(mode_t mode, uid_t uid, gid_t gid, dev_t dev,
 
 	/* For pipes, we need a buffer.  Try to allocate one. */
 	data = NULL;
-	if (isfifo && (data = malloc(PIPE_BUF)) == NULL)
+	if (isfifo && (data = malloc(PIPE_SIZE)) == NULL)
 		return ENOSPC;
 
 	/* Nothing can go wrong now.  Take an inode off the free list. */
@@ -180,8 +177,7 @@ pfs_newnode(mode_t mode, uid_t uid, gid_t gid, dev_t dev,
 /*
  * Close a node.
  */
-static int
-pfs_putnode(ino_t ino_nr, unsigned int count)
+static int pfs_putnode(ino_t ino_nr, unsigned int count)
 {
 	struct inode *rip;
 
@@ -214,8 +210,7 @@ pfs_putnode(ino_t ino_nr, unsigned int count)
 /*
  * Read from a pipe.
  */
-static ssize_t
-pfs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
+static ssize_t pfs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 	off_t __unused pos, int __unused call)
 {
 	struct inode *rip;
@@ -226,7 +221,7 @@ pfs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 		return EINVAL;
 
 	/* We can't read beyond the maximum file position. */
-	if (bytes > PIPE_BUF)
+	if (bytes > PIPE_SIZE)
 		return EFBIG;
 
 	/* Limit the request to how much is in the pipe. */
@@ -250,8 +245,7 @@ pfs_read(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 /*
  * Write to a pipe.
  */
-static ssize_t
-pfs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
+static ssize_t pfs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 	off_t __unused pos, int __unused call)
 {
 	struct inode *rip;
@@ -262,7 +256,7 @@ pfs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 		return EINVAL;
 
 	/* Check in advance to see if file will grow too big. */
-	if (rip->i_size + bytes > PIPE_BUF)
+	if (rip->i_size + bytes > PIPE_SIZE)
 		return EFBIG;
 
 	/*
@@ -295,8 +289,7 @@ pfs_write(ino_t ino_nr, struct fsdriver_data * data, size_t bytes,
 /*
  * Truncate a pipe.
  */
-static int
-pfs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
+static int pfs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
 {
 	struct inode *rip;
 
@@ -318,8 +311,7 @@ pfs_trunc(ino_t ino_nr, off_t start_pos, off_t end_pos)
 /*
  * Return node status.
  */
-static int
-pfs_stat(ino_t ino_nr, struct stat * statbuf)
+static int pfs_stat(ino_t ino_nr, struct stat * statbuf)
 {
 	struct inode *rip;
 	time_t now;
@@ -358,8 +350,7 @@ pfs_stat(ino_t ino_nr, struct stat * statbuf)
 /*
  * Change node permissions.
  */
-static int
-pfs_chmod(ino_t ino_nr, mode_t * mode)
+static int pfs_chmod(ino_t ino_nr, mode_t * mode)
 {
 	struct inode *rip;
 
@@ -377,8 +368,7 @@ pfs_chmod(ino_t ino_nr, mode_t * mode)
 /*
  * Process a signal.
  */
-static void
-pfs_signal(int signo)
+static void pfs_signal(int signo)
 {
 
 	/* Only check for termination signal, ignore anything else. */
@@ -390,8 +380,7 @@ pfs_signal(int signo)
 /*
  * Initialize PFS.
  */
-static int
-pfs_init(int __unused type, sef_init_info_t * __unused info)
+static int pfs_init(int __unused type, sef_init_info_t * __unused info)
 {
 
 	/* Drop privileges. */
@@ -404,8 +393,7 @@ pfs_init(int __unused type, sef_init_info_t * __unused info)
 /*
  * Perform SEF initialization.
  */
-static void
-pfs_startup(void)
+static void pfs_startup(void)
 {
 
 	/* Register initialization callbacks. */
@@ -437,8 +425,7 @@ static struct fsdriver pfs_table = {
 /*
  * The main routine of this service.
  */
-int
-main(void)
+int main(void)
 {
 
 	/* Local startup. */

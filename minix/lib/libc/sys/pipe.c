@@ -9,8 +9,7 @@
 __weak_alias(pipe, _pipe)
 #endif
 
-int
-pipe2(int fild[2], int flags)
+int pipe2(int fild[2], int flags)
 {
 	message m;
 
@@ -24,8 +23,7 @@ pipe2(int fild[2], int flags)
 	return(0);
 }
 
-int
-pipe(int fild[2])
+int pipe(int fild[2])
 {
 	return pipe2(fild, 0);
 }

@@ -30,7 +30,12 @@ static struct acpi_rsdt {
 	struct acpi_sdt_header	hdr;
 	u32_t			data[MAX_RSDT];
 } rsdt;
-	
+
+static struct acpi_xsdt {
+	struct acpi_sdt_header	hdr;
+	u64_t			data[MAX_RSDT];
+} xsdt;
+
 static struct {
 	char	signature [ACPI_SDT_SIGNATURE_LEN + 1];
 	size_t	length;
@@ -204,6 +209,8 @@ static int acpi_rsdp_test(void * buff)
 static int get_acpi_rsdp(void)
 {
 	u16_t ebda;
+	
+   	if (kinfo.boot_mode == 0) {
 	/*
 	 * Read 40:0Eh - to find the starting address of the EBDA.
 	 */
@@ -221,6 +228,18 @@ static int get_acpi_rsdp(void)
 				sizeof(acpi_rsdp), &machine.acpi_rsdp,
 				acpi_rsdp_test))
 		return 1;
+	} 
+	else {
+	if ((kinfo.mb_version == 2) && (kinfo.rsdp_p != NULL)) {
+		memcpy((void *)&acpi_rsdp, (void *)kinfo.rsdp_p, 
+				sizeof(acpi_rsdp));
+		if (acpi_rsdp_test(&acpi_rsdp)) {
+			machine.acpi_rsdp = vir2phys(&acpi_rsdp);
+			return 1;
+		}
+		printf("get_acpi_rsdp: acpi_rsdp_test failed.\n");
+	}
+	}
 	
 	machine.acpi_rsdp = 0; /* RSDP cannot be found at this address therefore
 				  it is a valid negative value */
@@ -317,11 +336,32 @@ void acpi_init(void)
 		return;
 	}
 	
-	s = acpi_read_sdt_at(acpi_rsdp.rsdt_addr, (struct acpi_sdt_header *) &rsdt,
-			sizeof(struct acpi_rsdt), ACPI_SDT_SIGNATURE(RSDT));
-
-	sdt_count = (s - sizeof(struct acpi_sdt_header)) / sizeof(u32_t);
-
+	if (acpi_rsdp.revision == 0) {
+		s = acpi_read_sdt_at(acpi_rsdp.rsdt_addr,
+				(struct acpi_sdt_header *) &rsdt,
+				sizeof(struct acpi_rsdt), ACPI_SDT_SIGNATURE(RSDT));
+		if (s <= 0) {
+			printf("WARNING : Cannot read RSDT\n");
+			return;
+		}
+		sdt_count = (s - sizeof(struct acpi_sdt_header)) / sizeof(u32_t);
+	} else if (acpi_rsdp.revision == 2) {
+		s = acpi_read_sdt_at(acpi_rsdp.xsdt_addr,
+				(struct acpi_sdt_header *) &xsdt,
+				sizeof(struct acpi_xsdt), ACPI_SDT_SIGNATURE(XSDT));
+		if (s <= 0) {
+			printf("WARNING : Cannot read XSDT\n");
+			return;
+		}
+		sdt_count = (s - sizeof(struct acpi_sdt_header)) / sizeof(u64_t);
+		for (i = 0; i < sdt_count; i++) {
+			rsdt.data[i] = (u32_t)xsdt.data[i];
+		}
+	} else {
+		printf("WARNING : ACPI revision error.\n");
+		return;
+	}
+	
 	for (i = 0; i < sdt_count; i++) {
 		struct acpi_sdt_header hdr;
 		int j;

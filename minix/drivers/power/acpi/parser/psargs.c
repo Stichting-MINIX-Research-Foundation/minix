@@ -420,8 +420,7 @@ AcpiPsGetNextNamepath (
  *
  ******************************************************************************/
 
-void
-AcpiPsGetNextSimpleArg (
+void AcpiPsGetNextSimpleArg (
     ACPI_PARSE_STATE        *ParserState,
     UINT32                  ArgType,
     ACPI_PARSE_OBJECT       *Arg)

@@ -1,0 +1,185 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./etc/mtree/set.minix-comp-gcc							minix-comp-gcc
+./usr/include/gcc-4.5/abmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/ammintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/avxintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/bmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/cpuid.h                           minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/cross-stdarg.h                    minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/emmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/fma4intrin.h                      minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/ia32intrin.h                      minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/immintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/lwpintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/mm3dnow.h                         minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/mm_malloc.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/nmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/pmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/popcntintrin.h                    minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/smmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/tmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/wmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/x86intrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/xmmintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.5/xopintrin.h                       minix-comp      gcccmds,gcc=45,obsolete
+./usr/include/gcc-4.8/adxintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/ammintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/avx2intrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/avxintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/bmi2intrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/bmiintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/bmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/cpuid.h                           minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/cross-stdarg.h                    minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/emmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/f16cintrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/fma4intrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/fmaintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/fxsrintrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/ia32intrin.h                      minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/immintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/lwpintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/lzcntintrin.h                     minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/mm3dnow.h                         minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/mm_malloc.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/nmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/pmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/popcntintrin.h                    minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/prfchwintrin.h                    minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/rdseedintrin.h                    minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/rtmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/smmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/tbmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/tmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/wmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/x86intrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/xmmintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/xopintrin.h                       minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/xsaveintrin.h                     minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/xsaveoptintrin.h                  minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/xtestintrin.h                     minix-comp      gcc=5,gcccmds
+./usr/include/i386                                      minix-comp
+./usr/include/i386/ansi.h                               minix-comp
+./usr/include/i386/aout_machdep.h                       minix-comp
+./usr/include/i386/apmvar.h                             minix-comp
+./usr/include/i386/archconst.h                          minix-comp
+./usr/include/i386/archtypes.h                          minix-comp
+./usr/include/i386/asm.h                                minix-comp
+./usr/include/i386/bios.h                               minix-comp
+./usr/include/i386/bioscall.h                           minix-comp
+./usr/include/i386/bootinfo.h                           minix-comp
+./usr/include/i386/bswap.h                              minix-comp
+./usr/include/i386/byte_swap.h                          minix-comp
+./usr/include/i386/cdefs.h                              minix-comp
+./usr/include/i386/cmos.h                               minix-comp
+./usr/include/i386/compat_jmp_buf.h                     minix-comp      obsolete
+./usr/include/i386/cpu.h                                minix-comp
+./usr/include/i386/cputypes.h                           minix-comp
+./usr/include/i386/disklabel.h                          minix-comp
+./usr/include/i386/diskparm.h                           minix-comp
+./usr/include/i386/elf.h                                minix-comp
+./usr/include/i386/elf_machdep.h                        minix-comp
+./usr/include/i386/endian.h                             minix-comp
+./usr/include/i386/endian_machdep.h                     minix-comp
+./usr/include/i386/fenv.h                               minix-comp
+./usr/include/i386/float.h                              minix-comp
+./usr/include/i386/fpu.h                                minix-comp
+./usr/include/i386/frame.h                              minix-comp
+./usr/include/i386/freebsd_machdep.h                    minix-comp
+./usr/include/i386/gdt.h                                minix-comp
+./usr/include/i386/ibcs2_machdep.h                      minix-comp
+./usr/include/i386/ieee.h                               minix-comp
+./usr/include/i386/ieeefp.h                             minix-comp
+./usr/include/i386/int86.h                              minix-comp      obsolete
+./usr/include/i386/int_const.h                          minix-comp
+./usr/include/i386/int_fmtio.h                          minix-comp
+./usr/include/i386/int_limits.h                         minix-comp
+./usr/include/i386/int_mwgwtypes.h                      minix-comp
+./usr/include/i386/int_types.h                          minix-comp
+./usr/include/i386/interrupt.h                          minix-comp
+./usr/include/i386/intr.h                               minix-comp
+./usr/include/i386/intrdefs.h                           minix-comp
+./usr/include/i386/ipcconst.h                           minix-comp
+./usr/include/i386/joystick.h                           minix-comp
+./usr/include/i386/kcore.h                              minix-comp
+./usr/include/i386/limits.h                             minix-comp
+./usr/include/i386/lock.h                               minix-comp
+./usr/include/i386/math.h                               minix-comp
+./usr/include/i386/mcontext.h                           minix-comp
+./usr/include/i386/memory.h                             minix-comp
+./usr/include/i386/mtrr.h                               minix-comp
+./usr/include/i386/multiboot.h                          minix-comp
+./usr/include/i386/multiboot2.h                         minix-comp
+./usr/include/i386/mutex.h                              minix-comp
+./usr/include/i386/npx.h                                minix-comp      obsolete
+./usr/include/i386/param.h                              minix-comp
+./usr/include/i386/partition.h                          minix-comp
+./usr/include/i386/pcb.h                                minix-comp
+./usr/include/i386/pci.h                                minix-comp
+./usr/include/i386/pci_amd.h                            minix-comp
+./usr/include/i386/pci_intel.h                          minix-comp
+./usr/include/i386/pci_sis.h                            minix-comp
+./usr/include/i386/pci_via.h                            minix-comp
+./usr/include/i386/pio.h                                minix-comp
+./usr/include/i386/pmap.h                               minix-comp
+./usr/include/i386/pmc.h                                minix-comp
+./usr/include/i386/ports.h                              minix-comp
+./usr/include/i386/proc.h                               minix-comp
+./usr/include/i386/profile.h                            minix-comp
+./usr/include/i386/psl.h                                minix-comp
+./usr/include/i386/pte.h                                minix-comp
+./usr/include/i386/ptrace.h                             minix-comp
+./usr/include/i386/reg.h                                minix-comp
+./usr/include/i386/rwlock.h                             minix-comp
+./usr/include/i386/segments.h                           minix-comp
+./usr/include/i386/setjmp.h                             minix-comp
+./usr/include/i386/signal.h                             minix-comp
+./usr/include/i386/sljit_machdep.h                      minix-comp
+./usr/include/i386/specialreg.h                         minix-comp
+./usr/include/i386/spkr.h                               minix-comp
+./usr/include/i386/stackframe.h                         minix-comp
+./usr/include/i386/svr4_machdep.h                       minix-comp
+./usr/include/i386/sysarch.h                            minix-comp
+./usr/include/i386/trap.h                               minix-comp
+./usr/include/i386/tss.h                                minix-comp
+./usr/include/i386/types.h                              minix-comp
+./usr/include/i386/vm.h                                 minix-comp
+./usr/include/i386/vm86.h                               minix-comp
+./usr/include/i386/vmparam.h                            minix-comp
+./usr/include/i386/wchar_limits.h                       minix-comp
+./usr/include/minix/vassert.h                           minix-comp
+./usr/include/x86                                       minix-comp
+./usr/include/x86/aout_machdep.h                        minix-comp
+./usr/include/x86/bootinfo.h                            minix-comp
+./usr/include/x86/cacheinfo.h                           minix-comp
+./usr/include/x86/cpu.h                                 minix-comp
+./usr/include/x86/cpu_extended_state.h                  minix-comp
+./usr/include/x86/cpu_ucode.h                           minix-comp
+./usr/include/x86/cputypes.h                            minix-comp
+./usr/include/x86/cpuvar.h                              minix-comp
+./usr/include/x86/float.h                               minix-comp
+./usr/include/x86/fpu.h                                 minix-comp
+./usr/include/x86/ieee.h                                minix-comp
+./usr/include/x86/ieeefp.h                              minix-comp
+./usr/include/x86/intr.h                                minix-comp
+./usr/include/x86/intrdefs.h                            minix-comp
+./usr/include/x86/lock.h                                minix-comp
+./usr/include/x86/math.h                                minix-comp
+./usr/include/x86/mtrr.h                                minix-comp
+./usr/include/x86/mutex.h                               minix-comp
+./usr/include/x86/pio.h                                 minix-comp
+./usr/include/x86/pmap.h                                minix-comp
+./usr/include/x86/pmap_pv.h                             minix-comp
+./usr/include/x86/psl.h                                 minix-comp
+./usr/include/x86/pte.h                                 minix-comp
+./usr/include/x86/rwlock.h                              minix-comp
+./usr/include/x86/specialreg.h                          minix-comp
+./usr/include/x86/sysarch.h                             minix-comp
+./usr/include/x86/trap.h                                minix-comp
+./usr/include/x86/via_padlock.h                         minix-comp

@@ -160,7 +160,7 @@ next:
 get_ptab:
 	call	read_sector
 	call	inc64
-	loopw	get_ptab
+	loop	get_ptab
 
 	/* Find the boot partition */
 	xorw	%si,%si			/* Nothing found yet */
@@ -182,7 +182,7 @@ find_part:
 	movw	%di,%si
 not_this:
 	addw	%ax,%di
-	loopw	find_part
+	loop	find_part
 
 	andw	%si,%si
 	jnz	found_part

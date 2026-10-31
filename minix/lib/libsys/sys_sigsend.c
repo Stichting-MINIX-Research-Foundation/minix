@@ -3,9 +3,7 @@
 /*===========================================================================*
  *                                sys_sigsend				     *
  *===========================================================================*/
-int sys_sigsend(proc_ep, sig_ctxt)
-endpoint_t proc_ep;			/* for which process */
-struct sigmsg *sig_ctxt;		/* POSIX style handling */
+int sys_sigsend(endpoint_t proc_ep, struct sigmsg *sig_ctxt)
 {
     message m;
     int result;

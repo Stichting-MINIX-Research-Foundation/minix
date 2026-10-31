@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.140 2015/06/28 10:04:32 maxv Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.154 2022/04/16 07:59:46 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.140 2015/06/28 10:04:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.154 2022/04/16 07:59:46 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -139,9 +139,6 @@ ffs_snapshot_init(struct ufsmount *ump)
 	struct snap_info *si;
 
 	si = ump->um_snapinfo = kmem_alloc(sizeof(*si), KM_SLEEP);
-	if (si == NULL)
-		return ENOMEM;
-
 	TAILQ_INIT(&si->si_snapshots);
 	mutex_init(&si->si_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&si->si_snaplock, MUTEX_DEFAULT, IPL_NONE);
@@ -254,10 +251,14 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * All allocations are done, so we can now suspend the filesystem.
 	 */
 	error = vfs_suspend(vp->v_mount, 0);
+	if (error == 0) {
+		suspended = true;
+		vrele_flush(vp->v_mount);
+		error = VFS_SYNC(vp->v_mount, MNT_WAIT, curlwp->l_cred);
+	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error)
 		goto out;
-	suspended = true;
 	getmicrotime(&starttime);
 	/*
 	 * First, copy all the cylinder group maps that have changed.
@@ -333,7 +334,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Invalidate and free all pages on the snapshot vnode.
 	 * We will read and write through the buffercache.
 	 */
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES | PGO_CLEANIT | PGO_SYNCIO | PGO_FREE);
 	if (error)
@@ -402,6 +403,12 @@ out:
 	}
 	if (error) {
 		if (UFS_WAPBL_BEGIN(mp) == 0) {
+			/*
+			 * We depend on ffs_truncate() to call ffs_snapremove()
+			 * before it may return an error. On failed
+			 * ffs_truncate() we have normal file with leaked
+			 * (meta-) data, but no snapshot to use.
+			 */
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
@@ -436,18 +443,21 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	if (error)
 		return EACCES;
 
-	if (vp->v_size != 0) {
-		error = ffs_truncate(vp, 0, 0, NOCRED);
-		if (error)
-			return error;
-	}
+	/*
+	 * Must completely truncate the file here. Allocated
+	 * blocks on a snapshot mean that block has been copied
+	 * on write, see ffs_copyonwrite() testing "blkno != 0"
+	 */
+	error = ufs_truncate_all(vp);
+	if (error)
+		return error;
 
 	/* Change inode to snapshot type file. */
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		return error;
 #if defined(QUOTA) || defined(QUOTA2)
-	/* shapshot inodes are not accounted in quotas */
+	/* snapshot inodes are not accounted in quotas */
 	chkiq(ip, -1, l->l_cred, 0);
 #endif
 	ip->i_flags |= (SF_SNAPSHOT | SF_SNAPINVAL);
@@ -603,7 +613,6 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 
 struct snapshot_expunge_ctx {
 	struct vnode *logvp;
-	struct lwp *l;
 	struct vnode *vp;
 	struct fs *copy_fs;
 };
@@ -611,9 +620,10 @@ struct snapshot_expunge_ctx {
 static bool
 snapshot_expunge_selector(void *cl, struct vnode *xvp)
 {
-	struct vattr vat;
 	struct snapshot_expunge_ctx *c = cl;
 	struct inode *xp;
+
+	KASSERT(mutex_owned(xvp->v_interlock));
 
 	xp = VTOI(xvp);
 	if (xvp->v_type == VNON || VTOI(xvp) == NULL ||
@@ -627,8 +637,7 @@ snapshot_expunge_selector(void *cl, struct vnode *xvp)
 	if (xvp == c->logvp)
 		return true;
 
-	if (VOP_GETATTR(xvp, &vat, c->l->l_cred) == 0 &&
-	    vat.va_nlink > 0)
+	if (xp->i_nlink > 0)
 		return false;
 
 	if (ffs_checkfreefile(c->copy_fs, c->vp, xp->i_number))
@@ -652,7 +661,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	daddr_t blkno, *blkp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct inode *xp;
-	struct lwp *l = curlwp;
 	struct vnode *logvp = NULL, *xvp;
 	struct vnode_iterator *marker;
 	struct snapshot_expunge_ctx ctx;
@@ -663,8 +671,8 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	 */
 	if ((fs->fs_flags & FS_DOWAPBL) &&
 	    fs->fs_journal_location == UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM) {
-		error = VFS_VGET(mp,
-		    fs->fs_journallocs[UFS_WAPBL_INFS_INO], &logvp);
+		error = VFS_VGET(mp, fs->fs_journallocs[UFS_WAPBL_INFS_INO],
+		    LK_EXCLUSIVE, &logvp);
 		if (error)
 			goto out;
 	}
@@ -676,7 +684,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 
 	vfs_vnode_iterator_init(mp, &marker);
 	ctx.logvp = logvp;
-	ctx.l = l;
 	ctx.vp = vp;
 	ctx.copy_fs = copy_fs;
 	while ((xvp = vfs_vnode_iterator_next(marker, snapshot_expunge_selector,
@@ -1752,7 +1759,7 @@ ffs_snapshot_mount(struct mount *mp)
 		if (fs->fs_snapinum[snaploc] == 0)
 			break;
 		if ((error = VFS_VGET(mp, fs->fs_snapinum[snaploc],
-		    &vp)) != 0) {
+		    LK_EXCLUSIVE, &vp)) != 0) {
 			printf("ffs_snapshot_mount: vget failed %d\n", error);
 			continue;
 		}
@@ -1978,10 +1985,9 @@ retry:
 			if (gen != si->si_gen)
 				goto retry;
 		}
-#ifdef DIAGNOSTIC
-		if (blkno == BLK_SNAP && bp->b_lblkno >= 0)
-			panic("ffs_copyonwrite: bad copy block");
-#endif
+		KASSERTMSG((blkno != BLK_SNAP || bp->b_lblkno < 0),
+		    "ffs_copyonwrite: bad copy block: blkno %jd, lblkno %jd",
+		    (intmax_t)blkno, (intmax_t)bp->b_lblkno);
 		if (blkno != 0)
 			continue;
 
@@ -2071,7 +2077,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	long size, xfersize, blkoffset;
 	int error;
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
 	if (ioflag & IO_ALTSEMANTICS)
@@ -2124,7 +2129,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 		brelse(bp, BC_AGE);
 
 	mutex_exit(&si->si_snaplock);
-	fstrans_done(vp->v_mount);
 	return error;
 }
 

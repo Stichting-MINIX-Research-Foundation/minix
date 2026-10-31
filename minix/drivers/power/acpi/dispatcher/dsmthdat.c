@@ -53,8 +53,7 @@
 
 /* Local prototypes */
 
-static void
-AcpiDsMethodDataDeleteValue (
+static void AcpiDsMethodDataDeleteValue (
     UINT8                   Type,
     UINT32                  Index,
     ACPI_WALK_STATE         *WalkState);
@@ -96,8 +95,7 @@ AcpiDsMethodDataGetType (
  *
  ******************************************************************************/
 
-void
-AcpiDsMethodDataInit (
+void AcpiDsMethodDataInit (
     ACPI_WALK_STATE         *WalkState)
 {
     UINT32                  i;
@@ -146,8 +144,7 @@ AcpiDsMethodDataInit (
  *
  ******************************************************************************/
 
-void
-AcpiDsMethodDataDeleteAll (
+void AcpiDsMethodDataDeleteAll (
     ACPI_WALK_STATE         *WalkState)
 {
     UINT32                  Index;
@@ -511,8 +508,7 @@ AcpiDsMethodDataGetValue (
  *
  ******************************************************************************/
 
-static void
-AcpiDsMethodDataDeleteValue (
+static void AcpiDsMethodDataDeleteValue (
     UINT8                   Type,
     UINT32                  Index,
     ACPI_WALK_STATE         *WalkState)

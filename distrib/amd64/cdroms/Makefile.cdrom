@@ -1,0 +1,27 @@
+# $NetBSD: Makefile.cdrom,v 1.41 2017/02/10 16:43:59 christos Exp $
+
+.include <bsd.own.mk>
+
+#SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+
+# Need multidot for the boot loader to read kernel modules as it doesn't
+# understand rockridge.
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
+#CDINSTKERNEL=	../../instkernel
+#CDKERNELS=	netbsd-GENERIC.gz       netbsd
+CDRELEASE_NOISOS=	true
+#CD_SETS=	base etc
+CD_SETS=	minix-kernel minix-base
+.if ${MKKMOD} != "no"
+CD_SETS+=	modules
+.endif
+
+image_md_pre:
+	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc cdrom/install.sh
+	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
+	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
+	${INSTALL} ${COPY} ${.CURDIR}/../etc.rc cdrom/etc/rc
+	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/../install.sh cdrom/install.sh
+	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
+#	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
+	${MKDIR} ${MKDIRPERM} cdrom/var

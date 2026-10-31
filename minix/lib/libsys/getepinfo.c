@@ -4,8 +4,7 @@
 
 #include <sys/socket.h>
 
-pid_t
-getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
+pid_t getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
 {
 	message m;
 	int r;
@@ -25,14 +24,12 @@ getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
 	return (pid_t) r;
 }
 
-pid_t
-getnpid(endpoint_t proc_ep)
+pid_t getnpid(endpoint_t proc_ep)
 {
 	return getepinfo(proc_ep, NULL, NULL);
 }
 
-uid_t
-getnuid(endpoint_t proc_ep)
+uid_t getnuid(endpoint_t proc_ep)
 {
 	uid_t uid;
 	int r;
@@ -43,8 +40,7 @@ getnuid(endpoint_t proc_ep)
 	return uid;
 }
 
-gid_t
-getngid(endpoint_t proc_ep)
+gid_t getngid(endpoint_t proc_ep)
 {
 	gid_t gid;
 	int r;
@@ -55,8 +51,7 @@ getngid(endpoint_t proc_ep)
 	return gid;
 }
 
-int
-getsockcred(endpoint_t proc_ep, struct sockcred * sockcred, gid_t * groups,
+int getsockcred(endpoint_t proc_ep, struct sockcred * sockcred, gid_t * groups,
 	int ngroups)
 {
 	message m;

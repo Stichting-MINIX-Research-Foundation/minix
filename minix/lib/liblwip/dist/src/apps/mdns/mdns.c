@@ -294,8 +294,7 @@ mdns_domain_add_label(struct mdns_domain *domain, const char *label, u8_t len)
  * Internal readname function with max 6 levels of recursion following jumps
  * while decompressing name
  */
-static u16_t
-mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, unsigned depth)
+static u16_t mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, unsigned depth)
 {
   u8_t c;
 
@@ -366,8 +365,7 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
  * @return The new offset after the domain, or MDNS_READNAME_ERROR
  *         if reading failed
  */
-u16_t
-mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain)
+u16_t mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain)
 {
   memset(domain, 0, sizeof(struct mdns_domain));
   return mdns_readname_loop(p, offset, domain, 0);
@@ -377,8 +375,7 @@ mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain)
  * Print domain name to debug output
  * @param domain The domain name
  */
-static void
-mdns_domain_debug_print(struct mdns_domain *domain)
+static void mdns_domain_debug_print(struct mdns_domain *domain)
 {
   u8_t *src = domain->name;
   u8_t i;
@@ -400,8 +397,7 @@ mdns_domain_debug_print(struct mdns_domain *domain)
  * @param b Domain name to compare 2
  * @return 1 if domains are equal ignoring case, 0 otherwise
  */
-int
-mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b)
+int mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b)
 {
   u8_t *ptra, *ptrb;
   u8_t len;
@@ -437,8 +433,7 @@ mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b)
  * Call user supplied function to setup TXT data
  * @param service The service to build TXT record for
  */
-static void
-mdns_prepare_txtdata(struct mdns_service *service)
+static void mdns_prepare_txtdata(struct mdns_service *service)
 {
   memset(&service->txtdata, 0, sizeof(struct mdns_domain));
   if (service->txt_fn) {
@@ -607,8 +602,7 @@ mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *servi
  *                         if reply bit has REPLY_HOST_PTR_V6 set
  * @return Bitmask of which replies to send
  */
-static int
-check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
+static int check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
 {
   err_t res;
   int replies = 0;
@@ -674,8 +668,7 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
  * @param rr Domain/type/class from a question
  * @return Bitmask of which replies to send
  */
-static int
-check_service(struct mdns_service *service, struct mdns_rr_info *rr)
+static int check_service(struct mdns_service *service, struct mdns_rr_info *rr)
 {
   err_t res;
   int replies = 0;
@@ -726,8 +719,7 @@ check_service(struct mdns_service *service, struct mdns_rr_info *rr)
  *         If compression can not be done against this previous domain name, the full new
  *         domain length is returned.
  */
-u16_t
-mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain)
+u16_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain)
 {
   struct mdns_domain target;
   u16_t target_end;
@@ -1213,8 +1205,7 @@ mdns_add_txt_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct mdns
 /**
  * Setup outpacket as a reply to the incoming packet
  */
-static void
-mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
+static void mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
 {
   memset(out, 0, sizeof(struct mdns_outpacket));
   out->cache_flush = 1;
@@ -1247,8 +1238,7 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
  * Add additional answers based on the selected answers
  * Send the packet
  */
-static void
-mdns_send_outpacket(struct mdns_outpacket *outpkt)
+static void mdns_send_outpacket(struct mdns_outpacket *outpkt)
 {
   struct mdns_service *service;
   err_t res;
@@ -1448,8 +1438,7 @@ cleanup:
  * @param netif The network interface to send on
  * @param destination The target address to send to (usually multicast address)
  */
-static void
-mdns_announce(struct netif *netif, const ip_addr_t *destination)
+static void mdns_announce(struct netif *netif, const ip_addr_t *destination)
 {
   struct mdns_outpacket announce;
   int i;
@@ -1490,8 +1479,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
  * 2. Clear pending answers if known answers are supplied
  * 3. Put chosen answers in new packet and send as reply
  */
-static void
-mdns_handle_question(struct mdns_packet *pkt)
+static void mdns_handle_question(struct mdns_packet *pkt)
 {
   struct mdns_service *service;
   struct mdns_outpacket reply;
@@ -1704,8 +1692,7 @@ cleanup:
  * Handle response MDNS packet
  * Only prints debug for now. Will need more code to do conflict resolution.
  */
-static void
-mdns_handle_response(struct mdns_packet *pkt)
+static void mdns_handle_response(struct mdns_packet *pkt)
 {
   /* Ignore all questions */
   while (pkt->questions_left) {
@@ -1739,8 +1726,7 @@ mdns_handle_response(struct mdns_packet *pkt)
  * Receive input function for MDNS packets.
  * Handles both IPv4 and IPv6 UDP pcbs.
  */
-static void
-mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   struct dns_hdr hdr;
   struct mdns_packet packet;
@@ -1811,8 +1797,7 @@ dealloc:
  * this handled automatically for you.
  * @param netif The network interface where settings have changed.
  */
-void
-mdns_resp_netif_settings_changed(struct netif *netif)
+void mdns_resp_netif_settings_changed(struct netif *netif)
 {
   LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
 
@@ -1830,8 +1815,7 @@ mdns_resp_netif_settings_changed(struct netif *netif)
 }
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-static void
-mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
+static void mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
 {
   LWIP_UNUSED_ARG(args);
 
@@ -2043,8 +2027,7 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
  * @ingroup mdns
  * Initiate MDNS responder. Will open UDP sockets on port 5353
  */
-void
-mdns_resp_init(void)
+void mdns_resp_init(void)
 {
   err_t res;
 

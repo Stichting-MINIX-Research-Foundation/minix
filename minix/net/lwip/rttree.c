@@ -47,8 +47,7 @@
  * bit count assigned.  Precompute any additional fields used for fast address
  * access on the node.
  */
-static void
-rttree_precompute(struct rttree * tree __unused, struct rttree_node * node)
+static void rttree_precompute(struct rttree * tree __unused, struct rttree_node * node)
 {
 
 	node->rtn_byte = RTTREE_BITS_TO_BYTE(node->rtn_bits);
@@ -60,8 +59,7 @@ rttree_precompute(struct rttree * tree __unused, struct rttree_node * node)
  * set or clear in 'addr'.  Return 1 if the address has the bit set, 0 if it
  * does not.
  */
-static unsigned int
-rttree_test(const struct rttree * tree __unused, const void * addr,
+static unsigned int rttree_test(const struct rttree * tree __unused, const void * addr,
 	unsigned int bit)
 {
 	unsigned int byte, shift;
@@ -78,8 +76,7 @@ rttree_test(const struct rttree * tree __unused, const void * addr,
  * effectively computing the side (left or right) to take when descending down
  * the tree.  Return 1 if the address has the bit set, 0 if it does not.
  */
-static inline unsigned int
-rttree_side(const struct rttree * tree, const struct rttree_node * node,
+static inline unsigned int rttree_side(const struct rttree * tree, const struct rttree_node * node,
 	const void * addr)
 {
 
@@ -93,8 +90,7 @@ rttree_side(const struct rttree * tree, const struct rttree_node * node,
  * This function must be called only on entries that have already been
  * determined to span the full bit width.
  */
-static inline int
-rttree_equals(const struct rttree * tree, const struct rttree_entry * entry,
+static inline int rttree_equals(const struct rttree * tree, const struct rttree_entry * entry,
 	const void * addr)
 {
 	unsigned int bits;
@@ -111,8 +107,7 @@ rttree_equals(const struct rttree * tree, const struct rttree_entry * entry,
  * the address 'addr'.  Return TRUE if the address is matched by the entry's
  * address and mask, or FALSE if not.
  */
-static inline int
-rttree_match(const struct rttree * tree, const struct rttree_entry * entry,
+static inline int rttree_match(const struct rttree * tree, const struct rttree_entry * entry,
 	const void * addr)
 {
 	const uint8_t *aptr, *aptr2, *mptr;
@@ -143,8 +138,7 @@ rttree_match(const struct rttree * tree, const struct rttree_entry * entry,
  * Find the first bit that differs between the two given addresses.  Return the
  * bit number if found, or the full bit width if the addresses are equal.
  */
-static unsigned int
-rttree_diff(const struct rttree * tree, const void * addr, const void * addr2)
+static unsigned int rttree_diff(const struct rttree * tree, const void * addr, const void * addr2)
 {
 	const uint8_t *aptr, *aptr2;
 	unsigned int bit, i;
@@ -169,8 +163,7 @@ rttree_diff(const struct rttree * tree, const void * addr, const void * addr2)
  * Add a link node to the free list of the given routing tree, marking it as
  * free in the process.
  */
-static void
-rttree_add_free(struct rttree * tree, struct rttree_node * node)
+static void rttree_add_free(struct rttree * tree, struct rttree_node * node)
 {
 
 	node->rtn_child[0] = NULL;
@@ -186,8 +179,7 @@ rttree_add_free(struct rttree * tree, struct rttree_node * node)
  * have verified that the node is on the free list, and has to change the node
  * type as appropriate afterward.
  */
-static void
-rttree_del_free(struct rttree * tree, struct rttree_node * node)
+static void rttree_del_free(struct rttree * tree, struct rttree_node * node)
 {
 
 	assert(node->rtn_type == RTNT_FREE);
@@ -222,8 +214,7 @@ rttree_get_free(struct rttree * tree)
 /*
  * Initialize the given routing tree, with the given address bit width.
  */
-void
-rttree_init(struct rttree * tree, unsigned int bits)
+void rttree_init(struct rttree * tree, unsigned int bits)
 {
 
 	tree->rtt_root = NULL;
@@ -399,8 +390,7 @@ rttree_enum(struct rttree * tree, struct rttree_entry * last)
  * The node's children are set to 'left' and 'right'; for each, if not NULL,
  * its parent is set to 'node'.
  */
-static void
-rttree_set(struct rttree * tree, struct rttree_node * node, int type,
+static void rttree_set(struct rttree * tree, struct rttree_node * node, int type,
 	unsigned int prefix, struct rttree_node * parent, int side,
 	struct rttree_node * left, struct rttree_node * right)
 {
@@ -431,8 +421,7 @@ rttree_set(struct rttree * tree, struct rttree_node * node, int type,
  * setting the type of the latter to 'type'.  The tree is updated accordingly,
  * but it is left up to the caller to deal with the old node as appropriate.
  */
-static void
-rttree_replace(struct rttree * tree, struct rttree_node * onode,
+static void rttree_replace(struct rttree * tree, struct rttree_node * onode,
 	struct rttree_node * node, int type)
 {
 	struct rttree_node *parent;
@@ -470,8 +459,7 @@ rttree_replace(struct rttree * tree, struct rttree_node * onode,
  * combination of that address and mask.  If the caller has already verified
  * with rttree_lookup_exact() that no such entry exists, the call will succeed.
  */
-int
-rttree_add(struct rttree * tree, struct rttree_entry * entry,
+int rttree_add(struct rttree * tree, struct rttree_entry * entry,
 	const void * addr, const void * mask, unsigned int prefix)
 {
 	struct rttree_node *node, *parent, *link;
@@ -683,8 +671,7 @@ rttree_remove(struct rttree * tree, struct rttree_node * node,
  * Delete the routing entry 'entry' from the routing tree 'tree'.  The entry
  * must have been added before.  This function always succeeds.
  */
-void
-rttree_delete(struct rttree * tree, struct rttree_entry * entry)
+void rttree_delete(struct rttree * tree, struct rttree_entry * entry)
 {
 	struct rttree_node *node, *link;
 

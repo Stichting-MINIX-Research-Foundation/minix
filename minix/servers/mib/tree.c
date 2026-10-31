@@ -87,8 +87,7 @@ mib_find(struct mib_node * parent, int id, struct mib_dynode *** prevpp)
  * success, or a negative error code on failure.  The function may return 0
  * to indicate that nothing was copied out after all (this is unused here).
  */
-static ssize_t
-mib_copyout_node(struct mib_call * call, struct mib_oldp * oldp, size_t off,
+static ssize_t mib_copyout_node(struct mib_call * call, struct mib_oldp * oldp, size_t off,
 	int id, const struct mib_node * node)
 {
 	struct sysctlnode scn;
@@ -176,8 +175,7 @@ mib_copyout_node(struct mib_call * call, struct mib_oldp * oldp, size_t off,
  * Given a query on a non-leaf (parent) node, provide the user with an array of
  * this node's children.
  */
-static ssize_t
-mib_query(struct mib_call * call, struct mib_node * parent,
+static ssize_t mib_query(struct mib_call * call, struct mib_node * parent,
 	struct mib_oldp * oldp, struct mib_newp * newp)
 {
 	struct sysctlnode scn;
@@ -244,8 +242,7 @@ mib_query(struct mib_call * call, struct mib_node * parent,
  * characters, return the length of the string excluding null terminator.
  * Otherwise, return zero to indicate failure.
  */
-static size_t
-mib_check_name(const char * name, size_t namesize)
+static size_t mib_check_name(const char * name, size_t namesize)
 {
 	size_t namelen;
 	char c;
@@ -274,8 +271,7 @@ mib_check_name(const char * name, size_t namesize)
  * failure, return an error code.  If the failure is EEXIST, 'idp' will contain
  * the ID of the conflicting node, and 'nodep' will point to the node.
  */
-static int
-mib_scan(struct mib_node * parent, int given_id, const char * name, int * idp,
+static int mib_scan(struct mib_node * parent, int given_id, const char * name, int * idp,
 	struct mib_dynode *** prevpp, struct mib_node ** nodep)
 {
 	struct mib_dynode **prevp, **dynp;
@@ -368,8 +364,7 @@ mib_scan(struct mib_node * parent, int given_id, const char * name, int * idp,
  * the case that no null terminator was found within the range of bytes that
  * would fit in the given buffer.
  */
-static int
-mib_copyin_str(struct mib_newp * __restrict newp, vir_bytes addr,
+static int mib_copyin_str(struct mib_newp * __restrict newp, vir_bytes addr,
 	char * __restrict buf, size_t bufsize, size_t * __restrict sizep)
 {
 	char *ptr, *endp;
@@ -423,8 +418,7 @@ mib_copyin_str(struct mib_newp * __restrict newp, vir_bytes addr,
  * Increase the version of the root node, and copy this new version to all
  * nodes on the path to the given node, including that node itself.
  */
-static void
-mib_upgrade(struct mib_node * node)
+static void mib_upgrade(struct mib_node * node)
 {
 	uint32_t ver;
 
@@ -453,8 +447,7 @@ mib_upgrade(struct mib_node * node)
  * linked-list position of the parent tree as given by 'prevp'.  Also update
  * versions and counters accordingly.  This function never fails.
  */
-static void
-mib_add(struct mib_dynode * dynode, struct mib_dynode ** prevp)
+static void mib_add(struct mib_dynode * dynode, struct mib_dynode ** prevp)
 {
 	struct mib_node *parent;
 
@@ -483,8 +476,7 @@ mib_add(struct mib_dynode * dynode, struct mib_dynode ** prevp)
 /*
  * Create a node.
  */
-static ssize_t
-mib_create(struct mib_call * call, struct mib_node * parent,
+static ssize_t mib_create(struct mib_call * call, struct mib_node * parent,
 	struct mib_oldp * oldp, struct mib_newp * newp)
 {
 	struct mib_dynode *dynode, **prevp;
@@ -781,8 +773,7 @@ mib_create(struct mib_call * call, struct mib_node * parent,
  * to its dynode container.  Also update versions and counters as appropriate.
  * This function never fails.
  */
-static void
-mib_remove(struct mib_node * node, struct mib_dynode ** prevp)
+static void mib_remove(struct mib_node * node, struct mib_dynode ** prevp)
 {
 	struct mib_dynode *dynode;
 	struct mib_node *parent;
@@ -835,8 +826,7 @@ mib_remove(struct mib_node * node, struct mib_dynode ** prevp)
 /*
  * Destroy a node.
  */
-static ssize_t
-mib_destroy(struct mib_call * call, struct mib_node * parent,
+static ssize_t mib_destroy(struct mib_call * call, struct mib_node * parent,
 	struct mib_oldp * oldp, struct mib_newp * newp)
 {
 	struct mib_dynode **prevp;
@@ -922,8 +912,7 @@ mib_destroy(struct mib_call * call, struct mib_node * parent,
  * range, would be) copied out on success, or a negative error code on failure.
  * The function may return 0 to indicate that nothing was copied out after all.
  */
-static ssize_t
-mib_copyout_desc(struct mib_call * call, struct mib_oldp * oldp, size_t off,
+static ssize_t mib_copyout_desc(struct mib_call * call, struct mib_oldp * oldp, size_t off,
 	int id, const struct mib_node * node)
 {
 	struct sysctldesc *scd;
@@ -969,8 +958,7 @@ mib_copyout_desc(struct mib_call * call, struct mib_oldp * oldp, size_t off,
  * Retrieve node descriptions in bulk, or retrieve or assign a particular
  * node's description.
  */
-static ssize_t
-mib_describe(struct mib_call * call, struct mib_node * parent,
+static ssize_t mib_describe(struct mib_call * call, struct mib_node * parent,
 	struct mib_oldp * oldp, struct mib_newp * newp)
 {
 	struct sysctlnode scn;
@@ -1127,8 +1115,7 @@ mib_getptr(struct mib_node * node)
  * Read current (old) data from a regular data node, if requested.  Return the
  * old data length.
  */
-static ssize_t
-mib_read(struct mib_node * node, struct mib_oldp * oldp)
+static ssize_t mib_read(struct mib_node * node, struct mib_oldp * oldp)
 {
 	void *ptr;
 	size_t oldlen;
@@ -1156,8 +1143,7 @@ mib_read(struct mib_node * node, struct mib_oldp * oldp)
 /*
  * Write new data into a regular data node, if requested.
  */
-static int
-mib_write(struct mib_call * call, struct mib_node * node,
+static int mib_write(struct mib_call * call, struct mib_node * node,
 	struct mib_newp * newp, mib_verify_ptr verify)
 {
 	bool b[(sizeof(bool) == sizeof(char)) ? 1 : -1]; /* explained below */
@@ -1305,8 +1291,7 @@ mib_write(struct mib_call * call, struct mib_node * node,
  * case this function will be used instead.  In addition, this function may be
  * used from handler functions as part of their functionality.
  */
-ssize_t
-mib_readwrite(struct mib_call * call, struct mib_node * node,
+ssize_t mib_readwrite(struct mib_call * call, struct mib_node * node,
 	struct mib_oldp * oldp, struct mib_newp * newp, mib_verify_ptr verify)
 {
 	ssize_t len;
@@ -1329,8 +1314,7 @@ mib_readwrite(struct mib_call * call, struct mib_node * node,
  * taking the appropriate action on the resulting node, if found.  Return the
  * old data length on success, or a negative error code on failure.
  */
-ssize_t
-mib_dispatch(struct mib_call * call, struct mib_oldp * oldp,
+ssize_t mib_dispatch(struct mib_call * call, struct mib_oldp * oldp,
 	struct mib_newp * newp)
 {
 	struct mib_node *parent, *node;
@@ -1476,8 +1460,7 @@ mib_dispatch(struct mib_call * call, struct mib_oldp * oldp,
 /*
  * Recursively initialize the static tree at initialization time.
  */
-static void
-mib_tree_recurse(struct mib_node * parent)
+static void mib_tree_recurse(struct mib_node * parent)
 {
 	struct mib_node *node;
 	int id;
@@ -1516,8 +1499,7 @@ mib_tree_recurse(struct mib_node * parent)
  * Go through the entire static tree, recursively, initializing some values
  * that could not be assigned at compile time.
  */
-void
-mib_tree_init(void)
+void mib_tree_init(void)
 {
 
 	/* Initialize some variables. */
@@ -1540,8 +1522,7 @@ mib_tree_init(void)
  * success, with a pointer to the resulting static-node structure stored in
  * 'nodep'.  Return a negative error code on failure.
  */
-int
-mib_mount(const int * mib, unsigned int miblen, unsigned int eid, uint32_t rid,
+int mib_mount(const int * mib, unsigned int miblen, unsigned int eid, uint32_t rid,
 	uint32_t flags, unsigned int csize, unsigned int clen,
 	struct mib_node ** nodep)
 {
@@ -1651,7 +1632,16 @@ mib_mount(const int * mib, unsigned int miblen, unsigned int eid, uint32_t rid,
 	 * converted to a mount point.  If the target node does not exist, we
 	 * have to allocate a temporary node as mount point.
 	 */
-	if ((node = mib_find(parent, id, NULL /*prevp*/)) != NULL) {
+	/*
+	 * If the mount point is held by a service that no longer exists,
+	 * evict the stale mounts first; the node may be deallocated as a
+	 * result, so look it up again afterwards.
+	 */
+	if ((node = mib_find(parent, id, NULL /*prevp*/)) != NULL &&
+	    mib_remote_evict_stale(node))
+		node = mib_find(parent, id, NULL /*prevp*/);
+
+	if (node != NULL) {
 		/*
 		 * We are about to mount on an existing node.  As stated above,
 		 * the node flags must match the given flags exactly.
@@ -1786,8 +1776,7 @@ mib_mount(const int * mib, unsigned int miblen, unsigned int eid, uint32_t rid,
  * change of contents in the subtree.  This function always succeeds, and may
  * deallocate the given node.
  */
-void
-mib_unmount(struct mib_node * node)
+void mib_unmount(struct mib_node * node)
 {
 	struct mib_dynode **prevp;
 	struct mib_node *child;

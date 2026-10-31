@@ -14,8 +14,7 @@ static char hostname[MAXHOSTNAMELEN], domainname[MAXHOSTNAMELEN];
 /*
  * Verification for CTL_KERN KERN_SECURELVL.
  */
-static int
-mib_kern_securelvl(struct mib_call * call __unused, struct mib_node * node,
+static int mib_kern_securelvl(struct mib_call * call __unused, struct mib_node * node,
 	void * ptr, size_t size __unused)
 {
 	int v;
@@ -32,8 +31,7 @@ mib_kern_securelvl(struct mib_call * call __unused, struct mib_node * node,
 /*
  * Implementation of CTL_KERN KERN_CLOCKRATE.
  */
-static ssize_t
-mib_kern_clockrate(struct mib_call * call __unused,
+static ssize_t mib_kern_clockrate(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -60,8 +58,7 @@ mib_kern_clockrate(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_PROFILING.
  */
-static ssize_t
-mib_kern_profiling(struct mib_call * call __unused,
+static ssize_t mib_kern_profiling(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp __unused,
 	struct mib_newp * newp __unused)
 {
@@ -73,8 +70,7 @@ mib_kern_profiling(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_HARDCLOCK_TICKS.
  */
-static ssize_t
-mib_kern_hardclock_ticks(struct mib_call * call __unused,
+static ssize_t mib_kern_hardclock_ticks(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -92,8 +88,7 @@ mib_kern_hardclock_ticks(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_ROOT_DEVICE.
  */
-static ssize_t
-mib_kern_root_device(struct mib_call * call __unused,
+static ssize_t mib_kern_root_device(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -116,8 +111,7 @@ mib_kern_root_device(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_CCPU.
  */
-static ssize_t
-mib_kern_ccpu(struct mib_call * call __unused,
+static ssize_t mib_kern_ccpu(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -131,8 +125,7 @@ mib_kern_ccpu(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_CP_TIME.
  */
-static ssize_t
-mib_kern_cp_time(struct mib_call * call, struct mib_node * node __unused,
+static ssize_t mib_kern_cp_time(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	uint64_t ticks[MINIX_CPUSTATES], sum[MINIX_CPUSTATES];
@@ -189,8 +182,7 @@ mib_kern_cp_time(struct mib_call * call, struct mib_node * node __unused,
 /*
  * Implementation of CTL_KERN KERN_CONSDEV.
  */
-static ssize_t
-mib_kern_consdev(struct mib_call * call __unused,
+static ssize_t mib_kern_consdev(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -205,8 +197,7 @@ mib_kern_consdev(struct mib_call * call __unused,
 /*
  * Verification for CTL_KERN KERN_FORKFSLEEP.
  */
-static int
-mib_kern_forkfsleep(struct mib_call * call __unused,
+static int mib_kern_forkfsleep(struct mib_call * call __unused,
 	struct mib_node * node __unused, void * ptr, size_t size __unused)
 {
 	int v;
@@ -219,8 +210,7 @@ mib_kern_forkfsleep(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_DRIVERS.
  */
-static ssize_t
-mib_kern_drivers(struct mib_call * call __unused,
+static ssize_t mib_kern_drivers(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -283,8 +273,7 @@ mib_kern_drivers(struct mib_call * call __unused,
 /*
  * Implementation of CTL_KERN KERN_BOOTTIME.
  */
-static ssize_t
-mib_kern_boottime(struct mib_call * call __unused,
+static ssize_t mib_kern_boottime(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -303,8 +292,7 @@ mib_kern_boottime(struct mib_call * call __unused,
  * the IPC service overrides the entire "kern.ipc" subtree.  Therefore, this
  * function will only ever be called when the IPC service is *not* running.
  */
-static ssize_t
-mib_kern_ipc_info(struct mib_call * call, struct mib_node * node __unused,
+static ssize_t mib_kern_ipc_info(struct mib_call * call, struct mib_node * node __unused,
 	struct mib_oldp * oldp __unused, struct mib_newp * newp __unused)
 {
 
@@ -500,8 +488,7 @@ static struct mib_node mib_kern_table[] = {
 /*
  * Initialize the CTL_KERN subtree.
  */
-void
-mib_kern_init(struct mib_node * node)
+void mib_kern_init(struct mib_node * node)
 {
 
 	MIB_INIT_ENODE(node, mib_kern_table);

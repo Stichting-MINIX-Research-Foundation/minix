@@ -9,9 +9,7 @@ pci_attr_r8.c
 /*===========================================================================*
  *				pci_attr_r8				     *
  *===========================================================================*/
-u8_t pci_attr_r8(devind, port)
-int devind;
-int port;
+u8_t pci_attr_r8(int devind, int port)
 {
 	int r;
 	message m;

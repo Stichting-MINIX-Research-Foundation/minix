@@ -31,8 +31,7 @@ int max_error = 0;
 #include "common.h"
 #include "testcache.h"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	char pipefn[30], cwd[400], cmdline[400];
 	int pipefd;

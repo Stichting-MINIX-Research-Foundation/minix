@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_memmap.c,v 1.5 2008/12/14 17:03:43 christos Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.5.70.1 2019/09/17 19:31:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,13 +30,14 @@
 #include "libi386.h"
 #include "bootinfo.h"
 
+struct btinfo_memmap *btinfo_memmap = NULL;
+
 extern int getmementry(int *, int *);
 
 void
 bi_getmemmap(void)
 {
 	int buf[5], i, nranges, n;
-	struct btinfo_memmap *bimm;
 
 	nranges = 0;
 	i = 0;
@@ -46,16 +47,17 @@ bi_getmemmap(void)
 		nranges++;
 	} while (i);
 
-	bimm = alloc(sizeof(struct btinfo_memmap)
+	btinfo_memmap = alloc(sizeof(struct btinfo_memmap)
 		+ (nranges - 1) * sizeof(struct bi_memmap_entry));
 
 	i = 0;
 	for (n = 0; n < nranges; n++) {
 		getmementry(&i, buf);
-		memcpy(&bimm->entry[n], buf, sizeof(struct bi_memmap_entry));
+		memcpy(&btinfo_memmap->entry[n], buf,
+		       sizeof(struct bi_memmap_entry));
 	}
-	bimm->num = nranges;
+	btinfo_memmap->num = nranges;
 
-	BI_ADD(bimm, BTINFO_MEMMAP, sizeof(struct btinfo_memmap)
+	BI_ADD(btinfo_memmap, BTINFO_MEMMAP, sizeof(struct btinfo_memmap)
 	       + (nranges - 1) * sizeof(struct bi_memmap_entry));
 }

@@ -9,8 +9,7 @@ static int nr_pid_entries;
 /*
  * Return a PID for the given slot, or 0 if the slot is not in use.
  */
-pid_t
-pid_from_slot(int slot)
+pid_t pid_from_slot(int slot)
 {
 
 	/* All kernel tasks are always present.*/
@@ -29,8 +28,7 @@ pid_from_slot(int slot)
  * Check if the owner user and group ID of the inode are still in sync with
  * the current effective user and group ID of the given process.
  */
-static int
-check_owner(struct inode * node, int slot)
+static int check_owner(struct inode * node, int slot)
 {
 	struct inode_stat stat;
 
@@ -46,8 +44,7 @@ check_owner(struct inode * node, int slot)
  * Fill in an inode_stat structure for the given process slot and per-PID file
  * index (or NO_INDEX for the process subdirectory root).
  */
-static void
-make_stat(struct inode_stat * stat, int slot, int index)
+static void make_stat(struct inode_stat * stat, int slot, int index)
 {
 
 	if (index == NO_INDEX)
@@ -70,8 +67,7 @@ make_stat(struct inode_stat * stat, int slot, int index)
 /*
  * Return whether the given node is a PID directory.
  */
-static int
-dir_is_pid(struct inode *node)
+static int dir_is_pid(struct inode *node)
 {
 
 	return (get_parent_inode(node) == get_root_inode() &&
@@ -81,8 +77,7 @@ dir_is_pid(struct inode *node)
 /*
  * Get the process listing from the MIB service.
  */
-static int
-update_list(void)
+static int update_list(void)
 {
 	const int mib[] = { CTL_MINIX, MINIX_PROC, PROC_LIST };
 	size_t size;
@@ -100,8 +95,7 @@ update_list(void)
  * check if we're not compiled against a kernel different from the one that is
  * running at the moment.
  */
-int
-init_tree(void)
+int init_tree(void)
 {
 	int i, r;
 
@@ -126,8 +120,7 @@ init_tree(void)
  * If the NR_INODES value is not below the *crucial* minimum, the symptom of
  * this case will be an incomplete listing of the main proc directory.
  */
-void
-out_of_inodes(void)
+void out_of_inodes(void)
 {
 	static int warned = FALSE;
 
@@ -143,8 +136,7 @@ out_of_inodes(void)
  * system.  Add new directories and delete old directories as appropriate;
  * leave unchanged those that should remain the same.
  */
-static void
-construct_pid_dirs(void)
+static void construct_pid_dirs(void)
 {
 	/*
 	 * We have to make two passes.  Otherwise, we would trigger a vtreefs
@@ -215,7 +207,7 @@ construct_pid_dirs(void)
 		make_stat(&stat, i, NO_INDEX);
 
 		node = add_inode(root, name, i, &stat, nr_pid_entries,
-		    (cbdata_t)pid);
+		    (cbdata_t)(uintptr_t)pid);
 
 		if (node == NULL)
 			out_of_inodes();
@@ -226,8 +218,7 @@ construct_pid_dirs(void)
  * Construct one file in a PID directory, if a file with the given name should
  * exist at all.
  */
-static void
-make_one_pid_entry(struct inode * parent, char * name, int slot)
+static void make_one_pid_entry(struct inode * parent, char * name, int slot)
 {
 	struct inode *node;
 	struct inode_stat stat;
@@ -257,8 +248,7 @@ make_one_pid_entry(struct inode * parent, char * name, int slot)
 /*
  * Construct all files in a PID directory.
  */
-static void
-make_all_pid_entries(struct inode * parent, int slot)
+static void make_all_pid_entries(struct inode * parent, int slot)
 {
 	struct inode *node;
 	struct inode_stat stat;
@@ -282,8 +272,7 @@ make_all_pid_entries(struct inode * parent, int slot)
 /*
  * Construct one requested file entry, or all file entries, in a PID directory.
  */
-static void
-construct_pid_entries(struct inode * parent, char * name)
+static void construct_pid_entries(struct inode * parent, char * name)
 {
 	int slot;
 
@@ -312,8 +301,7 @@ construct_pid_entries(struct inode * parent, char * name)
  * Data is requested from one of the files in a PID directory. Call the
  * function that is responsible for generating the data for that file.
  */
-static void
-pid_read(struct inode * node)
+static void pid_read(struct inode * node)
 {
 	struct inode *parent;
 	int slot, index;
@@ -337,8 +325,7 @@ pid_read(struct inode * node)
  * The contents of a symbolic link in a PID directory are requested.  This
  * function is a placeholder for future use.
  */
-static int
-pid_link(struct inode * __unused node, char * ptr, int max)
+static int pid_link(struct inode * __unused node, char * ptr, int max)
 {
 
 	/* Nothing yet. */
@@ -352,8 +339,7 @@ pid_link(struct inode * __unused node, char * ptr, int max)
  * update our own view of the system first; after that, determine whether we
  * need to (re)generate certain files.
  */
-int
-lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
+int lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
 {
 	static clock_t last_update = 0;
 	clock_t now;
@@ -399,8 +385,7 @@ lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
  * Make sure that all files that are supposed to be returned, are actually part
  * of the virtual tree.
  */
-int
-getdents_hook(struct inode * node, cbdata_t __unused cbdata)
+int getdents_hook(struct inode * node, cbdata_t __unused cbdata)
 {
 
 	if (node == get_root_inode()) {
@@ -419,8 +404,7 @@ getdents_hook(struct inode * node, cbdata_t __unused cbdata)
  * Regular file read hook.  Call the appropriate callback function to generate
  * and return the data.
  */
-ssize_t
-read_hook(struct inode * node, char * ptr, size_t len, off_t off,
+ssize_t read_hook(struct inode * node, char * ptr, size_t len, off_t off,
 	cbdata_t cbdata)
 {
 	struct inode *parent;
@@ -445,8 +429,7 @@ read_hook(struct inode * node, char * ptr, size_t len, off_t off,
 /*
  * Symbolic link resolution hook.  Not used yet.
  */
-int
-rdlink_hook(struct inode * node, char * ptr, size_t max,
+int rdlink_hook(struct inode * node, char * ptr, size_t max,
 	cbdata_t __unused cbdata)
 {
 	struct inode *parent;

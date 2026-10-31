@@ -41,6 +41,10 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "awkgram.h"
 
+#ifdef __linux__
+#include <stdio_ext.h>
+#endif
+
 #define tempfree(x)	do { if (istemp(x)) tfree(x); } while (/*CONSTCOND*/0)
 
 void stdinit(void);
@@ -1869,14 +1873,19 @@ void closeall(void)
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
-			if (i == 0)
-				stat = fpurge(files[i].fp) == EOF;
-			else if (i <= 2)
-				stat = fflush(files[i].fp) == EOF;
-			else if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp) == -1;
-			else
-				stat = fclose(files[i].fp) == EOF;
+                        if (i == 0) {
+#ifdef __linux__
+                                __fpurge(files[i].fp);
+                                stat = 0;
+#else
+                                stat = fpurge(files[i].fp) == EOF;
+#endif
+                        } else if (i <= 2)
+                                stat = fflush(files[i].fp) == EOF;
+                        else if (files[i].mode == '|' || files[i].mode == LE)
+                                stat = pclose(files[i].fp) == -1;
+                        else
+                                stat = fclose(files[i].fp) == EOF;
 			if (stat)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
 		}

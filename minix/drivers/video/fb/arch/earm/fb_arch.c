@@ -129,14 +129,12 @@ static struct log log = {
 	.log_func = default_log
 };
 
-static inline u32_t
-readw(vir_bytes addr)
+static inline u32_t readw(vir_bytes addr)
 {
         return *((volatile u32_t *) addr);
 }
 
-static inline void
-writew(vir_bytes addr, u32_t val)
+static inline void writew(vir_bytes addr, u32_t val)
 {
         *((volatile u32_t *) addr) = val;
 }
@@ -163,8 +161,7 @@ choose_mode(struct edid_info *info)
 	return NULL;
 }
 
-static int
-configure_with_edid(int minor, struct edid_info *info)
+static int configure_with_edid(int minor, struct edid_info *info)
 {
 	struct videomode *mode;
 
@@ -218,8 +215,7 @@ configure_with_edid(int minor, struct edid_info *info)
 	return OK;
 }
 
-static void
-configure_with_defaults(int minor)
+static void configure_with_defaults(int minor)
 {
 	if (minor < 0 || minor >= FB_DEV_NR) {
 		log_warn(&log, "Invalid minor #%d\n", minor);
@@ -232,8 +228,7 @@ configure_with_defaults(int minor)
 	memcpy(&omap_fbvs[minor], &default_fbvs, sizeof(struct fb_var_screeninfo));
 }
 
-static void
-arch_configure_display(int minor)
+static void arch_configure_display(int minor)
 {
 /* Tell hardware where frame buffer is and turn display on */
 	u32_t off, rdispc;
@@ -251,8 +246,7 @@ arch_configure_display(int minor)
 	writew((vir_bytes) OMAP3_DISPC_CONTROL(dispc_phys_base), rdispc);
 }
 
-int
-arch_get_device(int minor, struct device *dev)
+int arch_get_device(int minor, struct device *dev)
 {
 	if (!initialized) return ENXIO;
 	if (minor != 0) return ENXIO;
@@ -261,8 +255,7 @@ arch_get_device(int minor, struct device *dev)
 	return OK;
 }
 
-int
-arch_get_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
+int arch_get_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
 {
 	if (!initialized) return ENXIO;
 	if (minor != 0) return ENXIO;
@@ -271,8 +264,7 @@ arch_get_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
 	return OK;
 }
 
-int
-arch_put_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
+int arch_put_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
 {
 	int r = OK;
 	
@@ -295,8 +287,7 @@ arch_put_varscreeninfo(int minor, struct fb_var_screeninfo *fbvsp)
 	return OK;
 }
 
-int
-arch_get_fixscreeninfo(int minor, struct fb_fix_screeninfo *fbfsp)
+int arch_get_fixscreeninfo(int minor, struct fb_fix_screeninfo *fbfsp)
 {
 	if (!initialized) return ENXIO;
 	if (minor != 0) return ENXIO;
@@ -305,14 +296,12 @@ arch_get_fixscreeninfo(int minor, struct fb_fix_screeninfo *fbfsp)
 	return OK;
 }
 
-int
-arch_pan_display(int minor, struct fb_var_screeninfo *fbvsp)
+int arch_pan_display(int minor, struct fb_var_screeninfo *fbvsp)
 {
 	return arch_put_varscreeninfo(minor, fbvsp);
 }
 
-int
-arch_fb_init(int minor, struct edid_info *info)
+int arch_fb_init(int minor, struct edid_info *info)
 {
 	int r;
 	u32_t rdispc;

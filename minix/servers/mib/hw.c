@@ -8,6 +8,9 @@ static const char arch[] = "i386";	/* architecture */
 #elif defined(__arm__)
 static const char mach[] = "evbarm";	/* machine (cpu) type */
 static const char arch[] = "evbarm";	/* architecture */
+#elif defined(__x86_64__)
+static const char mach[] = "amd64";	/* machine (cpu) type */
+static const char arch[] = "x86_64";	/* architecture */
 #else
 #error "unknown machine architecture"
 #endif
@@ -15,8 +18,7 @@ static const char arch[] = "evbarm";	/* architecture */
 /*
  * Implementation of CTL_HW HW_PHYSMEM/HW_PHYSMEM64.
  */
-static ssize_t
-mib_hw_physmem(struct mib_call * call __unused, struct mib_node * node,
+static ssize_t mib_hw_physmem(struct mib_call * call __unused, struct mib_node * node,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	struct vm_stats_info vsi;
@@ -42,8 +44,7 @@ mib_hw_physmem(struct mib_call * call __unused, struct mib_node * node,
 /*
  * Implementation of CTL_HW HW_USERMEM/HW_USERMEM64.
  */
-static ssize_t
-mib_hw_usermem(struct mib_call * call __unused, struct mib_node * node,
+static ssize_t mib_hw_usermem(struct mib_call * call __unused, struct mib_node * node,
 	struct mib_oldp * oldp, struct mib_newp * newp __unused)
 {
 	struct vm_stats_info vsi;
@@ -78,8 +79,7 @@ mib_hw_usermem(struct mib_call * call __unused, struct mib_node * node,
 /*
  * Implementation of CTL_HW HW_NCPUONLINE.
  */
-static ssize_t
-mib_hw_ncpuonline(struct mib_call * call __unused,
+static ssize_t mib_hw_ncpuonline(struct mib_call * call __unused,
 	struct mib_node * node __unused, struct mib_oldp * oldp,
 	struct mib_newp * newp __unused)
 {
@@ -132,8 +132,7 @@ static struct mib_node mib_hw_table[] = {
 /*
  * Initialize the CTL_HW subtree.
  */
-void
-mib_hw_init(struct mib_node * node)
+void mib_hw_init(struct mib_node * node)
 {
 
 	MIB_INIT_ENODE(node, mib_hw_table);

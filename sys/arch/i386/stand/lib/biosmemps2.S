@@ -1,6 +1,6 @@
-/*	$NetBSD: biosmemps2.S,v 1.6 2011/06/16 13:27:59 joerg Exp $	*/
+/*	$NetBSD: biosmemps2.S,v 1.7 2016/12/04 08:21:08 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -33,55 +33,58 @@
 
 	.text
 
-/* int getextmemp2(void buffer)
-   call int 15 function 0xc7 - later PS/2s - RETURN MEMORY-MAP INFORMATION
-   return: 0=OK, nonzero=error
-   buffer: filled with memory-map table structure
-*/
+/*
+ * int getextmemps2(void *buffer)
+ *
+ * call int 15 function 0xc7 - later PS/2s - RETURN MEMORY-MAP INFORMATION
+ * return: 0=OK, nonzero=error
+ * buffer: filled with memory-map table structure
+ */
 ENTRY(getextmemps2)
 	.code32
-	movl	%eax, %edx
-	xorl	%eax, %eax
+	movl	%eax,%edx
+	xorl	%eax,%eax
 	pusha
 
 	call	_C_LABEL(prot_to_real)
 	.code16
 
-	# do int15, function 0xc0 call to discover if C7h is supported
-	movb	$0xc0, %ah
+	/* do int15, function 0xc0 call to discover if C7h is supported */
+	movb	$0xc0,%ah
 	int	$0x15
 	setc	%cl
-	jc	out		# 0xc0 not supported if carry set
+	jc	out		/* 0xc0 not supported if carry set */
 
-	# check feature byte 2, bit 4 to see if return memory map is supported
-	movb	%es:6(%bx), %al
-	andb	$0x10, %al
-	jnz	getmem		# 0xc7 supported
-	
-	# set %cl to indicate failure, and exit
-	movb	$2, %cl
+	/* check feature byte 2, bit 4 to see if return memory map is supported */
+	movb	%es:6(%bx),%al
+	andb	$0x10,%al
+	jnz	getmem		/* 0xc7 supported */
+
+	/* set %cl to indicate failure, and exit */
+	movb	$2,%cl
 	jmp	out
 
 getmem:
-	# move the parameter to right register
+	/* move the parameter to right register */
 	push	%ds
-	movl	%edx, %esi
-	andl	$0xf, %esi
-	shrl	$4, %edx
-	mov	%ds, %ax
-	add	%dx, %ax
-	mov	%ax, %ds
+	movl	%edx,%esi
+	andl	$0xf,%esi
+	shrl	$4,%edx
+	mov	%ds,%ax
+	add	%dx,%ax
+	mov	%ax,%ds
 
-	# actually call int15, function 0xc7 now
-	movb	$0xc7, %ah
+	/* actually call int15, function 0xc7 now */
+	movb	$0xc7,%ah
 	int	$0x15
-	setc	%cl		# save carry
+	setc	%cl		/* save carry */
 	pop	%ds
 
 out:
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movb	%cl, 28(%esp)
+	movb	%cl,28(%esp)
 	popa
 	ret
+

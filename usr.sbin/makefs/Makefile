@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2013/08/05 14:41:57 reinoud Exp $
+#	$NetBSD: Makefile,v 1.37 2019/10/13 07:28:19 mrg Exp $
 #
 
 WARNS?=	5
@@ -31,6 +31,12 @@ CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC} -DMAKEFS
 .if !defined(HOSTPROG)
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
+
+COPTS.cd9660.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.cd9660_conversion.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.udf.c+=			${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.v7fs_estimate.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.v7fs_populate.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
 .endif
 
 .include <bsd.prog.mk>

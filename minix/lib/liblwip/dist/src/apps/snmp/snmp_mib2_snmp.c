@@ -45,8 +45,7 @@
 #define MIB2_AUTH_TRAPS_DISABLED 2
 
 /* --- snmp .1.3.6.1.2.1.11 ----------------------------------------------------- */
-static s16_t
-snmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
+static s16_t snmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   u32_t *uint_ptr = (u32_t*)value;
   switch (node->oid) {

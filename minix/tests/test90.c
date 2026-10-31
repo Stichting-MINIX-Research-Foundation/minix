@@ -37,8 +37,7 @@
  * path may be passed in to indicate the result should be for an unbound
  * socket.
  */
-static void
-check_addr(struct sockaddr_un * sun, socklen_t len, const char * path)
+static void check_addr(struct sockaddr_un * sun, socklen_t len, const char * path)
 {
 
 	if (len < offsetof(struct sockaddr_un, sun_path)) e(0);
@@ -60,8 +59,7 @@ check_addr(struct sockaddr_un * sun, socklen_t len, const char * path)
  * Get a socket of the given type, bound to the given path.  Return the file
  * descriptor, as well as the bound addres in 'sun'.
  */
-static int
-get_bound_socket(int type, const char * path, struct sockaddr_un * sun)
+static int get_bound_socket(int type, const char * path, struct sockaddr_un * sun)
 {
 	int fd;
 
@@ -81,8 +79,7 @@ get_bound_socket(int type, const char * path, struct sockaddr_un * sun)
 /*
  * Get a pair of connected sockets.
  */
-static void
-get_socket_pair(int type, int fd[2])
+static void get_socket_pair(int type, int fd[2])
 {
 	struct sockaddr_un sunA, sunB;
 
@@ -104,8 +101,7 @@ get_socket_pair(int type, int fd[2])
 /*
  * Return the receive buffer size of the given socket.
  */
-static int
-get_rcvbuf_len(int fd)
+static int get_rcvbuf_len(int fd)
 {
 	socklen_t len;
 	int val;
@@ -414,8 +410,7 @@ static const int unix_connect_results[][__arraycount(unix_connect_states)] = {
  * and pass it to socklib_sweep_call() along with local and remote addresses
  * and their length.
  */
-static int
-unix_connect_sweep(int domain, int type, int protocol __unused,
+static int unix_connect_sweep(int domain, int type, int protocol __unused,
 	enum state state, enum call call)
 {
 	struct sockaddr_un sunA, sunB, sunC;
@@ -858,8 +853,7 @@ static const int unix_dgram_results[][__arraycount(unix_dgram_states)] = {
  * to socklib_sweep_call() along with local and remote addresses and their
  * length.
  */
-static int
-unix_dgram_sweep(int domain __unused, int type, int protocol __unused,
+static int unix_dgram_sweep(int domain __unused, int type, int protocol __unused,
 	enum state state, enum call call)
 {
 	struct sockaddr_un sunA, sunB;
@@ -974,8 +968,7 @@ unix_dgram_sweep(int domain __unused, int type, int protocol __unused,
 /*
  * Sweep test for socket calls versus socket states of all socket types.
  */
-static void
-test90a(void)
+static void test90a(void)
 {
 
 	subtest = 1;
@@ -997,8 +990,7 @@ test90a(void)
 /*
  * Test for large sends and receives with MSG_WAITALL.
  */
-static void
-test90b(void)
+static void test90b(void)
 {
 	int fd[2];
 
@@ -1012,8 +1004,7 @@ test90b(void)
 /*
  * A randomized producer-consumer test for datagram sockets.
  */
-static void
-sub90c(int type)
+static void sub90c(int type)
 {
 	char *buf;
 	time_t t;
@@ -1193,8 +1184,7 @@ sub90c(int type)
  * basic bulk functionality tests of FIONREAD, MSG_PEEK, MSG_DONTWAIT, and
  * MSG_WAITALL.
  */
-static void
-test90c(void)
+static void test90c(void)
 {
 	int fd[2];
 
@@ -1214,8 +1204,7 @@ test90c(void)
  * socket with LOCAL_CONNWAIT turned on, return OK rather than EINPROGRESS.
  * This requires a hack in libsockevent.
  */
-static void
-test90d(void)
+static void test90d(void)
 {
 	struct sockaddr_un sunA, sunB;
 	socklen_t len;
@@ -1338,8 +1327,7 @@ test90d(void)
 /*
  * Test self-connecting datagram sockets.
  */
-static void
-test90e(void)
+static void test90e(void)
 {
 	struct sockaddr_un sunA, sunB, sunC;
 	socklen_t len;
@@ -1416,8 +1404,7 @@ test90e(void)
  * interprocess communication rather than the current carefully arranged and
  * rather brittle timing approach.
  */
-static void
-sub90f(unsigned int test)
+static void sub90f(unsigned int test)
 {
 	struct sockaddr_un sun;
 	pid_t pid[4], apid;
@@ -1569,8 +1556,7 @@ sub90f(unsigned int test)
  * or failure.  In particular, ensure that the error code ends up with the
  * right call.
  */
-static void
-test90f(void)
+static void test90f(void)
 {
 
 	subtest = 6;
@@ -1589,8 +1575,7 @@ test90f(void)
 /*
  * Test whether various calls all return the same expected error code.
  */
-static void
-sub90g(struct sockaddr_un * sun, int err)
+static void sub90g(struct sockaddr_un * sun, int err)
 {
 	int fd;
 
@@ -1619,8 +1604,7 @@ sub90g(struct sockaddr_un * sun, int err)
  * the same as for connect(2), just like on NetBSD and Linux, even though
  * POSIX does not document all of these under sendto(2).
  */
-static void
-test90g(void)
+static void test90g(void)
 {
 	struct sockaddr_un sun;
 	int fd;
@@ -1648,8 +1632,7 @@ test90g(void)
  * Test addresses returned for unbound connection-type sockets by various
  * calls.
  */
-static void
-sub90h(int type)
+static void sub90h(int type)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -1703,8 +1686,7 @@ sub90h(int type)
 /*
  * Test addresses returned for unbound sockets by various calls.
  */
-static void
-test90h(void)
+static void test90h(void)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -1760,8 +1742,7 @@ test90h(void)
  * along with regular data.  Return the result of the sendmsg(2) call, with
  * errno preserved.  Written to be reusable outside this test set.
  */
-static int
-send_fds(int fd, const char * data, size_t len, int flags,
+static int send_fds(int fd, const char * data, size_t len, int flags,
 	struct sockaddr * addr, socklen_t addr_len, int * fds, int nfds)
 {
 	union {
@@ -1801,8 +1782,7 @@ send_fds(int fd, const char * data, size_t len, int flags,
  * flags in 'rflags', the received file descriptors stored in 'fds' and their
  * number stored in 'nfds'.  Written to be (somewhat) reusable.
  */
-static int
-recv_fds(int fd, char * buf, size_t size, int flags, int * rflags, int * fds,
+static int recv_fds(int fd, char * buf, size_t size, int flags, int * rflags, int * fds,
 	int * nfds)
 {
 	union {
@@ -1856,8 +1836,7 @@ recv_fds(int fd, char * buf, size_t size, int flags, int * rflags, int * fds,
  * errno preserved.  Also return a set of peer FDs for each of the sent file
  * descriptors, which should later be used in a call to close_test_fds().
  */
-static int
-send_test_fds(int fd, const char * data, size_t len, int flags, int * peers,
+static int send_test_fds(int fd, const char * data, size_t len, int flags, int * peers,
 	int nfds)
 {
 	int i, r, saved_errno, fds[MAX_FDS], pfd[2];
@@ -1887,8 +1866,7 @@ send_test_fds(int fd, const char * data, size_t len, int flags, int * peers,
  * closed, and close all peer file descriptors.  The ultimate goal here is to
  * detect any possible file descriptor leaks in the UDS service.
  */
-static void
-close_test_fds(int * peers, int nfds)
+static void close_test_fds(int * peers, int nfds)
 {
 	char buf[1];
 	unsigned int i;
@@ -1909,8 +1887,7 @@ close_test_fds(int * peers, int nfds)
  * along with regular data.  Return the result of the recvmsg(2) call, with
  * errno preserved.
  */
-static int
-recv_test_fds(int fd, char * buf, size_t size, int flags, int * rflags,
+static int recv_test_fds(int fd, char * buf, size_t size, int flags, int * rflags,
 	int * nfds)
 {
 	int i, r, saved_errno, fds[MAX_FDS];
@@ -1933,8 +1910,7 @@ recv_test_fds(int fd, char * buf, size_t size, int flags, int * rflags,
  * Following this function requires a very close look at what is in the
  * receive queue versus what is being received.
  */
-static void
-sub90i_recv(int fd, int type, int state, int test, int sub, int sentfds)
+static void sub90i_recv(int fd, int type, int state, int test, int sub, int sentfds)
 {
 	struct msghdr msg;
 	struct iovec iov;
@@ -2116,8 +2092,7 @@ sub90i_recv(int fd, int type, int state, int test, int sub, int sentfds)
 /*
  * Test send requests on various socket states and in various forms.
  */
-static void
-sub90i_send(int type, int state, int test, int sub)
+static void sub90i_send(int type, int state, int test, int sub)
 {
 	char *buf;
 	int r, res, err, fd[2], peers[2], rcvlen;
@@ -2271,8 +2246,7 @@ sub90i_send(int type, int state, int test, int sub)
  * Test send and receive requests with regular data, control data, both, or
  * neither, and test segment boundaries.
  */
-static void
-test90i(void)
+static void test90i(void)
 {
 	int state, test, sub;
 
@@ -2294,8 +2268,7 @@ test90i(void)
 /*
  * Test segmentation of file descriptor transfer on a particular socket type.
  */
-static void
-sub90j(int type)
+static void sub90j(int type)
 {
 	char path[PATH_MAX], buf[2];
 	int i, fd[2], out[7], in[7], rflags, nfds;
@@ -2375,8 +2348,7 @@ sub90j(int type)
  * in-flight file descriptors, they must each be associated with their
  * respective segments.
  */
-static void
-test90j(void)
+static void test90j(void)
 {
 
 	subtest = 10;
@@ -2394,8 +2366,7 @@ test90j(void)
  * to get away with throwing EDEADLK as a sledgehammer approach to preventing
  * problems with in-flight UDS sockets.
  */
-static void
-test90k(void)
+static void test90k(void)
 {
 	int r, fd[2], fd2;
 
@@ -2421,8 +2392,7 @@ test90k(void)
  * in-flight.  Currently we allow VFS/UDS to get away with throwing EDEADLK as
  * a sledgehammer approach to preventing problems with in-flight UDS sockets.
  */
-static void
-test90l(void)
+static void test90l(void)
 {
 	struct sockaddr_un sun;
 	int i, r, fd, fd2;
@@ -2450,8 +2420,7 @@ test90l(void)
 /*
  * Receive with credentials.
  */
-static int
-recv_creds(int fd, char * buf, size_t size, int flags, int * rflags,
+static int recv_creds(int fd, char * buf, size_t size, int flags, int * rflags,
 	struct sockcred * sc, socklen_t * sc_len)
 {
 	union {
@@ -2500,8 +2469,7 @@ recv_creds(int fd, char * buf, size_t size, int flags, int * rflags,
 /*
  * Test basic credentials passing on connection-oriented sockets.
  */
-static void
-sub90m(int type)
+static void sub90m(int type)
 {
 	struct sockaddr_un sun;
 	struct sockcred sc;
@@ -2616,8 +2584,7 @@ sub90m(int type)
  * their listening socket, and, credentials are passed only once on a
  * connection-oriented socket.
  */
-static void
-test90m(void)
+static void test90m(void)
 {
 	struct sockcred sc;
 	socklen_t len;
@@ -2672,8 +2639,7 @@ test90m(void)
  * Test whether MSG_CMSG_CLOEXEC is honored when copying in file descriptors.
  * We do not bother to test with execve(2w); obtaining the FD flags suffices.
  */
-static void
-test90n(void)
+static void test90n(void)
 {
 	char buf[1];
 	int i, fd[2], sfd, rfd, fl, rflags, nfds;
@@ -2716,8 +2682,7 @@ test90n(void)
 /*
  * Test failures sending and receiving sets of file descriptors.
  */
-static void
-sub90o(int type)
+static void sub90o(int type)
 {
 	static int ofd[OPEN_MAX];
 	char buf[1];
@@ -2775,8 +2740,7 @@ sub90o(int type)
 /*
  * Test failures sending and receiving sets of file descriptors.
  */
-static void
-test90o(void)
+static void test90o(void)
 {
 	const int types[] = { SOCK_STREAM, SOCK_SEQPACKET, SOCK_DGRAM };
 	int i;
@@ -2790,8 +2754,7 @@ test90o(void)
 /*
  * Test socket reuse for a particular socket type.
  */
-static void
-sub90p(int type)
+static void sub90p(int type)
 {
 	struct sockaddr_un sunA, sunB, sunC;
 	socklen_t len;
@@ -2996,8 +2959,7 @@ sub90p(int type)
  * Test socket reuse, receiving left-overs in the receive buffer, and the
  * (in)ability to obtain peer credentials.
  */
-static void
-test90p(void)
+static void test90p(void)
 {
 
 	subtest = 16;
@@ -3010,8 +2972,7 @@ test90p(void)
 /*
  * Test state changes and errors related to connected datagram sockets.
  */
-static void
-test90q(void)
+static void test90q(void)
 {
 	struct sockaddr_un sunA, sunB, sunC, sunD;
 	socklen_t len;
@@ -3155,8 +3116,7 @@ test90q(void)
 /*
  * Test socket file name reuse.
  */
-static void
-test90r(void)
+static void test90r(void)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -3218,8 +3178,7 @@ test90r(void)
  * Test that non-canonized path names are accepted and returned.
  * Also test datagram send errors on disconnect.
  */
-static void
-test90s(void)
+static void test90s(void)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -3259,8 +3218,7 @@ test90s(void)
 /*
  * Test basic sysctl(2) socket enumeration for a specific socket type.
  */
-static void
-sub90t(int type, const char * path)
+static void sub90t(int type, const char * path)
 {
 	struct kinfo_pcb *ki;
 	size_t i, len, oldlen;
@@ -3306,8 +3264,7 @@ sub90t(int type, const char * path)
 /*
  * Test basic sysctl(2) socket enumeration support.
  */
-static void
-test90t(void)
+static void test90t(void)
 {
 
 	subtest = 20;
@@ -3330,8 +3287,7 @@ test90t(void)
  * requires sending data, 'data' and 'len' identify the data that should be
  * sent.  Return 'fd' if it is still open, or -1 if it is closed.
  */
-static int
-break_uds_recv(int fd, const char * data, size_t len)
+static int break_uds_recv(int fd, const char * data, size_t len)
 {
 	int fd2;
 
@@ -3355,8 +3311,7 @@ break_uds_recv(int fd, const char * data, size_t len)
  * Test for receiving on stream sockets.  In particular, test SO_RCVLOWAT,
  * MSG_PEEK, MSG_DONTWAIT, and MSG_WAITALL.
  */
-static void
-test90u(void)
+static void test90u(void)
 {
 
 	subtest = 21;
@@ -3371,8 +3326,7 @@ test90u(void)
  * Signal handler which just needs to exist, so that invoking it will interrupt
  * an ongoing system call.
  */
-static void
-test90_got_signal(int sig __unused)
+static void test90_got_signal(int sig __unused)
 {
 
 	/* Nothing. */
@@ -3388,8 +3342,7 @@ test90_got_signal(int sig __unused)
  * watermark, or the whole send request length, whichever is smaller.  In
  * addition, select(2) should use the same threshold.
  */
-static void
-sub90v(int iroom, int istate, int slowat, int len, int bits, int act)
+static void sub90v(int iroom, int istate, int slowat, int len, int bits, int act)
 {
 	const char *data = "ABC";	/* this limits MAX_BYTES to 3 */
 	struct sigaction sa;
@@ -3612,8 +3565,7 @@ cleanup:
  * Test for sending on stream sockets.  In particular, test SO_SNDLOWAT and
  * MSG_DONTWAIT.
  */
-static void
-test90v(void)
+static void test90v(void)
 {
 	int iroom, istate, slowat, len, bits, act;
 
@@ -3634,8 +3586,7 @@ test90v(void)
 /*
  * Test that SO_RCVLOWAT is limited to the size of the receive buffer.
  */
-static void
-sub90w_recv(int fill_delta, int rlowat_delta, int exp_delta)
+static void sub90w_recv(int fill_delta, int rlowat_delta, int exp_delta)
 {
 	char *buf;
 	int fd[2], rcvlen, fill, rlowat, res;
@@ -3672,8 +3623,7 @@ sub90w_recv(int fill_delta, int rlowat_delta, int exp_delta)
 /*
  * Test that SO_SNDLOWAT is limited to the size of the "send" buffer.
  */
-static void
-sub90w_send(int fill, int slowat_delta, int exp_delta)
+static void sub90w_send(int fill, int slowat_delta, int exp_delta)
 {
 	char *buf;
 	socklen_t len;
@@ -3715,8 +3665,7 @@ sub90w_send(int fill, int slowat_delta, int exp_delta)
  * Test that on stream sockets, SO_RCVLOWAT and SO_SNDLOWAT are limited to
  * their respective buffer sizes.
  */
-static void
-test90w(void)
+static void test90w(void)
 {
 
 	subtest = 23;
@@ -3757,8 +3706,7 @@ test90w(void)
 /*
  * Test shutdown on listening sockets.
  */
-static void
-sub90x(int type, int how, int connwait)
+static void sub90x(int type, int how, int connwait)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -3843,8 +3791,7 @@ sub90x(int type, int how, int connwait)
  * acceptable (and not inherit the shutdown flags), but new connections must be
  * refused, and the accept call must no longer ever block.
  */
-static void
-test90x(void)
+static void test90x(void)
 {
 	const int types[] = { SOCK_STREAM, SOCK_SEQPACKET };
 	const int hows[] = { SHUT_RD, SHUT_WR, SHUT_RDWR };
@@ -3859,8 +3806,7 @@ test90x(void)
 /*
  * Test accepting connections without LOCAL_CONNWAIT for the given socket type.
  */
-static void
-sub90y(int type)
+static void sub90y(int type)
 {
 	struct sockaddr_un sunA, sunB, sunC;
 	socklen_t len;
@@ -4066,8 +4012,7 @@ sub90y(int type)
  * LOCAL_CONNWAIT behavior, the alternative (which is now the default, as it is
  * on other platforms) has been a bit under-tested so far.
  */
-static void
-test90y(void)
+static void test90y(void)
 {
 
 	subtest = 25;
@@ -4080,8 +4025,7 @@ test90y(void)
 /*
  * Test that SO_LINGER has no effect on sockets of the given type.
  */
-static void
-sub90z(int type)
+static void sub90z(int type)
 {
 	struct sockaddr_un sun;
 	socklen_t len;
@@ -4125,8 +4069,7 @@ sub90z(int type)
  * Test that SO_LINGER has no effect on UNIX domain sockets.  In particular, a
  * timeout of zero does not cause the connection to be reset forcefully.
  */
-static void
-test90z(void)
+static void test90z(void)
 {
 
 	subtest = 26;
@@ -4139,8 +4082,7 @@ test90z(void)
 /*
  * Test program for UDS.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

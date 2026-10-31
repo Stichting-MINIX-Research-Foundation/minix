@@ -371,14 +371,20 @@
 #define SVMCTL_PARAM	m1_i2	/* All SYS_VMCTL requests. */
 #define SVMCTL_VALUE	m1_i3
 #define	SVMCTL_MRG_TARGET	m2_i1	/* MEMREQ_GET reply: target process */
-#define	SVMCTL_MRG_ADDR		m2_i2	/* MEMREQ_GET reply: address */
+/* MEMREQ_GET reply: faulting address.  Must be a 64-bit field (m2_ll1), not a
+ * 32-bit int (was m2_i2): on x86_64 a user address with bit 31 set (e.g. a
+ * stack address 0xefffXXXX) is otherwise truncated and sign-extended to the
+ * kernel half when VM reads it via sys_vmctl_get_memreq() into a vir_bytes, so
+ * VM's map_lookup() misses and the kernel-call copy (safecopy) fails with
+ * EFAULT.  The source address (SVMCTL_MRG_ADDR2) already uses a 64-bit field. */
+#define	SVMCTL_MRG_ADDR		m2_ll1	/* MEMREQ_GET reply: address */
 #define	SVMCTL_MRG_LENGTH	m2_i3	/* MEMREQ_GET reply: length */
 #define	SVMCTL_MRG_FLAG		m2_s1	/* MEMREQ_GET reply: flag */
 #define	SVMCTL_MRG_EP2		m2_l1	/* MEMREQ_GET reply: source process */
 #define	SVMCTL_MRG_ADDR2	m2_l2	/* MEMREQ_GET reply: source address */
 #define SVMCTL_MRG_REQUESTOR	m2_p1	/* MEMREQ_GET reply: requestor */
 #define SVMCTL_MAP_VIR_ADDR	m1_p1
-#define SVMCTL_PTROOT		m1_i3
+#define SVMCTL_PTROOT		m1_ull1  /* 64-bit physical page-table root (CR3/TTBR) */
 #define SVMCTL_PTROOT_V		m1_p1
 
 /* Reply message for VMCTL_KERN_PHYSMAP */
@@ -565,13 +571,16 @@
 					 */
 #  define VFS_PM_FRAME		m7_p2	/* arguments and environment */
 #  define VFS_PM_FRAME_LEN	m7_i3	/* size of frame */
-#  define VFS_PM_PS_STR		m7_i5	/* ps_strings pointer */
+#  define VFS_PM_PS_STR		m7_p3	/* ps_strings pointer (64-bit; was m7_i5,
+					 * a 32-bit int that sign-extended user
+					 * addresses with bit 31 set on x86_64) */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define VFS_PM_STATUS		m7_i2	/* OK or failure */
 #  define VFS_PM_PC		m7_p1	/* program counter */
 #  define VFS_PM_NEWSP		m7_p2	/* possibly-changed stack ptr */
-#  define VFS_PM_NEWPS_STR	m7_i5	/* possibly-changed ps_strings ptr */
+#  define VFS_PM_NEWPS_STR	m7_p3	/* possibly-changed ps_strings ptr (64-bit;
+					 * see VFS_PM_PS_STR) */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define VFS_PM_PENDPT		m7_i2	/* parent process endpoint */
@@ -771,7 +780,11 @@
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */
 #define VM_PAGEFAULT		(VM_RQ_BASE+0xff)
-#	define VPF_ADDR		m1_i1
+/* VPF_ADDR is a virtual address: it must be a 64-bit field (m1_ull1), not a
+ * 32-bit int (m1_i1).  On x86_64 a user address with bit 31 set (e.g. a stack
+ * address just below 0xF0000000) would otherwise be sign-extended to the kernel
+ * half when VM read it, so VM refused to grow the stack and SIGSEGV'd. */
+#	define VPF_ADDR		m1_ull1
 #	define VPF_FLAGS	m1_i2
 
 /* Basic vm calls allowed to every process. */

@@ -42,16 +42,18 @@ static void handle_vfs_reply(void);
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
+extern void __minix_init(void);
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-int
-main(void)
+int main(void)
 {
 /* Main routine of the process manager. */
   unsigned int call_index;
   int ipc_status, result;
 
+  __minix_init();
   /* SEF local startup. */
   sef_local_startup();
 
@@ -111,8 +113,7 @@ main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -246,8 +247,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-void
-reply(
+void reply(
 	int proc_nr,			/* process to reply to */
 	int result			/* result of call (usually OK or error #) */
 )
@@ -272,8 +272,7 @@ reply(
 /*===========================================================================*
  *				get_nice_value				     *
  *===========================================================================*/
-static int
-get_nice_value(
+static int get_nice_value(
 	int queue				/* store mem chunks here */
 )
 {
@@ -291,8 +290,7 @@ get_nice_value(
 /*===========================================================================*
  *				handle_vfs_reply       			     *
  *===========================================================================*/
-static void
-handle_vfs_reply(void)
+static void handle_vfs_reply(void)
 {
   struct mproc *rmp;
   endpoint_t proc_e;

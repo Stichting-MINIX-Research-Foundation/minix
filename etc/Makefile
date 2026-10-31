@@ -54,23 +54,33 @@ GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
 # Note: At least mkisofs 2.0 should be used.
 #
-.if !defined(__MINIX)
-# LSC: We do not yet support iso creation anyway, then do not try to find it.
 .if !defined(MKISOFS)
 MKISOFS!=       (which mkisofs || echo true) 2>/dev/null
 .endif
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
-ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
+ISO_VOLID!=	echo MINIX_${DISTRIBREV} | tr a-z A-Z
 MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
 		-V ${ISO_VOLID} \
-		-publisher "The NetBSD Project" \
+		-publisher "Minix" \
 		-m "${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom"
 .if ${MKISOFS_FLAGS:N-v}
 MKISOFS_FLAGS+=	-quiet
 .endif
-.endif # !defined(__MINIX)
  
+# Reproducible build parameters
+.if ${MKREPRO:Uno} == "no"
+BUILDER!=	echo $${USER-root}@$$(hostname)
+.else
+BUILDER=	builder@localhost.NetBSD.org
+.endif
+.if ${MKREPRO_TIMESTAMP:Uno} == "no"
+PAX_TIMESTAMP=
+BUILD_DATE!=	date -u
+.else
+PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
+BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}"
+.endif
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "+=".
@@ -124,7 +134,8 @@ BIN1+=	etc.${MACHINE}/disktab
 BIN1+=	disktab
 .endif
 
-.if exists(etc.${MACHINE}/ld.so.conf) && empty(MACHINE_ARCH:M*arm*hf*)
+.if exists(etc.${MACHINE}/ld.so.conf) && \
+    empty(MACHINE_ARCH:M*arm*hf*) && ${MACHINE_ARCH} != "aarch64"
 BIN1+=	etc.${MACHINE}/ld.so.conf
 .endif
 
@@ -137,7 +148,7 @@ BIN2+=	motd
 FILESBUILD_motd=	YES
 
 # -rw-------
-BIN3+=	hosts.equiv
+BIN3+=	hosts.equiv wpa_supplicant.conf
 .endif # defined(__MINIX)
 
 SYSPKG=	etc
@@ -196,7 +207,6 @@ motd: ${.CURDIR}/${MOTD_SOURCE} ${_NETBSD_VERSION_DEPENDS}
 .endif # !defined(__MINIX)
 
 CLEANFILES+=	MAKEDEV
-.if !defined(__MINIX)
 MAKEDEV_MACHINE=${"${MACHINE_CPU}" == "aarch64":?${MACHINE_CPU}:${MACHINE}}
 MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
     ${.CURDIR}/etc.${MAKEDEV_MACHINE}/MAKEDEV.conf
@@ -205,16 +215,9 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
-.else
-MAKEDEV: .PHONY
-	if [ ${MKUNPRIVED} != "yes" ]; then \
-		cd ${DESTDIR}/dev && sh ${NETBSDSRCDIR}/minix/commands/MAKEDEV/MAKEDEV.sh -s; \
-	else \
-		sh ${NETBSDSRCDIR}/minix/commands/MAKEDEV/MAKEDEV.sh -m -s >> ${DESTDIR}/METALOG; \
-	fi
-.endif # !defined(__MINIX)
 
 .include "${NETBSDSRCDIR}/etc/Makefile.params"
+
 CLEANFILES+=	etc-release
 etc-release: .EXEC .MAKE
 	${_MKTARGET_CREATE}
@@ -223,8 +226,8 @@ etc-release: .EXEC .MAKE
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build information:"; \
-		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
-		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
+		printf "%20s   %s\n" "Build date" "${BUILD_DATE}"; \
+		printf "%20s   %s\n"  "Built by" "${BUILDER}"; \
 		if [ -n "${BUILDID}" ]; then \
 		    printf "%20s   %s\n"  "Build ID" "${BUILDID}" ; \
 		fi ; \
@@ -271,11 +274,11 @@ FILESDIR_aliases=	/etc/mail
 FILESMODE_aliases=	644
 .endif
 
-.if !defined(__MINIX)
 CONFIGFILES+=		MAKEDEV.local
 FILESDIR_MAKEDEV.local=	/dev
 FILESMODE_MAKEDEV.local=${BINMODE}
 
+.if !defined(__MINIX)
 CONFIGFILES+=		crontab
 FILESDIR_crontab=	/var/cron/tabs
 FILESNAME_crontab=	root
@@ -289,8 +292,6 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 			/usr/sbin/rmt		/etc/rmt
 .else
 CONFIGSYMLINKS+=	\
-			/usr/log		/var/log \
-			/usr/tmp		/var/tmp \
 			/proc/mounts		/etc/mtab \
 			/usr/service/asr	/service/asr
 
@@ -378,16 +379,15 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/boot.cfg ${DESTDIR}/
 .endif
-.if !defined(__MINIX)
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
-.else
+.if defined(__MINIX)
 # As /var/log is a symlink to /usr/log, we need to use /usr/log for files
 # in /var/log here.  The same applies to the distrib list entries.
 .for owner group mode file in \
-		${BINOWN} ${BINGRP}	644	/usr/log/messages \
-		${BINOWN} ${BINGRP}	644	/usr/log/syslog \
+		${BINOWN} ${BINGRP}	644	/var/log/messages \
+		${BINOWN} ${BINGRP}	644	/var/log/syslog \
 		games games		664	/var/games/tetris.scores
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
@@ -395,7 +395,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
     			/dev/null ${DESTDIR}${file}; \
 	else true; fi
 .endfor
-.endif # !defined(__MINIX)
+.endif # defined(__MINIX)
 # TAC as software is imported, copy the files from the .for block below
 # TAC to the .for block above.
 .if !defined(__MINIX)
@@ -498,9 +498,13 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 .if !defined(__MINIX)
-OBSOLETE.files=		base comp etc games man misc text
+OBSOLETE.files=		base comp etc games man misc rescue text
 .else
+.if ${MKLLVM} != "no"
 OBSOLETE.files=		minix-base minix-comp minix-games minix-kernel minix-man
+.else
+OBSOLETE.files=		minix-base minix-comp-gcc minix-games minix-kernel minix-man
+.endif
 .endif # !defined(__MINIX)
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	minix-debug
@@ -552,7 +556,6 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel '*.gz'
 
 
-.if !defined(__MINIX)
 # iso-image --
 #	Standalone target to create a CDROM image after the release
 #	was composed.  Should be run after "make release" in src and xsrc.
@@ -641,7 +644,6 @@ install-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \
 	    INSTIMG_RELEASEDIR=${INSTIMG_RELEASEDIR}
 	${MAKESUMS} -t ${INSTIMG_RELEASEDIR} '*.img.gz'
-.endif # !defined(__MINIX)
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.
@@ -674,9 +676,9 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
 #				kern-${kernel}.tgz.  These kernels
-#				are also placed in the binary/kernel
-#				area of the release package as
-#				netbsd-${kernel}.gz.
+#				These kernels are also placed in the
+#				binary/kernel area of the release package
+#				as netbsd-${kernel}.gz.
 #
 #	EXTRA_KERNELS		Additional kernels to place in the
 #				binary/kernel area of the release
@@ -716,17 +718,20 @@ build_kernels: .PHONY
 # (e.g. Linux) when building on NFS.
 #
 .if !defined(KERNELS_DONE)						# {
+.if !defined(__MINIX)
 .for configfile in ${ALL_KERNELS:O:u}					# {
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
-	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
+	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
+	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} distclean
 .endif
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE}
+	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} depend && \
+	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} 
 	sync
 .endfor	# ALL_KERNELS							# }
+.endif  # !defined(__MINIX)
 .endif	# KERNELS_DONE							# }
 
 build_kernelsets: .PHONY
@@ -735,14 +740,15 @@ build_kernelsets: .PHONY
 #
 .for configfile in ${KERNEL_SETS:O:u}					# {
 .for configsel in ${ALL_KERNELS:O:u}
+.if !defined(__MINIX)
 .if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
-	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
+	@kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
-	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.${TAR_SUFF}; \
+	pax_cmd="GZIP=${GZIP_FLAGS:Q} XZ_OPT=${XZ_OPT:Q} ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program ${COMPRESS_PROGRAM:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -758,12 +764,17 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 			echo "echo $${kernels} | $${pax_cmd}"; \
 			( echo "/set uname=${BINOWN} gname=${BINGRP}"; \
 			echo ". type=dir optional"; \
+			dtblist=$$(${MAKE} -v DTB); \
+			for dtb in $${dtblist}; do \
+				echo "./$${dtb} type=file"; \
+			done; \
 			for kernel in $${kernels}; do \
 				echo "./$${kernel} type=file"; \
 			done ) | eval $${pax_cmd}; \
 		} \
 	}
 .endif
+.endif # !defined(__MINIX)
 .endfor
 .endfor	# KERNEL_SETS							# }
 
@@ -773,18 +784,29 @@ build_releasekernels: .PHONY
 #
 .for configfile in ${KERNEL_SETS:O:u} ${EXTRA_KERNELS:O:u}		# {
 .for configsel in ${ALL_KERNELS:O:u}
+.if !defined(__MINIX)
 .if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
-	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
+	@kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
+	dest="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"; \
 	cd $${kerndir} && {	\
+		dtblist=$$(${MAKE} -v DTB); \
+		for dtb in $${dtblist}; do \
+			[ ! -f $${dtb} ] && continue; \
+			dtb_gz="$${dest}/$${dtb}.gz"; \
+			[ $${dtb_gz} -nt $${dtb} ] && continue; \
+			rm -f $${dtb_gz}; \
+			echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${dtb} > $${dtb_gz}"; \
+			${TOOL_GZIP} ${GZIP_FLAGS} -c < $${dtb} > $${dtb_gz}; \
+		done; \
 		for kernel in $${kernlist}; do \
 			for s in "" $${kernsuffixes}; do \
 				ks="$${kernel}$${s}"; \
 				[ ! -f $${ks} ] && continue; \
-				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
+				knl_gz="$${dest}/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
 				echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${ks} > $${knl_gz}"; \
@@ -793,6 +815,7 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 		done; \
 	}
 .endif
+.endif # !defined(__MINIX)
 .endfor
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.15 2007/12/25 18:33:34 perry Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.16 2018/03/08 10:34:33 nonaka Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -120,7 +120,9 @@ struct biosdisk_extinfo {
 #define EXTINFO_LOCKABLE	0x0020	/* device is lockable */
 #define EXTINFO_MAXGEOM		0x0040	/* geometry set to max; no media */
 
+#ifndef BIOSDISK_DEFAULT_SECSIZE
 #define BIOSDISK_DEFAULT_SECSIZE	512
+#endif
 
 int set_geometry(struct biosdisk_ll *, struct biosdisk_extinfo *);
 int readsects(struct biosdisk_ll *, daddr_t, int, char *, int);

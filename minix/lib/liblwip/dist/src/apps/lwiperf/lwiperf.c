@@ -164,8 +164,7 @@ static err_t lwiperf_tcp_poll(void *arg, struct tcp_pcb *tpcb);
 static void lwiperf_tcp_err(void *arg, err_t err);
 
 /** Add an iperf session to the 'active' list */
-static void
-lwiperf_list_add(lwiperf_state_base_t* item)
+static void lwiperf_list_add(lwiperf_state_base_t* item)
 {
   if (lwiperf_all_connections == NULL) {
     lwiperf_all_connections = item;
@@ -175,8 +174,7 @@ lwiperf_list_add(lwiperf_state_base_t* item)
 }
 
 /** Remove an iperf session from the 'active' list */
-static void
-lwiperf_list_remove(lwiperf_state_base_t* item)
+static void lwiperf_list_remove(lwiperf_state_base_t* item)
 {
   lwiperf_state_base_t* prev = NULL;
   lwiperf_state_base_t* iter;
@@ -197,8 +195,7 @@ lwiperf_list_remove(lwiperf_state_base_t* item)
 }
 
 /** Call the report function of an iperf tcp session */
-static void
-lwip_tcp_conn_report(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
+static void lwip_tcp_conn_report(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
 {
   if ((conn != NULL) && (conn->report_fn != NULL)) {
     u32_t now, duration_ms, bandwidth_kbitpsec;
@@ -217,8 +214,7 @@ lwip_tcp_conn_report(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_
 }
 
 /** Close an iperf tcp session */
-static void
-lwiperf_tcp_close(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
+static void lwiperf_tcp_close(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
 {
   err_t err;
 
@@ -505,8 +501,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 }
 
 /** Error callback, iperf tcp session aborted */
-static void
-lwiperf_tcp_err(void *arg, err_t err)
+static void lwiperf_tcp_err(void *arg, err_t err)
 {
   lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
   LWIP_UNUSED_ARG(err);
@@ -638,8 +633,7 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
  * @ingroup iperf
  * Abort an iperf session (handle returned by lwiperf_start_tcp_server*())
  */
-void
-lwiperf_abort(void* lwiperf_session)
+void lwiperf_abort(void* lwiperf_session)
 {
   lwiperf_state_base_t* i, *dealloc, *last = NULL;
 

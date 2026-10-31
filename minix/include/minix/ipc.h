@@ -15,22 +15,22 @@
 #define CTL_SHORTNAME 8 /* max sysctl(2) name length that fits in message */
 
 typedef struct {
-	uint8_t data[56];
+	uint8_t  data[_MSG_PAYLOAD_SIZE];
 } mess_u8;
 _ASSERT_MSG_SIZE(mess_u8);
 
 typedef struct {
-	uint16_t data[28];
+	uint16_t data[_MSG_PAYLOAD_SIZE / 2];
 } mess_u16;
 _ASSERT_MSG_SIZE(mess_u16);
 
 typedef struct {
-	uint32_t data[14];
+	uint32_t data[_MSG_PAYLOAD_SIZE / 4];
 } mess_u32;
 _ASSERT_MSG_SIZE(mess_u32);
 
 typedef struct {
-	uint64_t data[7];
+	uint64_t data[_MSG_PAYLOAD_SIZE / 8];
 } mess_u64;
 _ASSERT_MSG_SIZE(mess_u64);
 
@@ -69,8 +69,8 @@ _ASSERT_MSG_SIZE(mess_4);
 
 typedef struct {
 	int m7i1, m7i2, m7i3, m7i4, m7i5;
-	char *m7p1, *m7p2;
-	uint8_t padding[28];
+	char *m7p1, *m7p2, *m7p3;
+	uint8_t padding[24];
 } mess_7;
 _ASSERT_MSG_SIZE(mess_7);
 
@@ -745,7 +745,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_mknod);
 
 typedef struct {
-	int flags;
 	size_t devlen;
 	size_t pathlen;
 	size_t typelen;
@@ -754,6 +753,7 @@ typedef struct {
 	vir_bytes path;
 	vir_bytes type;
 	vir_bytes label;
+	int flags;
 
 	uint8_t padding[20];
 } mess_lc_vfs_mount;
@@ -1720,11 +1720,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_notify);
 
 typedef struct {
-	int base;
-	size_t size;
+	uint64_t base;
+	uint32_t size;
 	uint32_t flags;
 
-	uint8_t padding[44];
+	uint8_t padding[40];
 } mess_pci_lsys_busc_get_bar;
 _ASSERT_MSG_SIZE(mess_pci_lsys_busc_get_bar);
 
@@ -2667,12 +2667,14 @@ typedef struct noxfer_message {
 		mess_vmmcp		m_vmmcp;
 		mess_vmmcp_reply	m_vmmcp_reply;
 
-		u8_t size[56];	/* message payload may have 56 bytes at most */
+		u8_t size[_MSG_PAYLOAD_SIZE]; /* arch-specific payload size */
 	};
 } message __ALIGNED(16);
 
-/* Ensure the complete union respects the IPC assumptions. */
-typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
+/* Ensure the complete message struct has the expected total size.
+ * Total = 4 (m_source) + 4 (m_type) + _MSG_PAYLOAD_SIZE payload. */
+typedef int _ASSERT_message[/* CONSTCOND */
+    sizeof(message) == (8 + _MSG_PAYLOAD_SIZE) ? 1 : -1];
 
 /* The following defines provide names for useful members. */
 #define m1_i1  m_m1.m1i1
@@ -2714,6 +2716,7 @@ typedef int _ASSERT_message[/* CONSTCOND */sizeof(message) == 64 ? 1 : -1];
 #define m7_i5  m_m7.m7i5
 #define m7_p1  m_m7.m7p1
 #define m7_p2  m_m7.m7p2
+#define m7_p3  m_m7.m7p3
 
 #define m9_l1  m_m9.m9l1
 #define m9_l2  m_m9.m9l2

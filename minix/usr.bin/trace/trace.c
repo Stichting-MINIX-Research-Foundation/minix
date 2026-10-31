@@ -21,8 +21,7 @@ static int got_signal, got_info;
  * main loop do the actual work, since it might be in the middle of processing
  * a process status change right now.
  */
-static void
-sig_handler(int __unused sig)
+static void sig_handler(int __unused sig)
 {
 
 	got_signal = TRUE;
@@ -35,8 +34,7 @@ sig_handler(int __unused sig)
  * process group, traced children may get the signal as well.  This is both
  * intentional and impossible to prevent.
  */
-static void
-info_handler(int __unused sig)
+static void info_handler(int __unused sig)
 {
 
 	got_info = TRUE;
@@ -47,8 +45,7 @@ info_handler(int __unused sig)
  * interfere with actual process output, so perform out-of-band printing
  * (with info lines rather than lines prefixed by each process's PID).
  */
-static void
-list_info(void)
+static void list_info(void)
 {
 	struct trace_proc *proc;
 	int no_call, in_call;
@@ -78,8 +75,7 @@ list_info(void)
  * has performed a successful execve() call.  Obtain the new process name, and
  * print a banner for it.
  */
-static void
-new_exec(struct trace_proc * proc)
+static void new_exec(struct trace_proc * proc)
 {
 
 	/* Failure to obtain the process name is worrisome, but not fatal.. */
@@ -95,8 +91,7 @@ new_exec(struct trace_proc * proc)
  * We have started or attached to a process.  Set the appropriate flags, and
  * print a banner showing that we are now tracing it.
  */
-static void
-new_proc(struct trace_proc * proc, int follow_fork)
+static void new_proc(struct trace_proc * proc, int follow_fork)
 {
 	int fl;
 
@@ -121,8 +116,7 @@ new_proc(struct trace_proc * proc, int follow_fork)
 /*
  * A process has terminated or is being detached.  Print the resulting status.
  */
-static void
-discard_proc(struct trace_proc * proc, int status)
+static void discard_proc(struct trace_proc * proc, int status)
 {
 	const char *signame;
 
@@ -171,8 +165,7 @@ discard_proc(struct trace_proc * proc, int status)
  * The given process has been stopped on a system call, either entering or
  * leaving that call.
  */
-static void
-handle_call(struct trace_proc * proc, int show_stack)
+static void handle_call(struct trace_proc * proc, int show_stack)
 {
 	reg_t pc, sp;
 	int class, skip, new_ctx;
@@ -254,8 +247,7 @@ handle_call(struct trace_proc * proc, int show_stack)
  * to the way signals are handled in PM right now (namely, deferring signal
  * delivery would let the traced process block signals meant for the tracer).
  */
-static void
-report_signal(struct trace_proc * proc, int sig, int show_stack)
+static void report_signal(struct trace_proc * proc, int sig, int show_stack)
 {
 	const char *signame;
 
@@ -309,8 +301,7 @@ report_signal(struct trace_proc * proc, int sig, int show_stack)
  * will be either set to an error code, or to zero in order to indicate that
  * the process exited instead.
  */
-static int
-wait_sig(pid_t pid, int sig)
+static int wait_sig(pid_t pid, int sig)
 {
 	int status;
 
@@ -347,8 +338,7 @@ wait_sig(pid_t pid, int sig)
  * signal will be pending right after attaching to the process, this procedure
  * will never block.
  */
-static int
-attach(pid_t pid)
+static int attach(pid_t pid)
 {
 
 	if (ptrace(T_ATTACH, pid, 0, 0) != 0) {
@@ -396,8 +386,7 @@ attach(pid_t pid)
  * Detach from all processes, knowning that they were all processes to which we
  * attached explicitly (i.e., not started by us) and are all currently stopped.
  */
-static void
-detach_stopped(void)
+static void detach_stopped(void)
 {
 	struct trace_proc *proc;
 
@@ -412,8 +401,7 @@ detach_stopped(void)
  * started by us (to allow graceful termination), unless force is set, in which
  * case those processes are killed.
  */
-static void
-detach_running(int force)
+static void detach_running(int force)
 {
 	struct trace_proc *proc;
 
@@ -454,8 +442,7 @@ usage(void)
 /*
  * The main function of the system call tracer.
  */
-int
-main(int argc, char * argv[])
+int main(int argc, char * argv[])
 {
 	struct trace_proc *proc;
 	const char *output_file;

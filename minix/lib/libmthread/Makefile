@@ -17,6 +17,9 @@ SRCS=	\
 
 WARNS?=	4
 
+# Debug option
+CPPFLAGS+= -DMDEBUG -DMTHREAD_STRICT
+
 CFLAGS+= -fno-builtin
 
 .include <bsd.lib.mk>

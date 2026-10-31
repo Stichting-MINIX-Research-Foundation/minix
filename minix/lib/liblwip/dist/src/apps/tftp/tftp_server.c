@@ -94,8 +94,7 @@ static struct tftp_state tftp_state;
 
 static void tftp_tmr(void* arg);
 
-static void
-close_handle(void)
+static void close_handle(void)
 {
   tftp_state.port = 0;
   ip_addr_set_any(0, &tftp_state.addr);
@@ -114,8 +113,7 @@ close_handle(void)
   }
 }
 
-static void
-send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *str)
+static void send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *str)
 {
   int str_length = strlen(str);
   struct pbuf* p;
@@ -135,8 +133,7 @@ send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *
   pbuf_free(p);
 }
 
-static void
-send_ack(u16_t blknum)
+static void send_ack(u16_t blknum)
 {
   struct pbuf* p;
   u16_t* payload;
@@ -153,8 +150,7 @@ send_ack(u16_t blknum)
   pbuf_free(p);
 }
 
-static void
-resend_data(void)
+static void resend_data(void)
 {
   struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, tftp_state.last_data->len, PBUF_RAM);
   if(p == NULL) {
@@ -170,8 +166,7 @@ resend_data(void)
   pbuf_free(p);
 }
 
-static void
-send_data(void)
+static void send_data(void)
 {
   u16_t *payload;
   int ret;
@@ -200,8 +195,7 @@ send_data(void)
   resend_data();
 }
 
-static void
-recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   u16_t *sbuf = (u16_t *) p->payload;
   int opcode;
@@ -357,8 +351,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
   pbuf_free(p);
 }
 
-static void
-tftp_tmr(void* arg)
+static void tftp_tmr(void* arg)
 {
   LWIP_UNUSED_ARG(arg);
   

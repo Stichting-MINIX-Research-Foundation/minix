@@ -362,8 +362,7 @@ ip6_select_source_address(struct netif *netif, const ip6_addr_t *dest)
  * @param iphdr the IPv6 header of the input packet
  * @param inp the netif on which this packet was received
  */
-static void
-ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
+static void ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
 
@@ -472,8 +471,7 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 #endif /* LWIP_IPV6_FORWARD */
 
 /** Return true if the current input packet should be accepted on this netif */
-static int
-ip6_input_accept(struct netif *netif)
+static int ip6_input_accept(struct netif *netif)
 {
   /* interface is up? */
   if (netif_is_up(netif)) {
@@ -1228,8 +1226,7 @@ ip6_options_add_hbh_ra(struct pbuf *p, u8_t nexth, u8_t value)
 /* Print an IPv6 header by using LWIP_DEBUGF
  * @param p an IPv6 packet, p->payload pointing to the IPv6 header
  */
-void
-ip6_debug_print(struct pbuf *p)
+void ip6_debug_print(struct pbuf *p)
 {
   struct ip6_hdr *ip6hdr = (struct ip6_hdr *)p->payload;
 

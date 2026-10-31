@@ -57,8 +57,7 @@ static void AcpiUtTerminate (
 
 #if (!ACPI_REDUCED_HARDWARE)
 
-static void
-AcpiUtFreeGpeLists (
+static void AcpiUtFreeGpeLists (
     void);
 
 #else
@@ -80,8 +79,7 @@ AcpiUtFreeGpeLists (
  *
  ******************************************************************************/
 
-static void
-AcpiUtFreeGpeLists (
+static void AcpiUtFreeGpeLists (
     void)
 {
     ACPI_GPE_BLOCK_INFO     *GpeBlock;
@@ -281,8 +279,7 @@ AcpiUtInitGlobals (
  *
  ******************************************************************************/
 
-static void
-AcpiUtTerminate (
+static void AcpiUtTerminate (
     void)
 {
     ACPI_FUNCTION_TRACE (UtTerminate);
@@ -306,8 +303,7 @@ AcpiUtTerminate (
  *
  ******************************************************************************/
 
-void
-AcpiUtSubsystemShutdown (
+void AcpiUtSubsystemShutdown (
     void)
 {
     ACPI_FUNCTION_TRACE (UtSubsystemShutdown);

@@ -1,0 +1,41 @@
+Cross-compiling memo
+
+  For Ubuntu
+
+	# apt install build-essential curl git zlib1g zlib1g-dev
+
+  Cross-building for x86
+
+  Using build.sh directly
+
+    $ sh build.sh -U -u -mi386 -O ../build tools
+    $ sh build.sh -U -u -mi386 -O ../build distribution
+    $ sh build.sh -U -u -mi386 -O ../build release
+    $ sh build.sh -U -u -mi386 -O ../build live-image
+    $ sh build.sh -U -u -mi386 -O ../build install-image (not working)
+    
+    
+    build.sh options
+    
+    -m mach        Set MACHINE to mach.  Some mach values are actually
+                   aliases that set MACHINE/MACHINE_ARCH pairs.
+                   (ex. i386 or amd64)
+
+    -U             Set MKUNPRIVED=yes; build without requiring root privileges,
+                   install from an UNPRIVED build with proper file permissions.
+    -u             Set MKUPDATE=yes; do not run "make cleandir" first.
+                   Without this, everything is rebuilt, including the tools.
+    
+    To use gcc: -V MKLLVM=no -V MKGCCCMDS=yes
+    
+    To build debug info: -V MKDEBUG=yes
+    
+  *texinfo
+  
+    You might run gnu/dist/fetch.sh manually.
+    
+  ex.
+  
+    $ sh build.sh -U -u -j4 -mi386 -O ../build32 tools
+    $ sh build.sh -U -u -j4 -mamd64 -O ../build tools
+

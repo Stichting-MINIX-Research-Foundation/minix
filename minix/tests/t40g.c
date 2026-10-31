@@ -21,8 +21,7 @@
 
 #include "common.h"
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	fd_set set;
 	int fd, retval;

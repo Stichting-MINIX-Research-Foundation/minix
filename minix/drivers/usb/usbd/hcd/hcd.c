@@ -67,8 +67,7 @@ extern void _ddekit_thread_set_myprio(int);
 /*===========================================================================*
  *    hcd_handle_event                                                       *
  *===========================================================================*/
-void
-hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
+void hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 {
 	DEBUG_DUMP;
 
@@ -205,8 +204,7 @@ hcd_handle_event(hcd_device_state * device, hcd_event event, hcd_reg1 val)
 /*===========================================================================*
  *    hcd_update_port                                                        *
  *===========================================================================*/
-void
-hcd_update_port(hcd_driver_state * driver, hcd_event event)
+void hcd_update_port(hcd_driver_state * driver, hcd_event event)
 {
 	DEBUG_DUMP;
 
@@ -246,8 +244,7 @@ hcd_update_port(hcd_driver_state * driver, hcd_event event)
 /*===========================================================================*
  *    hcd_device_thread                                                      *
  *===========================================================================*/
-static void
-hcd_device_thread(void * thread_args)
+static void hcd_device_thread(void * thread_args)
 {
 	hcd_device_state * this_device;
 
@@ -287,8 +284,7 @@ hcd_device_thread(void * thread_args)
 /*===========================================================================*
  *    hcd_device_finish                                                      *
  *===========================================================================*/
-static void
-hcd_device_finish(hcd_device_state * this_device, const char * finish_msg)
+static void hcd_device_finish(hcd_device_state * this_device, const char * finish_msg)
 {
 	DEBUG_DUMP;
 
@@ -356,8 +352,7 @@ hcd_get_child_for_ep(hcd_device_state * device, hcd_reg1 ep)
 /*===========================================================================*
  *    hcd_add_child                                                          *
  *===========================================================================*/
-static void
-hcd_add_child(hcd_device_state * parent, hcd_reg1 port, hcd_speed speed)
+static void hcd_add_child(hcd_device_state * parent, hcd_reg1 port, hcd_speed speed)
 {
 	DEBUG_DUMP;
 
@@ -384,8 +379,7 @@ hcd_add_child(hcd_device_state * parent, hcd_reg1 port, hcd_speed speed)
 /*===========================================================================*
  *    hcd_delete_child                                                       *
  *===========================================================================*/
-static void
-hcd_delete_child(hcd_device_state * parent, hcd_reg1 port)
+static void hcd_delete_child(hcd_device_state * parent, hcd_reg1 port)
 {
 	hcd_device_state * child;
 
@@ -412,8 +406,7 @@ hcd_delete_child(hcd_device_state * parent, hcd_reg1 port)
 /*===========================================================================*
  *    hcd_disconnect_tree                                                    *
  *===========================================================================*/
-static void
-hcd_disconnect_tree(hcd_device_state * device)
+static void hcd_disconnect_tree(hcd_device_state * device)
 {
 	hcd_reg1 child_num;
 
@@ -449,8 +442,7 @@ hcd_disconnect_tree(hcd_device_state * device)
 /*===========================================================================*
  *    hcd_dump_tree                                                          *
  *===========================================================================*/
-static void
-hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
+static void hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
 {
 	hcd_reg1 child_num;
 
@@ -469,8 +461,7 @@ hcd_dump_tree(hcd_device_state * device, hcd_reg1 level)
 /*===========================================================================*
  *    hcd_enumerate                                                          *
  *===========================================================================*/
-static int
-hcd_enumerate(hcd_device_state * this_device)
+static int hcd_enumerate(hcd_device_state * this_device)
 {
 	hcd_driver_state * d;
 
@@ -565,8 +556,7 @@ hcd_enumerate(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_get_device_descriptor                                              *
  *===========================================================================*/
-static int
-hcd_get_device_descriptor(hcd_device_state * this_device)
+static int hcd_get_device_descriptor(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
 	hcd_urb urb;
@@ -614,8 +604,7 @@ hcd_get_device_descriptor(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_set_address                                                        *
  *===========================================================================*/
-static int
-hcd_set_address(hcd_device_state * this_device)
+static int hcd_set_address(hcd_device_state * this_device)
 {
 	hcd_ctrlrequest setup;
 	hcd_urb urb;
@@ -667,8 +656,7 @@ hcd_set_address(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_get_descriptor_tree                                                *
  *===========================================================================*/
-static int
-hcd_get_descriptor_tree(hcd_device_state * this_device)
+static int hcd_get_descriptor_tree(hcd_device_state * this_device)
 {
 	hcd_config_descriptor temp_config_descriptor;
 	hcd_ctrlrequest setup;
@@ -802,8 +790,7 @@ hcd_get_descriptor_tree(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_set_configuration                                                  *
  *===========================================================================*/
-static int
-hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
+static int hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 {
 	hcd_ctrlrequest setup;
 	hcd_urb urb;
@@ -838,8 +825,7 @@ hcd_set_configuration(hcd_device_state * this_device, hcd_reg1 configuration)
 /*===========================================================================*
  *    hcd_handle_urb                                                         *
  *===========================================================================*/
-static void
-hcd_handle_urb(hcd_device_state * this_device)
+static void hcd_handle_urb(hcd_device_state * this_device)
 {
 	hcd_urb * urb;
 	int transfer_status;
@@ -891,8 +877,7 @@ hcd_handle_urb(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_complete_urb                                                       *
  *===========================================================================*/
-static void
-hcd_complete_urb(hcd_device_state * this_device)
+static void hcd_complete_urb(hcd_device_state * this_device)
 {
 	DEBUG_DUMP;
 
@@ -910,8 +895,7 @@ hcd_complete_urb(hcd_device_state * this_device)
 /*===========================================================================*
  *    hcd_control_urb                                                        *
  *===========================================================================*/
-static int
-hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
+static int hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 {
 	DEBUG_DUMP;
 
@@ -959,8 +943,7 @@ hcd_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 /*===========================================================================*
  *    hcd_non_control_urb                                                    *
  *===========================================================================*/
-static int
-hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
+static int hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 {
 	hcd_endpoint * e;
 	hcd_datarequest request;
@@ -1048,8 +1031,7 @@ hcd_non_control_urb(hcd_device_state * this_device, hcd_urb * urb)
 /*===========================================================================*
  *    hcd_setup_packet                                                       *
  *===========================================================================*/
-static int
-hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
+static int hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 		hcd_reg1 ep)
 {
 	hcd_driver_state * d;
@@ -1189,8 +1171,7 @@ hcd_setup_packet(hcd_device_state * this_device, hcd_ctrlrequest * setup,
 /*===========================================================================*
  *    hcd_finish_setup                                                       *
  *===========================================================================*/
-static int
-hcd_finish_setup(hcd_device_state * this_device, void * output)
+static int hcd_finish_setup(hcd_device_state * this_device, void * output)
 {
 	DEBUG_DUMP;
 
@@ -1214,8 +1195,7 @@ hcd_finish_setup(hcd_device_state * this_device, void * output)
 /*===========================================================================*
  *    hcd_data_transfer                                                      *
  *===========================================================================*/
-static int
-hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
+static int hcd_data_transfer(hcd_device_state * this_device, hcd_datarequest * request)
 {
 	hcd_driver_state * d;
 	hcd_datarequest temp_req;

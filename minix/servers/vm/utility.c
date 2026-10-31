@@ -224,8 +224,7 @@ int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
  * (inclusive) to 'end_addr' (exclusive).  Return OK or an error code.
  * If the regions seem to have been transferred already, do nothing.
  */
-static int
-transfer_mmap_regions(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+static int transfer_mmap_regions(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 	vir_bytes start_addr, vir_bytes end_addr)
 {
 	struct vir_region *start_vr, *check_vr, *end_vr;
@@ -279,8 +278,7 @@ transfer_mmap_regions(struct vmproc *src_vmp, struct vmproc *dst_vmp,
  * regions present in 'src_vmp'.  Return OK on success, or an error otherwise.
  * In the case of failure, successfully created mappings are not undone.
  */
-int
-map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+int map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
 	int r;
 

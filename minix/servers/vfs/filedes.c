@@ -310,8 +310,7 @@ void invalidate_filp_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				lock_filp				     *
  *===========================================================================*/
-void
-lock_filp(struct filp *filp, tll_access_t locktype)
+void lock_filp(struct filp *filp, tll_access_t locktype)
 {
   struct worker_thread *org_self;
   struct vnode *vp;
@@ -354,8 +353,7 @@ lock_filp(struct filp *filp, tll_access_t locktype)
 /*===========================================================================*
  *				unlock_filp				     *
  *===========================================================================*/
-void
-unlock_filp(struct filp *filp)
+void unlock_filp(struct filp *filp)
 {
   /* If this filp holds a soft lock on the vnode, we must be the owner */
   if (filp->filp_softlock != NULL)
@@ -379,8 +377,7 @@ unlock_filp(struct filp *filp)
 /*===========================================================================*
  *				unlock_filps				     *
  *===========================================================================*/
-void
-unlock_filps(struct filp *filp1, struct filp *filp2)
+void unlock_filps(struct filp *filp1, struct filp *filp2)
 {
 /* Unlock two filps that are tied to the same vnode. As a thread can lock a
  * vnode only once, unlocking the vnode twice would result in an error. */
@@ -410,8 +407,7 @@ unlock_filps(struct filp *filp1, struct filp *filp2)
 /*===========================================================================*
  *				close_filp				     *
  *===========================================================================*/
-int
-close_filp(struct filp * f, int may_suspend)
+int close_filp(struct filp * f, int may_suspend)
 {
 /* Close a file.  Will also unlock filp when done.  The 'may_suspend' flag
  * indicates whether the current process may be suspended closing a socket.
@@ -420,7 +416,7 @@ close_filp(struct filp * f, int may_suspend)
  * cases, this function will always return OK.  It will never return another
  * error code, for reasons explained below.
  */
-  int r, rw;
+  int r, rw, fifo;
   dev_t dev;
   struct vnode *vp;
 
@@ -487,14 +483,22 @@ close_filp(struct filp * f, int may_suspend)
 	}
   }
 
-  /* If the inode being closed is a pipe, release everyone hanging on it. */
-  if (S_ISFIFO(vp->v_mode)) {
-	rw = (f->filp_mode & R_BIT ? VFS_WRITE : VFS_READ);
-	release(vp, rw, susp_count);
-  }
+  /* Note which end of a pipe is going, while the filp still says so. */
+  fifo = S_ISFIFO(vp->v_mode);
+  rw = (f->filp_mode & R_BIT) ? VFS_WRITE : VFS_READ;
 
-  if (--f->filp_count == 0) {
-	if (S_ISFIFO(vp->v_mode)) {
+  f->filp_count--;
+
+  /* If the inode being closed is a pipe, release everyone hanging on it.
+   * This happens after the count has been dropped, so that this filp no
+   * longer counts as a partner: what makes the other end ready is that
+   * there is nobody left to wait for, and find_filp() has to agree.
+   */
+  if (fifo)
+	release(vp, rw, susp_count);
+
+  if (f->filp_count == 0) {
+	if (fifo) {
 		/* Last reader or writer is going. Tell PFS about latest
 		 * pipe size.
 		 */
@@ -507,8 +511,8 @@ close_filp(struct filp * f, int may_suspend)
 	f->filp_mode = FILP_CLOSED;
 	f->filp_count = 0;
   } else if (f->filp_count < 0) {
-	panic("VFS: invalid filp count: %d ino %llx/%llu", f->filp_count,
-	      vp->v_dev, vp->v_inode_nr);
+	panic("VFS: invalid filp count: %d ino %lx/%lu", f->filp_count,
+	      (unsigned long)vp->v_dev, (unsigned long)vp->v_inode_nr);
   } else {
 	unlock_vnode(f->filp_vno);
   }

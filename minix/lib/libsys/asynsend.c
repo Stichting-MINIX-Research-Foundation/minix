@@ -22,10 +22,7 @@ static int initialized = 0;
 /*===========================================================================*
  *				asynsend3				     *
  *===========================================================================*/
-int asynsend3(dst, mp, fl)
-endpoint_t dst;
-message *mp;
-int fl;
+int asynsend3(endpoint_t dst, message *mp, int fl)
 {
   int i, r, src_ind, dst_ind;
   unsigned flags;

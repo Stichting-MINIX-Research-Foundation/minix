@@ -7,8 +7,7 @@ static unsigned int nr_procs;
 /*
  * Initialize the list of traced processes.
  */
-void
-proc_init(void)
+void proc_init(void)
 {
 
 	TAILQ_INIT(&proc_root);
@@ -61,8 +60,7 @@ proc_get(pid_t pid)
 /*
  * Remove a process from the list of traced processes.
  */
-void
-proc_del(struct trace_proc * proc)
+void proc_del(struct trace_proc * proc)
 {
 
 	TAILQ_REMOVE(&proc_root, proc, next);
@@ -89,8 +87,7 @@ proc_next(struct trace_proc * proc)
 /*
  * Return the number of processes in the list of traced processes.
  */
-unsigned int
-proc_count(void)
+unsigned int proc_count(void)
 {
 
 	return nr_procs;

@@ -1,7 +1,6 @@
 #include "syslib.h"
 
-int
-sys_schedule(endpoint_t proc_ep, int priority, int quantum, int cpu, int niced)
+int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int cpu, int niced)
 {
 	message m;
 

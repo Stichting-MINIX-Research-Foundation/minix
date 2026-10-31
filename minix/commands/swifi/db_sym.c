@@ -52,8 +52,7 @@ unsigned long modAddr = 0;
  * input is the desired address off and fault type
  * returns closest instruction address (if found), NULL otherwise
  */
-unsigned long
-find_faulty_instr(db_expr_t off, int type, int *instr_len)
+unsigned long find_faulty_instr(db_expr_t off, int type, int *instr_len)
 {
   db_expr_t       d;
   char            *name;

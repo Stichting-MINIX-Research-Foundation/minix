@@ -1,0 +1,272 @@
+#	$NetBSD: files.acpi,v 1.114 2018/12/25 11:56:14 mlelstv Exp $
+
+include "dev/acpi/acpica/files.acpica"
+
+defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
+			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
+			ACPI_REDUCED_HW ACPI__DIS_IS_BROKEN
+defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
+defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
+
+define	acpiapmbus { }
+define	acpinodebus { }
+define	acpiecdtbus { }
+define	acpihpetbus { }
+define	acpiwdrtbus { }
+define	acpisdtbus { }
+define	acpigtdtbus { }
+define	acpimadtbus { }
+
+device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpisdtbus, acpigtdtbus, acpimadtbus, acpihpetbus, acpiwdrtbus, sysmon_power, sysmon_taskq
+attach	acpi at acpibus
+file	dev/acpi/acpi.c			acpi
+file	dev/acpi/acpi_debug.c		acpi
+file	dev/acpi/acpi_event.c		acpi
+file	dev/acpi/acpi_i2c.c		acpi
+file	dev/acpi/acpi_mcfg.c		acpi & pci
+file	dev/acpi/acpi_pci.c		acpi
+file	dev/acpi/acpi_pci_link.c	acpi
+file	dev/acpi/acpi_power.c		acpi
+file	dev/acpi/acpi_quirks.c		acpi
+file	dev/acpi/acpi_resource.c	acpi
+file	dev/acpi/acpi_srat.c		acpi
+file	dev/acpi/acpi_slit.c		acpi
+file	dev/acpi/acpi_timer.c		acpi
+file	dev/acpi/acpi_usb.c		acpi
+file	dev/acpi/acpi_util.c		acpi
+file	dev/acpi/acpi_wakedev.c		acpi
+file	dev/acpi/acpi_verbose.c		acpi & acpiverbose
+
+# ACPI/apm emulation.
+attach  apm at acpiapmbus with acpiapm: sysmon_envsys
+file	dev/acpi/acpi_apm.c		acpiapm
+
+# ACPI Embedded Controller
+device	acpiec
+attach	acpiec at acpinodebus
+device	acpiecdt
+attach	acpiecdt at acpiecdtbus
+file	dev/acpi/acpi_ec.c		acpiec|acpiecdt
+
+# ACPI Lid Switch
+device	acpilid: sysmon_power
+attach	acpilid at acpinodebus
+file	dev/acpi/acpi_lid.c		acpilid
+
+# ACPI Button
+device	acpibut: sysmon_power
+attach	acpibut at acpinodebus
+file	dev/acpi/acpi_button.c		acpibut
+
+# ACPI AC Adapter
+device	acpiacad: sysmon_envsys, sysmon_power
+attach	acpiacad at acpinodebus
+file	dev/acpi/acpi_acad.c		acpiacad
+
+# ACPI Control Method Battery
+device	acpibat: sysmon_envsys
+attach	acpibat at acpinodebus
+file	dev/acpi/acpi_bat.c		acpibat
+
+# ACPI Display
+device	acpivga {}
+attach	acpivga at acpinodebus
+device	acpiout
+attach	acpiout at acpivga
+file	dev/acpi/acpi_display.c		acpivga|acpiout
+
+# ACPI Fan
+device	acpifan: sysmon_envsys
+attach	acpifan at acpinodebus
+file	dev/acpi/acpi_fan.c		acpifan
+
+# ACPI Generic Event Device
+device	acpiged
+attach	acpiged at acpinodebus
+file	dev/acpi/acpi_ged.c		acpiged
+
+# ACPI Power Meter
+device	acpipmtr: sysmon_envsys
+attach	acpipmtr at acpinodebus
+file	dev/acpi/acpi_pmtr.c		acpipmtr
+
+# ACPI Thermal Zone
+device	acpitz: sysmon_envsys
+attach	acpitz at acpinodebus
+file	dev/acpi/acpi_tz.c		acpitz
+
+# ACPI Watchdog Timer
+device	acpiwdrt: sysmon_wdog
+attach	acpiwdrt at acpiwdrtbus
+file	dev/acpi/acpi_wdrt.c		acpiwdrt
+
+# Serial interface
+attach	com at acpinodebus with com_acpi
+file	dev/acpi/com_acpi.c		com_acpi
+
+# Floppy disk controller
+attach	fdc at acpinodebus with fdc_acpi
+file	dev/acpi/fdc_acpi.c		fdc_acpi
+
+# Parallel interface
+attach	lpt at acpinodebus with lpt_acpi
+file	dev/acpi/lpt_acpi.c		lpt_acpi & !ppbus
+
+attach	atppc at acpinodebus with atppc_acpi: isadma
+file	dev/acpi/atppc_acpi.c		atppc_acpi
+
+# Keyboard controller
+attach	pckbc at acpinodebus with pckbc_acpi
+file	dev/acpi/pckbc_acpi.c		pckbc_acpi
+
+# NeoMagic 256AV audio with CS4232 codec
+attach	wss at acpinodebus with wss_acpi
+file	dev/acpi/wss_acpi.c		wss_acpi
+
+# Roland MPU401 (compatible) MIDI UART
+attach	mpu at acpinodebus with mpu_acpi
+file	dev/acpi/mpu_acpi.c		mpu_acpi
+
+# Joystick/Game port
+attach	joy at acpinodebus with joy_acpi
+file	dev/acpi/joy_acpi.c		joy_acpi
+
+# AT-style speaker sound
+attach	pcppi at acpinodebus with pcppi_acpi
+file	dev/acpi/pcppi_acpi.c		pcppi_acpi
+
+# AT Timer
+attach	attimer at acpinodebus with attimer_acpi
+file	dev/acpi/attimer_acpi.c		attimer_acpi
+
+# Trusted Platform Module
+attach tpm at acpinodebus with tpm_acpi
+file   dev/acpi/tpm_acpi.c		tpm_acpi
+
+# Yamaha OPL3-SAx
+attach	ym at acpinodebus with ym_acpi
+file	dev/acpi/ym_acpi.c		ym_acpi
+
+# High Precision Event Timer
+attach 	hpet at acpinodebus with hpet_acpi_dev
+attach 	hpet at acpihpetbus with hpet_acpi_tab
+file 	dev/acpi/hpet_acpi.c		hpet_acpi_dev|hpet_acpi_tab
+
+# ASUS hotkey device
+device	asus: sysmon_envsys, sysmon_power
+attach	asus at acpinodebus
+file	dev/acpi/asus_acpi.c		asus
+
+# Abit uGuru 2005
+attach	ug at acpinodebus with ug_acpi
+file	dev/acpi/ug_acpi.c		ug_acpi
+
+# HP 3D DriveGuard accelerometer
+device	hpacel: sysmon_envsys
+attach	hpacel at acpinodebus
+file	dev/acpi/hpacel_acpi.c		hpacel
+
+# HP Quick Launch Buttons
+device	hpqlb: sysmon_power
+attach	hpqlb at acpinodebus
+file	dev/acpi/hpqlb_acpi.c		hpqlb
+
+# Sony Notebook Controller (brightness, hotkeys, etc.)
+device	sony: displaydev
+attach	sony at acpinodebus with sony_acpi
+file	dev/acpi/sony_acpi.c		sony_acpi
+
+# Toshiba hotkeys
+device	vald
+attach	vald at acpinodebus with vald_acpi
+file	dev/acpi/vald_acpi.c		vald_acpi
+
+# Toshiba Dynabook hotkeys
+device	valz
+attach	valz at acpinodebus with valz_acpi
+file	dev/acpi/valz_acpi.c		valz_acpi
+
+# Sony SPIC (jog dial etc.)
+attach	spic at acpinodebus with spic_acpi
+file	dev/acpi/spic_acpi.c		spic_acpi
+
+# IBM/Lenovo Thinkpad hotkey device
+device	thinkpad
+attach	thinkpad at acpinodebus
+file	dev/acpi/thinkpad_acpi.c	thinkpad
+
+# Direct Application Launch Buttons
+device	acpidalb
+attach	acpidalb at acpinodebus
+file	dev/acpi/dalb_acpi.c		acpidalb
+
+# Winbond Integrated Media Reader
+attach	wb at acpinodebus with wb_acpi
+file	dev/acpi/wb_acpi.c		wb_acpi
+
+# ASUSTeK AI Booster
+device	aibs: sysmon_envsys
+attach	aibs at acpinodebus
+file	dev/acpi/aibs_acpi.c		aibs
+
+# ACPI SMBus controller
+device	acpismbus: i2cbus
+attach	acpismbus at acpinodebus
+file	dev/acpi/smbus_acpi.c		acpismbus
+
+# Fujitsu Brightness & Pointer
+device	fujbp
+attach	fujbp at acpinodebus
+file	dev/acpi/fujbp_acpi.c		fujbp
+
+# Fujitsu Hotkeys
+device	fujhk: sysmon_power
+attach	fujhk at acpinodebus
+file	dev/acpi/fujhk_acpi.c		fujhk
+
+# Apple SMC
+attach	applesmc at acpinodebus with apple_smc_acpi
+file	dev/acpi/apple_smc_acpi.c	apple_smc_acpi
+
+# SD Host Controller
+attach	sdhc at acpinodebus with sdhc_acpi
+file	dev/acpi/sdhc_acpi.c		sdhc_acpi
+
+# QEMU Firmware Configuration (fw_cfg) device
+attach	qemufwcfg at acpinodebus with qemufwcfg_acpi
+file	dev/acpi/qemufwcfg_acpi.c	qemufwcfg_acpi
+
+# AHCI SATA controller
+attach	ahcisata at acpinodebus with ahcisata_acpi
+file	dev/acpi/ahcisata_acpi.c	ahcisata_acpi
+
+# ARM PrimeCell PL061 GPIO controller
+attach	plgpio at acpinodebus with plgpio_acpi
+file	dev/acpi/plgpio_acpi.c		plgpio_acpi
+
+# DesignWare I2C controller
+attach	dwiic at acpinodebus with dwiic_acpi
+file	dev/acpi/dwiic_acpi.c		dwiic_acpi
+
+# AMD Cryptographic Coprocessor
+attach	amdccp at acpinodebus with amdccp_acpi
+file	dev/acpi/amdccp_acpi.c		amdccp_acpi
+
+# QEMU Virtio
+attach	virtio at acpinodebus with virtio_acpi
+file	dev/acpi/virtio_acpi.c		virtio_acpi
+
+# EHCI-compliant USB controller
+attach	ehci at acpinodebus with ehci_acpi
+file	dev/acpi/ehci_acpi.c		ehci_acpi
+
+# XHCI-compliant USB controller
+attach	xhci at acpinodebus with xhci_acpi
+file	dev/acpi/xhci_acpi.c		xhci_acpi
+
+# IPMI
+device	ipmi_acpi: ipmibus
+attach	ipmi_acpi at acpinodebus
+file	dev/acpi/ipmi_acpi.c		ipmi_acpi
+
+include	"dev/acpi/wmi/files.wmi"

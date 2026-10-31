@@ -96,7 +96,10 @@ static phys_bytes dma_buf_phys;
 
 struct prdte
 {
-	phys_bytes prdte_base;
+	u32_t prdte_base;	/* IDE bus-master PRD: 32-bit physical address.
+				 * MUST be u32_t (not phys_bytes) so the entry
+				 * stays exactly 8 bytes as the hardware expects;
+				 * phys_bytes is 64-bit on amd64 (LP64). */
 	u16_t prdte_count;
 	u8_t prdte_reserved;
 	u8_t prdte_flags;
@@ -394,9 +397,16 @@ static void w_init(int devind, u16_t vid, u16_t did)
 		printf("at_wini%ld: native 0 on %d: 0x%x 0x%x irq %d\n",
 			w_instance, devind, base_cmd, base_ctl, irq);
   } else {
-	/* Register first compatibility IRQ. */
+	/* Register first compatibility IRQ.
+	 *
+	 * Policy 0 (not IRQ_REENABLE): re-enable the IRQ ourselves from
+	 * w_intr_wait() only AFTER reading REG_STATUS (which acks/clears the
+	 * drive interrupt).  IRQ_REENABLE unmasks the line before we drain it;
+	 * under the IOAPIC (SMP/APIC mode) that re-fires the still-asserted IRQ
+	 * 14/15 immediately, starving this driver so it never drains -> interrupt
+	 * storm that wedges the boot.  The 8259 PIC (non-SMP) doesn't re-fire. */
 	compat_hook = nhooks++;
-	if ((r = sys_irqsetpolicy(AT_WINI_0_IRQ, IRQ_REENABLE,
+	if ((r = sys_irqsetpolicy(AT_WINI_0_IRQ, 0,
 		&compat_hook)) != OK)
 		panic("couldn't set compat(0) IRQ policy: %d", r);
 	if ((r = sys_irqenable(&compat_hook)) != OK)
@@ -425,9 +435,11 @@ static void w_init(int devind, u16_t vid, u16_t did)
 		printf("at_wini%ld: native 1 on %d: 0x%x 0x%x irq %d\n",
 			w_instance, devind, base_cmd, base_ctl, irq);
   } else {
-	/* Register secondary compatibility IRQ. */
+	/* Register secondary compatibility IRQ.  Policy 0 (not IRQ_REENABLE);
+	 * see the compat(0) comment above -- re-enabled from w_intr_wait() after
+	 * the REG_STATUS read, to avoid the IOAPIC IRQ-storm on VBox. */
 	compat_hook = nhooks++;
-	if ((r = sys_irqsetpolicy(AT_WINI_1_IRQ, IRQ_REENABLE,
+	if ((r = sys_irqsetpolicy(AT_WINI_1_IRQ, 0,
 		&compat_hook)) != OK)
 		panic("couldn't set compat(1) IRQ policy: %d", r);
 	if ((r = sys_irqenable(&compat_hook)) != OK)
@@ -560,8 +572,7 @@ static struct device *w_part(devminor_t device)
 /*===========================================================================*
  *				check_dma				     *
  *===========================================================================*/
-static void
-check_dma(struct wini *wn)
+static void check_dma(struct wini *wn)
 {
 	u32_t dma_status, dma_base;
 	int id_dma, ultra_dma;
@@ -964,7 +975,7 @@ static int error_dma(const struct wini *wn)
 	u32_t v;
 
 #define DMAERR(msg) \
-	printf("at_wini%ld: bad DMA: %s. Disabling DMA for drive %d.\n",	\
+	printf("at_wini%ld: bad DMA: %s. Disabling DMA for drive %td.\n",	\
 		w_instance, msg, wn - wini);				\
 	printf("at_wini%ld: workaround: set %s=1 in boot monitor.\n", \
 		w_instance, NO_DMA_VAR); \
@@ -1052,8 +1063,9 @@ static ssize_t w_transfer(
 
 	if (do_dma) {
 		stop_dma(wn);
-		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write)) {
-			do_dma = 0;
+		r = setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write);
+		if (r == 0) {
+			return -errno;
 		}
 #if 0
 		printf("nbytes = %d\n", nbytes);
@@ -1214,8 +1226,7 @@ static ssize_t w_transfer(
 /*===========================================================================*
  *				com_out					     *
  *===========================================================================*/
-static int com_out(cmd)
-struct command *cmd;		/* Command block */
+static int com_out(struct command *cmd)
 {
 /* Output the command block to the winchester controller and return status */
 
@@ -1265,8 +1276,7 @@ struct command *cmd;		/* Command block */
 /*===========================================================================*
  *				com_out_ext				     *
  *===========================================================================*/
-static int com_out_ext(cmd)
-struct command *cmd;		/* Command block */
+static int com_out_ext(struct command *cmd)
 {
 /* Output the command block to the winchester controller and return status */
 
@@ -1324,97 +1334,129 @@ static int setup_dma(
   endpoint_t proc_nr,
   iovec_t *iov,
   size_t addr_offset,
-  int UNUSED(do_write)
-)
-{
-	phys_bytes user_phys;
-	unsigned n, offset, size;
-	int i, j, r;
+  int do_write
+){
+	/* vvec cannot be bigger than prdt, so I think it is a suitable size
+	 * Should not exhaust the stack */
+	struct vumap_vir vvec[N_PRDTE];
+	struct vumap_phys pvec[N_PRDTE];
+
+	unsigned bytes, offset, size;
+	int i, j, vvec_len, r, pcount;
 	u32_t v;
 	struct wini *wn = w_wn;
 
-	/* First try direct scatter/gather to the supplied buffers */
-	size= *sizep;
-	i= 0;	/* iov index */
-	j= 0;	/* prdt index */
-	offset= 0;	/* Offset in current iov */
+	size = *sizep;
+	i = 0;	/* pvec index */
+	j = 0;	/* prdt index */
+	vvec_len = 0;
 
-#if VERBOSE_DMA
-	printf("at_wini: setup_dma: proc_nr %d\n", proc_nr);
-#endif
+	/* Step 1: copy data from iov to vvec */
+	while (size > 0) {
+		if (proc_nr == SELF) {
+			vvec[vvec_len].vv_addr = iov[vvec_len].iov_addr;
+		}
+		else {
+			vvec[vvec_len].vv_grant = (cp_grant_id_t)iov[vvec_len].iov_addr;
+		}
 
-	while (size > 0)
-	{
-#if VERBOSE_DMA
-		printf(
-	"at_wini: setup_dma: iov[%d]: addr 0x%lx, size %ld offset %d, size %d\n",
-			i, iov[i].iov_addr, iov[i].iov_size, offset, size);
-#endif
-			
-		n= iov[i].iov_size-offset;
-		if (n > size)
-			n= size;
-		if (n == 0 || (n & 1))
-			panic("bad size in iov: 0x%lx", iov[i].iov_size);
-		if(proc_nr != SELF) {
-			r= sys_umap(proc_nr, VM_GRANT, iov[i].iov_addr, n,
-				&user_phys);
-			if (r != 0)
-				panic("can't map user buffer (VM_GRANT): %d", r);
-			user_phys += offset + addr_offset;
+		if (size < iov[vvec_len].iov_size) {
+			vvec[vvec_len].vv_size = size;
 		} else {
-			r= sys_umap(proc_nr, VM_D,
-				iov[i].iov_addr+offset+addr_offset, n,
-				&user_phys);
-			if (r != 0)
-				panic("can't map user buffer (VM_D): %d", r);
+			vvec[vvec_len].vv_size = iov[vvec_len].iov_size;
 		}
-		if (user_phys & 1)
-		{
-			/* Buffer is not aligned */
-			printf("setup_dma: user buffer is not aligned\n");
-			return 0;
-		}
-
-		/* vector is not allowed to cross a 64K boundary */
-		if (user_phys/0x10000 != (user_phys+n-1)/0x10000)
-			n= ((user_phys/0x10000)+1)*0x10000 - user_phys;
-
-		/* vector is not allowed to be bigger than 64K, but we get that
-		 * for free.
-		 */
-
-		if (j >= N_PRDTE)
-		{
-			/* Too many entries */
-			printf("setup_dma: user buffer has too many entries\n");
-			return 0;
-		}
-
-		prdt[j].prdte_base= user_phys;
-		prdt[j].prdte_count= n;
-		prdt[j].prdte_reserved= 0;
-		prdt[j].prdte_flags= 0;
-		j++;
-
-		offset += n;
-		if (offset >= iov[i].iov_size)
-		{
-			i++;
-			offset= 0;
-			addr_offset= 0;
-		}
-
-		size -= n;
+		size -= vvec[vvec_len].vv_size;
+		vvec_len++;
 	}
 
-	if (j <= 0 || j > N_PRDTE)
-		panic("bad prdt index: %d", j);
-	prdt[j-1].prdte_flags |= PRDTE_FL_EOT;
+	pcount = vvec_len;
+	
+	/* Step 2: sys_vumap */
+	/* sys_vumap should resolve all our addresses in one go,
+	 * since caller is required to provide us with physically
+	 * contiguous buffers. If sys_vumap fails to do so,
+	 * we can just return EINVAL */
+
+	r = sys_vumap(proc_nr, vvec, vvec_len, addr_offset,
+			do_write? VUA_READ : VUA_WRITE, pvec, &pcount);
+
+	if (r != OK) {
+		printf("setup_dma: can't map user buffer: %d", r);
+		errno = EINVAL;
+		return 0;
+	}
+
+	/* sanity check: buffers should be 2-aligned
+	 * (i.e. their start addresses should be even) */
+	for (i = 0; i < pcount; i++) {
+		if (pvec[i].vp_addr & 1) {
+			printf("setup_dma: user buffer is not aligned\n");
+			errno = EINVAL;
+			return 0;
+		}
+	}
+
+	/* Step 3: redistribute pvec ranges to PRD's */
+	i = 0;
+	size = 0;
+	offset = 0;
+	while (i < pcount) {
+		/* The IDE bus-master can only address 32 bits. If sys_vumap
+		 * handed us a buffer above 4GB, we cannot DMA to it; bail so
+		 * the caller falls back to PIO instead of truncating. */
+		if ((u64_t)pvec[i].vp_addr + offset > 0xFFFFFFFFULL) {
+			printf("setup_dma: buffer above 4GB, no DMA\n");
+			errno = EINVAL;
+			return 0;
+		}
+		prdt[j].prdte_base = pvec[i].vp_addr + offset;
+		bytes = pvec[i].vp_size - offset;
+		
+		/* make sure PRD does not cross 64K boundary */
+		if (prdt[j].prdte_base / 0x10000 !=
+				(prdt[j].prdte_base + bytes - 1) / 0x10000) {
+			bytes = ((prdt[j].prdte_base / 0x10000) + 1) * 0x10000
+				- prdt[j].prdte_base;
+		}
+
+		/* PRD size must not exceed 64K, but we get that for free */
+
+		prdt[j].prdte_count = bytes;
+		prdt[j].prdte_reserved = 0;
+		prdt[j].prdte_flags = 0;
+
+		offset += bytes;
+		if (offset == pvec[i].vp_size) {
+			i++;
+			offset = 0;
+		}
+
+		/* keeping track of how much data in vvec were processed */
+		size += bytes;
+
+		j++;
+		if (j == N_PRDTE && i < pcount) {
+			/* we are out of PRDT space and not yet done with
+			 * all regions! Bail out gracefully. */
+			printf("setup_dma: user buffer has too many entries\n");
+			errno = EINVAL;
+			return 0;
+		}
+	}
+	prdt[j - 1].prdte_flags |= PRDTE_FL_EOT;
+
+	if (size < *sizep) {
+		/* sys_vumap didn't resolve everything in one go, therefore
+		 * buffers were not physically contiguous.
+		 */
+		printf("setup_dma: user buffers are not physically contiguous\n");
+		errno = EINVAL;
+		return 0;
+	}
 
 #if VERBOSE_DMA
 	printf("dma not bad\n");
-	for (i= 0; i<j; i++) {
+	for (i = 0; i < j; i++) {
 		printf("prdt[%d]: base 0x%lx, size %d, flags 0x%x\n",
 			i, prdt[i].prdte_base, prdt[i].prdte_count,
 			prdt[i].prdte_flags);
@@ -1422,18 +1464,18 @@ static int setup_dma(
 #endif
 
 	/* Verify that the bus master is not active */
-	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
+	r = sys_inb(wn->base_dma + DMA_STATUS, &v);
 	if (r != 0) panic("setup_dma: sys_inb failed: %d", r);
 	if (v & DMA_ST_BM_ACTIVE)
 		panic("Bus master IDE active");
 
 	if (prdt_phys & 3)
 		panic("prdt not aligned: 0x%lx", prdt_phys);
-	r= sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
+	r = sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
 	if (r != 0) panic("setup_dma: sys_outl failed: %d", r);
 
 	/* Clear interrupt and error flags */
-	r= sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
+	r = sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
 	if (r != 0) panic("setup_dma: sys_outb failed: %d", r);
 
 	return 1;
@@ -1472,8 +1514,7 @@ static int w_do_close(devminor_t minor)
 /*===========================================================================*
  *				com_simple				     *
  *===========================================================================*/
-static int com_simple(cmd)
-struct command *cmd;		/* Command block */
+static int com_simple(struct command *cmd)
 {
 /* A simple controller command, only one interrupt and no data-out phase. */
   int r;
@@ -1596,6 +1637,12 @@ static void w_intr_wait(void)
 					if (r != 0)
 						panic("sys_inb failed: %d", r);
 					w_wn->w_status= w_status;
+					/*
+					 * w_hw_int() acks and re-enables the
+					 * IRQ for both native and compat drives
+					 * (all use a non-IRQ_REENABLE policy to
+					 * avoid an IOAPIC re-fire storm on VBox).
+					 */
 					w_hw_int(m.m_notify.interrupts);
 					break;
 				default:
@@ -1648,9 +1695,7 @@ static int at_intr_wait(void)
 /*===========================================================================*
  *				w_waitfor				     *
  *===========================================================================*/
-static int w_waitfor(mask, value)
-int mask;			/* status mask */
-int value;			/* required status */
+static int w_waitfor(int mask, int value)
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
  */
@@ -1674,9 +1719,7 @@ int value;			/* required status */
 /*===========================================================================*
  *				w_waitfor_dma				     *
  *===========================================================================*/
-static int w_waitfor_dma(mask, value)
-unsigned int mask;		/* status mask */
-unsigned value;			/* required status */
+static int w_waitfor_dma(unsigned int mask, unsigned value)
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
  */
@@ -1849,8 +1892,9 @@ static int atapi_transfer(
 
 	if(do_dma) {
 		stop_dma(wn);
-		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, 0)) {
-			do_dma = 0;
+		r = setup_dma(&nbytes, proc_nr, iov, addr_offset, 0);
+		if (r == 0) {
+			return errno;
 		} else if(nbytes != nblocks * CD_SECTOR_SIZE) {
 			stop_dma(wn);
 			do_dma = 0;
@@ -1974,10 +2018,7 @@ static int atapi_transfer(
 /*===========================================================================*
  *				atapi_sendpacket			     *
  *===========================================================================*/
-static int atapi_sendpacket(packet, cnt, do_dma)
-u8_t *packet;
-unsigned cnt;
-int do_dma;
+static int atapi_sendpacket(u8_t *packet, unsigned cnt, int do_dma)
 {
 /* Send an Atapi Packet Command */
   struct wini *wn = w_wn;
@@ -2115,26 +2156,40 @@ static int w_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
  *===========================================================================*/
 static void w_hw_int(unsigned int UNUSED(irqs))
 {
-  /* Leftover interrupt(s) received; ack it/them.  For native drives only. */
+  /* Leftover interrupt(s) received; ack it/them and re-enable the IRQ.
+   *
+   * All configured drives (native AND compat) use a non-IRQ_REENABLE policy
+   * (see w_init), so the kernel leaves the line masked after each interrupt
+   * and we must re-enable it here after acking the drive.  Reading REG_STATUS
+   * acks/clears the drive interrupt (drops the asserted IRQ line) so the
+   * subsequent unmask does not re-fire under the IOAPIC.  A leftover interrupt
+   * on a compat drive reaches this handler directly from the blockdriver loop
+   * (not w_intr_wait), so compat drives must be handled here too -- otherwise
+   * their IRQ 14/15 would stay masked forever and the drive would go dead.
+   */
   unsigned int drive;
   u32_t w_status;
 
   for (drive = 0; drive < MAX_DRIVES; drive++) {
-	if (!(wini[drive].state & IGNORING) && wini[drive].native) {
-		if (sys_inb((wini[drive].base_cmd + REG_STATUS),
-			&w_status) != OK)
-		{
-		  	panic("couldn't ack irq on drive: %d", drive);
+	if (wini[drive].state & IGNORING)
+		continue;
+
+	if (sys_inb((wini[drive].base_cmd + REG_STATUS), &w_status) != OK)
+		panic("couldn't ack irq on drive: %d", drive);
+	wini[drive].w_status= w_status;
+
+	/* Busmaster DMA status is only maintained for native drives (compat
+	 * drives never touched it, matching the pre-policy-0 behaviour). */
+	if (wini[drive].native) {
+		sys_inb(wini[drive].base_dma + DMA_STATUS, &w_status);
+		if(w_status & DMA_ST_INT) {
+			sys_outb(wini[drive].base_dma + DMA_STATUS, DMA_ST_INT);
+			wini[drive].dma_intseen = 1;
 		}
-		wini[drive].w_status= w_status;
-  		sys_inb(wini[drive].base_dma + DMA_STATUS, &w_status);
-  		if(w_status & DMA_ST_INT) {
-	  		sys_outb(wini[drive].base_dma + DMA_STATUS, DMA_ST_INT);
-	  		wini[drive].dma_intseen = 1;
-  		}
-	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
-		  	printf("couldn't re-enable drive %d\n", drive);
 	}
+
+	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
+		printf("couldn't re-enable drive %d\n", drive);
   }
 }
 

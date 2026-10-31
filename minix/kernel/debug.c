@@ -96,7 +96,27 @@ int runqueues_ok_cpu(unsigned cpu)
 	}
 	if (isemptyp(xp))
 		continue;
-	if(proc_is_runnable(xp) && !xp->p_found) {
+	/*
+	 * On SMP each CPU has its own run queues and runqueues_ok_cpu()
+	 * only walks the queues of 'cpu'.  A runnable process assigned to a
+	 * different CPU is legitimately on that CPU's queue, so only flag
+	 * processes that belong to the CPU being checked.  (On UP every
+	 * process has p_cpu == 0, so this is a no-op there.)
+	 */
+	if(proc_is_runnable(xp) && xp->p_cpu == cpu && !xp->p_found) {
+#ifdef CONFIG_SMP
+		/*
+		 * A cross-CPU scheduling request in flight (smp_schedule_sync
+		 * has dropped the BKL and is spin-waiting for the target CPU to
+		 * ack a STOP/VMINHIBIT/SAVE_CTX/migrate) legitimately leaves the
+		 * run queues in a transient state as seen from this CPU: a proc
+		 * can be momentarily runnable yet not (yet) on a queue.  Do not
+		 * treat that as an error.  If the proc is off-queue for any
+		 * other reason, no sync is pending and we still catch it below.
+		 */
+		if (smp_sched_ipi_pending())
+			continue;
+#endif
 		printf("sched error: ready proc %d not on queue\n", xp->p_nr);
 		return 0;
 	}
@@ -184,8 +204,7 @@ schedulerstr(struct proc *scheduler)
 	return "KERNEL";
 }
 
-static void
-print_proc_name(struct proc *pp)
+static void print_proc_name(struct proc *pp)
 {
 	char *name = pp->p_name;
 	endpoint_t ep = pp->p_endpoint;
@@ -198,8 +217,7 @@ print_proc_name(struct proc *pp)
 	}
 }
 
-static void
-print_endpoint(endpoint_t ep)
+static void print_endpoint(endpoint_t ep)
 {
 	int proc_nr;
 	struct proc *pp = NULL;
@@ -231,8 +249,7 @@ print_endpoint(endpoint_t ep)
 	}
 }
 
-static void
-print_sigmgr(struct proc *pp)
+static void print_sigmgr(struct proc *pp)
 {
 	endpoint_t sig_mgr, bak_sig_mgr;
 	sig_mgr = priv(pp) ? priv(pp)->s_sig_mgr : NONE;
@@ -256,7 +273,16 @@ void print_proc(struct proc *pp)
 		pp->p_priority, pp->p_user_time,
 		pp->p_sys_time, ex64hi(pp->p_cycles),
 		ex64lo(pp->p_cycles), pp->p_cpu,
-#if defined(__i386__)
+		/*
+		 * x86_64 has a p_cr3 as well, and used to match neither arm
+		 * nor i386 here: "pdbr 0x%lx" was then left without an
+		 * argument, so every field after it in this line reported the
+		 * value of the one before, and the last read past the end of
+		 * the argument list.  Deadlock and panic dumps on amd64 named
+		 * the scheduler as the misc flags and printed stack garbage as
+		 * the scheduler.
+		 */
+#if defined(__i386__) || defined(__x86_64__)
 		pp->p_seg.p_cr3,
 #elif defined(__arm__)
 		pp->p_seg.p_ttbr,

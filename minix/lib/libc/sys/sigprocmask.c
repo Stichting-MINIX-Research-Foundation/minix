@@ -9,10 +9,7 @@
 #include <string.h>
 #include <signal.h>
 
-int sigprocmask(how, set, oset)
-int how;
-const sigset_t *set;
-sigset_t *oset;
+int sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
   message m;
 

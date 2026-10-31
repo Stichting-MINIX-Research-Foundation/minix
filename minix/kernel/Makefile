@@ -24,6 +24,17 @@ CFLAGS+= -fno-common
 .endif
 LDFLAGS+= -T ${LINKERSCRIPT}
 LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
+
+# x86_64: ld defaults to a 2MB max-page-size, which pads the first PT_LOAD
+# segment out to file offset 0x200000.  The multiboot2 header (in
+# .unpaged_text) would then sit ~2MB into the file, far outside the 32KB
+# MULTIBOOT_SEARCH window the boot loader scans -> "not a multiboot2 kernel".
+# Force a 4KB page size so the first segment (and the header) lands near the
+# start of the file.  Section addresses are fixed by the linker script, so
+# only the file offset changes.
+.if ${MACHINE_ARCH} == "x86_64"
+LDFLAGS+= -Wl,-z,max-page-size=0x1000
+.endif
 CFLAGS += -fno-stack-protector
 
 CPPFLAGS+= -D__kernel__ 

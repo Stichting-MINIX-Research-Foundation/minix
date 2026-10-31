@@ -133,8 +133,7 @@ AcpiPsGetArg (
  *
  ******************************************************************************/
 
-void
-AcpiPsAppendArg (
+void AcpiPsAppendArg (
     ACPI_PARSE_OBJECT       *Op,
     ACPI_PARSE_OBJECT       *Arg)
 {

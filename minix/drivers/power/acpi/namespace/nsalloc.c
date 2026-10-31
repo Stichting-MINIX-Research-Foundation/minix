@@ -113,8 +113,7 @@ AcpiNsCreateNode (
  *
  ******************************************************************************/
 
-void
-AcpiNsDeleteNode (
+void AcpiNsDeleteNode (
     ACPI_NAMESPACE_NODE     *Node)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;
@@ -179,8 +178,7 @@ AcpiNsDeleteNode (
  *
  ******************************************************************************/
 
-void
-AcpiNsRemoveNode (
+void AcpiNsRemoveNode (
     ACPI_NAMESPACE_NODE     *Node)
 {
     ACPI_NAMESPACE_NODE     *ParentNode;
@@ -246,8 +244,7 @@ AcpiNsRemoveNode (
  *
  ******************************************************************************/
 
-void
-AcpiNsInstallNode (
+void AcpiNsInstallNode (
     ACPI_WALK_STATE         *WalkState,
     ACPI_NAMESPACE_NODE     *ParentNode,    /* Parent */
     ACPI_NAMESPACE_NODE     *Node,          /* New Child*/
@@ -331,8 +328,7 @@ AcpiNsInstallNode (
  *
  ******************************************************************************/
 
-void
-AcpiNsDeleteChildren (
+void AcpiNsDeleteChildren (
     ACPI_NAMESPACE_NODE     *ParentNode)
 {
     ACPI_NAMESPACE_NODE     *NextNode;
@@ -389,8 +385,7 @@ AcpiNsDeleteChildren (
  *
  ******************************************************************************/
 
-void
-AcpiNsDeleteNamespaceSubtree (
+void AcpiNsDeleteNamespaceSubtree (
     ACPI_NAMESPACE_NODE     *ParentNode)
 {
     ACPI_NAMESPACE_NODE     *ChildNode = NULL;
@@ -487,8 +482,7 @@ AcpiNsDeleteNamespaceSubtree (
  *
  ******************************************************************************/
 
-void
-AcpiNsDeleteNamespaceByOwner (
+void AcpiNsDeleteNamespaceByOwner (
     ACPI_OWNER_ID            OwnerId)
 {
     ACPI_NAMESPACE_NODE     *ChildNode;

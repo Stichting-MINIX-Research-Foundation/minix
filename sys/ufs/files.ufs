@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.40 2015/05/31 15:48:03 hannken Exp $
+#	$NetBSD: files.ufs,v 1.45 2019/06/17 03:32:58 christos Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -18,6 +18,9 @@ file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_bmap.c	ext2fs
 file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
+file	ufs/ext2fs/ext2fs_hash.c	ext2fs
+file	ufs/ext2fs/ext2fs_htree.c	ext2fs
+file	ufs/ext2fs/ext2fs_extents.c	ext2fs
 file	ufs/ext2fs/ext2fs_inode.c	ext2fs
 file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
 file	ufs/ext2fs/ext2fs_readwrite.c	ext2fs
@@ -25,6 +28,7 @@ file	ufs/ext2fs/ext2fs_rename.c	ext2fs
 file	ufs/ext2fs/ext2fs_subr.c	ext2fs
 file	ufs/ext2fs/ext2fs_vfsops.c	ext2fs
 file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
+file	ufs/ext2fs/ext2fs_xattr.c	ext2fs
 
 define	chfs: vfs, ffs
 file	ufs/chfs/ebh.c			chfs
@@ -94,17 +98,17 @@ file	ufs/mfs/mfs_vnops.c		mfs
 file	ufs/mfs/mfs_miniroot.c
 
 define	ufs: vfs
-file	ufs/ufs/ufs_bmap.c		ufs
+file	ufs/ufs/ufs_bmap.c		ufs & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_dirhash.c		(ffs | mfs | ext2fs | chfs) & ufs_dirhash
 file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
 file	ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
-file	ufs/ufs/ufs_lookup.c		ufs
+file	ufs/ufs/ufs_lookup.c		ufs & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_quota1.c		quota & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_quota2.c		quota2 & (ffs | mfs | ext2fs | chfs)
-file	ufs/ufs/quota1_subr.c
+file	ufs/ufs/quota1_subr.c		quota & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/quota2_subr.c		quota2 & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_rename.c		ffs | mfs | chfs
-file	ufs/ufs/ufs_vfsops.c		ufs
-file	ufs/ufs/ufs_vnops.c		ufs
+file	ufs/ufs/ufs_vfsops.c		ufs & (ffs | mfs | ext2fs | chfs)
+file	ufs/ufs/ufs_vnops.c		ufs & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_wapbl.c		ffs & wapbl

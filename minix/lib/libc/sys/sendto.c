@@ -36,8 +36,7 @@ static ssize_t _uds_sendto_dgram(int sock, const void *message, size_t length,
 /*
  * Send a message on a socket.
  */
-static ssize_t
-__sendto(int fd, const void * buffer, size_t length, int flags,
+static ssize_t __sendto(int fd, const void * buffer, size_t length, int flags,
 	const struct sockaddr * dest_addr, socklen_t dest_len)
 {
 	message m;

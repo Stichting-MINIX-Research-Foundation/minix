@@ -234,8 +234,7 @@ find_instance(int dev_id)
 /*===========================================================================*
  *              match_usb_driver                                             *
  *===========================================================================*/
-static int
-match_usb_id(struct devmand_usb_match_id *mid, struct usb_device_id *id)
+static int match_usb_id(struct devmand_usb_match_id *mid, struct usb_device_id *id)
 {
 	int res = 1;
 	unsigned long match = mid->match_flags;

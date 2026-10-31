@@ -5,8 +5,7 @@
 /*
  * Create or open a file or directory.
  */
-int
-vboxfs_open_file(const char *path, int flags, int mode,
+int vboxfs_open_file(const char *path, int flags, int mode,
 	vboxfs_handle_t *handlep, vboxfs_objinfo_t *infop)
 {
 	vbox_param_t param[3];
@@ -108,8 +107,7 @@ vboxfs_open_file(const char *path, int flags, int mode,
 /*
  * Close an open file handle.
  */
-void
-vboxfs_close_file(vboxfs_handle_t handle)
+void vboxfs_close_file(vboxfs_handle_t handle)
 {
 	vbox_param_t param[2];
 

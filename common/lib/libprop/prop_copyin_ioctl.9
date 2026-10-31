@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.9 2011/01/20 10:47:33 wiz Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.15 2017/03/07 19:10:07 njoly Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,50 +27,68 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 17, 2011
+.Dd January 29, 2017
 .Dt PROP_COPYIN_IOCTL 9
 .Os
 .Sh NAME
-.Nm prop_array_copyin_ioctl ,
-.Nm prop_array_copyout_ioctl ,
 .Nm prop_array_copyin ,
+.Nm prop_array_copyin_size ,
+.Nm prop_array_copyin_ioctl ,
+.Nm prop_array_copyin_ioctl_size ,
 .Nm prop_array_copyout ,
-.Nm prop_dictionary_copyin_ioctl ,
-.Nm prop_dictionary_copyout_ioctl ,
+.Nm prop_array_copyout_ioctl ,
 .Nm prop_dictionary_copyin ,
-.Nm prop_dictionary_copyout
+.Nm prop_dictionary_copyin_size ,
+.Nm prop_dictionary_copyin_ioctl ,
+.Nm prop_dictionary_copyin_ioctl_size ,
+.Nm prop_dictionary_copyout ,
+.Nm prop_dictionary_copyout_ioctl
 .Nd Copy property lists to and from kernel space
 .Sh SYNOPSIS
 .In prop/proplib.h
 .Ft int
-.Fn prop_array_copyin_ioctl "const struct plistref *pref" \
-    "const u_long cmd" "prop_array_t *arrayp"
-.Ft int
 .Fn prop_array_copyin "const struct plistref *pref" \
     "prop_array_t *arrayp"
 .Ft int
-.Fn prop_array_copyout_ioctl "struct plistref *pref" \
-    "const u_long cmd" "prop_array_t array"
+.Fn prop_array_copyin_size "const struct plistref *pref" \
+    "prop_array_t *arrayp" "size_t lim"
+.Ft int
+.Fn prop_array_copyin_ioctl "const struct plistref *pref" \
+    "const u_long cmd" "prop_array_t *arrayp"
+.Ft int
+.Fn prop_array_copyin_ioctl_size "const struct plistref *pref" \
+    "const u_long cmd" "prop_array_t *arrayp" "size_t lim"
 .Ft int
 .Fn prop_array_copyout "struct plistref *pref" \
     "prop_array_t array"
 .Ft int
-.Fn prop_dictionary_copyin_ioctl "const struct plistref *pref" \
-    "const u_long cmd" "prop_dictionary_t *dictp"
+.Fn prop_array_copyout_ioctl "struct plistref *pref" \
+    "const u_long cmd" "prop_array_t array"
 .Ft int
 .Fn prop_dictionary_copyin "const struct plistref *pref" \
     "prop_dictionary_t *dictp"
 .Ft int
-.Fn prop_dictionary_copyout_ioctl "struct plistref *pref" \
-    "const u_long cmd" "prop_dictionary_t dict"
+.Fn prop_dictionary_copyin_size "const struct plistref *pref" \
+    "prop_dictionary_t *dictp" "size_t lim"
+.Ft int
+.Fn prop_dictionary_copyin_ioctl "const struct plistref *pref" \
+    "const u_long cmd" "prop_dictionary_t *dictp"
+.Ft int
+.Fn prop_dictionary_copyin_ioctl_size "const struct plistref *pref" \
+    "const u_long cmd" "prop_dictionary_t *dictp" "size_t lim"
 .Ft int
 .Fn prop_dictionary_copyout "struct plistref *pref" \
     "prop_dictionary_t dict"
+.Ft int
+.Fn prop_dictionary_copyout_ioctl "struct plistref *pref" \
+    "const u_long cmd" "prop_dictionary_t dict"
 .Sh DESCRIPTION
 The
 .Nm prop_array_copyin_ioctl ,
+.Nm prop_array_copyin_ioctl_size ,
 .Nm prop_array_copyout_ioctl ,
 .Nm prop_dictionary_copyin_ioctl ,
+.Nm prop_dictionary_copyin_ioctl_size ,
 and
 .Nm prop_dictionary_copyout_ioctl
 functions implement the kernel side of a protocol for copying property lists
@@ -78,8 +96,10 @@ to and from the kernel using
 .Xr ioctl 2 .
 The functions
 .Nm prop_array_copyin ,
+.Nm prop_array_copyin_size ,
 .Nm prop_array_copyout ,
 .Nm prop_dictionary_copyin ,
+.Nm prop_dictionary_copyin_size ,
 and
 .Nm prop_dictionary_copyout
 implement the kernel side of a protocol for copying property lists to the
@@ -90,6 +110,25 @@ pointer to a
 .Vt struct plistref .
 This structure encapsulates the reference to the property list in externalized
 form.
+.Pp
+The functions
+.Nm prop_array_copyin_size ,
+.Nm prop_array_copyin_ioctl_size ,
+.Nm prop_dictionary_copyin_size ,
+and
+.Nm prop_dictionary_copyin_ioctl_size
+take an explicit limit argument
+.Ar lim
+while
+.Nm prop_array_copyin ,
+.Nm prop_array_copyin_ioctl ,
+.Nm prop_dictionary_copyin ,
+and
+.Nm prop_dictionary_copyin_ioctl
+have an implicit size limit of 128KB.
+Attempts to transfer objects larger than the limit result in an
+.Er E2BIG
+return value.
 .Sh RETURN VALUES
 If successful, functions return zero.
 Otherwise, an error number will be returned to indicate the error.
@@ -159,6 +198,9 @@ and
 .Fn prop_dictionary_copyin_ioctl
 will fail if:
 .Bl -tag -width Er
+.It Bq Er E2BIG
+The object being copied is larger than an arbitrarily established limit
+(currently set to 128Kbytes).
 .It Bq Er EFAULT
 Bad address
 .It Bq Er EIO

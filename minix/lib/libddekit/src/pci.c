@@ -398,8 +398,7 @@ unsigned ddekit_pci_get_dev_class(struct ddekit_pci_dev *dev)
 /****************************************************************************/
 /*      ddekit_pci_get_irq                                                  */
 /****************************************************************************/
-unsigned long 
-ddekit_pci_get_irq(struct ddekit_pci_dev *dev) 
+unsigned long ddekit_pci_get_irq(struct ddekit_pci_dev *dev) 
 { 
 	WARN_UNIMPL;
 	return 0;

@@ -82,8 +82,7 @@ const UINT8    AcpiGbl_MapToUuidOffset[UUID_BUFFER_LENGTH] =
  *
  ******************************************************************************/
 
-void
-AcpiUtConvertStringToUuid (
+void AcpiUtConvertStringToUuid (
     char                    *InString,
     UINT8                   *UuidBuffer)
 {

@@ -9,9 +9,7 @@ pci_attr_r32.c
 /*===========================================================================*
  *				pci_attr_r32				     *
  *===========================================================================*/
-u32_t pci_attr_r32(devind, port)
-int devind;
-int port;
+u32_t pci_attr_r32(int devind, int port)
 {
 	int r;
 	message m;

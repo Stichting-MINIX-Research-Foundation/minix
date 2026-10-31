@@ -42,6 +42,7 @@ void bsp_finish_booting(void)
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
 
+  setup_sysenter_syscall();
   cpu_identify();
 
   vm_running = 0;
@@ -103,6 +104,9 @@ void bsp_finish_booting(void)
 
   /* Kernel may no longer use bits of memory as VM will be running soon */
   kernel_may_alloc = 0;
+#ifdef CONFIG_SMP
+  wait_for_APs_to_finish_booting();
+#endif
 
   switch_to_user();
   NOT_REACHABLE;
@@ -157,9 +161,9 @@ void kmain(kinfo_t *local_cbi)
   proc_init();
   IPCF_POOL_INIT();
 
-   if(NR_BOOT_MODULES != kinfo.mbi.mi_mods_count)
+   if(NR_BOOT_MODULES != kinfo.module_count)
    	panic("expecting %d boot processes/modules, found %d",
-		NR_BOOT_MODULES, kinfo.mbi.mi_mods_count);
+		NR_BOOT_MODULES, kinfo.module_count);
 
   /* Set up proc table entries for processes in boot image. */
   for (i=0; i < NR_BOOT_PROCS; ++i) {
@@ -178,7 +182,7 @@ void kmain(kinfo_t *local_cbi)
 
 	if(i >= NR_TASKS) {
 		/* Remember this so it can be passed to VM */
-		multiboot_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
+		kinfo_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
 		ip->start_addr = mb_mod->mod_start;
 		ip->len = mb_mod->mod_end - mb_mod->mod_start;
 	}
@@ -386,6 +390,7 @@ void minix_shutdown(int how)
   stop_local_timer();
 
   /* Show shutdown message */
+  if (kinfo.boot_mode == 0) {
   direct_cls();
   if((how & RB_POWERDOWN) == RB_POWERDOWN)
 	direct_print("MINIX has halted and will now power off.\n");
@@ -394,6 +399,7 @@ void minix_shutdown(int how)
 		     "It is safe to turn off your computer.\n");
   else
 	direct_print("MINIX will now reset.\n");
+  }
   arch_shutdown(how);
 }
 
@@ -410,9 +416,13 @@ void cstart(void)
   /* low-level initialization */
   prot_init();
 
+#if 0 /* NN: for debug */
   /* determine verbosity */
   if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
+#else
+	  verboseboot = VERBOSEBOOT_MAX;
+#endif
 
   /* Initialize clock variables. */
   init_clock();

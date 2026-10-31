@@ -41,8 +41,7 @@
  * Exit with apropriate exit status and print diagnostics to
  * stderr explaining what is wrong.
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int parent_pipe, res = EXIT_SUCCESS;
 	sigset_t sig;

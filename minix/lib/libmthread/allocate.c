@@ -31,9 +31,7 @@ static struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,
 /*===========================================================================*
  *				mthread_equal				     *
  *===========================================================================*/
-int mthread_equal(l, r)
-mthread_thread_t l;
-mthread_thread_t r;
+int mthread_equal(mthread_thread_t l, mthread_thread_t r)
 {
 /* Compare two thread ids */
 
@@ -44,14 +42,13 @@ mthread_thread_t r;
 /*===========================================================================*
  *				mthread_create				     *
  *===========================================================================*/
-int mthread_create(threadid, tattr, proc, arg)
-mthread_thread_t *threadid;
-mthread_attr_t *tattr;
-void *(*proc)(void *);
-void *arg;
+int mthread_create(mthread_thread_t *threadid, mthread_attr_t *tattr,
+    void *(*proc)(void *), void *arg)
 {
 /* Register procedure proc for execution in a thread. */
   mthread_thread_t thread;
+
+  mthread_init();	/* Ensure initialized; __constructor__ may not run in UEFI */
 
   if (proc == NULL)
 	return(EINVAL);
@@ -62,9 +59,6 @@ void *arg;
  	used_threads++;
  	if(threadid != NULL) 
  		*threadid = (mthread_thread_t) thread;
-#ifdef MDEBUG
- 	printf("Inited thread %d\n", thread);
-#endif
  	return(0);
   } else  {
   	if (mthread_increase_thread_pool() == -1) 
@@ -78,8 +72,7 @@ void *arg;
 /*===========================================================================*
  *				mthread_detach				     *
  *===========================================================================*/
-int mthread_detach(detach)
-mthread_thread_t detach;
+int mthread_detach(mthread_thread_t detach)
 {
 /* Mark a thread as detached. Consequently, upon exit, resources allocated for
  * this thread are automatically freed.
@@ -106,8 +99,7 @@ mthread_thread_t detach;
 /*===========================================================================*
  *				mthread_exit				     *
  *===========================================================================*/
-void mthread_exit(value)
-void *value;
+void mthread_exit(void *value)
 {
 /* Make a thread stop running and store the result value. */
   mthread_tcb_t *tcb;
@@ -140,8 +132,7 @@ void *value;
 /*===========================================================================*
  *			mthread_find_tcb				     *
  *===========================================================================*/
-mthread_tcb_t * mthread_find_tcb(thread)
-mthread_thread_t thread;
+mthread_tcb_t * mthread_find_tcb(mthread_thread_t thread)
 {
   mthread_tcb_t *rt = NULL;
 
@@ -198,10 +189,11 @@ static int mthread_increase_thread_pool(void)
 		while (i-- > old_no_threads)
 			free(new_tcb[i]);
 		if (old_no_threads > 0) {
-			new_tcb = realloc(threads, old_no_threads *
+			new_tcb = realloc(new_tcb, old_no_threads *
 			    sizeof(mthread_tcb_t *));
 			if (new_tcb == NULL)
 				mthread_panic("Unable to shrink tcb array");
+			threads = new_tcb;
 		} else
 			free(new_tcb);
   		return(-1);
@@ -219,10 +211,6 @@ static int mthread_increase_thread_pool(void)
 	mthread_thread_reset(i);
   }
 
-#ifdef MDEBUG
-  printf("Increased thread pool from %d to %d threads\n", old_no_threads,
-  	 new_no_threads);
-#endif
   return(0);
 }
 
@@ -230,7 +218,7 @@ static int mthread_increase_thread_pool(void)
 /*===========================================================================*
  *				mthread_init				     *
  *===========================================================================*/
-static void __attribute__((__constructor__, __used__)) mthread_init(void)
+void __attribute__((__constructor__, __used__)) mthread_init(void)
 {
 /* Initialize thread system; allocate thread structures and start creating
  * threads.
@@ -241,10 +229,7 @@ static void __attribute__((__constructor__, __used__)) mthread_init(void)
   no_threads = 0;
   used_threads = 0;
   need_reset = 0;
-  running_main_thread = 1;	/* mthread_init can only be called from the
-				 * main thread. Calling it from a thread will
-				 * not enter this clause.
-				 */
+  running_main_thread = 1;	/* guarded by 'initialized'; re-entrants return early */
 
   if (mthread_getcontext(&(mainthread.m_context)) == -1)
 	mthread_panic("Couldn't save state for main thread");
@@ -263,9 +248,7 @@ static void __attribute__((__constructor__, __used__)) mthread_init(void)
 /*===========================================================================*
  *				mthread_join				     *
  *===========================================================================*/
-int mthread_join(join, value)
-mthread_thread_t join;
-void **value;
+int mthread_join(mthread_thread_t join, void **value)
 {
 /* Wait for a thread to stop running and copy the result. */
 
@@ -319,9 +302,7 @@ void **value;
 /*===========================================================================*
  *				mthread_once				     *
  *===========================================================================*/
-int mthread_once(once, proc)
-mthread_once_t *once;
-void (*proc)(void);
+int mthread_once(mthread_once_t *once, void (*proc)(void))
 {
 /* Run procedure proc just once */
 
@@ -348,11 +329,8 @@ mthread_thread_t mthread_self(void)
 /*===========================================================================*
  *				mthread_thread_init			     *
  *===========================================================================*/
-static void mthread_thread_init(thread, tattr, proc, arg)
-mthread_thread_t thread;
-mthread_attr_t *tattr;
-void *(*proc)(void *);
-void *arg;
+static void mthread_thread_init(mthread_thread_t thread, mthread_attr_t *tattr,
+    void *(*proc)(void *), void *arg)
 {
 /* Initialize a thread so that it, when unsuspended, will run the given
  * procedure with the given parameter. The thread is marked as runnable.
@@ -410,7 +388,7 @@ void *arg;
 	if (stackaddr == MAP_FAILED)
   		mthread_panic("Failed to allocate stack to thread");
 
-#if defined(__i386__) || defined(__arm__)
+#if defined(__i386__) || defined(__arm__) || defined(__x86_64__)
 	guard_start = stackaddr;
 	guard_end = stackaddr + MTHREAD_GUARDSIZE;
 	guarded_stacksize = stackaddr + stacksize - guard_end;
@@ -450,8 +428,7 @@ void *arg;
 /*===========================================================================*
  *				mthread_thread_reset			     *
  *===========================================================================*/
-void mthread_thread_reset(thread)
-mthread_thread_t thread;
+void mthread_thread_reset(mthread_thread_t thread)
 {
 /* Reset the thread to its default values. Free the allocated stack space. */
 
@@ -473,7 +450,7 @@ mthread_thread_t thread;
 	if (rt->m_context.uc_stack.ss_sp) {
 		stacksize = rt->m_context.uc_stack.ss_size;
 		stackaddr = rt->m_context.uc_stack.ss_sp;
-#if defined(__i386__) || defined(__arm__)
+#if defined(__i386__) || defined(__arm__) || defined(__x86_64__)
 		stacksize += MTHREAD_GUARDSIZE;
 		stackaddr -= MTHREAD_GUARDSIZE;
 #else
@@ -493,8 +470,7 @@ mthread_thread_t thread;
 /*===========================================================================*
  *				mthread_thread_stop			     *
  *===========================================================================*/
-static void mthread_thread_stop(thread)
-mthread_thread_t thread;
+static void mthread_thread_stop(mthread_thread_t thread)
 {
 /* Stop thread from running. Deallocate resources. */
   mthread_tcb_t *stop_thread;

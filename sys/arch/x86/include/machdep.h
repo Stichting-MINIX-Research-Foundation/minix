@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.7 2014/06/12 19:02:35 riastradh Exp $ */
+/* $NetBSD: machdep.h,v 1.9 2016/12/26 17:54:07 cherry Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,19 +32,30 @@
 
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
+extern vaddr_t msgbuf_vaddr;
+extern unsigned int msgbuf_p_cnt;
+
 
 struct btinfo_memmap;
 struct extent;
 struct sysctllog;
 
+struct msgbuf_p_seg {
+	paddr_t paddr;
+	psize_t sz;
+};
+
+extern struct msgbuf_p_seg msgbuf_p_seg[];
+
 void	x86_cpu_idle_init(void);
 void	x86_cpu_idle_get(void (**)(void), char *, size_t);
 void	x86_cpu_idle_set(void (*)(void), const char *, bool);
 
-int	initx86_parse_memmap(struct btinfo_memmap *, struct extent *);
-int	initx86_fake_memmap(struct extent *);
-int	initx86_load_memmap(paddr_t first_avail);
 int	x86_select_freelist(uint64_t);
+
+void	init_x86_clusters(void);
+int	init_x86_vm(paddr_t);
+void	init_x86_msgbuf(void);
 
 void	x86_startup(void);
 void	x86_sysctl_machdep_setup(struct sysctllog **);

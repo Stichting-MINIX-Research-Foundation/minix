@@ -174,7 +174,7 @@ int read_write(struct fproc *rfp, int rw_flag, int fd, struct filp *f,
 	r = cdev_io(op, dev, for_e, buf, position, size, f->filp_flags);
 	if (r >= 0) {
 		/* This should no longer happen: all calls are asynchronous. */
-		printf("VFS: I/O to device %llx succeeded immediately!?\n", dev);
+		printf("VFS: I/O to device %lx succeeded immediately!?\n", (unsigned long)dev);
 		cum_io = r;
 		position += r;
 		r = OK;
@@ -323,7 +323,7 @@ int do_getdents(void)
 int rw_pipe(int rw_flag, endpoint_t usr_e, struct filp *f, int callnr, int fd,
 	vir_bytes buf, size_t nbytes, size_t cum_io)
 {
-  int r, oflags, partial_pipe = FALSE;
+  int r, oflags, partial_pipe = FALSE, was_full;
   size_t size;
   size_t cum_io_incr;
   struct vnode *vp;
@@ -359,7 +359,7 @@ int rw_pipe(int rw_flag, endpoint_t usr_e, struct filp *f, int callnr, int fd,
 	size = vp->v_size;
   }
 
-  if (vp->v_mapfs_e == 0)
+  if (vp->v_mapfs_e == NONE)
 	panic("unmapped pipe");
 
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
@@ -374,10 +374,24 @@ int rw_pipe(int rw_flag, endpoint_t usr_e, struct filp *f, int callnr, int fd,
   buf += cum_io_incr;
   nbytes -= cum_io_incr;
 
+  /* A pipe is writable once an atomic write fits in what is left of it.
+   * Note whether it was not, before the read below changes that.
+   */
+  was_full = (rw_flag == READING &&
+	      vp->v_size + PIPE_BUF > PIPE_SIZE);
+
   if (rw_flag == READING)
 	vp->v_size -= cum_io_incr;
   else
 	vp->v_size += cum_io_incr;
+
+  /* A read that makes room for an atomic write is what makes the pipe
+   * writable again, and anyone waiting for that has to be told here rather
+   * than one read later: pipe_check() gets around to it only when a reader
+   * *finds* the pipe empty, and a reader may never come back to look.
+   */
+  if (was_full && vp->v_size + PIPE_BUF <= PIPE_SIZE)
+	release(vp, VFS_WRITE, susp_count);
 
   if (partial_pipe) {
 	/* partial write on pipe with */

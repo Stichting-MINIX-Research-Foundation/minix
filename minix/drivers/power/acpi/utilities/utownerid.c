@@ -179,8 +179,7 @@ Exit:
  *
  ******************************************************************************/
 
-void
-AcpiUtReleaseOwnerId (
+void AcpiUtReleaseOwnerId (
     ACPI_OWNER_ID           *OwnerIdPtr)
 {
     ACPI_OWNER_ID           OwnerId = *OwnerIdPtr;

@@ -134,8 +134,7 @@ AcpiTbTablesLoaded (
  *
  ******************************************************************************/
 
-void
-AcpiTbCheckDsdtHeader (
+void AcpiTbCheckDsdtHeader (
     void)
 {
 

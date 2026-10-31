@@ -12,7 +12,7 @@ make_hdimage()
 	# installboot -m needs at least 1KB 
 	dd < /dev/zero >tmpimage count=2
 	partition -fm tmpimage 2 81:$rootsects* 0:0 81:$usrsects
-	installboot_nbsd -m tmpimage /usr/mdec/mbr
+	installboot -m tmpimage /usr/mdec/mbr
 	dd < tmpimage > subpart count=1
 
 	primsects=`expr 1 + $rootsects + $usrsects`
@@ -26,7 +26,7 @@ make_hdimage()
 		dd < /dev/zero count=$padsects
 	} > hdimage
 	partition -m hdimage 81:`expr $primsects + $padsects`*
-	installboot_nbsd -m hdimage /usr/mdec/mbr
+	installboot -m hdimage /usr/mdec/mbr
 }
 
 retrieve()

@@ -6822,6 +6822,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
         return new MicrosoftX86_64TargetInfo(Triple);
       }
     }
+    case llvm::Triple::Minix:
+      return new MinixTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::NaCl:
       return new NaClTargetInfo<X86_64TargetInfo>(Triple);
     default:

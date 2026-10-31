@@ -724,8 +724,7 @@ void test38c()
   }
 }
 
-void setsignumber(signum)
-int signum;
+void setsignumber(int signum)
 {
   signumber = signum;
 }

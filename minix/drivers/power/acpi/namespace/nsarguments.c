@@ -64,8 +64,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiNsCheckArgumentTypes (
+void AcpiNsCheckArgumentTypes (
     ACPI_EVALUATE_INFO          *Info)
 {
     UINT16                      ArgTypeList;
@@ -120,8 +119,7 @@ AcpiNsCheckArgumentTypes (
  *
  ******************************************************************************/
 
-void
-AcpiNsCheckAcpiCompliance (
+void AcpiNsCheckAcpiCompliance (
     char                        *Pathname,
     ACPI_NAMESPACE_NODE         *Node,
     const ACPI_PREDEFINED_INFO  *Predefined)
@@ -212,8 +210,7 @@ AcpiNsCheckAcpiCompliance (
  *
  ******************************************************************************/
 
-void
-AcpiNsCheckArgumentCount (
+void AcpiNsCheckArgumentCount (
     char                        *Pathname,
     ACPI_NAMESPACE_NODE         *Node,
     UINT32                      UserParamCount,

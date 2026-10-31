@@ -22,8 +22,7 @@ static const struct sockevent_ops lnksock_ops;
 /*
  * Initialize the link sockets module.
  */
-void
-lnksock_init(void)
+void lnksock_init(void)
 {
 	unsigned int slot;
 
@@ -63,8 +62,7 @@ lnksock_socket(int type, int protocol, struct sock ** sockp,
 /*
  * Free up a closed link socket.
  */
-static void
-lnksock_free(struct sock * sock)
+static void lnksock_free(struct sock * sock)
 {
 	struct lnksock *lnk = (struct lnksock *)sock;
 

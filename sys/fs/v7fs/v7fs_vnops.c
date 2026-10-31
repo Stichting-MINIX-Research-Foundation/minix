@@ -110,7 +110,7 @@ v7fs_lookup(void *v)
 #ifdef V7FS_VNOPS_DEBUG
 	const char *opname[] = { "LOOKUP", "CREATE", "DELETE", "RENAME" };
 #endif
-	DPRINTF("'%s' op=%s flags=%d parent=%d %o %dbyte\n", name,
+	DPRINTF("'%.*s' op=%s flags=%d parent=%d %o %dbyte\n", namelen, name,
 	    opname[nameiop], cnp->cn_flags, parent->inode_number, parent->mode,
 	    parent->filesize);
 
@@ -138,22 +138,25 @@ v7fs_lookup(void *v)
 		if ((nameiop == RENAME) && islastcn) {
 			return EISDIR; /* t_vnops rename_dir(3) */
 		}
-		vref(dvp); /* v_usecount++ */
+		vref(dvp); /* usecount++ */
 		*a->a_vpp = dvp;
 		DPRINTF("done.(.)\n");
 		return 0;
 	}
 
-	/* ".." and reguler file. */
-	if ((error = v7fs_file_lookup_by_name(fs, parent, name, &ino))) {
+	/* ".." and regular file. */
+	if ((error = v7fs_file_lookup_by_name(fs, parent, name, namelen,
+	    &ino))) {
 		/* Not found. Tell this entry be able to allocate. */
 		if (((nameiop == CREATE) || (nameiop == RENAME)) && islastcn) {
 			/* Check directory permission to allocate. */
 			if ((error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred))) {
-				DPRINTF("access denied. (%s)\n", name);
+				DPRINTF("access denied. (%.*s)\n",
+				    namelen, name);
 				return error;
 			}
-			DPRINTF("EJUSTRETURN op=%d (%s)\n", nameiop, name);
+			DPRINTF("EJUSTRETURN op=%d (%.*s)\n", nameiop, namelen,
+			    name);
 			return EJUSTRETURN;
 		}
 		DPRINTF("lastcn=%d\n", flags & ISLASTCN);
@@ -162,7 +165,7 @@ v7fs_lookup(void *v)
 
 	if ((nameiop == DELETE) && islastcn) {
 		if ((error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred))) {
-			DPRINTF("access denied. (%s)\n", name);
+			DPRINTF("access denied. (%.*s)\n", namelen, name);
 			return error;
 		}
 	}
@@ -174,7 +177,8 @@ v7fs_lookup(void *v)
 		VOP_UNLOCK(dvp); /* preserve reference count. (not vput) */
 	}
 	DPRINTF("enter vget\n");
-	if ((error = v7fs_vget(dvp->v_mount, ino, &vpp))) {
+	error = v7fs_vget(dvp->v_mount, ino, LK_EXCLUSIVE, &vpp);
+	if (error != 0) {
 		DPRINTF("***can't get vnode.\n");
 		return error;
 	}
@@ -185,7 +189,7 @@ v7fs_lookup(void *v)
 	if (vpp != dvp)
 		VOP_UNLOCK(vpp);
 	*a->a_vpp = vpp;
-	DPRINTF("done.(%s)\n", name);
+	DPRINTF("done.(%.*s)\n", namelen, name);
 
 	return 0;
 }
@@ -209,8 +213,8 @@ v7fs_create(void *v)
 	v7fs_ino_t ino;
 	int error = 0;
 
-	DPRINTF("%s parent#%d\n", a->a_cnp->cn_nameptr,
-	    parent_node->inode.inode_number);
+	DPRINTF("%.*s parent#%d\n", (int)a->a_cnp->cn_namelen,
+	    a->a_cnp->cn_nameptr, parent_node->inode.inode_number);
 	KDASSERT((va->va_type == VREG) || (va->va_type == VSOCK));
 
 	memset(&attr, 0, sizeof(attr));
@@ -221,7 +225,7 @@ v7fs_create(void *v)
 
 	/* Allocate disk entry. and register its entry to parent directory. */
 	if ((error = v7fs_file_allocate(fs, &parent_node->inode,
-		    a->a_cnp->cn_nameptr, &attr, &ino))) {
+		    a->a_cnp->cn_nameptr, a->a_cnp->cn_namelen, &attr, &ino))) {
 		DPRINTF("v7fs_file_allocate failed.\n");
 		return error;
 	}
@@ -230,7 +234,8 @@ v7fs_create(void *v)
 
 	/* Get myself vnode. */
 	*a->a_vpp = 0;
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("v7fs_vget failed.\n");
 		return error;
 	}
@@ -270,8 +275,8 @@ v7fs_mknod(void *v)
 	v7fs_ino_t ino;
 	int error = 0;
 
-	DPRINTF("%s %06o %lx %d\n", cnp->cn_nameptr, va->va_mode,
-	    (long)va->va_rdev, va->va_type);
+	DPRINTF("%.*s %06o %lx %d\n", (int)cnp->cn_namelen, cnp->cn_nameptr,
+	    va->va_mode, (long)va->va_rdev, va->va_type);
 	memset(&attr, 0, sizeof(attr));
 	attr.uid = kauth_cred_geteuid(cr);
 	attr.gid = kauth_cred_getegid(cr);
@@ -279,12 +284,13 @@ v7fs_mknod(void *v)
 	attr.device = va->va_rdev;
 
 	if ((error = v7fs_file_allocate(fs, &parent_node->inode,
-	    cnp->cn_nameptr, &attr, &ino)))
+	    cnp->cn_nameptr, cnp->cn_namelen, &attr, &ino)))
 		return error;
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 		return error;
 	}
@@ -369,33 +375,33 @@ v7fs_check_possible(struct vnode *vp, struct v7fs_node *v7node,
 
 static int
 v7fs_check_permitted(struct vnode *vp, struct v7fs_node *v7node,
-    mode_t mode, kauth_cred_t cred)
+    accmode_t accmode, kauth_cred_t cred)
 {
 
 	struct v7fs_inode *inode = &v7node->inode;
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, inode->mode), vp, NULL, genfs_can_access(vp->v_type,
-	    inode->mode, inode->uid, inode->gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, inode->mode), vp, NULL, genfs_can_access(vp, cred,
+	    inode->uid, inode->gid, inode->mode, NULL, accmode));
 }
 
 int
 v7fs_access(void *v)
 {
 	struct vop_access_args /* {
-				  struct vnode	*a_vp;
-				  int		a_mode;
-				  kauth_cred_t	a_cred;
-				  } */ *ap = v;
+		struct vnode	*a_vp;
+		accmode_t	a_accmode;
+		kauth_cred_t	a_cred;
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 	int error;
 
-	error = v7fs_check_possible(vp, v7node, ap->a_mode);
+	error = v7fs_check_possible(vp, v7node, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = v7fs_check_permitted(vp, v7node, ap->a_mode, ap->a_cred);
+	error = v7fs_check_permitted(vp, v7node, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -424,7 +430,7 @@ v7fs_getattr(void *v)
 	vap->va_fileid = inode->inode_number;
 	vap->va_size = vp->v_size;
 	if (vp->v_type == VLNK) {
-		/* Ajust for trailing NUL. */
+		/* Adjust for trailing NUL. */
 		KASSERT(vap->va_size > 0);
 		vap->va_size -= 1;
 	}
@@ -489,7 +495,7 @@ v7fs_setattr(void *v)
 	/* File pointer mode. */
 	if (vap->va_flags != VNOVAL) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS,
-		    vp, NULL, genfs_can_chflags(cred, vp->v_type, inode->uid,
+		    vp, NULL, genfs_can_chflags(vp, cred, inode->uid,
 		    false));
 		if (error)
 			return error;
@@ -499,8 +505,11 @@ v7fs_setattr(void *v)
 	/* File size change. */
 	if ((vap->va_size != VNOVAL) && (vp->v_type == VREG)) {
 		error = v7fs_datablock_size_change(fs, vap->va_size, inode);
-		if (error == 0)
+		if (error == 0) {
 			uvm_vnp_setsize(vp, vap->va_size);
+			v7node->update_mtime = true;
+			v7node->update_ctime = true;
+		}
 	}
 	uid_t uid = inode->uid;
 	gid_t gid = inode->gid;
@@ -509,7 +518,7 @@ v7fs_setattr(void *v)
 		uid = vap->va_uid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(cred, inode->uid, inode->gid, uid,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -519,7 +528,7 @@ v7fs_setattr(void *v)
 		gid = vap->va_gid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(cred, inode->uid, inode->gid, uid,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -528,7 +537,7 @@ v7fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		mode_t mode = vap->va_mode;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp->v_type, cred, inode->uid, inode->gid,
+		    vp, NULL, genfs_can_chmod(vp, cred, inode->uid, inode->gid,
 		    mode));
 		if (error) {
 			return error;
@@ -539,8 +548,8 @@ v7fs_setattr(void *v)
 	    (vap->va_mtime.tv_sec != VNOVAL) ||
 	    (vap->va_ctime.tv_sec != VNOVAL)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, inode->uid,
-		    cred));
+		    NULL, genfs_can_chtimes(vp, cred, inode->uid,
+		    vap->va_vaflags));
 		if (error)
 			return error;
 
@@ -586,7 +595,7 @@ v7fs_read(void *v)
 			break;
 
 		error = ubc_uiomove(&vp->v_uobj, uio, sz, advice, UBC_READ |
-		    UBC_PARTIALOK | UBC_UNMAP_FLAG(v));
+		    UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error) {
 			break;
 		}
@@ -638,7 +647,7 @@ v7fs_write(void *v)
 	while (uio->uio_resid > 0) {
 		sz = uio->uio_resid;
 		if ((error = ubc_uiomove(&vp->v_uobj, uio, sz, advice,
-			    UBC_WRITE | UBC_UNMAP_FLAG(v))))
+			    UBC_WRITE | UBC_VNODE_FLAGS(vp))))
 			break;
 		DPRINTF("write %zubyte\n", sz);
 	}
@@ -677,11 +686,12 @@ v7fs_fsync(void *v)
 int
 v7fs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v3_args /* {
 				  struct vnodeop_desc *a_desc;
 				  struct vnode * a_dvp;
 				  struct vnode * a_vp;
 				  struct componentname * a_cnp;
+				  nlink_t ctx_vp_new_nlink;
 				  } */ *a = v;
 	struct v7fs_node *parent_node = a->a_dvp->v_data;
 	struct v7fs_mount *v7fsmount = parent_node->v7fsmount;
@@ -691,7 +701,8 @@ v7fs_remove(void *v)
 	struct v7fs_self *fs = v7fsmount->core;
 	int error = 0;
 
-	DPRINTF("delete %s\n", a->a_cnp->cn_nameptr);
+	DPRINTF("delete %.*s\n", (int)a->a_cnp->cn_namelen,
+	    a->a_cnp->cn_nameptr);
 
 	if (vp->v_type == VDIR) {
 		error = EPERM;
@@ -699,7 +710,7 @@ v7fs_remove(void *v)
 	}
 
 	if ((error = v7fs_file_deallocate(fs, &parent_node->inode,
-		    a->a_cnp->cn_nameptr))) {
+		    a->a_cnp->cn_nameptr, a->a_cnp->cn_namelen))) {
 		DPRINTF("v7fs_file_delete failed.\n");
 		goto out;
 	}
@@ -711,10 +722,9 @@ v7fs_remove(void *v)
 
 out:
 	if (dvp == vp)
-		vrele(vp); /* v_usecount-- of unlocked vp */
+		vrele(vp); /* usecount-- of unlocked vp */
 	else
-		vput(vp); /* unlock vp and then v_usecount-- */
-	vput(dvp);
+		vput(vp); /* unlock vp and then usecount-- */
 
 	return error;
 }
@@ -735,21 +745,27 @@ v7fs_link(void *v)
 	struct v7fs_inode *p = &node->inode;
 	struct v7fs_self *fs = node->v7fsmount->core;
 	struct componentname *cnp = a->a_cnp;
-	int error = 0;
+	int error, abrt = 1;
 
 	DPRINTF("%p\n", vp);
-	/* Lock soruce file */
+	/* Lock source file */
 	if ((error = vn_lock(vp, LK_EXCLUSIVE))) {
 		DPRINTF("lock failed. %p\n", vp);
-		VOP_ABORTOP(dvp, cnp);
 		goto unlock;
 	}
-	error = v7fs_file_link(fs, parent, p, cnp->cn_nameptr);
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto unlock;
+	abrt = 0;
+	error = v7fs_file_link(fs, parent, p, cnp->cn_nameptr, cnp->cn_namelen);
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	VOP_UNLOCK(vp);
 unlock:
+	VOP_UNLOCK(vp);
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return error;
 }
 
@@ -774,9 +790,12 @@ v7fs_rename(void *v)
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	const char *from_name = a->a_fcnp->cn_nameptr;
 	const char *to_name = a->a_tcnp->cn_nameptr;
+	size_t from_len = a->a_fcnp->cn_namelen;
+	size_t to_len = a->a_tcnp->cn_namelen;
 	int error;
 
-	DPRINTF("%s->%s %p %p\n", from_name, to_name, fvp, tvp);
+	DPRINTF("%.*s->%.*s %p %p\n", (int)from_len, from_name, (int)to_len,
+	    to_name, fvp, tvp);
 
 	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
@@ -785,8 +804,8 @@ v7fs_rename(void *v)
 		goto out;
 	}
 	// XXXsource file lock?
-	error = v7fs_file_rename(fs, &parent_from->inode, from_name,
-	    &parent_to->inode, to_name);
+	error = v7fs_file_rename(fs, &parent_from->inode, from_name, from_len,
+	    &parent_to->inode, to_name, to_len);
 	/* 'to file' inode may be changed. (hard-linked and it is cached.)
 	   t_vnops rename_reg_nodir */
 	if (error == 0 && tvp) {
@@ -840,12 +859,13 @@ v7fs_mkdir(void *v)
 	attr.mode = va->va_mode | vtype_to_v7fs_mode(va->va_type);
 
 	if ((error = v7fs_file_allocate(fs, &parent_node->inode,
-	    cnp->cn_nameptr, &attr, &ino)))
+	    cnp->cn_nameptr, cnp->cn_namelen, &attr, &ino)))
 		return error;
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 	}
 	struct v7fs_node *newnode = (*a->a_vpp)->v_data;
@@ -862,7 +882,7 @@ v7fs_mkdir(void *v)
 int
 v7fs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 				 struct vnode		*a_dvp;
 				 struct vnode		*a_vp;
 				 struct componentname	*a_cnp;
@@ -875,12 +895,13 @@ v7fs_rmdir(void *v)
 	struct v7fs_self *fs = v7fsmount->core;
 	int error = 0;
 
-	DPRINTF("delete %s\n", a->a_cnp->cn_nameptr);
+	DPRINTF("delete %.*s\n", (int)a->a_cnp->cn_namelen,
+	    a->a_cnp->cn_nameptr);
 
 	KDASSERT(vp->v_type == VDIR);
 
 	if ((error = v7fs_file_deallocate(fs, &parent_node->inode,
-	    a->a_cnp->cn_nameptr))) {
+	    a->a_cnp->cn_nameptr, a->a_cnp->cn_namelen))) {
 		DPRINTF("v7fs_directory_deallocate failed.\n");
 		goto out;
 	}
@@ -892,7 +913,6 @@ v7fs_rmdir(void *v)
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 out:
 	vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -931,7 +951,7 @@ readdir_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk, size_t sz)
 		if ((error = v7fs_inode_load(fs, &inode, dir->inode_number)))
 			break;
 
-		v7fs_dirent_filename(filename, dir->name);
+		v7fs_dirent_filename(filename, dir->name, strlen(dir->name));
 
 		DPRINTF("inode=%d name=%s %s\n", dir->inode_number, filename,
 		    v7fs_inode_isdir(&inode) ? "DIR" : "FILE");
@@ -976,8 +996,10 @@ v7fs_readdir(void *v)
 	DPRINTF("offset=%zu residue=%zu\n", uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
-	KDASSERT(uio->uio_offset >= 0);
 	KDASSERT(v7fs_inode_isdir(inode));
+
+	if (uio->uio_offset  < 0)
+		return EINVAL;
 
 	struct v7fs_readdir_arg arg;
 	arg.start = uio->uio_offset / sizeof(*dp);
@@ -1007,7 +1029,7 @@ v7fs_readdir(void *v)
 int
 v7fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 				    struct vnode *a_vp;
 				    bool *a_recycle;
 				    } */ *a = v;
@@ -1023,8 +1045,6 @@ v7fs_inactive(void *v)
 		*a->a_recycle = true;
 	}
 
-	VOP_UNLOCK(vp);
-
 	return 0;
 }
 
@@ -1033,13 +1053,15 @@ v7fs_reclaim(void *v)
 {
 	/*This vnode is no longer referenced by kernel. */
 	extern struct pool v7fs_node_pool;
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 				   struct vnode *a_vp;
 				   } */ *a = v;
 	struct vnode *vp = a->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	struct v7fs_inode *inode = &v7node->inode;
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF("%p #%d\n", vp, inode->inode_number);
 	if (v7fs_inode_nlink(inode) == 0) {
@@ -1048,8 +1070,6 @@ v7fs_reclaim(void *v)
 		v7fs_inode_deallocate(fs, inode->inode_number);
 		DPRINTF("remove inode\n");
 	}
-	vcache_remove(vp->v_mount,
-	    &inode->inode_number, sizeof(inode->inode_number));
 	genfs_node_destroy(vp);
 	pool_put(&v7fs_node_pool, v7node);
 	mutex_enter(vp->v_interlock);
@@ -1169,48 +1189,43 @@ int
 v7fs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
-				    struct vnode *a_vp;
-				    int a_name;
-				    register_t *a_retval;
-				    } */ *a = v;
-	int err = 0;
+		struct vnode *a_vp;
+		int a_name;
+		register_t *a_retval;
+	} */ *ap = v;
+	DPRINTF("%p\n", ap->a_vp);
 
-	DPRINTF("%p\n", a->a_vp);
-
-	switch (a->a_name) {
+	switch (ap->a_name) {
 	case _PC_LINK_MAX:
-		*a->a_retval = V7FS_LINK_MAX;
-		break;
+		*ap->a_retval = V7FS_LINK_MAX;
+		return 0;
 	case _PC_NAME_MAX:
-		*a->a_retval = V7FS_NAME_MAX;
-		break;
+		*ap->a_retval = V7FS_NAME_MAX;
+		return 0;
 	case _PC_PATH_MAX:
-		*a->a_retval = V7FS_PATH_MAX;
-		break;
+		*ap->a_retval = V7FS_PATH_MAX;
+		return 0;
 	case _PC_CHOWN_RESTRICTED:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	case _PC_NO_TRUNC:
-		*a->a_retval = 0;
-		break;
+		*ap->a_retval = 0;
+		return 0;
 	case _PC_SYNC_IO:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	case _PC_FILESIZEBITS:
-		*a->a_retval = 30; /* ~1G */
-		break;
+		*ap->a_retval = 30; /* ~1G */
+		return 0;
 	case _PC_SYMLINK_MAX:
-		*a->a_retval = V7FSBSD_MAXSYMLINKLEN;
-		break;
+		*ap->a_retval = V7FSBSD_MAXSYMLINKLEN;
+		return 0;
 	case _PC_2_SYMLINKS:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	default:
-		err = EINVAL;
-		break;
+		return genfs_pathconf(ap);
 	}
-
-	return err;
 }
 
 int
@@ -1268,6 +1283,7 @@ v7fs_symlink(void *v)
 	const char *from = a->a_target;
 	const char *to = cnp->cn_nameptr;
 	size_t len = strlen(from) + 1;
+	size_t tolen = cnp->cn_namelen;
 	int error = 0;
 
 	if (len > V7FS_BSIZE) { /* limited to 512byte pathname */
@@ -1281,14 +1297,15 @@ v7fs_symlink(void *v)
 	attr.mode = va->va_mode | vtype_to_v7fs_mode(va->va_type);
 
 	if ((error = v7fs_file_allocate
-		(fs, &parent_node->inode, to, &attr, &ino))) {
+		(fs, &parent_node->inode, to, tolen, &attr, &ino))) {
 		return error;
 	}
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(a->a_dvp, v7fs_inode_filesize(&parent_node->inode));
 
 	/* Get myself vnode. */
-	if ((error = v7fs_vget(v7fsmount->mountp, ino, a->a_vpp))) {
+	error = v7fs_vget(v7fsmount->mountp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 	}
 

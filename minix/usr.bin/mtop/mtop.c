@@ -86,8 +86,7 @@ struct proc {
 
 struct proc *proc = NULL, *prev_proc = NULL;
 
-static void
-parse_file(pid_t pid)
+static void parse_file(pid_t pid)
 {
 	char path[PATH_MAX], name[256], type, state;
 	int version, endpt;

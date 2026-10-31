@@ -121,8 +121,7 @@ static int tcpip_tcp_timer_active;
  *
  * @param arg unused argument
  */
-static void
-tcpip_tcp_timer(void *arg)
+static void tcpip_tcp_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
 
@@ -143,8 +142,7 @@ tcpip_tcp_timer(void *arg)
  * the reason is to have the TCP timer only running when
  * there are active (or time-wait) PCBs.
  */
-void
-tcp_timer_needed(void)
+void tcp_timer_needed(void)
 {
   /* timer is off but needed again? */
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
@@ -160,8 +158,7 @@ tcp_timer_needed(void)
  *
  * @param arg unused argument
  */
-static void
-cyclic_timer(void *arg)
+static void cyclic_timer(void *arg)
 {
   const struct lwip_cyclic_timer* cyclic = (const struct lwip_cyclic_timer*)arg;
 #if LWIP_DEBUG_TIMERNAMES
@@ -197,11 +194,9 @@ void sys_timeouts_init(void)
  * @param arg argument to pass to the callback function
  */
 #if LWIP_DEBUG_TIMERNAMES
-void
-sys_timeout_debug(u32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name)
+void sys_timeout_debug(u32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name)
 #else /* LWIP_DEBUG_TIMERNAMES */
-void
-sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
+void sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
@@ -269,8 +264,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
  * @param handler callback function that would be called by the timeout
  * @param arg callback argument that would be passed to handler
 */
-void
-sys_untimeout(sys_timeout_handler handler, void *arg)
+void sys_untimeout(sys_timeout_handler handler, void *arg)
 {
   struct sys_timeo *prev_t, *t;
 
@@ -309,8 +303,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
 #if !NO_SYS && !defined __DOXYGEN__
 static
 #endif /* !NO_SYS */
-void
-sys_check_timeouts(void)
+void sys_check_timeouts(void)
 {
   if (next_timeout) {
     struct sys_timeo *tmptimeout;
@@ -365,8 +358,7 @@ sys_check_timeouts(void)
  * time (e.g. while saving energy) to prevent all timer functions of that
  * period being called.
  */
-void
-sys_restart_timeouts(void)
+void sys_restart_timeouts(void)
 {
   timeouts_last_time = sys_now();
 }
@@ -377,8 +369,7 @@ sys_restart_timeouts(void)
 #if !NO_SYS
 static
 #endif /* !NO_SYS */
-u32_t
-sys_timeouts_sleeptime(void)
+u32_t sys_timeouts_sleeptime(void)
 {
   u32_t diff;
   if (next_timeout == NULL) {
@@ -401,8 +392,7 @@ sys_timeouts_sleeptime(void)
  * @param mbox the mbox to fetch the message from
  * @param msg the place to store the message
  */
-void
-sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
+void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 {
   u32_t sleeptime;
 
@@ -426,8 +416,7 @@ again:
 
 #else /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */
 /* Satisfy the TCP code which calls this function */
-void
-tcp_timer_needed(void)
+void tcp_timer_needed(void)
 {
 }
 #endif /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */

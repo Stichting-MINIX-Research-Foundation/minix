@@ -11,7 +11,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(__x86_64__)
+void ctx_start(void);
+#else
 void ctx_start(void (*)(void), int, ...);
+#endif
 
 /*===========================================================================*
  *				setuctx					     *
@@ -73,7 +77,9 @@ int getuctx(ucontext_t *ucp)
 void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
   va_list ap;
+#if defined(__i386__) || defined(__arm__)
   unsigned int *stack_top;
+#endif
 
   /* There are a number of situations that are erroneous, but we can't actually
      tell the caller something is wrong, because this is a void function.
@@ -209,10 +215,68 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	if (stack_top == ucp->uc_stack.ss_sp) {
 		_UC_MACHINE_SET_STACK(ucp, 0);
 	}
+#elif defined(__x86_64__)
+	/*
+	 * SysV AMD64 ABI: first 6 arguments in RDI, RSI, RDX, RCX, R8, R9
+	 * (gregs indices 0-5).  Remaining arguments go on the stack.
+	 *
+	 * ctx_start is the entry point (RIP).  It receives the function
+	 * pointer in R12 and ucp in R13 (both callee-saved), then calls
+	 * func with the args already in the argument registers, and finally
+	 * calls resumecontext(ucp) when func returns.
+	 *
+	 * RSP must be 16-byte aligned when ctx_start executes its
+	 * 'call *%r12', so that func starts with RSP ≡ 8 (mod 16) as
+	 * required by the ABI.  Stack args occupy sp[0..nstackargs-1];
+	 * if nstackargs is odd we allocate one extra alignment-padding slot
+	 * below them (at a lower address, never accessed by func).
+	 */
+	{
+	__greg_t *gr = ucp->uc_mcontext.__gregs;
+	uintptr_t *sp;
+	int nregargs, nstackargs, i;
+
+	/* Top of stack, aligned down to 16 bytes */
+	sp = (uintptr_t *)((uintptr_t)ucp->uc_stack.ss_sp +
+	    ucp->uc_stack.ss_size);
+	sp = (uintptr_t *)(((uintptr_t)sp) & ~0xfUL);
+
+	nregargs   = (argc < 6) ? argc : 6;
+	nstackargs = argc - nregargs;
+
+	if (nstackargs > 0) {
+		sp -= nstackargs;
+		/* Ensure 16-byte alignment: if nstackargs is odd the
+		 * subtraction leaves sp 8-mod-16; add one padding slot. */
+		if ((uintptr_t)sp & 0xf)
+			sp--;
+	}
+	/* sp is now 16-byte aligned; stack args go at sp[0..nstackargs-1] */
+
+	gr[_REG_RIP] = (uintptr_t)ctx_start;
+	gr[_REG_RSP] = (uintptr_t)sp;
+	gr[_REG_RBP] = 0;
+	gr[_REG_R12] = (uintptr_t)(void (*)(void))func;  /* for ctx_start */
+	gr[_REG_R13] = (uintptr_t)ucp;                   /* for ctx_start */
+
+	/* First 6 args go into argument registers (gregs[0..5] = RDI..R9) */
+	va_start(ap, argc);
+	for (i = 0; i < nregargs; i++)
+		gr[i] = va_arg(ap, __greg_t);
+
+	/* Remaining args go on the stack at sp[0..nstackargs-1] */
+	for (i = 0; i < nstackargs; i++)
+		sp[i] = va_arg(ap, uintptr_t);
+	va_end(ap);
+
+	/* Invalidate if stack space was exhausted */
+	if ((char *)sp < (char *)ucp->uc_stack.ss_sp)
+		_UC_MACHINE_SET_STACK(ucp, 0);
+	}
 #else
 # error "Unsupported platform"
 #endif
-  }	
+  }
 }
 
 

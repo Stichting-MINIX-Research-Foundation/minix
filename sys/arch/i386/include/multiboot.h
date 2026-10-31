@@ -43,6 +43,12 @@
 #define MULTIBOOT_HEADER_HAS_VBE	0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR	0x00010000
 
+#if defined(_LOCORE) || defined(__ASSEMBLY__)
+#define MULTIBOOT2_HEADER_MAGIC		0xe85250d6
+#define MULTIBOOT2_BOOTLOADER_MAGIC	0x36d76289
+#define MULTIBOOT2_ARCHITECTURE_I386	0
+#endif
+
 #if defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))
 
 #if !defined(_LOCORE)
@@ -83,19 +89,19 @@ extern struct multiboot_header *Multiboot_Header;
 /*
  * Multiboot information structure.
  */
-#define MULTIBOOT_INFO_MAGIC			0x2BADB002
-#define MULTIBOOT_INFO_HAS_MEMORY		0x00000001
+#define MULTIBOOT_INFO_MAGIC		0x2BADB002
+#define MULTIBOOT_INFO_HAS_MEMORY	0x00000001
 #define MULTIBOOT_INFO_HAS_BOOT_DEVICE	0x00000002
-#define MULTIBOOT_INFO_HAS_CMDLINE		0x00000004
+#define MULTIBOOT_INFO_HAS_CMDLINE	0x00000004
 #define MULTIBOOT_INFO_HAS_MODS		0x00000008
 #define MULTIBOOT_INFO_HAS_AOUT_SYMS	0x00000010
-#define MULTIBOOT_INFO_HAS_ELF_SYMS		0x00000020
+#define MULTIBOOT_INFO_HAS_ELF_SYMS	0x00000020
 #define MULTIBOOT_INFO_HAS_MMAP		0x00000040
-#define MULTIBOOT_INFO_HAS_DRIVES		0x00000080
+#define MULTIBOOT_INFO_HAS_DRIVES	0x00000080
 #define MULTIBOOT_INFO_HAS_CONFIG_TABLE	0x00000100
 #define MULTIBOOT_INFO_HAS_LOADER_NAME	0x00000200
 #define MULTIBOOT_INFO_HAS_APM_TABLE	0x00000400
-#define MULTIBOOT_INFO_HAS_VBE			0x00000800
+#define MULTIBOOT_INFO_HAS_VBE		0x00000800
 #define MULTIBOOT_INFO_HAS_FRAMEBUFFER	0x00001000
 
 #if defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))
@@ -145,40 +151,38 @@ struct multiboot_info {
 	void *		unused_mi_apm_table;
 
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_VBE. */
-	uint32_t vbe_control_info;
-	uint32_t vbe_mode_info;
-	uint16_t vbe_mode;
-	uint16_t vbe_interface_seg;
-	uint16_t vbe_interface_off;
-	uint16_t vbe_interface_len;
+	void *		unused_mi_vbe_control_info;
+	void *		unused_mi_vbe_mode_info;
+	uint16_t	unused_mi_vbe_mode;
+	uint16_t	unused_mi_vbe_interface_seg;
+	uint16_t	unused_mi_vbe_interface_off;
+	uint16_t	unused_mi_vbe_interface_len;
 
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_FRAMEBUFFER. */
-	uint64_t framebuffer_addr;
-	uint32_t framebuffer_pitch;
-	uint32_t framebuffer_width;
-	uint32_t framebuffer_height;
-	uint8_t framebuffer_bpp;
-#define MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED 0
-#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB     1
-#define MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT	2
+	uint64_t	framebuffer_addr;
+	uint32_t	framebuffer_pitch;
+	uint32_t	framebuffer_width;
+	uint32_t	framebuffer_height;
+	uint8_t		framebuffer_bpp;
+#define MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED 	0
+#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB     	1
+#define MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT     2
 	uint8_t framebuffer_type;
-	union
-	{
-		struct
-		{
+	union {
+		struct {
 			uint32_t framebuffer_palette_addr;
 			uint16_t framebuffer_palette_num_colors;
 		};
-		struct
-		{
+		struct {
 			uint8_t framebuffer_red_field_position;
 			uint8_t framebuffer_red_mask_size;
 			uint8_t framebuffer_green_field_position;
 			uint8_t framebuffer_green_mask_size;
 			uint8_t framebuffer_blue_field_position;
 			uint8_t framebuffer_blue_mask_size;
-	    };
+		};
 	};
+
 };
 
 /* --------------------------------------------------------------------- */
@@ -232,43 +236,22 @@ struct multiboot_module {
 
 #endif /* defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))*/
 
-#if defined(__minix)
-
-#ifndef __ASSEMBLY__
-typedef struct multiboot_info multiboot_info_t;
-typedef struct multiboot_module multiboot_module_t;
-typedef struct multiboot_mmap multiboot_memory_map_t;
-#endif
-
-#define MULTIBOOT_MEMORY_AVAILABLE              1
-#define MULTIBOOT_MAX_MODS     20
-
-#define mod_start mmo_start
-#define mod_end mmo_end
-
-#define mmap_addr mi_mmap_addr
-#define mmap_length mi_mmap_length
-
-#define MULTIBOOT_VIDEO_MODE 0x00000004
-#define MULTIBOOT_VIDEO_MODE_EGA 1
-#define MULTIBOOT_VIDEO_BUFFER 0xB8000
-
-#define MULTIBOOT_CONSOLE_LINES 25
-#define MULTIBOOT_CONSOLE_COLS 80
-
-#define MULTIBOOT_PARAM_BUF_SIZE 1024
-#endif /* defined(__minix) */
 
 /* --------------------------------------------------------------------- */
 
 /*
- * Prototypes for public functions defined in multiboot.c.
+ * Prototypes for public functions defined in multiboot.c and multiboot2.c
  */
 #if !defined(_LOCORE) && defined(_KERNEL)
-void		multiboot_pre_reloc(struct multiboot_info *);
-void		multiboot_post_reloc(void);
-void		multiboot_print_info(void);
-bool		multiboot_ksyms_addsyms_elf(void);
+void		multiboot1_pre_reloc(struct multiboot_info *);
+void		multiboot1_post_reloc(void);
+void		multiboot1_print_info(void);
+bool		multiboot1_ksyms_addsyms_elf(void);
+
+void		multiboot2_pre_reloc(struct multiboot_info *);
+void		multiboot2_post_reloc(void);
+void		multiboot2_print_info(void);
+bool		multiboot2_ksyms_addsyms_elf(void);
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */

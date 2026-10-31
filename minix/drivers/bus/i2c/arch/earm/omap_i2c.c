@@ -231,8 +231,7 @@ static int omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen,
 /*
  * Performs the action in minix_i2c_ioctl_exec_t.
  */
-static int
-omap_i2c_process(minix_i2c_ioctl_exec_t * ioctl_exec)
+static int omap_i2c_process(minix_i2c_ioctl_exec_t * ioctl_exec)
 {
 	int r;
 
@@ -288,8 +287,7 @@ omap_i2c_process(minix_i2c_ioctl_exec_t * ioctl_exec)
  * Usually called to clear any garbage that may be in the buffer before
  * doing a read.
  */
-static void
-omap_i2c_flush(void)
+static void omap_i2c_flush(void)
 {
 	int tries;
 	int status;
@@ -314,8 +312,7 @@ omap_i2c_flush(void)
  * Poll the status register checking the bits set in 'mask'.
  * Returns the status if any bits set or 0x0000 when the timeout is reached.
  */
-static uint16_t
-omap_i2c_poll(uint16_t mask)
+static uint16_t omap_i2c_poll(uint16_t mask)
 {
 	spin_t spin;
 	uint16_t status;
@@ -337,8 +334,7 @@ omap_i2c_poll(uint16_t mask)
  * Poll Bus Busy Flag until the bus becomes free (return 1) or the timeout
  * expires (return 0).
  */
-static int
-omap_i2c_bus_is_free(void)
+static int omap_i2c_bus_is_free(void)
 {
 	spin_t spin;
 	uint16_t status;
@@ -357,8 +353,7 @@ omap_i2c_bus_is_free(void)
 	return 0;		/* timeout expired */
 }
 
-static void
-omap_i2c_clkconf(int i2c_bus_id)
+static void omap_i2c_clkconf(int i2c_bus_id)
 {
 	clkconf_init();
 
@@ -390,8 +385,7 @@ omap_i2c_clkconf(int i2c_bus_id)
 	clkconf_release();
 }
 
-static void
-omap_i2c_padconf(int i2c_bus_id)
+static void omap_i2c_padconf(int i2c_bus_id)
 {
 	int r;
 	u32_t pinopts;
@@ -466,8 +460,7 @@ omap_i2c_padconf(int i2c_bus_id)
 	/* nothing to do for the DM37XX */
 }
 
-static int
-omap_i2c_soft_reset(void)
+static int omap_i2c_soft_reset(void)
 {
 	spin_t spin;
 
@@ -495,8 +488,7 @@ omap_i2c_soft_reset(void)
 	return EIO;
 }
 
-static void
-omap_i2c_intr_enable(void)
+static void omap_i2c_intr_enable(void)
 {
 	int r;
 	uint16_t intmask;
@@ -544,8 +536,7 @@ omap_i2c_intr_enable(void)
 	}
 }
 
-static void
-omap_i2c_bus_init(void)
+static void omap_i2c_bus_init(void)
 {
 
 	/* Ensure i2c module is disabled before setting prescalar & bus speed */
@@ -590,8 +581,7 @@ omap_i2c_bus_init(void)
 	omap_i2c_intr_enable();
 }
 
-static uint16_t
-omap_i2c_read_status(void)
+static uint16_t omap_i2c_read_status(void)
 {
 	uint16_t status = 0x0000;
 
@@ -607,8 +597,7 @@ omap_i2c_read_status(void)
 	return status;
 }
 
-static void
-omap_i2c_write_status(uint16_t mask)
+static void omap_i2c_write_status(uint16_t mask)
 {
 	if (omap_i2c_bus->bus_type == AM335X_I2C_BUS) {
 		/* write 1's to IRQSTATUS (not RAW) to clear the bits */
@@ -620,8 +609,7 @@ omap_i2c_write_status(uint16_t mask)
 	}
 }
 
-static int
-omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
+static int omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 {
 	int r, i;
 	uint16_t conopts;
@@ -699,8 +687,7 @@ omap_i2c_read(i2c_addr_t addr, uint8_t * buf, size_t buflen, int dostop)
 	return 0;
 }
 
-static int
-omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
+static int omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 {
 	int r, i;
 	uint16_t conopts;
@@ -776,8 +763,7 @@ omap_i2c_write(i2c_addr_t addr, const uint8_t * buf, size_t buflen, int dostop)
 	return 0;
 }
 
-int
-omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
+int omap_interface_setup(int (**process) (minix_i2c_ioctl_exec_t * ioctl_exec),
     int i2c_bus_id)
 {
 	int r;

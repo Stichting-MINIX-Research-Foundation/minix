@@ -6,7 +6,7 @@
 #include "cmi8738.h"
 
 /* I/O function */
-static u8_t my_inb(u32_t port) {
+static u8_t my_inb(vir_bytes port) {
 	u32_t value;
 	int r;
 #ifdef DMA_BASE_IOMAP
@@ -19,7 +19,7 @@ static u8_t my_inb(u32_t port) {
 }
 #define sdr_in8(port, offset) (my_inb((port) + (offset)))
 
-static u16_t my_inw(u32_t port) {
+static u16_t my_inw(vir_bytes port) {
 	u32_t value;
 	int r;
 #ifdef DMA_BASE_IOMAP
@@ -32,7 +32,7 @@ static u16_t my_inw(u32_t port) {
 }
 #define sdr_in16(port, offset) (my_inw((port) + (offset)))
 
-static u32_t my_inl(u32_t port) {
+static u32_t my_inl(vir_bytes port) {
 	u32_t value;
 	int r;
 #ifdef DMA_BASE_IOMAP
@@ -45,7 +45,7 @@ static u32_t my_inl(u32_t port) {
 }
 #define sdr_in32(port, offset) (my_inl((port) + (offset)))
 
-static void my_outb(u32_t port, u32_t value) {
+static void my_outb(vir_bytes port, u32_t value) {
 	int r;
 #ifdef DMA_BASE_IOMAP
 	*(volatile u8_t *)(port) = value;
@@ -57,7 +57,7 @@ static void my_outb(u32_t port, u32_t value) {
 #define sdr_out8(port, offset, value) \
 				(my_outb(((port) + (offset)), (value)))
 
-static void my_outw(u32_t port, u32_t value) {
+static void my_outw(vir_bytes port, u32_t value) {
 	int r;
 #ifdef DMA_BASE_IOMAP
 	*(volatile u16_t *)(port) = value;
@@ -69,7 +69,7 @@ static void my_outw(u32_t port, u32_t value) {
 #define sdr_out16(port, offset, value) \
 				(my_outw(((port) + (offset)), (value)))
 
-static void my_outl(u32_t port, u32_t value) {
+static void my_outl(vir_bytes port, u32_t value) {
 	int r;
 #ifdef DMA_BASE_IOMAP
 	*(volatile u32_t *)(port) = value;

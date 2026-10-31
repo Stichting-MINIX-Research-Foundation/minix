@@ -1,0 +1,827 @@
+.\" $NetBSD: gpt.8,v 1.74 2020/07/27 20:54:18 christos Exp $
+.\"
+.\" Copyright (c) 2002 Marcel Moolenaar
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
+.\"
+.Dd July 27, 2020
+.Dt GPT 8
+.Os
+.Sh NAME
+.Nm gpt
+.Nd GUID partition table maintenance utility
+.Sh SYNOPSIS
+.Nm
+.Op Fl Hnqrv
+.Op Fl m Ar mediasize
+.Op Fl s Ar sectorsize
+.Op Fl T Ar timestamp
+.Ar command
+.Op Ar command_options
+.Ar device
+.Nm
+.Ar set
+.Fl l
+.Nm
+.Ar unset
+.Fl l
+.Nm
+.Ar type
+.Fl l
+.Sh DESCRIPTION
+The
+.Nm
+utility provides the necessary functionality to manipulate GUID partition
+tables
+.Pq GPTs ,
+but see
+.Sx BUGS
+below for how and where functionality is missing.
+The basic usage model of the
+.Nm
+tool follows that of the
+.Xr cvs 1
+tool.
+The general options are described in the following paragraph.
+The remaining paragraphs describe the individual commands with their options.
+Here we conclude by mentioning that a
+.Ar device
+is either a special file
+corresponding to a disk-like device or a regular file.
+The command is applied to each
+.Ar device
+listed on the command line.
+.Ss General Options
+The general options allow the user to change default settings or otherwise
+change the behaviour that is applicable to all commands.
+Not all commands use all default settings, so some general options may not
+have an effect on all commands.
+.Bl -tag -width XXXX
+.It Fl H
+Ignore existing MBR (Hybrid MBR/GPT mode).
+.It Fl m Ar mediasize
+Override the default media size for the device (obtained
+from the kernel if possible) or defaulting to the file size for
+plain files.
+.It Fl n
+Do not update the wedge information that
+.Nm
+changed.
+You need to use the
+.Xr dkctl 8
+command manually update the device's wedge configuration if you do that.
+.It Fl q
+Do not print error messages.
+This is not implemented completely yet.
+.It Fl r
+Open the device for reading only.
+.Nm
+Currently this option is primarily useful for the
+.Ic show
+command, but the intent is to use it to implement dry-run behaviour.
+.It Fl s Ar sectorsize
+Override the default sector size for the device (obtained
+from the kernel if possible) or
+.Dv 512
+for plain files.
+.It Fl T Ar timestamp
+Specify a timestamp to be used for uuid generation so that uuids
+are not random and can be consistent for reproducible builds.
+The timestamp can be a pathname, where the timestamps are derived from
+that file, a parseable date for parsedate(3) (this option is not
+yet available in the tools build), or an integer value interpreted
+as the number of seconds from the Epoch.
+.It Fl v
+Controls the verbosity level.
+The level increases with every occurrence of this option.
+There is no formalized definition of the different levels yet.
+.El
+.Ss Commands
+.Bl -tag -width indent
+.\" ==== add ====
+.It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar blocknr Oc \
+Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar size Oc \
+Oo Fl t Ar type Oc
+The
+.Ic add
+command allows the user to add a new partition to an existing table.
+By default, it will create a UFS partition covering the first available block
+of an unused disk space.
+The command-specific options can be used to control this behaviour.
+.Pp
+The
+.Fl a Ar alignment
+option allows the user to specify an alignment for the start and size.
+The alignment is given in bytes and may have a suffix to indicate its
+magnitude.
+.Nm
+will attempt to align the partition.
+.Pp
+The
+.Fl b Ar blocknr
+option allows the user to specify the starting (beginning) sector number of
+the partition.
+The minimum sector number is 1, but has to fall inside an unused region of
+disk space that is covered by the GPT.
+.Pp
+The
+.Fl i Ar index
+option allows the user to specify which (free) entry in the GPT table is to
+be used for the new partition.
+By default, the first free entry is selected.
+.Pp
+The
+.Fl l Ar label
+option allows the user to specify a label for the partition.
+.Pp
+The
+.Fl s Ar size
+option allows the user to specify the size of the partition.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
+The minimum size is 1 sector.
+.Pp
+The
+.Fl t Ar type
+option allows the user to specify the partition type.
+The type is given as an UUID, but
+.Nm
+accepts
+.Bl -tag -width "windows-reserved" -compact -offset indent
+.It Cm apple
+Apple HFS
+.It Cm apple-ufs
+Apple UFS
+.It Cm bios
+BIOS Boot
+.It Cm efi
+EFI System
+.It Cm fbsd-legacy
+.Fx
+legacy
+.It Cm fbsd-swap
+.Fx
+swap
+.It Cm fbsd-ufs
+.Fx
+UFS/UFS2
+.It Cm fbsd-vinum
+.Fx
+vinum
+.It Cm zfs
+.Fx ,
+.Nx
+ZFS
+.It Cm linux-data
+Linux data
+.It Cm linux-raid
+Linux RAID
+.It Cm linux-swap
+Linux swap
+.It Cm linux-lvm
+Linux LVM
+.It Cm windows
+Windows basic data
+.It Cm windows-reserved
+Windows reserved
+.It Cm ccd
+.Nx
+ccd component
+.It Cm cgd
+.Nx
+Cryptographic Disk
+.It Cm ffs
+.Nx
+FFSv1/FFSv2
+.It Cm lfs
+.Nx
+LFS
+.It Cm raid
+.Nx
+RAIDFrame component
+.It Cm swap
+.Nx
+swap
+.El
+as aliases for the most commonly used partition types.
+.\" ==== backup ====
+.It Nm Ic backup Oo Fl o Ar outfile Oc
+The
+.Ic backup
+command dumps the MBR or (PMBR) and GPT partition tables to standard
+output or to a file specified by the
+.Ar outfile
+argument in a format to be used by the
+.Ic restore
+command.
+The format is a plist.
+It should not be modified.
+.\" ==== biosboot ====
+.It Nm Ic biosboot Oo Fl A Oc Oo Fl c Ar bootcode Oc Oo Fl b Ar startsec Oc \
+Oo Fl i Ar index Oc Oo Fl L Ar label Oc
+The
+.Ic biosboot
+command allows the user to configure the partition that contains the
+primary bootstrap program, used during
+.Xr boot 8 .
+.Pp
+The
+.Fl A
+options sets the PMBR partition active.
+.Pp
+The
+.Fl c
+option allows the user to specify the filename that
+.Nm
+should read the bootcode from.
+The default is to read from
+.Pa /usr/mdec/gptmbr.bin .
+.Pp
+The
+.Fl i
+option selects the partition that should contain the primary
+bootstrap code, as installed via
+.Xr installboot 8 .
+The
+.Fl L
+option selects the partition by label.
+If there are multiple partitions with the same label, the
+first one found will be used.
+The
+.Fl b
+options selects the partition by start block.
+.\" ==== create ====
+.It Nm Ic create Oo Fl AfP Oc Oo Fl p Ar partitions Oc
+The
+.Ic create
+command allows the user to create a new (empty) GPT.
+By default, one cannot create a GPT when the device contains a MBR,
+however this can be overridden with the
+.Fl f
+option.
+If the
+.Fl f
+option is specified, an existing MBR is destroyed and any partitions
+described by the MBR are lost.
+.Pp
+The
+.Fl A
+options sets the PMBR partition active.
+.Pp
+The
+.Fl P
+option tells
+.Nm
+to create only the primary table and not the backup table.
+This option is only useful for debugging and should not be used otherwise.
+.Pp
+The
+.Fl p
+option changes the default number of partitions the GPT can
+accommodate.
+This is used whenever a new GPT is created.
+By default, the
+.Nm
+utility will create space for 128 partitions (or 32 sectors of 512 bytes).
+.\" ==== destroy ====
+.It Nm Ic destroy Oo Fl r Oc
+The
+.Ic destroy
+command allows the user to destroy an existing, possibly not empty GPT.
+.Pp
+The
+.Fl r
+option instructs
+.Nm
+to destroy the table in a way that it can be recovered.
+.\" ==== header ====
+.It Nm Ic header
+The
+.Ic header
+command displays size information about the media and information from the
+GPT header if it exists.
+.\" ==== label ====
+.It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac
+.It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Ao Fl f Ar file | Fl l Ar label Ac
+The
+.Ic label
+command allows the user to label any partitions that match the selection.
+At least one of the following selection options must be specified.
+.Pp
+The
+.Fl a
+option specifies that all partitions should be labeled.
+It is mutually exclusive with all other selection options.
+.Pp
+The
+.Fl b Ar blocknr
+option selects the partition that starts at the given block number.
+.Pp
+The
+.Fl i Ar index
+option selects the partition with the given partition number.
+.Pp
+The
+.Fl L Ar label
+option selects all partitions that have the given label.
+This can cause multiple partitions to be relabeled.
+.Pp
+The
+.Fl s Ar sectors
+option selects all partitions that have the given size.
+This can cause multiple partitions to be labeled.
+.Pp
+The
+.Fl t Ar type
+option selects all partitions that have the given type.
+The type is given as an UUID or by the aliases that the
+.Ic add
+command accepts.
+This can cause multiple partitions to be labeled.
+.Pp
+The
+.Fl f Ar file
+or
+.Fl l Ar label
+options specify the new label to be assigned to the selected partitions.
+The
+.Fl f Ar file
+option is used to read the label from the specified file.
+Only the first line is read from the file and the trailing newline
+character is stripped.
+If the file name is the dash or minus sign
+.Pq Fl ,
+the label is read from
+the standard input.
+The
+.Fl l Ar label
+option is used to specify the label in the command line.
+The label is assumed to be encoded in UTF-8.
+.\" ==== migrate ====
+.It Nm Ic migrate Oo Fl Afs Oc Oo Fl p Ar partitions Oc
+The
+.Ic migrate
+command allows the user to migrate an MBR-based disk partitioning into a
+GPT-based partitioning.
+By default, the MBR is not migrated when it contains partitions of an unknown
+type.
+This can be overridden with the
+.Fl f
+option.
+Specifying the
+.Fl f
+option will cause unknown partitions to be ignored and any data in it
+to be lost.
+.Pp
+The
+.Fl A
+options sets the PMBR partition active.
+.Pp
+The
+.Fl s
+option prevents migrating
+.Bx
+disk labels into GPT partitions by creating
+the GPT equivalent of a slice.
+Note that the
+.Fl s
+option is not applicable to
+.Nx
+partitions.
+.Pp
+The
+.Fl p
+option changes the default number of partitions the GPT can
+accommodate.
+This is used whenever a new GPT is created.
+By default, the
+.Nm
+utility will create space for 128 partitions (or 32 sectors of 512 bytes).
+.Pp
+The
+.Ic migrate
+command requires space at the beginning and the end of the device outside
+any partitions to store the GPTs.
+Space is required for the GPT header
+.Pq which takes one sector
+and the GPT partition table.
+See the
+.Fl p
+option
+for the size of the GPT partition table.
+By default, just about all devices have a minimum of 62 sectors free at the
+beginning of the device, but do not have any free space at the end.
+For the default GPT partition table size on a 512 byte sector size device,
+33 sectors at the end of the device would need to be freed.
+.\" ==== recover ====
+.It Nm Ic recover
+The
+.Ic recover
+command tries to restore the GPT partition label from the backup
+near the end of the disk.
+It is very useful in case the primary label was deleted.
+.\" ==== remove ====
+.It Nm Ic remove Oo Fl a Oc
+.It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
+The
+.Ic remove
+command allows the user to remove any and all partitions that match the
+selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
+Partitions are removed by clearing the partition type.
+No other information is changed.
+.\" ==== resize ====
+.It Nm Ic resize Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc Oo Fl a Ar alignment Oc \
+Oo Fl s Ar size Oc Oo Fl q Oc
+The
+.Ic resize
+command allows the user to resize a partition.
+The partition may be shrunk and if there is sufficient free space
+immediately after it then it may be expanded.
+The
+.Fl s
+option allows the new size to be specified, otherwise the partition will
+be increased to the maximum available size.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
+The minimum size is 1 sector.
+If the
+.Fl a
+option is specified then the size will be adjusted to be a multiple of
+alignment if possible.
+If the
+.Fl q
+option is specified then the utility will not print output when a
+resize is not required.
+.\" ==== resizedisk ====
+.It Nm Ic resizedisk Oo Fl s Ar size Oc Oo Fl q Oc
+The
+.Ic resizedisk
+command allows the user to resize a disk.
+With GPTs, a backup copy is stored at the end of the disk.
+If the underlying medium changes size
+.Pq or is going to change size ,
+then the backup copy needs to be moved to the new end of the disk,
+and the last sector available for data storage needs to be adjusted.
+This command does that.
+If the backup copy no longer exists due to the medium shrinking, then
+a new backup copy will be created using the primary copy.
+.Pp
+The
+.Fl s
+option allows the new size to be specified, otherwise the backup copy
+will automatically be placed at the current end of the disk.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
+Using the
+.Fl s
+option allows you to move the backup copy prior to resizing the medium.
+This is primarily useful when shrinking the medium.
+If the
+.Fl q
+option is specified then the utility will not print output when a
+resize is not required.
+.\" ==== restore ====
+.It Nm Ic restore Oo Fl F Oc Oo Fl i Ar infile Oc
+The
+.Ic restore
+command restores a partition table that was previously saved using the
+.Ic backup
+command.
+The partition table is read from standard input or a file specified in
+the
+.Ar infile
+argument and is expected to be in the format of a plist.
+It assumes an empty disk.
+The
+.Fl F
+option can be used to blank the disk.
+The new disk does not have to be the same size as the old disk as long as all
+the partitions fit, as
+.Ic restore
+will automatically adjust.
+However, the new disk must use the same sector size as the old disk.
+.\" ==== set ====
+.It Nm Ic set Oo Fl a Ar attribute Oc Oo Fl N Oc Oo Fl i Ar index Oc \
+Oo Fl b Ar startsec Oc
+.It Nm Ic set Fl l
+The
+.Ic set
+command sets various partition attributes.
+The
+.Fl l
+flag lists all available attributes.
+The
+.Fl a
+option specifies which attributes to set and may be specified more than once,
+or the attributes can be comma-separated.
+If the
+.Fl N
+option and no
+.Fl a
+option are specified, all attributes are removed.
+The
+.Fl i
+or the
+.Fl b
+option specify which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc ,
+.Do bootfailed Dc ,
+.Do noblockio Dc , and
+.Do required Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The bootme flag is used to indicate which partition should be booted
+by UEFI boot code.
+The other attributes are for compatibility with
+.Fx
+and are not currently used by
+.Nx .
+They may be used by
+.Nx
+in the future.
+.\" ==== show ====
+.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
+The
+.Ic show
+command displays the current partitioning on the listed devices and gives
+an overall view of the disk contents.
+With the
+.Fl g
+option the GPT partition GUID will be displayed instead of the GPT partition
+type.
+With the
+.Fl l
+option the GPT partition label will be displayed instead of the GPT partition
+type.
+With the
+.Fl u
+option the GPT partition type is displayed as an UUID instead of in a
+user friendly form.
+With the
+.Fl i
+or the
+.Fl b
+option, all the details of a particular GPT partition will be displayed.
+The format of this display is subject to change.
+With the
+.Fl a
+option, all information for all GPT partitions (just like with
+.Fl i Ar index )
+will be printed.
+None of the options have any effect on non-GPT partitions.
+The order of precedence for the options are:
+.Fl a ,
+.Fl i ,
+.Fl l ,
+.Fl g ,
+.Fl u .
+.\" ==== type ====
+.It Nm Ic type Oo Fl a Oc Fl T Ar newtype
+.It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Fl T Ar newtype
+.It Nm Ic type Fl l
+The
+.Ic type
+command allows the user to change the type of any and all partitions
+that match the selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
+The
+.Fl l
+flag lists available types.
+.\" ==== unset ====
+.It Nm Ic unset Fl a Ar attribute Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
+.It Nm Ic unset Fl l
+The
+.Ic unset
+command unsets various partition attributes.
+The
+.Fl l
+flag lists all available attributes.
+The
+.Fl a
+option specifies which attributes to unset and may be specified more than once.
+Alternatively a comma separated list of attributes can be used.
+The
+.Fl i
+or the
+.Fl b
+option specifies which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc ,
+.Do bootfailed Dc ,
+.Do noblockio Dc , and
+.Do required Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The other attributes are for compatibility with
+.Fx
+and are not currently used by any
+.Nx
+code.
+They may be used by
+.Nx
+code in the future.
+.\" ==== uuid ====
+.It Nm Ic uuid Oo Fl a Oc
+.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
+The
+.Ic uuid
+command allows the user to change the UUID of any and all partitions
+that match the selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
+If
+.Fl a
+is used, then the header UUID is changed as well.
+.Pp
+The primary purpose of this command is for use after cloning a disk to
+prevent collisions when both disks are used in the same system.
+.\" ==== end of commands ====
+.El
+.Sh EXIT STATUS
+The
+.Nm
+command exits with a failure status (1) when the header command
+is used and no GPT header is found.
+This can be used to check for the existence of a GPT in shell scripts.
+.Sh EXAMPLES
+.Bd -literal
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1  3907029167
+nas# gpt create wd3
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34  3907029101
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas# gpt add -s 10486224 -t swap -i 1 wd3
+nas# gpt label -i 1 -l swap_1 wd3
+partition 1 on rwd3d labeled swap_1
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34    10486224      1  GPT part - NetBSD swap
+    10486258  3896542877
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas# gpt show -l wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34    10486224      1  GPT part - "swap_1"
+    10486258  3896542877
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas#
+.Ed
+.Pp
+Booting from GPT on a BIOS system: this creates a bootable partition.
+.Bd -literal
+xotica# gpt create wd1
+xotica# gpt add -b 1024 -l bootroot -t ffs -s 1g wd1
+/dev/rwd1: Partition 1 added: 49f48d5a-b10e-11dc-b99b-0019d1879648 1024 2097152
+xotica ~# dmesg | tail -2
+wd1: GPT GUID: 660e0630-0a3f-47c0-bc52-c88bcec79392
+dk0 at wd1: "bootroot", 2097152 blocks at 1024, type: ffs
+xotica# gpt biosboot -L bootroot wd1
+xotica# newfs dk0
+xotica# installboot /dev/rdk0 /usr/mdec/bootxx_ffsv1
+xotica# mount /dev/dk0 /mnt
+xotica# cp /usr/mdec/boot /mnt
+.Ed
+.Pp
+Note that
+.Ic biosboot
+is not needed for UEFI systems.
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr dkctl 8 ,
+.Xr fdisk 8 ,
+.Xr installboot 8 ,
+.Xr mount 8 ,
+.Xr newfs 8 ,
+.Xr swapctl 8
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Fx 5.0
+for ia64.
+.Nm
+utility first appeared in
+.Nx 5.0 .
+.Sh BUGS
+The development of the
+.Nm
+utility is still work in progress.
+Many necessary features are missing or partially implemented.
+In practice this means that the manual page, supposed to describe these
+features, is farther removed from being complete or useful.
+As such, missing functionality is not even documented as missing.
+However, it is believed that the currently present functionality is reliable
+and stable enough that this tool can be used without bullet-proof footware if
+one thinks one does not make mistakes.
+.Pp
+It is expected that the basic usage model does not change, but it is
+possible that future versions will not be compatible in the strictest sense
+of the word.
+Also, options primarily intended for diagnostic or debug purposes may be
+removed in future versions.
+.Pp
+Another possibility is that the current usage model is accompanied by
+other interfaces to make the tool usable as a back-end.
+This all depends on demand and thus feedback.

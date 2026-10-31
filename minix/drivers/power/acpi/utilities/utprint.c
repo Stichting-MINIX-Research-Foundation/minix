@@ -435,8 +435,7 @@ AcpiUtFormatNumber (
  *
  ******************************************************************************/
 
-int
-AcpiUtVsnprintf (
+int AcpiUtVsnprintf (
     char                    *String,
     ACPI_SIZE               Size,
     const char              *Format,
@@ -724,8 +723,7 @@ AcpiUtVsnprintf (
  *
  ******************************************************************************/
 
-int
-AcpiUtSnprintf (
+int AcpiUtSnprintf (
     char                    *String,
     ACPI_SIZE               Size,
     const char              *Format,
@@ -758,8 +756,7 @@ AcpiUtSnprintf (
  *
  ******************************************************************************/
 
-int
-AcpiUtFileVprintf (
+int AcpiUtFileVprintf (
     ACPI_FILE               File,
     const char              *Format,
     va_list                 Args)
@@ -792,8 +789,7 @@ AcpiUtFileVprintf (
  *
  ******************************************************************************/
 
-int
-AcpiUtFilePrintf (
+int AcpiUtFilePrintf (
     ACPI_FILE               File,
     const char              *Format,
     ...)

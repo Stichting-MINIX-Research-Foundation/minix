@@ -81,9 +81,7 @@ static pid_t ppid;
 static int pfd[4];
 static int sigs, caught;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   int i, m = 0xFFFFFF, n = 0xF;
   char cp_cmd[NAME_MAX + 10];
@@ -113,9 +111,7 @@ char **argv;
   return(-1);			/* impossible */
 }
 
-void test(m, a)
-int m;
-int a;
+void test(int m, int a)
 {
   attach = a;
 
@@ -364,8 +360,7 @@ void(*c) (void);
   return pid;
 }
 
-void WRITE(value)
-int value;
+void WRITE(int value)
 {
   if (write(pfd[child*2+1], &value, sizeof(value)) != sizeof(value)) my_e(400);
 }
@@ -399,8 +394,7 @@ void traced_wait()
   close(pfd[3]);
 }
 
-void detach_running(pid)
-pid_t pid;
+void detach_running(pid_t pid)
 {
 /* Detach from a process that is not already stopped. This is the way to do it.
  * We have to stop the child in order to detach from it, but as the child may
@@ -437,25 +431,21 @@ pid_t pid;
   my_e(606);
 }
 
-void dummy_handler(sig)
-int sig;
+void dummy_handler(int sig)
 {
 }
 
-void exit_handler(sig)
-int sig;
+void exit_handler(int sig)
 {
   exit(42);
 }
 
-void count_handler(sig)
-int sig;
+void count_handler(int sig)
 {
   sigs++;
 }
 
-void catch_handler(sig)
-int sig;
+void catch_handler(int sig)
 {
   sigset_t set;
   int bit;
@@ -1292,11 +1282,7 @@ void test_tracefork()
   traced_wait();
 }
 
-void sigexec(setflag, opt, traps, stop)
-int setflag;
-int opt;
-int *traps;
-int *stop;
+void sigexec(int setflag, int opt, int *traps, int *stop)
 {
   pid_t pid;
   int r, status;

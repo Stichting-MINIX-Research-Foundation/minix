@@ -89,8 +89,8 @@ allocate(struct v7fs_self *fs, struct v7fs_inode *parent_inode, fsnode *node,
 
 	attr_setup(node, &attr);
 	attr.device = dev;
-	if ((error = v7fs_file_allocate(fs, parent_inode, node->name, &attr,
-	    &ino))) {
+	if ((error = v7fs_file_allocate(fs, parent_inode, node->name,
+	    strlen(node->name), &attr, &ino))) {
 		errno = error;
 		warn("%s", node->name);
 		return error;
@@ -146,7 +146,7 @@ file_copy(struct v7fs_self *fs, struct v7fs_inode *parent_inode, fsnode *node,
 			goto err_exit;
 		}
 		if ((error = v7fs_file_link(fs, parent_inode, &inode,
-			    node->name))) {
+			    node->name, strlen(node->name)))) {
 			errmsg = "hard link";
 			goto err_exit;
 		}

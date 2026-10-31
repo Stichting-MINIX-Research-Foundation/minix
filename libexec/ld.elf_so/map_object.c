@@ -95,10 +95,10 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #endif
 	Elf_Addr	 phdr_vaddr;
 	size_t		 phdr_memsz;
-#if defined(__minix) && (defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II))
+#if !defined(__minix)
 	caddr_t		 gap_addr;
 	size_t		 gap_size;
-#endif /* defined(__minix) */
+#endif
 	int i;
 #ifdef RTLD_LOADER
 	Elf_Addr	 clear_vaddr;

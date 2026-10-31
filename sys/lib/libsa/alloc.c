@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.26 2011/07/30 03:43:20 jakllsch Exp $	*/
+/*	$NetBSD: alloc.c,v 1.28 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -138,6 +138,9 @@
  * However, note that ALIGN(sizeof(unsigned int)) + ALIGN(data size) must
  * be at least 'sizeof(struct fl)', so that blocks can be used as structures
  * when on the free list.
+ *
+ * When HEAP_LIMIT is defined and the heap limit is reached, alloc() panics.
+ * Otherwise, it never fails.
  */
 struct fl {
 	unsigned int	size;
@@ -251,16 +254,16 @@ dealloc(void *ptr, size_t size)
 #endif
 #ifdef DEBUG
 	if (size > (size_t)f->size) {
-		printf("dealloc %zu bytes @%lx, should be <=%u\n",
-			size, (u_long)ptr, f->size);
+		printf("%s: %zu bytes @%p, should be <=%u\n", __func__,
+			size, ptr, f->size);
 	}
 
 	if (ptr < (void *)HEAP_START)
-		printf("dealloc: %lx before start of heap.\n", (u_long)ptr);
+		printf("%s: %p before start of heap.\n", __func__, ptr);
 
 #ifdef HEAP_LIMIT
 	if (ptr > (void *)HEAP_LIMIT)
-		printf("dealloc: %lx beyond end of heap.\n", (u_long)ptr);
+		printf("%s: %p beyond end of heap.\n", __func__, ptr);
 #endif
 #endif /* DEBUG */
 	/* put into freelist */

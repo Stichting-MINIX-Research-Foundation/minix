@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.10 2011/01/06 01:08:48 jakllsch Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.11 2019/07/11 03:49:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ boot_fail:
 	aam				/* largest errno is < 100 */
 	addw	$('0' << 8) | '0', %ax	/* to ascii */
 	rorw	$8, %ax
-	cmpb	$'0', %al		/* supress leading zero */
+	cmpb	$'0', %al		/* suppress leading zero */
 	jne	10f
 	movb	$' ', %al
 10:	movw	%ax, 12f

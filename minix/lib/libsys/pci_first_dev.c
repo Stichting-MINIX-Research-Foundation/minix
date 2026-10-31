@@ -9,10 +9,7 @@ pci_first_dev.c
 /*===========================================================================*
  *				pci_first_dev				     *
  *===========================================================================*/
-int pci_first_dev(devindp, vidp, didp)
-int *devindp;
-u16_t *vidp;
-u16_t *didp;
+int pci_first_dev(int *devindp, u16_t *vidp, u16_t *didp)
 {
 	int r;
 	message m;

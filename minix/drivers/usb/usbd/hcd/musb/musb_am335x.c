@@ -281,8 +281,7 @@ static void musb_am335x_otg_enable(int);
 /*===========================================================================*
  *    musb_am335x_init                                                       *
  *===========================================================================*/
-int
-musb_am335x_init(void)
+int musb_am335x_init(void)
 {
 	am335x_controller * ctrl;
 
@@ -399,8 +398,7 @@ musb_am335x_init(void)
 /*===========================================================================*
  *    musb_am335x_deinit                                                     *
  *===========================================================================*/
-void
-musb_am335x_deinit(void)
+void musb_am335x_deinit(void)
 {
 	DEBUG_DUMP;
 
@@ -426,8 +424,7 @@ musb_am335x_deinit(void)
 /*===========================================================================*
  *    musb_am335x_internal_init                                              *
  *===========================================================================*/
-static int
-musb_am335x_internal_init(void)
+static int musb_am335x_internal_init(void)
 {
 	DEBUG_DUMP;
 
@@ -471,8 +468,7 @@ musb_am335x_internal_init(void)
 /*===========================================================================*
  *    musb_am335x_internal_deinit                                            *
  *===========================================================================*/
-static void
-musb_am335x_internal_deinit(void)
+static void musb_am335x_internal_deinit(void)
 {
 	DEBUG_DUMP;
 
@@ -497,8 +493,7 @@ musb_am335x_internal_deinit(void)
 /*===========================================================================*
  *    musb_am335x_irq_init                                                   *
  *===========================================================================*/
-static void
-musb_am335x_irq_init(void * UNUSED(unused))
+static void musb_am335x_irq_init(void * UNUSED(unused))
 {
 	DEBUG_DUMP;
 
@@ -512,8 +507,7 @@ musb_am335x_irq_init(void * UNUSED(unused))
 /*===========================================================================*
  *    musb_am335x_usbss_isr                                                  *
  *===========================================================================*/
-static void
-musb_am335x_usbss_isr(void * UNUSED(data))
+static void musb_am335x_usbss_isr(void * UNUSED(data))
 {
 	void * r;
 	hcd_reg4 irqstat;
@@ -534,8 +528,7 @@ musb_am335x_usbss_isr(void * UNUSED(data))
 /*===========================================================================*
  *    musb_am335x_usbx_isr                                                   *
  *===========================================================================*/
-static void
-musb_am335x_usbx_isr(void * data)
+static void musb_am335x_usbx_isr(void * data)
 {
 	void * r;
 	hcd_driver_state * driver;
@@ -672,8 +665,7 @@ musb_am335x_irqstat0_to_ep(int irqstat0)
 /*===========================================================================*
  *    musb_am335x_usb_reset                                                  *
  *===========================================================================*/
-static void
-musb_am335x_usb_reset(int usb_num)
+static void musb_am335x_usb_reset(int usb_num)
 {
 	void * r;
 	hcd_reg4 ctrl;
@@ -694,8 +686,7 @@ musb_am335x_usb_reset(int usb_num)
 /*===========================================================================*
  *    musb_am335x_otg_enable                                                 *
  *===========================================================================*/
-static void
-musb_am335x_otg_enable(int usb_num)
+static void musb_am335x_otg_enable(int usb_num)
 {
 	void * r;
 	hcd_reg4 intreg;

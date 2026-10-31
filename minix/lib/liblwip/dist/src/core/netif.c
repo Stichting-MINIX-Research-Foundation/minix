@@ -167,8 +167,7 @@ netif_loopif_init(struct netif *netif)
 }
 #endif /* LWIP_HAVE_LOOPIF */
 
-void
-netif_init(void)
+void netif_init(void)
 {
 #if LWIP_HAVE_LOOPIF
 #if LWIP_IPV4
@@ -397,8 +396,7 @@ netif_add(struct netif *netif,
  * @param netmask the new netmask
  * @param gw the new default gateway
  */
-void
-netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
+void netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
     const ip4_addr_t *gw)
 {
   if (ip4_addr_isany(ipaddr)) {
@@ -424,8 +422,7 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
  *
  * @param netif the network interface to remove
  */
-void
-netif_remove(struct netif *netif)
+void netif_remove(struct netif *netif)
 {
 #if LWIP_IPV6
   int i;
@@ -527,8 +524,7 @@ netif_remove(struct netif *netif)
  * @note call netif_set_addr() if you also want to change netmask and
  * default gateway
  */
-void
-netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
+void netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
   ip_addr_t new_addr;
   *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY4);
@@ -587,8 +583,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
  *
  * @note call netif_set_addr() if you also want to change ip address and netmask
  */
-void
-netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
+void netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   netif_ext_callback_args_t args;
@@ -619,8 +614,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
  * @note call netif_set_addr() if you also want to change ip address and
  * default gateway
  */
-void
-netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
+void netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   netif_ext_callback_args_t args;
@@ -652,8 +646,7 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
  *
  * @param netif the default network interface
  */
-void
-netif_set_default(struct netif *netif)
+void netif_set_default(struct netif *netif)
 {
   if (netif == NULL) {
     /* remove default route */
@@ -672,8 +665,7 @@ netif_set_default(struct netif *netif)
  * Bring an interface up, available for processing
  * traffic.
  */
-void
-netif_set_up(struct netif *netif)
+void netif_set_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif->flags |= NETIF_FLAG_UP;
@@ -698,8 +690,7 @@ netif_set_up(struct netif *netif)
 
 /** Send ARP/IGMP/MLD/RS events, e.g. on link-up/netif-up or addr-change
  */
-static void
-netif_issue_reports(struct netif* netif, u8_t report_type)
+static void netif_issue_reports(struct netif* netif, u8_t report_type)
 {
 #if LWIP_IPV4
   if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
@@ -738,8 +729,7 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
  * @ingroup netif
  * Bring an interface down, disabling any traffic processing.
  */
-void
-netif_set_down(struct netif *netif)
+void netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
@@ -772,8 +762,7 @@ netif_set_down(struct netif *netif)
  * @ingroup netif
  * Set callback to be called when interface is brought up/down or address is changed while up
  */
-void
-netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
+void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
 {
   if (netif) {
     netif->status_callback = status_callback;
@@ -786,8 +775,7 @@ netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_c
  * @ingroup netif
  * Set callback to be called when the interface has been removed
  */
-void
-netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_callback)
+void netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_callback)
 {
   if (netif) {
     netif->remove_callback = remove_callback;
@@ -799,8 +787,7 @@ netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_c
  * @ingroup netif
  * Called by a driver when its link goes up
  */
-void
-netif_set_link_up(struct netif *netif)
+void netif_set_link_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
     netif->flags |= NETIF_FLAG_LINK_UP;
@@ -831,8 +818,7 @@ netif_set_link_up(struct netif *netif)
  * @ingroup netif
  * Called by a driver when its link goes down
  */
-void
-netif_set_link_down(struct netif *netif )
+void netif_set_link_down(struct netif *netif )
 {
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif->flags &= ~NETIF_FLAG_LINK_UP;
@@ -852,8 +838,7 @@ netif_set_link_down(struct netif *netif )
  * @ingroup netif
  * Set callback to be called when link is brought up/down
  */
-void
-netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback)
+void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback)
 {
   if (netif) {
     netif->link_callback = link_callback;
@@ -983,8 +968,7 @@ netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* ad
  * netif_loop_output() are put on a list that is passed to netif->input() by
  * netif_poll().
  */
-void
-netif_poll(struct netif *netif)
+void netif_poll(struct netif *netif)
 {
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
@@ -1049,8 +1033,7 @@ netif_poll(struct netif *netif)
 /**
  * Calls netif_poll() for every netif on the netif_list.
  */
-void
-netif_poll_all(void)
+void netif_poll_all(void)
 {
   struct netif *netif;
   /* loop through netifs */
@@ -1068,8 +1051,7 @@ netif_poll_all(void)
  * Returned value is an index in mentioned array.
  * @see LWIP_NUM_NETIF_CLIENT_DATA
  */
-u8_t
-netif_alloc_client_data_id(void)
+u8_t netif_alloc_client_data_id(void)
 {
   u8_t result = netif_client_id;
   netif_client_id++;
@@ -1090,8 +1072,7 @@ netif_alloc_client_data_id(void)
  *
  * @note call netif_ip6_addr_set_state() to set the address valid/temptative
  */
-void
-netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
+void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
 {
   LWIP_ASSERT("addr6 != NULL", addr6 != NULL);
   netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
@@ -1108,8 +1089,7 @@ netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
  * @param i2 word2 of the new IPv6 address
  * @param i3 word3 of the new IPv6 address
  */
-void
-netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
+void netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
 {
   ip_addr_t old_addr;
   ip_addr_t new_ipaddr;
@@ -1172,8 +1152,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
  * @param addr_idx index of the IPv6 address
  * @param state the new IPv6 address state
  */
-void
-netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
+void netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
 {
   u8_t old_state;
   LWIP_ASSERT("netif != NULL", netif != NULL);
@@ -1250,8 +1229,7 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
  * @return >= 0: address found, this is its index
  *         -1: address not found on this netif
  */
-s8_t
-netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
+s8_t netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 {
   s8_t i;
 
@@ -1278,8 +1256,7 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
  * @param from_mac_48bit if != 0, assume hwadr is a 48-bit MAC address (std conversion)
  *                       if == 0, use hwaddr directly as interface ID
  */
-void
-netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
+void netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
 {
   u8_t i, addr_index;
 
@@ -1395,8 +1372,7 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
 *
 * @param name the name of the netif
 */
-u8_t
-netif_name_to_index(const char *name)
+u8_t netif_name_to_index(const char *name)
 {
   struct netif *netif = netif_find(name);
   if (netif != NULL) {

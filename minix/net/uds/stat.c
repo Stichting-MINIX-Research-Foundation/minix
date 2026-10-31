@@ -7,8 +7,7 @@
 /*
  * Fill the given 'ki' structure with information about the socket 'uds'.
  */
-static void
-uds_get_info(struct kinfo_pcb * ki, const struct udssock * uds)
+static void uds_get_info(struct kinfo_pcb * ki, const struct udssock * uds)
 {
 	struct udssock *peer;
 	socklen_t len;
@@ -74,8 +73,7 @@ uds_get_info(struct kinfo_pcb * ki, const struct udssock * uds)
  * means that we can safely change the 0 to another number if NetBSD ever
  * introduces statically numbered nodes in these subtrees.
  */
-static ssize_t
-net_local_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t net_local_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 	struct udssock *uds;
@@ -159,8 +157,7 @@ static struct rmib_node net_local_node =
 /*
  * Initialize the status module.
  */
-void
-uds_stat_init(void)
+void uds_stat_init(void)
 {
 	const int mib[] = { CTL_NET, PF_LOCAL };
 	int r;
@@ -178,8 +175,7 @@ uds_stat_init(void)
 /*
  * Clean up the status module.
  */
-void
-uds_stat_cleanup(void)
+void uds_stat_cleanup(void)
 {
 
 	rmib_deregister(&net_local_node);

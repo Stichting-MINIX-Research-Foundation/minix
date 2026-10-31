@@ -81,8 +81,7 @@ AcpiUtCreateRwLock (
 }
 
 
-void
-AcpiUtDeleteRwLock (
+void AcpiUtDeleteRwLock (
     ACPI_RW_LOCK            *Lock)
 {
 
@@ -193,8 +192,7 @@ AcpiUtAcquireWriteLock (
 }
 
 
-void
-AcpiUtReleaseWriteLock (
+void AcpiUtReleaseWriteLock (
     ACPI_RW_LOCK            *Lock)
 {
 

@@ -4,10 +4,7 @@
 /*===========================================================================*
  *				fkey_ctl				     *
  *===========================================================================*/
-int fkey_ctl(request, fkeys, sfkeys)
-int request;				/* request to perform */
-int *fkeys;				/* bit masks for F1-F12 keys */
-int *sfkeys;				/* bit masks for Shift F1-F12 keys */
+int fkey_ctl(int request, int *fkeys, int *sfkeys)
 {
 /* Send a message to the TTY server to request notifications for function 
  * key presses or to disable notifications. Enabling succeeds unless the key

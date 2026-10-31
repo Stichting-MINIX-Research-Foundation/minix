@@ -41,9 +41,7 @@ void ex(void);
 
 volatile int childsigs, parsigs, alarms;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0x7777;
 
@@ -86,8 +84,7 @@ void test5a()
   if (signal(SIGUSR1, SIG_DFL) == SIG_ERR) e(5);
 }
 
-void parent(childpid)
-int childpid;
+void parent(int childpid)
 {
   int i, pid;
 
@@ -100,8 +97,7 @@ int childpid;
   if (i != 256 * 6) e(8);
 }
 
-void child(parpid)
-int parpid;
+void child(int parpid)
 {
 
   int i;
@@ -114,27 +110,23 @@ int parpid;
   exit(6);
 }
 
-void func1(s)
-int s;				/* for ANSI */
+void func1(int s)
 {
   if (signal(SIGHUP, func1) == SIG_ERR) e(10);
   childsigs++;
 }
 
-void func8(s)
-int s;
+void func8(int s)
 {
 }
 
-void func10(s)
-int s;				/* for ANSI */
+void func10(int s)
 {
   if (signal(SIGUSR1, func10) == SIG_ERR) e(11);
   parsigs++;
 }
 
-void func11(s)
-int s;				/* for ANSI */
+void func11(int s)
 {
   e(38);
 }
@@ -272,8 +264,7 @@ void test5g()
   signal(SIGSEGV, SIG_DFL);
 }
 
-void funcalrm(s)
-int s;				/* for ANSI */
+void funcalrm(int s)
 {
   alarms++;
 }

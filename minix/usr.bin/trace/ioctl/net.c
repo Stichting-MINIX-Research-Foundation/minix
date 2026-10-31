@@ -206,8 +206,7 @@ static const struct flags ipopt_flags[] = {
 	FLAG(NWIO_RWDATALL),
 };
 
-static void
-put_ipaddr(struct trace_proc * proc, const char * name, ipaddr_t ipaddr)
+static void put_ipaddr(struct trace_proc * proc, const char * name, ipaddr_t ipaddr)
 {
 	struct in_addr in;
 
@@ -216,8 +215,7 @@ put_ipaddr(struct trace_proc * proc, const char * name, ipaddr_t ipaddr)
 	put_in_addr(proc, name, in);
 }
 
-static void
-put_ipproto(struct trace_proc * proc, const char * name, ipproto_t proto)
+static void put_ipproto(struct trace_proc * proc, const char * name, ipproto_t proto)
 {
 	const char *text = NULL;
 
@@ -292,8 +290,7 @@ static const struct flags udpopt_flags[] = {
 	FLAG(NWUO_DI_IPOPT),
 };
 
-static void
-put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct uucred cred;
@@ -313,8 +310,7 @@ put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 0);
 }
 
-static void
-put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
+static void put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
@@ -377,8 +373,7 @@ put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
 	put_close(proc, "]");
 }
 
-int
-net_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
+int net_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
 {
 	const char *text;
 	nwio_ipopt_t *ipopt;

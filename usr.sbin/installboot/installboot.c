@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.39 2015/07/25 10:37:22 mlelstv Exp $	*/
+/*	$NetBSD: installboot.c,v 1.40 2019/05/07 05:02:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.39 2015/07/25 10:37:22 mlelstv Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.40 2019/05/07 05:02:42 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: installboot.c,v 1.39 2015/07/25 10:37:22 mlelstv Exp $");
 #endif
 
 #include "installboot.h"
+#include "evboards.h"
 
 static	void	getmachine(ib_params *, const char *, const char *);
 static	void	getfstype(ib_params *, const char *, const char *);
@@ -92,6 +93,9 @@ const struct option {
 	{ "timeout",	IB_TIMEOUT,	OPT_INT,	OFFSET(timeout) },
 	{ "modules",	IB_MODULES,	OPT_BOOL,	0 },
 	{ "bootconf",	IB_BOOTCONF,	OPT_BOOL,	0 },
+	{ "board",	IB_BOARD,	OPT_STRING,	OFFSET(board) },
+	{ "dtb",	IB_DTB,		OPT_STRING,	OFFSET(dtb) },
+	{ "media",	IB_MEDIA,	OPT_WORD,	OFFSET(media) },
 	{ .name = NULL },
 };
 #undef OFFSET
@@ -302,16 +306,32 @@ main(int argc, char *argv[])
 		}
 	}
 
+	assert(params->machine != NULL);
+
 	if (argc >= 2) {
 		if ((params->s1fd = open(argv[1], O_RDONLY, 0600)) == -1)
 			err(1, "Opening primary bootstrap `%s'", argv[1]);
 		if (fstat(params->s1fd, &params->s1stat) == -1)
 			err(1, "Examining primary bootstrap `%s'", argv[1]);
-		if (!S_ISREG(params->s1stat.st_mode))
-			errx(1, "`%s' must be a regular file", argv[1]);
+		if (!S_ISREG(params->s1stat.st_mode)) {
+			/*
+			 * If the platform uses u-boot, then the stage1
+			 * spec might be the directory where the u-boot
+			 * binaries for the system are located.
+			 */
+			if (params->machine->mach_flags & MF_UBOOT) {
+				if (!S_ISDIR(params->s1stat.st_mode)) {
+					errx(1, "`%s' must be a regular file "
+					     "or a directory", argv[1]);
+				}
+				(void) close(params->s1fd);
+				params->s1fd = -1;
+			} else {
+				errx(1, "`%s' must be a regular file", argv[1]);
+			}
+		}
 		params->stage1 = argv[1];
 	}
-	assert(params->machine != NULL);
 
 	if (params->flags & IB_VERBOSE) {
 		printf("File system:         %s\n", params->filesystem);
@@ -321,9 +341,11 @@ main(int argc, char *argv[])
 			    params->fstype->name, params->fstype->blocksize,
 			    params->fstype->needswap);
 		if (!(params->flags & IB_EDIT))
-			printf("Primary bootstrap:   %s\n",
+			printf("Primary bootstrap:   %s%s\n",
 			    (params->flags & IB_CLEAR) ? "(to be cleared)"
-			    : params->stage1 ? params->stage1 : "(none)" );
+			    : params->stage1 ? params->stage1 : "(none)",
+			    S_ISDIR(params->s1stat.st_mode) ? " (directory)"
+			    				    : "");
 		if (params->stage2 != NULL)
 			printf("Secondary bootstrap: %s\n", params->stage2);
 	}
@@ -335,9 +357,18 @@ main(int argc, char *argv[])
 		op = "Clear";
 		rv = params->machine->clearboot(params);
 	} else {
-		if (argc < 2)
-			errx(EXIT_FAILURE, "Please specify the primary "
-			    "bootstrap file");
+		if (argc < 2) {
+			/*
+			 * If the platform uses u-boot, then the stage1 spec is
+			 * optional iff they specified a board (because we can
+			 * infer a default location for u-boot binaries if the
+			 * board type is given).
+			 */
+			if (!(params->machine->mach_flags & MF_UBOOT)) {
+				errx(EXIT_FAILURE,
+				   "Please specify the primary bootstrap file");
+			}
+		}
 		op = "Set";
 		rv = params->machine->setboot(params);
 	}
@@ -354,7 +385,7 @@ main(int argc, char *argv[])
 	}
 	if (close(params->fsfd) == -1)
 		err(1, "Closing file system `%s'", params->filesystem);
-	if (argc == 2)
+	if (params->s1fd != -1)
 		if (close(params->s1fd) == -1)
 			err(1, "Closing primary bootstrap `%s'",
 			    params->stage1);
@@ -607,5 +638,8 @@ usage(void)
 	machine_usage();
 	fstype_usage();
 	options_usage();
+	if (installboot_params.machine != NULL &&
+	    installboot_params.machine->usage != NULL)
+		installboot_params.machine->usage(&installboot_params);
 	exit(1);
 }

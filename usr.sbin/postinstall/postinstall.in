@@ -1,0 +1,2640 @@
+#!/bin/sh
+#
+# $NetBSD: postinstall.in,v 1.5.2.5 2020/07/07 20:02:27 martin Exp $
+#
+# Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Luke Mewburn.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# postinstall
+#	Check for or fix configuration changes that occur
+#	over time as NetBSD evolves.
+#
+
+#
+# XXX BE SURE TO USE ${DEST_DIR} PREFIX BEFORE ALL REAL FILE OPERATIONS XXX
+#
+
+#
+# checks to add:
+#	- sysctl(8) renames (net.inet6.ip6.bindv6only -> net.inet6.ip6.v6only)
+#	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*, ...) ?
+#	- support quiet/verbose mode ?
+#	- differentiate between failures caused by missing source
+#	  and real failures
+#	- install moduli into usr/share/examples/ssh and use from there?
+#	- differentiate between "needs fix" versus "can't fix" issues
+#
+
+# This script is executed as part of a cross build.  Allow the build
+# environment to override the locations of some tools.
+: ${AWK:=awk}
+: ${DB:=db}
+: ${GREP:=grep}
+: ${HOST_SH:=sh}
+: ${MAKE:=make}
+: ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
+: ${SED:=sed}
+: ${SORT:=sort}
+: ${STAT:=stat}
+
+#
+#	helper functions
+#
+
+err()
+{
+	exitval=$1
+	shift
+	echo 1>&2 "${PROGNAME}: $*"
+	if [ -n "${SCRATCHDIR}" ]; then
+	    /bin/rm -rf "${SCRATCHDIR}"
+	fi
+	exit ${exitval}
+}
+
+warn()
+{
+	echo 1>&2 "${PROGNAME}: $*"
+}
+
+msg()
+{
+	echo "	$*"
+}
+
+mkdtemp()
+{
+	# Make sure we don't loop forever if mkdir will always fail.
+	[ -d /tmp ] || err 2 /tmp is not a directory
+	[ -w /tmp ] || err 2 /tmp is not writable
+
+	_base="/tmp/_postinstall.$$"
+	_serial=0
+
+	while true; do
+		_dir="${_base}.${_serial}"
+		mkdir -m 0700 "${_dir}" && break
+		_serial=$((${_serial} + 1))
+	done
+	echo "${_dir}"
+}
+
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+#
+shell_quote()
+{(
+	local result=''
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
+	for arg in "$@" ; do
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
+	done
+	printf "%s\n" "$result"
+)}
+
+# Convert arg $1 to a basic regular expression (as in sed)
+# that will match the arg.  This works by inserting backslashes
+# before characters that are special in basic regular expressions.
+# It also inserts backslashes before the extra characters specified
+# in $2 (which defaults to "/,").
+# XXX: Does not handle embedded newlines.
+# Usage: regex="$(bre_quote "${string}")"
+bre_quote()
+{
+	local arg="$1"
+	local extra="${2-/,}"
+	printf "%s\n" "${arg}" | ${SED} -e 's/[][^$.*\\'"${extra}"']/\\&/g'
+}
+
+# unprefix dir
+#	Remove any dir prefix from a list of paths on stdin,
+#	and write the result to stdout.  Useful for converting
+#	from ${DEST_DIR}/path to /path.
+#
+unprefix()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: unprefix dir"
+	local prefix="${1%/}"
+	prefix="$(bre_quote "${prefix}")"
+
+	${SED} -e "s,^${prefix}/,/,"
+}
+
+# additem item description
+#	Add item to list of supported items to check/fix,
+#	which are checked/fixed by default if no item is requested by user.
+#
+additem()
+{
+	[ $# -eq 2 ] || err 3 "USAGE: additem item description"
+	defaultitems="${defaultitems}${defaultitems:+ }$1"
+	eval desc_$1=\"\$2\"
+}
+
+# adddisableditem item description
+#	Add item to list of supported items to check/fix,
+#	but execute the item only if the user asks for it explicitly.
+#
+adddisableditem()
+{
+	[ $# -eq 2 ] || err 3 "USAGE: adddisableditem item description"
+	otheritems="${otheritems}${otheritems:+ }$1"
+	eval desc_$1=\"\$2\"
+}
+
+# checkdir op dir mode
+#	Ensure dir exists, and if not, create it with the appropriate mode.
+#	Returns 0 if ok, 1 otherwise.
+#
+check_dir()
+{
+	[ $# -eq 3 ] || err 3 "USAGE: check_dir op dir mode"
+	_cdop="$1"
+	_cddir="$2"
+	_cdmode="$3"
+	[ -d "${_cddir}" ] && return 0
+	if [ "${_cdop}" = "check" ]; then
+		msg "${_cddir} is not a directory"
+		return 1
+	elif ! mkdir -m "${_cdmode}" "${_cddir}" ; then
+		msg "Can't create missing ${_cddir}"
+		return 1
+	else
+		msg "Missing ${_cddir} created"
+	fi
+	return 0
+}
+
+# check_ids op type file srcfile start id [...]
+#	Check if file of type "users" or "groups" contains the relevant IDs.
+#	Use srcfile as a reference for the expected contents.
+#	The specified "id" names should be given in numerical order,
+#	with the first name corresponding to numerical value "start",
+#	and with the special name "SKIP" being used to mark gaps in the
+#	sequence.
+#	Returns 0 if ok, 1 otherwise.
+#
+check_ids()
+{
+	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id [...]"
+	_op="$1"
+	_type="$2"
+	_file="$3"
+	_srcfile="$4"
+	_start="$5"
+	shift 5
+	#_ids="$@"
+
+	if [ ! -f "${_file}" ]; then
+		msg "${_file} doesn't exist; can't check for missing ${_type}"
+		return 1
+	fi
+	if [ ! -r "${_file}" ]; then
+		msg "${_file} is not readable; can't check for missing ${_type}"
+		return 1
+	fi
+	_notfixed=""
+	if [ "${_op}" = "fix" ]; then
+		_notfixed="${NOT_FIXED}"
+	fi
+	_missing="$(${AWK} -v start=$_start -F: '
+		BEGIN {
+			for (x = 1; x < ARGC; x++) {
+				if (ARGV[x] == "SKIP")
+					continue;
+				idlist[ARGV[x]]++;
+				value[ARGV[x]] = start + x - 1;
+			}
+			ARGC=1
+		}
+		{
+			found[$1]++
+			number[$1] = $3
+		}
+		END {
+			for (id in idlist) {
+				if (!(id in found))
+					printf("%s (missing)\n", id)
+				else if (number[id] != value[id])
+					printf("%s (%d != %d)\n", id,
+					    number[id], value[id])
+				start++;
+			}
+		}
+	' "$@" < "${_file}")"	|| return 1
+	if [ -n "${_missing}" ]; then
+		msg "Error ${_type}${_notfixed}:" $(echo ${_missing})
+		msg "Use the following as a template:"
+		set -- ${_missing}
+		while [ $# -gt 0 ]
+		do
+			${GREP} -E "^${1}:" ${_srcfile}
+			shift 2
+		done | sort -t: -k3n
+		msg "and adjust if necessary."
+		return 1
+	fi
+	return 0
+}
+
+# populate_dir op onlynew src dest mode file [file ...]
+#	Perform op ("check" or "fix") on files in src/ against dest/
+#	If op = "check" display missing or changed files, optionally with diffs.
+#	If op != "check" copies any missing or changed files.
+#	If onlynew evaluates to true, changed files are ignored.
+#	Returns 0 if ok, 1 otherwise.
+#
+populate_dir()
+{
+	[ $# -ge 5 ] || err 3 "USAGE: populate_dir op onlynew src dest mode file [...]"
+	_op="$1"
+	_onlynew="$2"
+	_src="$3"
+	_dest="$4"
+	_mode="$5"
+	shift 5
+	#_files="$@"
+
+	if [ ! -d "${_src}" ]; then
+		msg "${_src} is not a directory; skipping check"
+		return 1
+	fi
+	check_dir "${_op}" "${_dest}" 755 || return 1
+
+	_cmpdir_rv=0
+	for f in "$@"; do
+		fs="${_src}/${f}"
+		fd="${_dest}/${f}"
+		_error=""
+		if [ ! -f "${fd}" ]; then
+			_error="${fd} does not exist"
+		elif ! cmp -s "${fs}" "${fd}" ; then
+			if $_onlynew; then	# leave existing ${fd} alone
+				continue;
+			fi
+			_error="${fs} != ${fd}"
+		else
+			continue
+		fi
+		if [ "${_op}" = "check" ]; then
+			msg "${_error}"
+			if [ -n "${DIFF_STYLE}" -a -f "${fd}" ]; then
+				diff -${DIFF_STYLE} ${DIFF_OPT} "${fd}" "${fs}"
+			fi
+			_cmpdir_rv=1
+		elif ! rm -f "${fd}" ||
+		     ! cp -f "${fs}" "${fd}"; then
+			msg "Can't copy ${fs} to ${fd}"
+			_cmpdir_rv=1
+		elif ! chmod "${_mode}" "${fd}"; then
+			msg "Can't change mode of ${fd} to ${_mode}"
+			_cmpdir_rv=1
+		else
+			msg "Copied ${fs} to ${fd}"
+		fi
+	done
+	return ${_cmpdir_rv}
+}
+
+# compare_dir op src dest mode file [file ...]
+#	Perform op ("check" or "fix") on files in src/ against dest/
+#	If op = "check" display missing or changed files, optionally with diffs.
+#	If op != "check" copies any missing or changed files.
+#	Returns 0 if ok, 1 otherwise.
+#
+compare_dir()
+{
+	[ $# -ge 4 ] || err 3 "USAGE: compare_dir op src dest mode file [...]"
+	_op="$1"
+	_src="$2"
+	_dest="$3"
+	_mode="$4"
+	shift 4
+	#_files="$@"
+
+	populate_dir "$_op" false "$_src" "$_dest" "$_mode" "$@"
+}
+
+# move_file op src dest --
+#	Check (op == "check") or move (op != "check") from src to dest.
+#	Returns 0 if ok, 1 otherwise.
+#
+move_file()
+{
+	[ $# -eq 3 ] || err 3 "USAGE: move_file op src dest"
+	_fm_op="$1"
+	_fm_src="$2"
+	_fm_dest="$3"
+
+	if [ -f "${_fm_src}" -a ! -f "${_fm_dest}" ]; then
+		if [ "${_fm_op}" = "check" ]; then
+			msg "Move ${_fm_src} to ${_fm_dest}"
+			return 1
+		fi
+		if ! mv "${_fm_src}" "${_fm_dest}"; then
+			msg "Can't move ${_fm_src} to ${_fm_dest}"
+			return 1
+		fi
+		msg "Moved ${_fm_src} to ${_fm_dest}"
+	fi
+	return 0
+}
+
+# rcconf_is_set op name var [verbose] --
+#	Load the rcconf for name, and check if obsolete rc.conf(5) variable
+#	var is defined or not.
+#	Returns 0 if defined (even to ""), otherwise 1.
+#	If verbose != "", print an obsolete warning if the var is defined.
+#
+rcconf_is_set()
+{
+	[ $# -ge 3 ] || err 3 "USAGE: rcconf_is_set op name var [verbose]"
+	_rcis_op="$1"
+	_rcis_name="$2"
+	_rcis_var="$3"
+	_rcis_verbose="$4"
+	_rcis_notfixed=""
+	if [ "${_rcis_op}" = "fix" ]; then
+		_rcis_notfixed="${NOT_FIXED}"
+	fi
+	(
+		for f in \
+		    "${DEST_DIR}/etc/rc.conf" \
+		    "${DEST_DIR}/etc/rc.conf.d/${_rcis_name}"; do
+			[ -f "${f}" ] && . "${f}"
+		done
+		eval echo -n \"\${${_rcis_var}}\" 1>&3
+		if eval "[ -n \"\${${_rcis_var}}\" \
+			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
+			if [ -n "${_rcis_verbose}" ]; then
+				msg \
+    "Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
+			fi
+			exit 0
+		else
+			exit 1
+		fi
+	)
+}
+
+# rcvar_is_enabled var
+#	Check if rcvar is enabled
+#
+rcvar_is_enabled()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: rcvar_is_enabled var"
+	_rcie_var="$1"
+	(
+		[ -f "${DEST_DIR}/etc/rc.conf" ] && . "${DEST_DIR}/etc/rc.conf"
+		eval _rcie_val=\"\${${_rcie_var}}\"
+		case $_rcie_val in
+		#	"yes", "true", "on", or "1"
+		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+			exit 0
+			;;
+
+		*)
+			exit 1
+			;;
+		esac
+	)
+}
+
+# find_file_in_dirlist() file message dir1 [...] --
+#	Find which directory file is in, and sets ${dir} to match.
+#	Returns 0 if matched, otherwise 1 (and sets ${dir} to "").
+#
+#	Generally, check the directory for the "checking from source" case,
+#	and then the directory for the "checking from extracted etc.tgz" case.
+#
+find_file_in_dirlist()
+{
+	[ $# -ge 3 ] || err 3 "USAGE: find_file_in_dirlist file msg dir1 [...]"
+
+	_file="$1" ; shift
+	_msg="$1" ; shift
+	_dir1st=	# first dir in list
+	for dir in "$@"; do
+		: ${_dir1st:="${dir}"}
+		if [ -f "${dir}/${_file}" ]; then
+			if [ "${_dir1st}" != "${dir}" ]; then
+				msg \
+    "(Checking for ${_msg} from ${dir} instead of ${_dir1st})"
+			fi
+			return 0
+		fi
+	done
+	msg "Can't find source directory for ${_msg}"
+	return 1
+}
+
+# file_exists_exact path
+#	Returns true if a file exists in the ${DEST_DIR} whose name
+#	is exactly ${path}, interpreted in a case-sensitive way
+#	even if the underlying file system is case-insensitive.
+#
+#	The path must begin with '/' or './', and is interpreted as
+#	being relative to ${DEST_DIR}.
+#
+file_exists_exact()
+{
+	[ -n "$1" ] || err 3 "USAGE: file_exists_exact path"
+	_path="${1#.}"
+	[ -h "${DEST_DIR}${_path}" ] || \
+		[ -e "${DEST_DIR}${_path}" ] || return 1
+	while [ "${_path}" != "/" -a "${_path}" != "." ] ; do
+		_dirname="$(dirname "${_path}" 2>/dev/null)"
+		_basename="$(basename "${_path}" 2>/dev/null)"
+		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
+			| ${GREP} -F -x "${_basename}" >/dev/null \
+			|| return 1
+		_path="${_dirname}"
+	done
+	return 0
+}
+
+# obsolete_paths op
+#	Obsolete the list of paths provided on stdin.
+#	Each path should start with '/' or './', and
+#	will be interpreted relative to ${DEST_DIR}.
+#
+obsolete_paths()
+{
+	[ -n "$1" ] || err 3 "USAGE: obsolete_paths  fix|check"
+	op="$1"
+
+	failed=0
+	while read ofile; do
+		if ! ${file_exists_exact} "${ofile}"; then
+			continue
+		fi
+		ofile="${DEST_DIR}${ofile#.}"
+		cmd="rm"
+		ftype="file"
+		if [ -h "${ofile}" ]; then
+			ftype="link"
+		elif [ -d "${ofile}" ]; then
+			ftype="directory"
+			cmd="rmdir"
+		elif [ ! -e "${ofile}" ]; then
+			continue
+		fi
+		if [ "${op}" = "check" ]; then
+			msg "Remove obsolete ${ftype} ${ofile}"
+			failed=1
+		elif ! eval "${cmd} \"\${ofile}\""; then
+			msg "Can't remove obsolete ${ftype} ${ofile}"
+			failed=1
+		else
+			msg "Removed obsolete ${ftype} ${ofile}"
+		fi
+	done
+	return ${failed}
+}
+
+# obsolete_libs dir
+#	Display the minor/teeny shared libraries in dir that are considered
+#	to be obsolete.
+#
+#	The implementation supports removing obsolete major libraries
+#	if the awk variable AllLibs is set, although there is no way to
+#	enable that in the enclosing shell function as this time.
+#
+obsolete_libs()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_libs dir"
+	dir="$1"
+
+	_obsolete_libs "${dir}"
+	_obsolete_libs "/usr/libdata/debug/${dir}"
+}
+
+exclude()
+{
+	local dollar
+	case "$1" in
+	-t)
+		dollar='$'
+		shift
+		;;
+	*)
+		dollar=
+		;;
+	esac
+	if [ -z "$*" ]; then
+		cat
+	else
+		eval ${GREP} -v -E "'(^$(echo $* | \
+		    ${SED} -e s/\\./\\\\./g -e 's/ /'${dollar}'|^/'g)${dollar})'"
+	fi
+}
+
+#
+# find all the target symlinks of shared libaries and exclude them
+# from consideration for removal
+#
+exclude_libs() {
+	local target="$(ls -l -d lib*.so.* 2> /dev/null \
+	    | ${AWK} '{ print $11; }' \
+	    | ${SED} -e 's@.*/@@' | ${SORT} -u)"
+	exclude -t ${target}
+}
+
+_obsolete_libs()
+{
+	dir="$1"
+
+	(
+
+	if [ ! -e "${DEST_DIR}/${dir}" ]
+	then
+		return 0
+	fi
+
+	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
+	echo lib*.so.* \
+	| tr ' ' '\n' \
+	| ${AWK} -v LibDir="${dir}/" '
+#{
+
+function digit(v, c, n) { return (n <= c) ? v[n] : 0 }
+
+function checklib(results, line, regex) {
+	if (! match(line, regex))
+		return
+	lib = substr(line, RSTART, RLENGTH)
+	rev = substr($0, RLENGTH+1)
+	if (! (lib in results)) {
+		results[lib] = rev
+		return
+	}
+	orevc = split(results[lib], orev, ".")
+	nrevc = split(rev, nrev, ".")
+	maxc = (orevc > nrevc) ? orevc : nrevc
+	for (i = 1; i <= maxc; i++) {
+		res = digit(orev, orevc, i) - digit(nrev, nrevc, i)
+		if (res < 0) {
+			print LibDir lib results[lib]
+			results[lib] = rev
+			return
+		} else if (res > 0) {
+			print LibDir lib rev
+			return
+		}
+	}
+}
+
+/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?(\.debug)?$/ {
+	if (AllLibs)
+		checklib(minor, $0, "^lib.*\\.so\\.")
+	else
+		checklib(found, $0, "^lib.*\\.so\\.[0-9]+\\.")
+}
+
+/^lib.*\.so\.[0-9]+$/ {
+	if (AllLibs)
+		checklib(major, $0, "^lib.*\\.so\\.")
+}
+
+#}' | exclude_libs
+
+	)
+}
+
+# obsolete_stand dir
+#	Prints the names of all obsolete files and subdirs below the
+#	provided dir.  dir should be something like /stand/${MACHINE}.
+#	The input dir and all output paths are interpreted
+#	relative to ${DEST_DIR}.
+#
+#	Assumes that the numerically largest subdir is current, and all
+#	others are obsolete.
+#
+obsolete_stand()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_stand dir"
+	local dir="$1"
+	local subdir
+
+	if ! [ -d "${DEST_DIR}${dir}" ]; then
+		msg "${DEST_DIR}${dir} doesn't exist; can't check for obsolete files"
+		return 1
+	fi
+
+	( cd "${DEST_DIR}${dir}" && ls -1d [0-9]*[0-9]/. ) \
+	| ${GREP} -v '[^0-9./]' \
+	| sort -t. -r -n -k1,1 -k2,2 -k3,3 \
+	| tail -n +2 \
+	| while read subdir ; do
+		subdir="${subdir%/.}"
+		find "${DEST_DIR}${dir}/${subdir}" -depth -print
+	done \
+	| unprefix "${DEST_DIR}"
+}
+
+# modify_file op srcfile scratchfile awkprog
+#	Apply awkprog to srcfile sending output to scratchfile, and
+#	if appropriate replace srcfile with scratchfile.
+#
+modify_file()
+{
+	[ $# -eq 4 ] || err 3 "USAGE: modify_file op file scratch awkprog"
+
+	_mfop="$1"
+	_mffile="$2"
+	_mfscratch="$3"
+	_mfprog="$4"
+	_mffailed=0
+
+	${AWK} "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
+	if ! cmp -s "${_mffile}" "${_mfscratch}"; then
+		diff "${_mffile}" "${_mfscratch}" > "${_mfscratch}.diffs"
+		if [ "${_mfop}" = "check" ]; then
+			msg "${_mffile} needs the following changes:"
+			_mffailed=1
+		elif ! rm -f "${_mffile}" ||
+		     ! cp -f "${_mfscratch}" "${_mffile}"; then
+			msg "${_mffile} changes not applied:"
+			_mffailed=1
+		else
+			msg "${_mffile} changes applied:"
+		fi
+		while read _line; do
+			msg "	${_line}"
+		done < "${_mfscratch}.diffs"
+	fi
+	return ${_mffailed}
+}
+
+
+# contents_owner op directory user group
+#	Make sure directory and contents are owned (and group-owned)
+#	as specified.
+#
+contents_owner()
+{
+	[ $# -eq 4 ] || err 3 "USAGE: contents_owner op dir user group"
+
+	_op="$1"
+	_dir="$2"
+	_user="$3"
+	_grp="$4"
+
+	if [ "${_op}" = "check" ]; then
+		if [ ! -z "`find "${_dir}" \( ! -user "${_user}" \) -o \
+		    \( ! -group "${_grp}" \)`" ]; then
+			msg \
+    "${_dir} and contents not all owned by ${_user}:${_grp}"
+			return 1
+		else
+			return 0
+		fi
+	elif [ "${_op}" = "fix" ]; then
+		find "${_dir}" \( \( ! -user "${_user}" \) -o \
+		\( ! -group "${_grp}" \) \) -a -print0 \
+		| xargs -0 chown "${_user}:${_grp}"
+	fi
+}
+
+# get_makevar var [var ...]
+#	Retrieve the value of a user-settable system make variable
+get_makevar()
+{
+	$SOURCEMODE || err 3 "get_makevar must be used in source mode"
+	[ $# -eq 0 ] && err 3 "USAGE: get_makevar var [var ...]"
+
+	for _var in "$@"; do
+		_value="$(echo '.include <bsd.own.mk>' | \
+		    ${MAKE} -f - -V "\${${_var}}")"
+
+		eval ${_var}=\"\${_value}\"
+	done
+}
+
+# detect_x11
+#	Detect if X11 components should be analysed and set values of
+#	relevant variables.
+detect_x11()
+{
+	if $SOURCEMODE; then
+		get_makevar MKX11 X11ROOTDIR X11SRCDIR
+	else
+		if [ -f "${SRC_DIR}/etc/mtree/set.xetc" ]; then
+			MKX11=yes
+			X11ROOTDIR=/this/value/isnt/used/yet
+		else
+			MKX11=no
+			X11ROOTDIR=
+		fi
+		X11SRCDIR=/nonexistent/xsrc
+	fi
+}
+
+#
+#	find out where MAKEDEV lives, set MAKEDEV_DIR appropriately
+#
+find_makedev()
+{
+	if [ -e "${DEST_DIR}/dev/MAKEDEV" ]; then
+		MAKEDEV_DIR="${DEST_DIR}/dev"
+	elif [ -e "${DEST_DIR}/etc/MAKEDEV" ]; then
+		MAKEDEV_DIR="${DEST_DIR}/etc"
+	else
+		MAKEDEV_DIR="${DEST_DIR}/dev"
+	fi
+}
+
+
+#
+#	items
+#	-----
+#
+
+#
+#	Bluetooth
+#
+
+additem bluetooth "Bluetooth configuration is up to date"
+do_bluetooth()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_bluetooth fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "${op}" true \
+		"${SRC_DIR}/etc/bluetooth" "${DEST_DIR}/etc/bluetooth" 644 \
+		hosts protocols btattach.conf btdevctl.conf
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" "${DEST_DIR}/var/db/btdev.xml" \
+			"${DEST_DIR}/var/db/btdevctl.plist"
+	failed=$(( ${failed} + $? ))
+
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed="${NOT_FIXED}"
+	fi
+	for _v in btattach btconfig btdevctl; do
+		if rcvar_is_enabled "${_v}"; then
+			msg \
+    "${_v} is obsolete in rc.conf(5)${notfixed}: use bluetooth=YES"
+			failed=$(( ${failed} + 1 ))
+		fi
+	done
+
+	return ${failed}
+}
+
+#
+#	ddbonpanic
+#
+additem ddbonpanic "verify ddb.onpanic is configured in sysctl.conf"
+do_ddbonpanic()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
+
+	if ${GREP} -E '^#*[[:space:]]*ddb\.onpanic[[:space:]]*\??=[[:space:]]*[[:digit:]]+' \
+		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
+	then
+		result=0
+	else
+		if [ "$1" = check ]; then
+			msg \
+    "The ddb.onpanic behaviour is not explicitly specified in /etc/sysctl.conf"
+			result=1
+		else
+			echo >> "${DEST_DIR}/etc/sysctl.conf"
+			${SED} < "${SRC_DIR}/etc/sysctl.conf" \
+			   -e '/^ddb\.onpanic/q' | \
+			       ${SED} -e '1,/^$/d' >> \
+			    "${DEST_DIR}/etc/sysctl.conf"
+			result=$?
+		fi
+	fi
+	return ${result}
+}
+
+#
+#	defaults
+#
+additem defaults "/etc/defaults/ being up to date"
+do_defaults()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_defaults  fix|check"
+	local op="$1"
+	local failed=0
+	local etcsets=$(getetcsets)
+
+	local rc_exclude_scripts=""
+	if $SOURCEMODE; then
+		# For most architectures rc.conf(5) should be the same as the
+		# one obtained from a source directory, except for the ones
+		# that have an append file for it.
+		local rc_conf_app="${SRC_DIR}/etc/etc.${MACHINE}/rc.conf.append"
+		if [ -f "${rc_conf_app}" ]; then
+			rc_exclude_scripts="rc.conf"
+
+			# Generate and compare the correct rc.conf(5) file
+			mkdir "${SCRATCHDIR}/defaults"
+
+			cat "${SRC_DIR}/etc/defaults/rc.conf" "${rc_conf_app}" \
+			    > "${SCRATCHDIR}/defaults/rc.conf"
+
+			compare_dir "${op}" "${SCRATCHDIR}/defaults" \
+			    "${DEST_DIR}/etc/defaults" \
+			    444 \
+			    "rc.conf"
+			failed=$(( ${failed} + $? ))
+		fi
+	fi
+
+	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
+	    "${SRC_DIR}/usr.sbin/pf/etc/defaults" "${SRC_DIR}/etc/defaults" \
+	    || return 1
+	# ${dir} is set by find_file_in_dirlist()
+	compare_dir "$op" "${dir}" "${DEST_DIR}/etc/defaults" 444 pf.boot.conf
+	failed=$(( ${failed} + $? ))
+
+	rc_exclude_scripts="${rc_exclude_scripts} pf.boot.conf"
+
+	local rc_default_conf_files="$(select_set_files /etc/defaults/ \
+	    "/etc/defaults/\([^[:space:]]*\.conf\)" ${etcsets} | \
+	    exclude ${rc_exclude_scripts})"
+	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
+		444 \
+		${rc_default_conf_files}
+	failed=$(( ${failed} + $? ))
+
+
+	return ${failed}
+}
+
+#
+#	dhcpcd
+#
+additem dhcpcd "dhcpcd configuration is up to date"
+do_dhcpcd()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcd fix|check"
+	op="$1"
+	failed=0
+
+	find_file_in_dirlist dhcpcd.conf "dhcpcd.conf" \
+	    "${SRC_DIR}/external/bsd/dhcpcd/dist/src" \
+	    "${SRC_DIR}/etc" || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
+	failed=$(( ${failed} + $? ))
+
+	check_dir "${op}" "${DEST_DIR}/var/db/dhcpcd" 755
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.duid" \
+		"${DEST_DIR}/var/db/dhcpcd/duid"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.secret" \
+		"${DEST_DIR}/var/db/dhcpcd/secret"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
+	failed=$(( ${failed} + $? ))
+
+	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
+		[ -f "${lease}" ] || continue
+		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
+		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
+		move_file "${op}" "${lease}" "${new_lease}"
+		failed=$(( ${failed} + $? ))
+	done
+
+	return ${failed}
+}
+
+#
+#	dhcpcdrundir
+#
+additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
+do_dhcpcdrundir()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
+	op="$1"
+	failed=0
+
+	if [ -d "${DEST_DIR}/@RUNDIR@" ]; then
+		if [ "${op}" = "check" ]; then
+			msg "Remove eroneously created /@RUNDIR@"
+			failed=1
+		elif ! rm -r "${DEST_DIR}/@RUNDIR@"; then
+			msg "Failed to remove ${DEST_DIR}/@RUNDIR@"
+			failed=1
+		else
+			msg "Removed eroneously created ${DEST_DIR}/@RUNDIR@"
+		fi
+	fi
+	return ${failed}
+}
+
+#
+#	envsys
+#
+additem envsys "envsys configuration is up to date"
+do_envsys()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_envsys fix|check"
+	local op="$1"
+	local failed=0
+	local etcsets=$(getetcsets)
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		envsys.conf
+	failed=$(( ${failed} + $? ))
+
+	local powerd_scripts="$(select_set_files /etc/powerd/scripts/ \
+	    "/etc/powerd/scripts/\([^[:space:]/]*\)" ${etcsets})"
+
+	populate_dir "$op" true "${SRC_DIR}/etc/powerd/scripts" \
+		"${DEST_DIR}/etc/powerd/scripts" \
+		555 \
+		${powerd_scripts}
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	X11 fontconfig
+#
+additem fontconfig "X11 font configuration is up to date"
+do_fontconfig()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_fontconfig fix|check"
+	op="$1"
+	failed=0
+
+	# First, check for updates we can handle.
+	if ! $SOURCEMODE; then
+		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail"
+	else
+		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
+	fi
+
+	if [ ! -d "${FONTCONFIG_DIR}" ]; then
+		msg "${FONTCONFIG_DIR} is not a directory; skipping check"
+		return 0
+	fi
+	local regular_fonts="
+10-autohint.conf
+10-no-sub-pixel.conf
+10-scale-bitmap-fonts.conf
+10-sub-pixel-bgr.conf
+10-sub-pixel-rgb.conf
+10-sub-pixel-vbgr.conf
+10-sub-pixel-vrgb.conf
+10-unhinted.conf
+11-lcdfilter-default.conf
+11-lcdfilter-legacy.conf
+11-lcdfilter-light.conf
+20-unhint-small-vera.conf
+25-unhint-nonlatin.conf
+30-metric-aliases.conf
+40-nonlatin.conf
+45-generic.conf
+45-latin.conf
+49-sansserif.conf
+50-user.conf
+51-local.conf
+60-generic.conf
+60-latin.conf
+65-fonts-persian.conf
+65-khmer.conf
+65-nonlatin.conf
+69-unifont.conf
+70-no-bitmaps.conf
+70-yes-bitmaps.conf
+80-delicious.conf
+90-synthetic.conf
+"
+	populate_dir "$op" false "${FONTCONFIG_DIR}" \
+	    "${DEST_DIR}/etc/fonts/conf.avail" \
+	    444 \
+	    ${regular_fonts}
+	failed=$(( ${failed} + $? ))
+
+	if ! $SOURCEMODE; then
+		FONTS_DIR="${SRC_DIR}/etc/fonts"
+	else
+		FONTS_DIR="${SRC_DIR}/external/mit/xorg/lib/fontconfig/etc"
+	fi
+
+	populate_dir "$op" false "${FONTS_DIR}" "${DEST_DIR}/etc/fonts" 444 \
+		fonts.conf
+	failed=$(( ${failed} + $? ))
+
+	# We can't modify conf.d easily; someone might have removed a file.
+
+	# Look for old files that need to be deleted.
+	obsolete_fonts="
+10-autohint.conf
+10-no-sub-pixel.conf
+10-sub-pixel-bgr.conf
+10-sub-pixel-rgb.conf
+10-sub-pixel-vbgr.conf
+10-sub-pixel-vrgb.conf
+10-unhinted.conf
+25-unhint-nonlatin.conf
+65-khmer.conf
+70-no-bitmaps.conf
+70-yes-bitmaps.conf
+"
+	failed_fonts=""
+	for i in ${obsolete_fonts}; do
+	    if [ -f "${DEST_DIR}/etc/fonts/conf.d/$i" ]; then
+		    conf_d_failed=1
+		    failed_fonts="$failed_fonts $i"
+	    fi
+	done
+
+	if [ -n "$failed_fonts" ]; then
+		msg \
+    "Broken fontconfig configuration found; please delete these files:"
+		msg "[$failed_fonts]"
+		failed=$(( ${failed} + 1 ))
+	fi
+
+	return ${failed}
+}
+
+#
+#	gid
+#
+additem gid "required groups in /etc/group"
+do_gid()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
+
+	check_ids "$1" groups "${DEST_DIR}/etc/group" \
+	    "${SRC_DIR}/etc/group" 14 \
+	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
+	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd SKIP \
+	    _unbound _nsd nvmm
+}
+
+#
+#	gpio
+#
+additem gpio "gpio configuration is up to date"
+do_gpio()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_gpio fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		gpio.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	hosts
+#
+additem hosts "/etc/hosts being up to date"
+do_hosts()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_hosts  fix|check"
+
+	modify_file "$1" "${DEST_DIR}/etc/hosts" "${SCRATCHDIR}/hosts" '
+		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
+			print $0, "localhost."
+			next
+		}
+		{ print }
+	'
+	return $?
+}
+
+#
+#	iscsi
+#
+additem iscsi "/etc/iscsi is populated"
+do_iscsi()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_iscsi  fix|check"
+
+	populate_dir "${op}" true \
+	    "${SRC_DIR}/etc/iscsi" "${DEST_DIR}/etc/iscsi" 600 auths
+	populate_dir "${op}" true \
+	    "${SRC_DIR}/etc/iscsi" "${DEST_DIR}/etc/iscsi" 644 targets
+	return $?
+}
+
+#
+#	makedev
+#
+additem makedev "/dev/MAKEDEV being up to date"
+do_makedev()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_makedev   fix|check"
+	failed=0
+
+	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
+			# generate MAKEDEV from source if source is available
+		env MACHINE="${MACHINE}" \
+		    MACHINE_ARCH="${MACHINE_ARCH}" \
+		    NETBSDSRCDIR="${SRC_DIR}" \
+		    ${AWK} -f "${SRC_DIR}/etc/MAKEDEV.awk" \
+		    "${SRC_DIR}/etc/MAKEDEV.tmpl" > "${SCRATCHDIR}/MAKEDEV"
+	fi
+
+	find_file_in_dirlist MAKEDEV "MAKEDEV" \
+	    "${SCRATCHDIR}" "${SRC_DIR}/dev" \
+	    || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	find_makedev
+	compare_dir "$1" "${dir}" "${MAKEDEV_DIR}" 555 MAKEDEV
+	failed=$(( ${failed} + $? ))
+
+	find_file_in_dirlist MAKEDEV.local "MAKEDEV.local" \
+	    "${SRC_DIR}/etc" "${SRC_DIR}/dev" \
+	    || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV.local
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	motd
+#
+additem motd "contents of motd"
+do_motd()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
+
+	if ${GREP} -i 'http://www.NetBSD.org/Misc/send-pr.html' \
+		"${DEST_DIR}/etc/motd" >/dev/null 2>&1 \
+	    || ${GREP} -i 'https*://www.NetBSD.org/support/send-pr.html' \
+		"${DEST_DIR}/etc/motd" >/dev/null 2>&1
+	then
+		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
+		tmp2="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
+		${SED} '1,2d' <"${SRC_DIR}/etc/motd" >"${tmp1}"
+		${SED} '1,2d' <"${DEST_DIR}/etc/motd" >"${tmp2}"
+
+		if [ "$1" = check ]; then
+			cmp -s "${tmp1}" "${tmp2}"
+			result=$?
+			if [ "${result}" -ne 0 ]; then
+				msg \
+    "Bug reporting messages do not seem to match the installed release"
+			fi
+		else
+			head -n 2 "${DEST_DIR}/etc/motd" >"${tmp1}"
+			${SED} '1,2d' <"${SRC_DIR}/etc/motd" >>"${tmp1}"
+			cp "${tmp1}" "${DEST_DIR}/etc/motd"
+			result=0
+		fi
+
+		rm -f "${tmp1}" "${tmp2}"
+	else
+		result=0
+	fi
+
+	return ${result}
+}
+
+#
+#	mtree
+#
+additem mtree "/etc/mtree/ being up to date"
+do_mtree()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_mtree  fix|check"
+	failed=0
+
+	compare_dir "$1" "${SRC_DIR}/etc/mtree" "${DEST_DIR}/etc/mtree" 444 special
+	failed=$(( ${failed} + $? ))
+
+	if ! $SOURCEMODE; then
+		MTREE_DIR="${SRC_DIR}/etc/mtree"
+	else
+		/bin/rm -rf "${SCRATCHDIR}/obj"
+		mkdir "${SCRATCHDIR}/obj"
+		${MAKE} -s -C "${SRC_DIR}/etc/mtree" TOOL_AWK="${AWK}" \
+		    MAKEOBJDIR="${SCRATCHDIR}/obj" emit_dist_file > \
+		    "${SCRATCHDIR}/NetBSD.dist"
+		MTREE_DIR="${SCRATCHDIR}"
+		/bin/rm -rf "${SCRATCHDIR}/obj"
+	fi
+	compare_dir "$1" "${MTREE_DIR}" "${DEST_DIR}/etc/mtree" 444 NetBSD.dist
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	named
+#
+additem named "named configuration update"
+do_named()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_named  fix|check"
+	op="$1"
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/namedb/named.conf" \
+		"${DEST_DIR}/etc/named.conf"
+
+	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
+		644 \
+		root.cache
+}
+
+#
+#	pam
+#
+additem pam "/etc/pam.d is populated"
+do_pam()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_pam  fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "${op}" true "${SRC_DIR}/etc/pam.d" \
+		"${DEST_DIR}/etc/pam.d" 644 \
+		README cron display_manager ftpd gdm imap kde login other \
+		passwd pop3 ppp racoon rexecd rsh sshd su system telnetd \
+		xdm xserver
+
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	periodic
+#
+additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
+do_periodic()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_periodic  fix|check"
+
+	compare_dir "$1" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		daily weekly monthly security
+}
+
+#
+#	pf
+#
+additem pf "pf configuration being up to date"
+do_pf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_pf  fix|check"
+	op="$1"
+	failed=0
+
+	find_file_in_dirlist pf.os "pf.os" \
+	    "${SRC_DIR}/dist/pf/etc" "${SRC_DIR}/etc" \
+	    || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	populate_dir "${op}" true \
+	    "${dir}" "${DEST_DIR}/etc" 644 \
+	    pf.conf
+	failed=$(( ${failed} + $? ))
+
+	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc" 444 pf.os
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	pwd_mkdb
+#
+additem pwd_mkdb "passwd database version"
+do_pwd_mkdb()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_pwd_mkdb  fix|check"
+	op="$1"
+	failed=0
+
+	# XXX Ideally, we should figure out the endianness of the
+	# target machine, and add "-E B"/"-E L" to the db(1) flags,
+	# and "-B"/"-L" to the pwd_mkdb(8) flags if the target is not
+	# the same as the host machine.  It probably doesn't matter,
+	# because we don't expect "postinstall fix pwd_mkdb" to be
+	# invoked during a cross build.
+
+	set -- $(${DB} -q -Sb -Ub -To -N hash "${DEST_DIR}/etc/pwd.db" \
+		'VERSION\0')
+	case "$2" in
+	'\001\000\000\000') return 0 ;; # version 1, little-endian
+	'\000\000\000\001') return 0 ;; # version 1, big-endian
+	esac
+
+	if [ "${op}" = "check" ]; then
+		msg "Update format of passwd database"
+		failed=1
+	elif ! ${PWD_MKDB} -V 1 -d "${DEST_DIR:-/}" \
+			"${DEST_DIR}/etc/master.passwd";
+	then
+		msg "Can't update format of passwd database"
+		failed=1
+	else
+		msg "Updated format of passwd database"
+	fi
+
+	return ${failed}
+}
+
+#
+#	rc
+#
+
+# There is no info in src/distrib or /etc/mtree which rc* files
+# can be overwritten unconditionally on upgrade. See PR/54741.
+rc_644_files="
+rc
+rc.subr
+rc.shutdown
+"
+
+rc_obsolete_vars="
+amd amd_master
+btcontrol btcontrol_devices
+critical_filesystems critical_filesystems_beforenet
+mountcritlocal mountcritremote
+network ip6forwarding
+network nfsiod_flags
+sdpd sdpd_control
+sdpd sdpd_groupname
+sdpd sdpd_username
+sysctl defcorename
+"
+
+update_rc()
+{
+	local op=$1
+	local dir=$2
+	local name=$3
+	local bindir=$4
+	local rcdir=$5
+
+	if [ ! -x "${DEST_DIR}/${bindir}/${name}" ]; then
+		return 0
+	fi
+
+	if ! find_file_in_dirlist "${name}" "${name}" \
+	    "${rcdir}" "${SRC_DIR}/etc/rc.d"; then
+		return 1
+	fi
+	populate_dir "${op}" false "${dir}" "${DEST_DIR}/etc/rc.d" 555 "${name}"
+	return $?
+}
+
+# select non-obsolete files in a sets file
+# $1: directory pattern
+# $2: file pattern
+# $3: filename
+select_set_files()
+{
+	local qdir="$(echo $1 | ${SED} -e s@/@\\\\/@g -e s/\\./\\\\./g)"
+	${SED} -n -e /obsolete/d \
+	    -e "/^\.${qdir}/s@^.$2[[:space:]].*@\1@p" $3
+}
+
+# select obsolete files in a sets file
+# $1: directory pattern
+# $2: file pattern
+# $3: setname
+select_obsolete_files()
+{
+	if $SOURCEMODE; then
+		${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" \
+		    ${SRC_DIR}/distrib/sets/lists/$3/mi
+		return
+	fi
+
+	# On upgrade builds we don't extract the "etc" set so we
+	# try to use the source set instead. See PR/54730 for
+	# ways to better handle this.
+
+	local obsolete_dir
+
+	if [ $3 = "etc" ] ;then
+		obsolete_dir=${SRC_DIR}/var/db/obsolete
+	else
+		obsolete_dir=${DEST_DIR}/var/db/obsolete
+	fi
+	${SED} -n -e "s@\.$1$2\$@\1@p" "${obsolete_dir}/$3"
+}
+
+getetcsets()
+{
+	if $SOURCEMODE; then
+		echo "${SRC_DIR}/distrib/sets/lists/etc/mi"
+	else
+		echo "${SRC_DIR}/etc/mtree/set.etc"
+	fi
+}
+
+additem rc "/etc/rc* and /etc/rc.d/ being up to date"
+do_rc()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_rc  fix|check"
+	local op="$1"
+	local failed=0
+	local generated_scripts=""
+	local etcsets=$(getetcsets)
+	if [ "${MKX11}" != "no" ]; then
+		generated_scripts="${generated_scripts} xdm xfs"
+	fi
+
+	# Directories of external programs that have rc files (in bsd)
+	local rc_external_files="blacklist nsd unbound"
+
+	# rc* files in /etc/
+	# XXX: at least rc.conf and rc.local shouldn't be updated. PR/54741
+	#local rc_644_files="$(select_set_files /etc/rc \
+	#    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
+
+	# no-obsolete rc files in /etc/rc.d
+	local rc_555_files="$(select_set_files /etc/rc.d/ \
+	    "/etc/rc\.d/\([^[:space:]]*\)" ${etcsets} | \
+	    exclude ${rc_external_files})"
+
+	# obsolete rc file in /etc/rc.d
+	local rc_obsolete_files="$(select_obsolete_files /etc/rc.d/ \
+	    "\([^[:space:]]*\)" etc)"
+
+	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		${rc_644_files}
+	failed=$(( ${failed} + $? ))
+
+	local extra_scripts
+	if ! $SOURCEMODE; then
+		extra_scripts="${generated_scripts}"
+	else
+		extra_scripts=""
+	fi
+
+	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
+		${rc_555_files} \
+		${extra_scripts}
+	failed=$(( ${failed} + $? ))
+
+	for i in ${rc_external_files}; do
+	    local rc_file 
+	    case $i in
+	    *d) rc_file=${i};;
+	    *)	rc_file=${i}d;;
+	    esac
+		
+	    update_rc "${op}" "${dir}" ${rc_file} /sbin \
+		"${SRC_DIR}/external/bsd/$i/etc/rc.d"
+	    failed=$(( ${failed} + $? ))
+	done
+
+	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
+		# generate scripts
+		mkdir "${SCRATCHDIR}/rc"
+		for f in ${generated_scripts}; do
+			${SED} -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
+			    < "${SRC_DIR}/etc/rc.d/${f}.in" \
+			    > "${SCRATCHDIR}/rc/${f}"
+		done
+		compare_dir "${op}" "${SCRATCHDIR}/rc" \
+		    "${DEST_DIR}/etc/rc.d" 555 \
+		    ${generated_scripts}
+		failed=$(( ${failed} + $? ))
+	fi
+
+		# check for obsolete rc.d files
+	for f in ${rc_obsolete_files}; do
+		local fd="/etc/rc.d/${f}"
+		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
+	done | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+		# check for obsolete rc.conf(5) variables
+	set -- ${rc_obsolete_vars}
+	while [ $# -gt 1 ]; do
+		if rcconf_is_set "${op}" "$1" "$2" 1; then
+			failed=1
+		fi
+		shift 2
+	done
+
+	return ${failed}
+}
+
+#
+#	sendmail
+#
+adddisableditem sendmail "remove obsolete sendmail configuration files and scripts"
+do_sendmail()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_sendmail  fix|check"
+	op="$1"
+	failed=0
+
+	# Don't complain if the "sendmail" package is installed because the
+	# files might still be in use.
+	if /usr/sbin/pkg_info -qe sendmail >/dev/null 2>&1; then
+		return 0
+	fi
+
+	for f in /etc/mail/helpfile /etc/mail/local-host-names \
+	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
+	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
+	    $( ( find "${DEST_DIR}/usr/share/sendmail" -type f ; \
+	         find "${DEST_DIR}/usr/share/sendmail" -type d \
+	       ) | unprefix "${DEST_DIR}" ) \
+	    /var/log/sendmail.st \
+	    /var/spool/clientmqueue \
+	    /var/spool/mqueue
+	do
+		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
+	done | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	mailerconf
+#
+adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
+do_mailerconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_mailterconf  fix|check"
+	op="$1"
+
+	failed=0
+	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' \
+		"${DEST_DIR}/etc/mailer.conf")"
+	old_sendmail_path="/usr/libexec/sendmail/sendmail"
+	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
+	    if [ "$op" = check ]; then
+		msg "mailer.conf points to obsolete ${old_sendmail_path}"
+		failed=1;
+	    else
+		populate_dir "${op}" false \
+		"${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 mailer.conf
+		failed=$?
+	    fi
+	fi
+
+	return ${failed}
+}
+
+#
+#	ssh
+#
+additem ssh "ssh configuration update"
+do_ssh()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ssh  fix|check"
+	op="$1"
+
+	failed=0
+	_etcssh="${DEST_DIR}/etc/ssh"
+	if ! check_dir "${op}" "${_etcssh}" 755; then
+		failed=1
+	fi
+
+	if [ ${failed} -eq 0 ]; then
+		for f in \
+			    ssh_known_hosts ssh_known_hosts2 \
+			    ssh_host_dsa_key ssh_host_dsa_key.pub \
+			    ssh_host_rsa_key ssh_host_rsa_key.pub \
+			    ssh_host_key ssh_host_key.pub \
+		    ; do
+			if ! move_file "${op}" \
+			    "${DEST_DIR}/etc/${f}" "${_etcssh}/${f}" ; then
+				failed=1
+			fi
+		done
+		for f in sshd.conf ssh.conf ; do
+				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
+				#
+			if ! move_file "${op}" \
+			    "${_etcssh}/${f}" "${_etcssh}/${f%.conf}_config" ;
+			then
+				failed=1
+			fi
+				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
+				#
+			if ! move_file "${op}" \
+			    "${DEST_DIR}/etc/${f}" \
+			    "${_etcssh}/${f%.conf}_config" ;
+			then
+				failed=1
+			fi
+		done
+	fi
+
+	sshdconf=""
+	for f in \
+	    "${_etcssh}/sshd_config" \
+	    "${_etcssh}/sshd.conf" \
+	    "${DEST_DIR}/etc/sshd.conf" ; do
+		if [ -f "${f}" ]; then
+			sshdconf="${f}"
+			break
+		fi
+	done
+	if [ -n "${sshdconf}" ]; then
+		modify_file "${op}" "${sshdconf}" "${SCRATCHDIR}/sshdconf" '
+			/^[^#$]/ {
+				kw = tolower($1)
+				if (kw == "hostkey" &&
+				    $2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ ) {
+					sub(/\/etc\/+/, "/etc/ssh/")
+				}
+				if (kw == "rhostsauthentication" ||
+				    kw == "verifyreversemapping" ||
+				    kw == "reversemappingcheck") {
+					sub(/^/, "# DEPRECATED:\t")
+				}
+			}
+			{ print }
+		'
+		failed=$(( ${failed} + $? ))
+	fi
+
+	if ! find_file_in_dirlist moduli "moduli" \
+	    "${SRC_DIR}/crypto/external/bsd/openssh/dist" "${SRC_DIR}/etc" ; then
+		failed=1
+			# ${dir} is set by find_file_in_dirlist()
+	elif ! compare_dir "${op}" "${dir}" "${DEST_DIR}/etc" 444 moduli; then
+		failed=1
+	fi
+
+	if ! check_dir "${op}" "${DEST_DIR}/var/chroot/sshd" 755 ; then
+		failed=1
+	fi
+
+	if rcconf_is_set "${op}" sshd sshd_conf_dir 1; then
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+#
+#	wscons
+#
+additem wscons "wscons configuration file update"
+do_wscons()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_wscons  fix|check"
+	op="$1"
+
+	[ -f "${DEST_DIR}/etc/wscons.conf" ] || return 0
+
+	failed=0
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed="${NOT_FIXED}"
+	fi
+	while read _type _arg1 _rest; do
+		if [ "${_type}" = "mux" -a "${_arg1}" = "1" ]; then
+			msg \
+    "Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found.${notfixed}"
+			failed=1
+		fi
+	done < "${DEST_DIR}/etc/wscons.conf"
+
+	return ${failed}
+}
+
+#
+#	X11
+#
+additem x11 "x11 configuration update"
+do_x11()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_x11  fix|check"
+	op="$1"
+
+	failed=0
+	_etcx11="${DEST_DIR}/etc/X11"
+	if [ ! -d "${_etcx11}" ]; then
+		msg "${_etcx11} is not a directory; skipping check"
+		return 0
+	fi
+	if [ -d "${DEST_DIR}/usr/X11R6/." ]
+	then
+		_libx11="${DEST_DIR}/usr/X11R6/lib/X11"
+		if [ ! -d "${_libx11}" ]; then
+			msg "${_libx11} is not a directory; skipping check"
+			return 0
+		fi
+	fi
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed="${NOT_FIXED}"
+	fi
+
+	for d in \
+		    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
+	    ; do
+		sd="${_libx11}/${d}"
+		ld="/etc/X11/${d}"
+		td="${DEST_DIR}${ld}"
+		if [ -h "${sd}" ]; then
+			continue
+		elif [ -d "${sd}" ]; then
+			tdfiles="$(find "${td}" \! -type d)"
+			if [ -n "${tdfiles}" ]; then
+				msg "${sd} exists yet ${td} already" \
+				    "contains files${_notfixed}"
+			else
+				msg "Migrate ${sd} to ${td}${_notfixed}"
+			fi
+			failed=1
+		elif [ -e "${sd}" ]; then
+			msg "Unexpected file ${sd}${_notfixed}"
+			continue
+		else
+			continue
+		fi
+	done
+
+	# check if xdm resources have been updated
+	if [ -r ${_etcx11}/xdm/Xresources ] && \
+	    ! ${GREP} 'inpColor:' ${_etcx11}/xdm/Xresources > /dev/null; then
+		msg "Update ${_etcx11}/xdm/Xresources${_notfixed}"
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+#
+#	xkb
+#
+# /usr/X11R7/lib/X11/xkb/symbols/pc used to be a directory, but changed
+# to a file on 2009-06-12.  Fixing this requires removing the directory
+# (which we can do) and re-extracting the xbase set (which we can't do),
+# or at least adding that one file (which we may be able to do if X11SRCDIR
+# is available).
+#
+additem xkb "clean up for xkbdata to xkeyboard-config upgrade"
+do_xkb()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_xkb  fix|check"
+	op="$1"
+	failed=0
+
+	pcpath="/usr/X11R7/lib/X11/xkb/symbols/pc"
+	pcsrcdir="${X11SRCDIR}/external/mit/xkeyboard-config/dist/symbols"
+
+	filemsg="\
+${pcpath} was a directory, should be a file.
+    To fix, extract the xbase set again."
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed="${NOT_FIXED}"
+	fi
+
+	if [ ! -d "${DEST_DIR}${pcpath}" ]; then
+		return 0
+	fi
+
+	# Delete obsolete files in the directory, and the directory
+	# itself.  If the directory contains unexpected extra files
+	# then it will not be deleted.
+	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
+	    &&  ${SORT} -ru "${DEST_DIR}"/var/db/obsolete/xbase \
+	    | ${GREP} -E "^\\.?${pcpath}/" ;
+	    echo "${pcpath}" ) \
+	| obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	# If the directory was removed above, then try to replace it with
+	# a file.
+	if [ -d "${DEST_DIR}${pcpath}" ]; then
+		msg "${filemsg}${_notfixed}"
+		failed=$(( ${failed} + 1 ))
+	else
+		if ! find_file_in_dirlist pc "${pcpath}" \
+			"${pcsrcdir}" "${SRC_DIR}${pcpath%/*}"
+		then
+			msg "${filemsg}${_notfixed}"
+			failed=$(( ${failed} + 1 ))
+		else
+			# ${dir} is set by find_file_in_dirlist()
+			populate_dir "${op}" true \
+				"${dir}" "${DEST_DIR}${pcpath%/*}" 444 \
+				pc
+			failed=$(( ${failed} + $? ))
+		fi
+	fi
+
+	return $failed
+}
+
+#
+#	uid
+#
+additem uid "required users in /etc/master.passwd"
+do_uid()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
+
+	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
+	    "${SRC_DIR}/etc/master.passwd" 12 \
+	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd \
+	    SKIP _unbound _nsd
+}
+
+
+#
+#	varrwho
+#
+additem varrwho "required ownership of files in /var/rwho"
+do_varrwho()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varrwho  fix|check"
+
+	contents_owner "$1" "${DEST_DIR}/var/rwho" _rwhod _rwhod
+}
+
+
+#
+#	tcpdumpchroot
+#
+additem tcpdumpchroot "remove /var/chroot/tcpdump/etc/protocols"
+do_tcpdumpchroot()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot  fix|check"
+
+	failed=0;
+	if [ -r "${DEST_DIR}/var/chroot/tcpdump/etc/protocols" ]; then
+		if [ "$1" = "fix" ]; then
+			rm "${DEST_DIR}/var/chroot/tcpdump/etc/protocols"
+			failed=$(( ${failed} + $? ))
+			rmdir "${DEST_DIR}/var/chroot/tcpdump/etc"
+			failed=$(( ${failed} + $? ))
+		else
+			failed=1
+		fi
+	fi
+	return ${failed}
+}
+
+
+#
+#	atf
+#
+additem atf "install missing atf configuration files and validate them"
+do_atf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_atf  fix|check"
+	op="$1"
+	failed=0
+
+	# Ensure atf configuration files are in place.
+	if find_file_in_dirlist NetBSD.conf "NetBSD.conf" \
+	    "${SRC_DIR}/external/bsd/atf/etc/atf" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    NetBSD.conf common.conf || failed=1
+	else
+		failed=1
+	fi
+	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
+	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    atf-run.hooks || failed=1
+	else
+		failed=1
+	fi
+
+	# Validate the _atf to _tests user/group renaming.
+	if [ -f "${DEST_DIR}/etc/atf/common.conf" ]; then
+		handle_atf_user "${op}" || failed=1
+	else
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+handle_atf_user()
+{
+	local op="$1"
+	local failed=0
+
+	local conf="${DEST_DIR}/etc/atf/common.conf"
+	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
+	then
+		if [ "$1" = "fix" ]; then
+			${SED} -e \
+			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
+			    "${conf}" >"${conf}.new"
+			failed=$(( ${failed} + $? ))
+			mv "${conf}.new" "${conf}"
+			failed=$(( ${failed} + $? ))
+			msg "Set unprivileged-user=_tests in ${conf}"
+		else
+			msg "unprivileged-user=_atf in ${conf} should be" \
+			    "unprivileged-user=_tests"
+			failed=1
+		fi
+	fi
+
+	return ${failed}
+}
+
+#
+#	catpages
+#
+obsolete_catpages()
+{
+	basedir="$2"
+	section="$3"
+	mandir="${basedir}/man${section}"
+	catdir="${basedir}/cat${section}"
+	test -d "$mandir" || return 0
+	test -d "$catdir" || return 0
+	(cd "$mandir" && find . -type f) | {
+	failed=0
+	while read manpage; do
+		manpage="${manpage#./}"
+		case "$manpage" in
+		*.Z)
+			catname="$catdir/${manpage%.*.Z}.0"
+			;;
+		*.gz)
+			catname="$catdir/${manpage%.*.gz}.0"
+			;;
+		*)
+			catname="$catdir/${manpage%.*}.0"
+			;;
+		esac
+		test -e "$catname" -a "$catname" -ot "$mandir/$manpage" || continue
+		if [ "$1" = "fix" ]; then
+			rm "$catname"
+			failed=$(( ${failed} + $? ))
+			msg "Removed obsolete cat page $catname"
+		else
+			msg "Obsolete cat page $catname"
+			failed=1
+		fi
+	done
+	exit $failed
+	}
+}
+
+additem catpages "remove outdated cat pages"
+do_catpages()
+{
+	failed=0
+	for manbase in /usr/share/man /usr/X11R6/man /usr/X11R7/man; do
+		for sec in 1 2 3 4 5 6 7 8 9; do
+			obsolete_catpages "$1" "${DEST_DIR}${manbase}" "${sec}"
+			failed=$(( ${failed} + $? ))
+			if [ "$1" = "fix" ]; then
+				rmdir "${DEST_DIR}${manbase}/cat${sec}"/* \
+					2>/dev/null
+				rmdir "${DEST_DIR}${manbase}/cat${sec}" \
+					2>/dev/null
+			fi
+		done
+	done
+	return $failed
+}
+
+#
+#	man.conf
+#
+additem manconf "check for a mandoc usage in /etc/man.conf"
+do_manconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_manconf  fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/man.conf" ] || return 0
+	if ${GREP} -w "mandoc" "${DEST_DIR}/etc/man.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		failed=1
+		notfixed=""
+		if [ "${op}" = "fix" ]; then
+			notfixed="${NOT_FIXED}"
+		fi
+		msg "The file /etc/man.conf has not been adapted to mandoc usage; you"
+		msg "probably want to copy a new version over. ${notfixed}"
+	fi
+
+	return ${failed}
+}
+
+
+#
+#	ptyfsoldnodes
+#
+additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
+do_ptyfsoldnodes()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes  fix|check"
+	_ptyfs_op="$1"
+
+	# Check whether ptyfs is in use
+	failed=0;
+	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+		msg "ptyfs is not in use"
+		return 0
+	fi
+
+	if [ ! -e "${DEST_DIR}/dev/pts" ]; then
+		msg "ptyfs is not properly configured: missing /dev/pts"
+		return 1
+	fi
+
+	# Find the device major numbers for the pty master and slave
+	# devices, by parsing the output from "MAKEDEV -s pty0".
+	#
+	# Output from MAKEDEV looks like this:
+	# ./ttyp0 type=char device=netbsd,5,0 mode=666 gid=0 uid=0
+	# ./ptyp0 type=char device=netbsd,6,0 mode=666 gid=0 uid=0
+	#
+	# Output from awk, used in the eval statement, looks like this:
+	# maj_ptym=6; maj_ptys=5;
+	#
+	find_makedev
+	eval "$(
+	    ${HOST_SH} "${MAKEDEV_DIR}/MAKEDEV" -s pty0 2>/dev/null \
+	    | ${AWK} '\
+	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
+	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
+		      maj_ptym = gensub(after_re, "", 1, maj_ptym); }
+	    /ttyp0/ { maj_ptys = gensub(before_re, "", 1, $0);
+		      maj_ptys = gensub(after_re, "", 1, maj_ptys); }
+	    END { print "maj_ptym=" maj_ptym "; maj_ptys=" maj_ptys ";"; }
+	    '
+	    )"
+	#msg "Major numbers are maj_ptym=${maj_ptym} maj_ptys=${maj_ptys}"
+	if [ -z "$maj_ptym" ] || [ -z "$maj_ptys" ]; then
+		msg "Cannot find device major numbers for pty master and slave"
+		return 1
+	fi
+
+	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
+	# have the expected device major numbers.  ttyv* is typically not a
+	# pty device, but we check it anyway.
+	#
+	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
+	# otherwise we could have used a single glob pattern.
+	#
+	# If there are no files that match a particular pattern,
+	# then stat prints something like:
+	#    stat: /dev/[pt]tyx?: lstat: No such file or directory
+	# and we ignore it.  XXX: We also ignore other error messages.
+	#
+	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
+	for d1 in p q r s t u v w x y z P Q R S T; do
+		${STAT} -f "%Hr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
+	done \
+	| while read -r major node ; do
+		case "$major" in
+		${maj_ptym}|${maj_ptys}) echo "$node" ;;
+		esac
+	done >"${_ptyfs_tmp}"
+
+	_desc="legacy device node"
+	while read node; do
+		if [ "${_ptyfs_op}" = "check" ]; then
+			msg "Remove ${_desc} ${node}"
+			failed=1
+		else # "fix"
+			if rm "${node}"; then
+				msg "Removed ${_desc} ${node}"
+			else
+				warn "Failed to remove ${_desc} ${node}"
+				failed=1
+			fi
+		fi
+	done < "${_ptyfs_tmp}"
+	rm "${_ptyfs_tmp}"
+
+	return ${failed}
+}
+
+
+#
+#	varshm
+#
+additem varshm "check for a tmpfs mounted on /var/shm"
+do_varshm()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varshm  fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
+	if ${GREP} -E "^var_shm_symlink" "${DEST_DIR}/etc/rc.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	elif ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		if [ "${op}" = "check" ]; then
+			failed=1
+			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+		elif [ "${op}" = "fix" ]; then
+			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
+				>> "${DEST_DIR}/etc/fstab"
+			msg "Added tmpfs with 25% ram limit as /var/shm"
+
+		fi
+	fi
+
+	return ${failed}
+}
+
+#
+#	obsolete_stand
+#
+adddisableditem obsolete_stand "remove obsolete files from /stand"
+do_obsolete_stand()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stnd  fix|check"
+	op="$1"
+	failed=0
+
+	for dir in \
+	    /stand/${MACHINE} \
+	    /stand/${MACHINE}-4xx \
+	    /stand/${MACHINE}-booke \
+	    /stand/${MACHINE}-xen \
+	    /stand/${MACHINE}pae-xen
+	do
+		[ -d "${DESTDIR}${dir}" ] && obsolete_stand "${dir}"
+	done | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+listarchsubdirs() {
+	if ! $SOURCEMODE; then
+		echo "@ARCHSUBDIRS@"
+	else
+		${SED} -n -e '/ARCHDIR_SUBDIR/s/[[:space:]]//gp' \
+		    ${SRC_DIR}/compat/archdirs.mk 
+	fi
+}
+
+
+getarchsubdirs() {
+	local m
+	case ${MACHINE_ARCH} in
+	*arm*|*aarch64*)	m=arm;;
+	x86_64)			m=amd64;;
+	*)			m=${MACHINE_ARCH};;
+	esac
+
+	for i in $(listarchsubdirs); do
+		echo $i
+	done | ${SORT} -u | ${SED} -n -e "/=${m}/s@.*=${m}/\(.*\)@\1@p"
+}
+
+getcompatlibdirs() {
+	for i in $(getarchsubdirs); do
+		if [ -d "${DEST_DIR}/usr/lib/$i" ]; then
+			echo /usr/lib/$i
+		fi
+	done
+}
+
+#
+#	obsolete
+#	(this item is last to allow other items to move obsolete files)
+#
+additem obsolete "remove obsolete file sets and minor libraries"
+do_obsolete()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	op="$1"
+	failed=0
+
+	${SORT} -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
+		obsolete_libs /usr/X11R7/lib
+		for i in $(getcompatlibdirs); do
+			obsolete_libs $i
+		done
+	) | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	end of items
+#	------------
+#
+
+
+usage()
+{
+	cat 1>&2 << _USAGE_
+Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
+	Perform post-installation checks and/or fixes on a system's
+	configuration files.
+	If no items are provided, a default set of checks or fixes is applied.
+
+	Options:
+	-s {srcdir|tgzfile|tempdir}
+			Location of the source files.  This may be any
+			of the following:
+			* A directory that contains a NetBSD source tree;
+			* A distribution set file such as "etc.tgz" or
+			  "xetc.tgz".  Pass multiple -s options to specify
+			  multiple such files;
+			* A temporary directory in which one or both of
+			  "etc.tgz" and "xetc.tgz" have been extracted.
+							[${SRC_DIR:-/usr/src}]
+	-x xsrcdir      Location of the X11 source files.  This must be
+			a directory that contains a NetBSD xsrc tree.
+							[${XSRC_DIR:-/usr/src/../xsrc}]
+	-d destdir	Destination directory to check. [${DEST_DIR:-/}]
+	-m mach		MACHINE.			[${MACHINE}]
+	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
+
+	Operation may be one of:
+		help	Display this help.
+		list	List available items.
+		check	Perform post-installation checks on items.
+		diff [diff(1) options ...]
+			Similar to 'check' but also output difference of files.
+		fix	Apply fixes that 'check' determines need to be applied.
+		usage	Display this usage.
+_USAGE_
+	exit 2
+}
+
+
+list()
+{
+	echo "Default set of items (to apply if no items are provided by user):"
+	echo "  Item          Description"
+	echo "  ----          -----------"
+	for i in ${defaultitems}; do
+		eval desc=\"\${desc_${i}}\"
+		printf "  %-12s  %s\n" "${i}" "${desc}"
+	done
+	echo "Items disabled by default (must be requested explicitly):"
+	echo "  Item          Description"
+	echo "  ----          -----------"
+	for i in ${otheritems}; do
+		eval desc=\"\${desc_${i}}\"
+		printf "  %-12s  %s\n" "${i}" "${desc}"
+	done
+
+}
+
+
+main()
+{
+	TGZLIST=		# quoted list list of tgz files
+	SRC_ARGLIST=		# quoted list of one or more "-s" args
+	SRC_DIR="${SRC_ARG}"	# set default value for early usage()
+	XSRC_DIR="${SRC_ARG}/../xsrc"
+	N_SRC_ARGS=0		# number of "-s" args
+	TGZMODE=false		# true if "-s" specifies a tgz file
+	DIRMODE=false		# true if "-s" specified a directory
+	SOURCEMODE=false	# true if "-s" specified a source directory
+
+	case "$(uname -s)" in
+	Darwin)
+		# case sensitive match for case insensitive fs
+		file_exists_exact=file_exists_exact
+		;;
+	*)
+		file_exists_exact=:
+		;;
+	esac
+
+	while getopts s:x:d:m:a: ch; do
+		case "${ch}" in
+		s)
+			qarg="$(shell_quote "${OPTARG}")"
+			N_SRC_ARGS=$(( $N_SRC_ARGS + 1 ))
+			SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
+			if [ -f "${OPTARG}" ]; then
+				# arg refers to a *.tgz file.
+				# This may happen twice, for both
+				# etc.tgz and xetc.tgz, so we build up a
+				# quoted list in TGZLIST.
+				TGZMODE=true
+				TGZLIST="${TGZLIST}${TGZLIST:+ }${qarg}"
+				# Note that, when TGZMODE is true,
+				# SRC_ARG is used only for printing
+				# human-readable messages.
+				SRC_ARG="${TGZLIST}"
+			elif [ -d "${OPTARG}" ]; then
+				# arg refers to a directory.
+				# It might be a source directory, or a
+				# directory where the sets have already
+				# been extracted.
+				DIRMODE=true
+				SRC_ARG="${OPTARG}"
+				if [ -f "${OPTARG}/etc/Makefile" ]; then
+					SOURCEMODE=true
+				fi
+			else
+				err 2 "Invalid argument for -s option"
+			fi
+			;;
+		x)
+			if [ -d "${OPTARG}" ]; then
+				# arg refers to a directory.
+				XSRC_DIR="${OPTARG}"
+				XSRC_DIR_FIX="-x ${OPTARG} "
+			else
+				err 2 "Not a directory for -x option"
+			fi
+			;;
+		d)
+			DEST_DIR="${OPTARG}"
+			;;
+		m)
+			MACHINE="${OPTARG}"
+			;;
+		a)
+			MACHINE_ARCH="${OPTARG}"
+			;;
+		*)
+			usage
+			;;
+		esac
+	done
+	shift $((${OPTIND} - 1))
+	[ $# -gt 0 ] || usage
+
+	if [ "$N_SRC_ARGS" -gt 1 ] && $DIRMODE; then
+		err 2 "Multiple -s args are allowed only with tgz files"
+	fi
+	if [ "$N_SRC_ARGS" -eq 0 ]; then
+		# The default SRC_ARG was set elsewhere
+		DIRMODE=true
+		SOURCEMODE=true
+		SRC_ARGLIST="-s $(shell_quote "${SRC_ARG}")"
+	fi
+
+	#
+	# If '-s' arg or args specified tgz files, extract them
+	# to a scratch directory.
+	#
+	if $TGZMODE; then
+		ETCTGZDIR="${SCRATCHDIR}/etc.tgz"
+		echo "Note: Creating temporary directory ${ETCTGZDIR}"
+		if ! mkdir "${ETCTGZDIR}"; then
+			err 2 "Can't create ${ETCTGZDIR}"
+		fi
+		( # subshell to localise changes to "$@"
+			eval "set -- ${TGZLIST}"
+			for tgz in "$@"; do
+				echo "Note: Extracting files from ${tgz}"
+				cat "${tgz}" | (
+					cd "${ETCTGZDIR}" &&
+					tar -zxf -
+				) || err 2 "Can't extract ${tgz}"
+			done
+		)
+		SRC_DIR="${ETCTGZDIR}"
+	else
+		SRC_DIR="${SRC_ARG}"
+	fi
+
+	[ -d "${SRC_DIR}" ]	|| err 2 "${SRC_DIR} is not a directory"
+	[ -d "${DEST_DIR}" ]	|| err 2 "${DEST_DIR} is not a directory"
+	[ -n "${MACHINE}" ]	|| err 2 "\${MACHINE} is not defined"
+	[ -n "${MACHINE_ARCH}" ] || err 2 "\${MACHINE_ARCH} is not defined"
+	if ! $SOURCEMODE && ! [ -f "${SRC_DIR}/etc/mtree/set.etc" ]; then
+		err 2 "Files from the etc.tgz set are missing"
+	fi
+
+		# If directories are /, clear them, so various messages
+		# don't have leading "//".   However, this requires
+		# the use of ${foo:-/} to display the variables.
+		#
+	[ "${SRC_DIR}" = "/" ]	&& SRC_DIR=""
+	[ "${DEST_DIR}" = "/" ]	&& DEST_DIR=""
+
+	detect_x11
+
+	op="$1"
+	shift
+
+	case "${op}" in
+	diff)
+		op=check
+		DIFF_STYLE=n			# default style is RCS
+		OPTIND=1
+		while getopts bcenpuw ch; do
+			case "${ch}" in
+			c|e|n|u)
+				if [ "${DIFF_STYLE}" != "n" -a \
+				    "${DIFF_STYLE}" != "${ch}" ]; then
+					err 2 "conflicting output style: ${ch}"
+				fi
+				DIFF_STYLE="${ch}"
+				;;
+			b|p|w)
+				DIFF_OPT="${DIFF_OPT} -${ch}"
+				;;
+			*)
+				err 2 "unknown diff option"
+				;;
+			esac
+		done
+		shift $((${OPTIND} - 1))
+		;;
+	esac
+
+	case "${op}" in
+
+	usage|help)
+		usage
+		;;
+
+	list)
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
+		if $TGZMODE; then
+			echo " (extracted from: ${SRC_ARG})"
+		fi
+		list
+		;;
+
+	check|fix)
+		todo="$*"
+		: ${todo:="${defaultitems}"}
+
+		# ensure that all supplied items are valid
+		#
+		for i in ${todo}; do
+			eval desc=\"\${desc_${i}}\"
+			[ -n "${desc}" ] || err 2 "Unsupported ${op} '"${i}"'"
+		done
+
+		# perform each check/fix
+		#
+		echo "Source directory: ${SRC_DIR:-/}"
+		if $TGZMODE; then
+			echo " (extracted from: ${SRC_ARG})"
+		fi
+		echo "Target directory: ${DEST_DIR:-/}"
+		items_passed=
+		items_failed=
+		for i in ${todo}; do
+			echo "${i} ${op}:"
+			( eval do_${i} ${op} )
+			if [ $? -eq 0 ]; then
+				items_passed="${items_passed} ${i}"
+			else
+				items_failed="${items_failed} ${i}"
+			fi
+		done
+
+		if [ "${op}" = "check" ]; then
+			plural="checks"
+		else
+			plural="fixes"
+		fi
+
+		echo "${PROGNAME} ${plural} passed:${items_passed}"
+		echo "${PROGNAME} ${plural} failed:${items_failed}"
+		if [ -n "${items_failed}" ]; then
+		    exitstatus=1;
+		    if [ "${op}" = "check" ]; then
+			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
+			cat <<_Fix_me_
+To fix, run:
+    ${HOST_SH} ${0} ${SRC_ARGLIST} ${XSRC_DIR_FIX}-d ${DEST_DIR:-/}$m fix${items_failed}
+Note that this may overwrite local changes.
+_Fix_me_
+		    fi
+		fi
+
+		;;
+
+	*)
+		warn "Unknown operation '"${op}"'"
+		usage
+		;;
+
+	esac
+}
+
+if [ -n "$POSTINSTALL_FUNCTION" ]; then
+	eval "$POSTINSTALL_FUNCTION"
+	exit 0
+fi
+
+# defaults
+#
+PROGNAME="${0##*/}"
+SRC_ARG="/usr/src"
+DEST_DIR="/"
+: ${MACHINE:="$( uname -m )"}	# assume native build if $MACHINE is not set
+: ${MACHINE_ARCH:="$( uname -p )"}# assume native build if not set
+
+DIFF_STYLE=
+NOT_FIXED=" (FIX MANUALLY)"
+SCRATCHDIR="$( mkdtemp )" || err 2 "Can't create scratch directory"
+trap "/bin/rm -rf \"\${SCRATCHDIR}\" ; exit 0" 1 2 3 15	# HUP INT QUIT TERM
+
+umask 022
+exec 3>/dev/null
+exec 4>/dev/null
+exitstatus=0
+
+main "$@"
+/bin/rm -rf "${SCRATCHDIR}"
+exit $exitstatus

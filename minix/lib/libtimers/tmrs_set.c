@@ -11,8 +11,7 @@
  * expiry time of the old head timer.  If 'new_head' is non-NULL, it is filled
  * with the absolute expiry time of the new head timer.
  */
-int
-tmrs_settimer(minix_timer_t ** tmrs, minix_timer_t * tp, clock_t exp_time,
+int tmrs_settimer(minix_timer_t ** tmrs, minix_timer_t * tp, clock_t exp_time,
 	tmr_func_t watchdog, int arg, clock_t * old_head, clock_t * new_head)
 {
 	minix_timer_t **atp;

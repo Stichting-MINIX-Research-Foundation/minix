@@ -3,8 +3,7 @@ int atoi(const char *);
 
 #define isnum(c) ((c) >= '0' && (c) <= '9')
 
-int
-atoi(const char *in)
+int atoi(const char *in)
 {
 	const char *c;
 	int ret;

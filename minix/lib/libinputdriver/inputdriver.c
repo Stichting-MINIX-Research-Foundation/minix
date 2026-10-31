@@ -17,8 +17,7 @@ static int running;
 /*
  * Announce that we are up after a fresh start or restart.
  */
-void
-inputdriver_announce(unsigned int type)
+void inputdriver_announce(unsigned int type)
 {
 	const char *driver_prefix = "drv.inp.";
 	char key[DS_MAX_KEYLEN];
@@ -39,8 +38,7 @@ inputdriver_announce(unsigned int type)
 /*
  * Send an event to the input server.
  */
-void
-inputdriver_send_event(int mouse, unsigned short page, unsigned short code,
+void inputdriver_send_event(int mouse, unsigned short page, unsigned short code,
 	int value, int flags)
 {
 	message m;
@@ -79,8 +77,7 @@ inputdriver_send_event(int mouse, unsigned short page, unsigned short code,
  * server crashes and recovers.  The configuration consists of device IDs for
  * use in keyboard and/or mouse events, one per each device type.
  */
-static void
-do_conf(message *m_ptr)
+static void do_conf(message *m_ptr)
 {
 	endpoint_t ep;
 	int r;
@@ -116,8 +113,7 @@ do_conf(message *m_ptr)
  * This approach was chosen over sending toggle events for the individual LEDs
  * for convenience reasons only.
  */
-static void
-do_setleds(struct inputdriver *idp, message *m_ptr)
+static void do_setleds(struct inputdriver *idp, message *m_ptr)
 {
 	unsigned int mask;
 
@@ -138,8 +134,7 @@ do_setleds(struct inputdriver *idp, message *m_ptr)
  * Call the appropriate driver function, based on the type of message.
  * All messages in the input protocol are one-way, so we never send a reply.
  */
-void
-inputdriver_process(struct inputdriver *idp, message *m_ptr, int ipc_status)
+void inputdriver_process(struct inputdriver *idp, message *m_ptr, int ipc_status)
 {
 	/* Check for notifications first. */
 	if (is_ipc_notify(ipc_status)) {
@@ -174,8 +169,7 @@ inputdriver_process(struct inputdriver *idp, message *m_ptr, int ipc_status)
 /*
  * Break out of the main loop after finishing the current request.
  */
-void
-inputdriver_terminate(void)
+void inputdriver_terminate(void)
 {
 	running = FALSE;
 
@@ -185,8 +179,7 @@ inputdriver_terminate(void)
 /*
  * Main program of any input driver task.
  */
-void
-inputdriver_task(struct inputdriver *idp)
+void inputdriver_task(struct inputdriver *idp)
 {
 	message m;
 	int r, ipc_status;

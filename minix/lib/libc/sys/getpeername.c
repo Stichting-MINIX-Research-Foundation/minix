@@ -28,8 +28,7 @@ static int _uds_getpeername(int sock, struct sockaddr *__restrict address,
 /*
  * Get the remote address of a socket.
  */
-static int
-__getpeername(int fd, struct sockaddr * __restrict address,
+static int __getpeername(int fd, struct sockaddr * __restrict address,
 	socklen_t * __restrict address_len)
 {
 	message m;

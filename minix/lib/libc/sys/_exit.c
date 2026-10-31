@@ -9,8 +9,7 @@
 __weak_alias(_Exit, _exit)
 #endif
 
-__dead void _exit(status)
-int status;
+__dead void _exit(int status)
 {
   void (*suicide)(void);
   message m;

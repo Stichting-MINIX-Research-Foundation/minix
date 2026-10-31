@@ -5,8 +5,7 @@
 #include <string.h>
 #include <signal.h>
 
-int sigsuspend(set)
-const sigset_t *set;
+int sigsuspend(const sigset_t *set)
 {
   message m;
 

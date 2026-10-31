@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_send_ioctl.3,v 1.9 2015/08/20 15:55:09 phx Exp $
+.\"	$NetBSD: prop_send_ioctl.3,v 1.10 2017/02/12 16:00:53 abhinav Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,12 +54,12 @@
     "unsigned long cmd" "prop_dictionary_t *dictp"
 .Sh DESCRIPTION
 The
-.Nm prop_array_send_ioctl ,
-.Nm prop_array_recv_ioctl ,
-.Nm prop_dictionary_send_ioctl ,
-.Nm prop_dictionary_recv_ioctl ,
+.Fn prop_array_send_ioctl ,
+.Fn prop_array_recv_ioctl ,
+.Fn prop_dictionary_send_ioctl ,
+.Fn prop_dictionary_recv_ioctl ,
 and
-.Nm prop_dictionary_sendrecv_ioctl
+.Fn prop_dictionary_sendrecv_ioctl
 functions implement the user space side of a protocol for sending property
 lists to and from the kernel using
 .Xr ioctl 2 .
@@ -109,7 +109,7 @@ foo_getprops(void)
 .Ed
 .Pp
 The
-.Nm prop_dictionary_sendrecv_ioctl
+.Fn prop_dictionary_sendrecv_ioctl
 function combines the send and receive functionality, allowing for
 ioctls that require two-way communication
 .Pq for example to specify arguments for the ioctl operation .
@@ -146,6 +146,6 @@ errors may be returned.
 .Xr prop_copyin_ioctl 9
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

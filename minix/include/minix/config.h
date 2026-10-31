@@ -4,7 +4,7 @@
 /* Minix release and version numbers. */
 #define OS_NAME "Minix"
 #define OS_RELEASE "3.4.0"	/* 3.m.p */
-#define OS_REV 304000000	/* see NetBSD sys/param.h: 3mm00pp00 */
+#define OS_REV 304000100	/* see NetBSD sys/param.h: 3mm00pp00 */
 #define OS_CONFIG "GENERIC"
 #define OS_VERSION OS_NAME " " OS_RELEASE " (" OS_CONFIG ")"
 
@@ -76,6 +76,14 @@
 /* defualt user process cpu */
 #define USER_DEFAULT_CPU	-1 /* use the default cpu or do not change the
 				      current one */
+
+/* How much a pipe holds.  This is not PIPE_BUF, which is the largest write
+ * the system promises to do in one piece and is fixed by <limits.h>: it is
+ * how much a pipe can hold in total, and it has to be a multiple of
+ * PIPE_BUF so that "is there room for an atomic write" is a question with
+ * more than one answer.  PFS allocates this much per open pipe.
+ */
+#define PIPE_SIZE	  4096	/* pipe capacity in bytes (n * PIPE_BUF) */
 
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *

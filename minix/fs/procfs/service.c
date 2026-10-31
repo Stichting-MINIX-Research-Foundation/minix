@@ -191,8 +191,7 @@ service_get_flags(index_t slot)
  * to ensure that after eliminating all slots that do not pass this check, we
  * are left with a set of live services each with a unique label.
  */
-static int
-service_active(index_t slot)
+static int service_active(index_t slot)
 {
 
 	/*
@@ -208,8 +207,7 @@ service_active(index_t slot)
  * Update the contents of the service directory, by first updating the RS
  * tables and then updating the directory contents.
  */
-static void
-service_update(void)
+static void service_update(void)
 {
 	struct inode *node;
 	struct inode_stat stat;
@@ -253,7 +251,7 @@ service_update(void)
 			continue;
 
 		node = add_inode(service_node, rproc.pub[slot].label, slot,
-		    &stat, (index_t)0, (cbdata_t)slot);
+		    &stat, (index_t)0, (cbdata_t)(uintptr_t)slot);
 
 		if (node == NULL)
 			out_of_inodes();
@@ -263,8 +261,7 @@ service_update(void)
 /*
  * Initialize the service directory.
  */
-void
-service_init(void)
+void service_init(void)
 {
 	struct inode *root, *node;
 	struct inode_stat stat;
@@ -287,8 +284,7 @@ service_init(void)
  * A lookup request is being performed.  If it is in the service directory,
  * update the tables.  We do this lazily, to reduce overhead.
  */
-void
-service_lookup(struct inode * parent, clock_t now)
+void service_lookup(struct inode * parent, clock_t now)
 {
 	static clock_t last_update = 0;
 
@@ -306,8 +302,7 @@ service_lookup(struct inode * parent, clock_t now)
  * A getdents request is being performed.  If it is in the service directory,
  * update the tables.
  */
-void
-service_getdents(struct inode * node)
+void service_getdents(struct inode * node)
 {
 
 	if (node != service_node)
@@ -322,8 +317,7 @@ service_getdents(struct inode * node)
  * call will have been preceded by a lookup, so its table entry has been
  * updated very recently.
  */
-void
-service_read(struct inode * node)
+void service_read(struct inode * node)
 {
 	struct inode *parent;
 	index_t slot;

@@ -63,8 +63,7 @@
  *
  ***************************************************************************/
 
-void
-AcpiDsScopeStackClear (
+void AcpiDsScopeStackClear (
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_GENERIC_STATE      *ScopeInfo;

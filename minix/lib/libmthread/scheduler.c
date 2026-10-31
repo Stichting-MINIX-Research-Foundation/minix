@@ -12,8 +12,7 @@ static int yield_all;
 /*===========================================================================*
  *				mthread_getcontext			     *
  *===========================================================================*/
-int mthread_getcontext(ctx)
-ucontext_t *ctx;
+int mthread_getcontext(ucontext_t *ctx)
 {
 /* Retrieve this process' current state.*/
 
@@ -90,8 +89,7 @@ void mthread_init_scheduler(void)
 /*===========================================================================*
  *				mthread_suspend				     *
  *===========================================================================*/
-void mthread_suspend(state)
-mthread_state_t state;
+void mthread_suspend(mthread_state_t state)
 {
 /* Stop the current thread from running. There can be multiple reasons for
  * this; the process tries to lock a locked mutex (i.e., has to wait for it to
@@ -100,7 +98,7 @@ mthread_state_t state;
  * runnable itself), or the thread is dead.
  */
 
-  int continue_thread = 0;
+  volatile int continue_thread;
   mthread_tcb_t *tcb;
   ucontext_t *ctx;
 
@@ -110,12 +108,13 @@ mthread_state_t state;
   ctx = &(tcb->m_context);
 
   /* Save current thread's context */
+  continue_thread = 0;
   if (mthread_getcontext(ctx) != 0)
 	mthread_panic("Couldn't save current thread's context");
-  
+
   /* We return execution here with setcontext/swapcontext, but also when we
    * simply return from the getcontext call. If continue_thread is non-zero, we
-   * are continuing the execution of this thread after a call from setcontext 
+   * are continuing the execution of this thread after a call from setcontext
    * or swapcontext.
    */
 
@@ -123,14 +122,17 @@ mthread_state_t state;
   	continue_thread = 1;
 	mthread_schedule(); /* Let other thread run. */
   }
+  /* This volatile read forces GCC to use call+ret (not jmp) for the
+   * mthread_schedule() call above, keeping this stack frame alive so that
+   * when setcontext resumes us here, continue_thread still reads 1. */
+  (void) continue_thread;
 }
 
 
 /*===========================================================================*
  *				mthread_unsuspend			     *
  *===========================================================================*/
-void mthread_unsuspend(thread)
-mthread_thread_t thread; /* Thread to make runnable */
+void mthread_unsuspend(mthread_thread_t thread)
 {
 /* Mark the state of a thread runnable and add it to the run queue */
   mthread_tcb_t *tcb;

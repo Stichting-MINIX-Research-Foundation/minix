@@ -1,0 +1,25 @@
+#	$NetBSD: Makefile.liveimage,v 1.2 2018/12/15 18:03:17 gson Exp $
+
+.include <bsd.own.mk>
+
+KERN_SET=		minix-kernel
+#MBR_BOOTCODE=	mbr_gpt
+#PRIMARY_BOOT=		bootxx_minixfs3
+SECONDARY_BOOT=		boot_monitor
+#SECONDARY_BOOT_ARG=	# unnecessary
+EFIBOOT=		${WORKDIR}/usr/mdec/bootia32.efi
+
+USE_MBR=		yes
+USE_GPT=		yes
+USE_GPTMBR=		no
+EFIMB=			64
+SWAPMB= 		0
+LIVEIMAGEMB=	2048
+
+# for using grub as efiboot
+USE_GRUB=		no
+GRUBDIR=		${NETBSDSRCDIR}/external/gpl3/grub/dist/grub-core
+
+FSTAB_IN=	${.CURDIR}/fstab.in
+
+.include "${.CURDIR}/../../../common/bootimage/Makefile.liveimage"

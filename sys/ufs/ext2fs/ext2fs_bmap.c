@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Ex
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *,
-				struct indir *, int *, int *);
+
+static int ext4_bmapext(struct vnode *, int32_t, int64_t *, int *, int *);
+static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
+    int *, int *);
 
 #define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 
@@ -104,6 +106,7 @@ ext2fs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
+
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -111,11 +114,76 @@ ext2fs_bmap(void *v)
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = VTOI(ap->a_vp)->i_devvp;
 	if (ap->a_bnp == NULL)
-		return (0);
+		return 0;
 
-	return (ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
-		ap->a_runp));
+	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & EXT2_EXTENTS)
+		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
+		    ap->a_runp, NULL);
+	else
+		return ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL,
+		    NULL, ap->a_runp);
 }
+
+/*
+ * Convert the logical block number of a file to its physical block number
+ * on the disk within ext4 extents.
+ */
+static int
+ext4_bmapext(struct vnode *vp, int32_t bn, int64_t *bnp, int *runp, int *runb)
+{	
+	struct inode *ip;
+	struct m_ext2fs	 *fs;
+	struct ext4_extent *ep;
+	struct ext4_extent_path path = { .ep_bp = NULL };
+	daddr_t lbn;
+	int error = 0;
+
+	ip = VTOI(vp);
+	fs = ip->i_e2fs;
+	lbn = bn;
+
+	/* XXX: Should not initialize on error? */
+	if (runp != NULL)
+		*runp = 0;
+
+	if (runb != NULL)
+		*runb = 0;
+
+	ext4_ext_find_extent(fs, ip, lbn, &path);
+	if (path.ep_is_sparse) {
+		*bnp = -1;
+		if (runp != NULL)
+			*runp = path.ep_sparse_ext.e_len -
+			    (lbn - path.ep_sparse_ext.e_blk) - 1;
+		if (runb != NULL)
+			*runb = lbn - path.ep_sparse_ext.e_blk;
+	} else {
+		if (path.ep_ext == NULL) {
+			error = EIO;
+			goto out;
+		}
+		ep = path.ep_ext;
+		*bnp = fsbtodb(fs, lbn - ep->e_blk
+		    + (ep->e_start_lo | (daddr_t)ep->e_start_hi << 32));
+
+		if (*bnp == 0)
+			*bnp = -1;
+
+		if (runp != NULL)
+			*runp = ep->e_len - (lbn - ep->e_blk) - 1;
+		if (runb != NULL)
+			*runb = lbn - ep->e_blk;
+	}
+
+out:
+	if (path.ep_bp != NULL) {
+		brelse(path.ep_bp, 0);
+	}
+
+	return error;
+}
+
+
 
 /*
  * Indirect blocks are now on the vnode for the file.  They are given negative
@@ -174,14 +242,14 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				is_sequential(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn - 1]),
 							  (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
-		return (0);
+		return 0;
 	}
 
 	xap = ap == NULL ? a : ap;
 	if (!nump)
 		nump = &num;
 	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
+		return error;
 
 	num = *nump;
 
@@ -229,7 +297,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			 * for detail.
 			 */
 
-			 return (ENOMEM);
+			 return ENOMEM;
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
@@ -246,7 +314,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			curlwp->l_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp, 0);
-				return (error);
+				return error;
 			}
 		}
 
@@ -265,5 +333,5 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 	daddr = blkptrtodb(ump, daddr);
 	*bnp = daddr == 0 ? -1 : daddr;
-	return (0);
+	return 0;
 }

@@ -184,8 +184,7 @@ static int openct[NR_DEVS];
 /* base and size of each device */
 static struct device geom[NR_DEVS];
 
-static int
-tda19988_blk_open(devminor_t minor, int access)
+static int tda19988_blk_open(devminor_t minor, int access)
 {
 	log_trace(&log, "tda19988_blk_open(%d,%d)\n", minor, access);
 	if (tda19988_blk_part(minor) == NULL) {
@@ -197,8 +196,7 @@ tda19988_blk_open(devminor_t minor, int access)
 	return OK;
 }
 
-static int
-tda19988_blk_close(devminor_t minor)
+static int tda19988_blk_close(devminor_t minor)
 {
 	log_trace(&log, "tda19988_blk_close(%d)\n", minor);
 	if (tda19988_blk_part(minor) == NULL) {
@@ -214,8 +212,7 @@ tda19988_blk_close(devminor_t minor)
 	return OK;
 }
 
-static ssize_t
-tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
+static ssize_t tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
     endpoint_t endpt, iovec_t * iov, unsigned int nr_req, int flags)
 {
 	unsigned count;
@@ -308,8 +305,7 @@ tda19988_blk_transfer(devminor_t minor, int do_write, u64_t pos64,
 	}
 }
 
-static int
-tda19988_blk_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int tda19988_blk_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	log_trace(&log, "tda19988_blk_ioctl(%d)\n", minor);
@@ -329,8 +325,7 @@ tda19988_blk_part(devminor_t minor)
 	return &geom[minor];
 }
 
-static void
-tda19988_blk_other(message * m, int ipc_status)
+static void tda19988_blk_other(message * m, int ipc_status)
 {
 	log_trace(&log, "tda19988_blk_other(0x%x)\n", m->m_type);
 
@@ -352,8 +347,7 @@ tda19988_blk_other(message * m, int ipc_status)
  * Check to see if a display is connected.
  * Returns 1 for yes, 0 for no, -1 for error.
  */
-static int
-is_display_connected(void)
+static int is_display_connected(void)
 {
 	int r;
 	uint8_t val;
@@ -376,8 +370,7 @@ is_display_connected(void)
 /*
  * Enable all the modules and clocks.
  */
-static int
-enable_hdmi_module(void)
+static int enable_hdmi_module(void)
 {
 	int r;
 
@@ -393,8 +386,7 @@ enable_hdmi_module(void)
 	return OK;
 }
 
-static int
-set_page(uint8_t page)
+static int set_page(uint8_t page)
 {
 	int r;
 	static int current_page = HDMI_PAGELESS;
@@ -413,8 +405,7 @@ set_page(uint8_t page)
 	return OK;
 }
 
-static int
-hdmi_read_block(uint8_t page, uint8_t reg, uint8_t * buf, size_t buflen)
+static int hdmi_read_block(uint8_t page, uint8_t reg, uint8_t * buf, size_t buflen)
 {
 
 	int r;
@@ -461,8 +452,7 @@ hdmi_read_block(uint8_t page, uint8_t reg, uint8_t * buf, size_t buflen)
 	return OK;
 }
 
-static int
-hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
+static int hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
 {
 
 	int r;
@@ -492,8 +482,7 @@ hdmi_read(uint8_t page, uint8_t reg, uint8_t * val)
 	return OK;
 }
 
-static int
-hdmi_write(uint8_t page, uint8_t reg, uint8_t val)
+static int hdmi_write(uint8_t page, uint8_t reg, uint8_t val)
 {
 	int r;
 
@@ -517,8 +506,7 @@ hdmi_write(uint8_t page, uint8_t reg, uint8_t val)
 	return OK;
 }
 
-static int
-hdmi_set(uint8_t page, uint8_t reg, uint8_t mask)
+static int hdmi_set(uint8_t page, uint8_t reg, uint8_t mask)
 {
 
 	int r;
@@ -541,8 +529,7 @@ hdmi_set(uint8_t page, uint8_t reg, uint8_t mask)
 	return OK;
 }
 
-static int
-hdmi_clear(uint8_t page, uint8_t reg, uint8_t mask)
+static int hdmi_clear(uint8_t page, uint8_t reg, uint8_t mask)
 {
 
 	int r;
@@ -565,8 +552,7 @@ hdmi_clear(uint8_t page, uint8_t reg, uint8_t mask)
 	return OK;
 }
 
-static int
-check_revision(void)
+static int check_revision(void)
 {
 	int r;
 	uint8_t rev_lo;
@@ -599,8 +585,7 @@ check_revision(void)
 	return OK;
 }
 
-static int
-hdmi_ddc_enable(void)
+static int hdmi_ddc_enable(void)
 {
 	int r;
 
@@ -642,8 +627,7 @@ hdmi_ddc_enable(void)
 	return OK;
 }
 
-static int
-hdmi_init(void)
+static int hdmi_init(void)
 {
 	int r;
 
@@ -671,8 +655,7 @@ hdmi_init(void)
 	return OK;
 }
 
-static int
-read_edid(uint8_t * buf, size_t count)
+static int read_edid(uint8_t * buf, size_t count)
 {
 	int r;
 	int i, j;
@@ -815,8 +798,7 @@ read_edid(uint8_t * buf, size_t count)
 	return OK;
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("cec_bus", cec_bus, DSF_OVERWRITE);
 	ds_publish_u32("hdmi_bus", hdmi_bus, DSF_OVERWRITE);
@@ -825,8 +807,7 @@ sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -850,8 +831,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -929,8 +909,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -948,8 +927,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-static int
-tda19988_env_parse()
+static int tda19988_env_parse()
 {
 	int r;
 	long int cec_busl;
@@ -984,8 +962,7 @@ tda19988_env_parse()
 	return OK;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

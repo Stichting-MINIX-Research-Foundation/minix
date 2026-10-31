@@ -80,8 +80,7 @@ static u8_t v1_enabled = 1;
 static u8_t v2c_enabled = 1;
 static u8_t v3_enabled = 1;
 
-static u8_t
-snmp_version_enabled(u8_t version)
+static u8_t snmp_version_enabled(u8_t version)
 {
   LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
@@ -102,26 +101,22 @@ snmp_version_enabled(u8_t version)
 #endif
 }
 
-u8_t
-snmp_v1_enabled(void)
+u8_t snmp_v1_enabled(void)
 {
   return snmp_version_enabled(SNMP_VERSION_1);
 }
 
-u8_t
-snmp_v2c_enabled(void)
+u8_t snmp_v2c_enabled(void)
 {
   return snmp_version_enabled(SNMP_VERSION_2c);
 }
 
-u8_t
-snmp_v3_enabled(void)
+u8_t snmp_v3_enabled(void)
 {
   return snmp_version_enabled(SNMP_VERSION_3);
 }
 
-static void
-snmp_version_enable(u8_t version, u8_t enable)
+static void snmp_version_enable(u8_t version, u8_t enable)
 {
   LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
@@ -142,20 +137,17 @@ snmp_version_enable(u8_t version, u8_t enable)
 #endif
 }
 
-void
-snmp_v1_enable(u8_t enable)
+void snmp_v1_enable(u8_t enable)
 {
   snmp_version_enable(SNMP_VERSION_1, enable);
 }
 
-void
-snmp_v2c_enable(u8_t enable)
+void snmp_v2c_enable(u8_t enable)
 {
   snmp_version_enable(SNMP_VERSION_2c, enable);
 }
 
-void
-snmp_v3_enable(u8_t enable)
+void snmp_v3_enable(u8_t enable)
 {
   snmp_version_enable(SNMP_VERSION_3, enable);
 }
@@ -181,8 +173,7 @@ snmp_get_community(void)
  *
  * @param community is a pointer to new community string
  */
-void
-snmp_set_community(const char * const community)
+void snmp_set_community(const char * const community)
 {
   LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_MAX_COMMUNITY_STR_LEN);
   snmp_community = community;
@@ -218,8 +209,7 @@ snmp_get_community_trap(void)
  *
  * @param community is a pointer to new write-access community string
  */
-void
-snmp_set_community_write(const char * const community)
+void snmp_set_community_write(const char * const community)
 {
   LWIP_ASSERT("community string must not be NULL", community != NULL);
   LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_MAX_COMMUNITY_STR_LEN);
@@ -234,8 +224,7 @@ snmp_set_community_write(const char * const community)
  *
  * @param community is a pointer to new trap community string
  */
-void
-snmp_set_community_trap(const char * const community)
+void snmp_set_community_trap(const char * const community)
 {
   LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_MAX_COMMUNITY_STR_LEN);
   snmp_community_trap = community;
@@ -245,8 +234,7 @@ snmp_set_community_trap(const char * const community)
  * @ingroup snmp_core
  * Callback fired on every successful write access
  */
-void 
-snmp_set_write_callback(snmp_write_callback_fct write_callback, void* callback_arg)
+void snmp_set_write_callback(snmp_write_callback_fct write_callback, void* callback_arg)
 {
   snmp_write_callback     = write_callback;
   snmp_write_callback_arg = callback_arg;
@@ -271,8 +259,7 @@ static void snmp_execute_write_callbacks(struct snmp_request *request);
 /* implementation */
 /* ----------------------------------------------------------------------- */
 
-void
-snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port)
+void snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port)
 {
   err_t err;
   struct snmp_request request;
@@ -391,8 +378,7 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
   }
 }
 
-static u8_t
-snmp_msg_getnext_validate_node_inst(struct snmp_node_instance* node_instance, void* validate_arg)
+static u8_t snmp_msg_getnext_validate_node_inst(struct snmp_node_instance* node_instance, void* validate_arg)
 {
   if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != SNMP_NODE_INSTANCE_ACCESS_READ) || (node_instance->get_value == NULL)) {
     return SNMP_ERR_NOSUCHINSTANCE;
@@ -406,8 +392,7 @@ snmp_msg_getnext_validate_node_inst(struct snmp_node_instance* node_instance, vo
   return SNMP_ERR_NOERROR;
 }
 
-static void 
-snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t get_next)
+static void snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t get_next)
 {
   err_t err;
   struct snmp_node_instance node_instance;
@@ -1836,8 +1821,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
   return ERR_OK;
 }
 
-static void 
-snmp_execute_write_callbacks(struct snmp_request *request)
+static void snmp_execute_write_callbacks(struct snmp_request *request)
 {
   struct snmp_varbind_enumerator inbound_varbind_enumerator;
   struct snmp_varbind vb;
@@ -1855,8 +1839,7 @@ snmp_execute_write_callbacks(struct snmp_request *request)
 /* VarBind enumerator methods */
 /* ----------------------------------------------------------------------- */
 
-void
-snmp_vb_enumerator_init(struct snmp_varbind_enumerator* enumerator, struct pbuf* p, u16_t offset, u16_t length)
+void snmp_vb_enumerator_init(struct snmp_varbind_enumerator* enumerator, struct pbuf* p, u16_t offset, u16_t length)
 {
   snmp_pbuf_stream_init(&(enumerator->pbuf_stream), p, offset, length);
   enumerator->varbind_count = 0;

@@ -164,7 +164,7 @@ static void action_pre_error(struct fbd_rule *rule, iovec_t *iov,
  *				action_post_error			     *
  *===========================================================================*/
 static void action_post_error(struct fbd_rule *rule, size_t UNUSED(osize),
-	int *result)
+	ssize_t *result)
 {
 	/* Upon success of the first part, return the specified error code. */
 	if (*result >= 0 && rule->params.error.code != OK)
@@ -214,7 +214,7 @@ static void action_pre_losttorn(struct fbd_rule *rule, iovec_t *iov,
  *				action_post_losttorn			     *
  *===========================================================================*/
 static void action_post_losttorn(struct fbd_rule *UNUSED(rule), size_t osize,
-	int *result)
+	ssize_t *result)
 {
 	/* On success, pretend full completion. */
 
@@ -284,7 +284,7 @@ void action_io_hook(struct fbd_rule *rule, char *buf, size_t size,
 /*===========================================================================*
  *				action_post_hook			     *
  *===========================================================================*/
-void action_post_hook(struct fbd_rule *rule, size_t osize, int *result)
+void action_post_hook(struct fbd_rule *rule, size_t osize, ssize_t *result)
 {
 	switch (rule->action) {
 	case FBD_ACTION_ERROR:

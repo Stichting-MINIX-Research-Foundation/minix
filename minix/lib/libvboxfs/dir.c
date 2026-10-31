@@ -46,8 +46,7 @@ typedef struct {
 /*
  * Free the memory allocated for the given directory contents storage.
  */
-static void
-free_dir(vboxfs_dirdata_t *dirdata)
+static void free_dir(vboxfs_dirdata_t *dirdata)
 {
 	vboxfs_dirblock_t *block;
 
@@ -66,8 +65,7 @@ free_dir(vboxfs_dirdata_t *dirdata)
  * Read all the contents of the given directory, allocating memory as needed to
  * store the data.
  */
-static int
-read_dir(vboxfs_handle_t handle, sffs_dir_t *dirp)
+static int read_dir(vboxfs_handle_t handle, sffs_dir_t *dirp)
 {
 	vboxfs_dirdata_t *dirdata;
 	vboxfs_dirblock_t *block;
@@ -142,8 +140,7 @@ read_dir(vboxfs_handle_t handle, sffs_dir_t *dirp)
 /*
  * Open a directory.
  */
-int
-vboxfs_opendir(const char *path, sffs_dir_t *handle)
+int vboxfs_opendir(const char *path, sffs_dir_t *handle)
 {
 	vboxfs_handle_t h;
 	int r;
@@ -170,8 +167,7 @@ vboxfs_opendir(const char *path, sffs_dir_t *handle)
  * exceeds size, return ENAMETOOLONG.  Do not return dot and dot-dot entries.
  * Return ENOENT if the index exceeds the number of files.
  */
-int
-vboxfs_readdir(sffs_dir_t handle, unsigned int index, char *buf, size_t size,
+int vboxfs_readdir(sffs_dir_t handle, unsigned int index, char *buf, size_t size,
 	struct sffs_attr *attr)
 {
 	vboxfs_dirdata_t *dirdata;
@@ -232,8 +228,7 @@ vboxfs_readdir(sffs_dir_t handle, unsigned int index, char *buf, size_t size,
 /*
  * Close a directory.
  */
-int
-vboxfs_closedir(sffs_dir_t handle)
+int vboxfs_closedir(sffs_dir_t handle)
 {
 	vboxfs_dirdata_t *dirdata;
 

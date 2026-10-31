@@ -166,6 +166,17 @@ apic_hwint(61)
 apic_hwint(62)
 apic_hwint(63)
 
+/*
+ * Align the start label to the handler stride.  Each LAPIC_INTR_DUMMY_HANDLER
+ * does its own .balign LAPIC_INTR_DUMMY_HANDLER_SIZE, so without this the
+ * 'start' label lands a few bytes before handler 0.  lapic_set_dummy_handlers()
+ * computes handler positions as start + vect*SIZE and bounds the loop by
+ * '< lapic_intr_dummy_handles_end'; if start is misaligned the loop runs one
+ * extra iteration, writing idt[256] (one past the 256-entry IDT) and
+ * corrupting the adjacent k_percpu_stacks[0] -- which the SYSCALL fast-path
+ * loads as the kernel stack pointer, faulting on the first user SYSCALL.
+ */
+.balign LAPIC_INTR_DUMMY_HANDLER_SIZE
 LABEL(lapic_intr_dummy_handles_start)
 	LAPIC_INTR_DUMMY_HANDLER(0)
 	LAPIC_INTR_DUMMY_HANDLER(1)

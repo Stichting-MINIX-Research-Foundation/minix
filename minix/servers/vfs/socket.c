@@ -40,8 +40,7 @@
 /*
  * Convert any SOCK_xx open flags to O_xx open flags.
  */
-static int
-get_sock_flags(int type)
+static int get_sock_flags(int type)
 {
 	int flags;
 
@@ -60,8 +59,7 @@ get_sock_flags(int type)
  * Perform cheap pre-call checks to ensure that the given number of socket FDs
  * can be created for the current process.
  */
-static int
-check_sock_fds(int nfds)
+static int check_sock_fds(int nfds)
 {
 
 	/*
@@ -82,8 +80,7 @@ check_sock_fds(int nfds)
  * the socket itself.  On failure, return a negative error code.  In this case,
  * the socket will be left open.
  */
-static int
-make_sock_fd(dev_t dev, int flags)
+static int make_sock_fd(dev_t dev, int flags)
 {
 	struct vmnt *vmp;
 	struct vnode *vp;
@@ -172,8 +169,7 @@ make_sock_fd(dev_t dev, int flags)
 /*
  * Create a socket.
  */
-int
-do_socket(void)
+int do_socket(void)
 {
 	int domain, type, sock_type, protocol;
 	dev_t dev;
@@ -220,8 +216,7 @@ do_socket(void)
 /*
  * Create a pair of connected sockets.
  */
-int
-do_socketpair(void)
+int do_socketpair(void)
 {
 	int domain, type, sock_type, protocol;
 	dev_t dev[2];
@@ -272,8 +267,7 @@ do_socketpair(void)
  * 'dev' and its file pointer flags stored in 'flags' (if not NULL).  If not,
  * return an appropriate error code.
  */
-static int
-get_sock(int fd, dev_t * dev, int * flags)
+static int get_sock(int fd, dev_t * dev, int * flags)
 {
 	struct filp *filp;
 
@@ -304,8 +298,7 @@ get_sock(int fd, dev_t * dev, int * flags)
 /*
  * Bind a socket to a local address.
  */
-int
-do_bind(void)
+int do_bind(void)
 {
 	dev_t dev;
 	int r, fd, flags;
@@ -322,8 +315,7 @@ do_bind(void)
 /*
  * Connect a socket to a remote address.
  */
-int
-do_connect(void)
+int do_connect(void)
 {
 	dev_t dev;
 	int r, fd, flags;
@@ -340,8 +332,7 @@ do_connect(void)
 /*
  * Put a socket in listening mode.
  */
-int
-do_listen(void)
+int do_listen(void)
 {
 	dev_t dev;
 	int r, fd, backlog;
@@ -361,8 +352,7 @@ do_listen(void)
 /*
  * Accept a connection on a listening socket, creating a new socket.
  */
-int
-do_accept(void)
+int do_accept(void)
 {
 	dev_t dev;
 	int r, fd, flags;
@@ -395,8 +385,7 @@ do_accept(void)
  *     the accept call has failed and no new socket was ever created.  In this
  *     case, the function MUST NOT block its calling thread.
  */
-void
-resume_accept(struct fproc * rfp, int status, dev_t dev, unsigned int addr_len,
+void resume_accept(struct fproc * rfp, int status, dev_t dev, unsigned int addr_len,
 	int listen_fd)
 {
 	message m;
@@ -479,8 +468,7 @@ resume_accept(struct fproc * rfp, int status, dev_t dev, unsigned int addr_len,
 /*
  * Send a message on a socket.
  */
-int
-do_sendto(void)
+int do_sendto(void)
 {
 	dev_t dev;
 	int r, fd, flags;
@@ -500,8 +488,7 @@ do_sendto(void)
 /*
  * Receive a message from a socket.
  */
-int
-do_recvfrom(void)
+int do_recvfrom(void)
 {
 	dev_t dev;
 	int r, fd, flags;
@@ -522,8 +509,7 @@ do_recvfrom(void)
  * Resume a previously suspended recvfrom(2) system call.  This function MUST
  * NOT block its calling thread.
  */
-void
-resume_recvfrom(struct fproc * rfp, int status, unsigned int addr_len)
+void resume_recvfrom(struct fproc * rfp, int status, unsigned int addr_len)
 {
 	message m;
 
@@ -539,8 +525,7 @@ resume_recvfrom(struct fproc * rfp, int status, unsigned int addr_len)
 /*
  * Send or receive a message on a socket using a message structure.
  */
-int
-do_sockmsg(void)
+int do_sockmsg(void)
 {
 	struct msghdr msg;
 	struct iovec iov;
@@ -604,8 +589,7 @@ do_sockmsg(void)
  * extremely hard to deal with, and on par with current behavior in other
  * operating systems.  This function MUST NOT block its calling thread.
  */
-void
-resume_recvmsg(struct fproc * rfp, int status, unsigned int ctl_len,
+void resume_recvmsg(struct fproc * rfp, int status, unsigned int ctl_len,
 	unsigned int addr_len, int flags, vir_bytes msg_buf)
 {
 	struct msghdr msg;
@@ -653,8 +637,7 @@ resume_recvmsg(struct fproc * rfp, int status, unsigned int ctl_len,
 /*
  * Set socket options.
  */
-int
-do_setsockopt(void)
+int do_setsockopt(void)
 {
 	dev_t dev;
 	int r, fd;
@@ -672,8 +655,7 @@ do_setsockopt(void)
 /*
  * Get socket options.
  */
-int
-do_getsockopt(void)
+int do_getsockopt(void)
 {
 	unsigned int len;
 	dev_t dev;
@@ -697,8 +679,7 @@ do_getsockopt(void)
 /*
  * Get the local address of a socket.
  */
-int
-do_getsockname(void)
+int do_getsockname(void)
 {
 	unsigned int len;
 	dev_t dev;
@@ -720,8 +701,7 @@ do_getsockname(void)
 /*
  * Get the remote address of a socket.
  */
-int
-do_getpeername(void)
+int do_getpeername(void)
 {
 	unsigned int len;
 	dev_t dev;
@@ -743,8 +723,7 @@ do_getpeername(void)
 /*
  * Shut down socket send and receive operations.
  */
-int
-do_shutdown(void)
+int do_shutdown(void)
 {
 	dev_t dev;
 	int r, fd, how;

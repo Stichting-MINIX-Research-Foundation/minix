@@ -65,8 +65,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiTbInitTableDescriptor (
+void AcpiTbInitTableDescriptor (
     ACPI_TABLE_DESC         *TableDesc,
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT8                   Flags,
@@ -159,8 +158,7 @@ AcpiTbAcquireTable (
  *
  ******************************************************************************/
 
-void
-AcpiTbReleaseTable (
+void AcpiTbReleaseTable (
     ACPI_TABLE_HEADER       *Table,
     UINT32                  TableLength,
     UINT8                   TableFlags)
@@ -259,8 +257,7 @@ AcpiTbAcquireTempTable (
  *
  *****************************************************************************/
 
-void
-AcpiTbReleaseTempTable (
+void AcpiTbReleaseTempTable (
     ACPI_TABLE_DESC         *TableDesc)
 {
 
@@ -325,8 +322,7 @@ AcpiTbValidateTable (
  *
  ******************************************************************************/
 
-void
-AcpiTbInvalidateTable (
+void AcpiTbInvalidateTable (
     ACPI_TABLE_DESC         *TableDesc)
 {
 
@@ -576,8 +572,7 @@ AcpiTbGetNextRootIndex (
  *
  ******************************************************************************/
 
-void
-AcpiTbTerminate (
+void AcpiTbTerminate (
     void)
 {
     UINT32                  i;
@@ -828,8 +823,7 @@ AcpiTbIsTableLoaded (
  *
  ******************************************************************************/
 
-void
-AcpiTbSetTableLoadedFlag (
+void AcpiTbSetTableLoadedFlag (
     UINT32                  TableIndex,
     BOOLEAN                 IsLoaded)
 {

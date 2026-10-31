@@ -81,8 +81,7 @@ static struct rmib_node net_inet6_ip6_node =
 /*
  * Initialize the IP sockets module.
  */
-void
-ipsock_init(void)
+void ipsock_init(void)
 {
 
 	/*
@@ -99,8 +98,7 @@ ipsock_init(void)
 /*
  * Return the lwIP IP address type (IPADDR_TYPE_) for the given IP socket.
  */
-static int
-ipsock_get_type(struct ipsock * ip)
+static int ipsock_get_type(struct ipsock * ip)
 {
 
 	if (!(ip->ip_flags & IPF_IPV6))
@@ -119,8 +117,7 @@ ipsock_get_type(struct ipsock * ip)
  * form, as socket creation may still fail later, in which case no destruction
  * function is called.
  */
-int
-ipsock_socket(struct ipsock * ip, int domain, size_t sndbuf, size_t rcvbuf,
+int ipsock_socket(struct ipsock * ip, int domain, size_t sndbuf, size_t rcvbuf,
 	struct sock ** sockp)
 {
 
@@ -146,8 +143,7 @@ ipsock_socket(struct ipsock * ip, int domain, size_t sndbuf, size_t rcvbuf,
  * socket.  Cloning is used for new TCP connections arriving on listening TCP
  * sockets.  This function must not fail.
  */
-void
-ipsock_clone(struct ipsock * ip, struct ipsock * newip, sockid_t newid)
+void ipsock_clone(struct ipsock * ip, struct ipsock * newip, sockid_t newid)
 {
 
 	sockevent_clone(&ip->ip_sock, &newip->ip_sock, newid);
@@ -163,8 +159,7 @@ ipsock_clone(struct ipsock * ip, struct ipsock * newip, sockid_t newid)
  * the socket is IPv4, IPv6, or mixed.  The generated address, stored in
  * 'ipaddr', will have the same type as returned from the ipsock_socket() call.
  */
-void
-ipsock_get_any_addr(struct ipsock * ip, ip_addr_t * ipaddr)
+void ipsock_get_any_addr(struct ipsock * ip, ip_addr_t * ipaddr)
 {
 
 	ip_addr_set_any(ipsock_is_ipv6(ip), ipaddr);
@@ -183,8 +178,7 @@ ipsock_get_any_addr(struct ipsock * ip, ip_addr_t * ipaddr)
  * code.  This function must be called, in one way or another, for every source
  * address used for binding or sending on a IP-layer socket.
  */
-int
-ipsock_check_src_addr(struct ipsock * ip, ip_addr_t * ipaddr, int allow_mcast,
+int ipsock_check_src_addr(struct ipsock * ip, ip_addr_t * ipaddr, int allow_mcast,
 	struct ifdev ** ifdevp)
 {
 	ip6_addr_t *ip6addr;
@@ -286,8 +280,7 @@ ipsock_check_src_addr(struct ipsock * ip, ip_addr_t * ipaddr, int allow_mcast,
  * performs all the tasks necessary before the socket can be bound using a lwIP
  * call.
  */
-int
-ipsock_get_src_addr(struct ipsock * ip, const struct sockaddr * addr,
+int ipsock_get_src_addr(struct ipsock * ip, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt, ip_addr_t * local_ip,
 	uint16_t local_port, int allow_mcast, ip_addr_t * src_addr,
 	uint16_t * src_port)
@@ -343,8 +336,7 @@ ipsock_get_src_addr(struct ipsock * ip, const struct sockaddr * addr,
  * called, in one way or another, for every destination address used for
  * connecting or sending on a IP-layer socket.
  */
-int
-ipsock_get_dst_addr(struct ipsock * ip, const struct sockaddr * addr,
+int ipsock_get_dst_addr(struct ipsock * ip, const struct sockaddr * addr,
 	socklen_t addr_len, const ip_addr_t * local_addr, ip_addr_t * dst_addr,
 	uint16_t * dst_port)
 {
@@ -438,8 +430,7 @@ ipsock_get_dst_addr(struct ipsock * ip, const struct sockaddr * addr,
  * (and will typically zero).  On return, 'addr_len' is filled with the length
  * of the address generated in 'addr'.  This function never fails.
  */
-void
-ipsock_put_addr(struct ipsock * ip, struct sockaddr * addr,
+void ipsock_put_addr(struct ipsock * ip, struct sockaddr * addr,
 	socklen_t * addr_len, ip_addr_t * ipaddr, uint16_t port)
 {
 	ip_addr_t mappedaddr;
@@ -470,8 +461,7 @@ ipsock_put_addr(struct ipsock * ip, struct sockaddr * addr,
 /*
  * Set socket options on an IP socket.
  */
-int
-ipsock_setsockopt(struct ipsock * ip, int level, int name,
+int ipsock_setsockopt(struct ipsock * ip, int level, int name,
 	const struct sockdriver_data * data, socklen_t len,
 	struct ipopts * ipopts)
 {
@@ -617,8 +607,7 @@ ipsock_setsockopt(struct ipsock * ip, int level, int name,
 /*
  * Retrieve socket options on an IP socket.
  */
-int
-ipsock_getsockopt(struct ipsock * ip, int level, int name,
+int ipsock_getsockopt(struct ipsock * ip, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len,
 	struct ipopts * ipopts)
 {
@@ -695,8 +684,7 @@ ipsock_getsockopt(struct ipsock * ip, int level, int name,
 /*
  * Fill the given kinfo_pcb sysctl(7) structure with IP-level information.
  */
-void
-ipsock_get_info(struct kinfo_pcb * ki, const ip_addr_t * local_ip,
+void ipsock_get_info(struct kinfo_pcb * ki, const ip_addr_t * local_ip,
 	uint16_t local_port, const ip_addr_t * remote_ip, uint16_t remote_port)
 {
 	ip_addr_t ipaddr;

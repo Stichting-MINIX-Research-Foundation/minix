@@ -5,8 +5,7 @@
 
 static struct data_store noxfer_ds_store[NR_DS_KEYS];
 
-void
-data_store_dmp(void)
+void data_store_dmp(void)
 {
   struct data_store *p;
   static int prev_i = 0;

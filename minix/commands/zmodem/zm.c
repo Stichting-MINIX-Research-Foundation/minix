@@ -749,8 +749,7 @@ void stohdr(long pos)
 }
 
 /* Recover a long integer from a header */
-long
-rclhdr(char *hdr)
+long rclhdr(char *hdr)
 {
 	register long l;
 

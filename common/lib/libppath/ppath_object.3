@@ -1,0 +1,278 @@
+.\"	$NetBSD: ppath_object.3,v 1.4 2017/10/23 00:59:44 wiz Exp $
+.\"
+.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by David Young <dyoung@NetBSD.org>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL David Young BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 24, 2011
+.Dt PPATH_OBJECT 3
+.Os
+.Sh NAME
+.Nm ppath_object ,
+.\" ,
+.Nm ppath_copydel_object ,
+.Nm ppath_copyset_object ,
+.Nm ppath_set_object ,
+.Nm ppath_get_object ,
+.Nm ppath_delete_object ,
+.\" ,
+.Nm ppath_copydel_data ,
+.Nm ppath_copyset_data ,
+.Nm ppath_set_data ,
+.Nm ppath_get_data ,
+.Nm ppath_dup_data ,
+.Nm ppath_delete_data ,
+.\" ,
+.Nm ppath_copydel_string ,
+.Nm ppath_copyset_string ,
+.Nm ppath_set_string ,
+.Nm ppath_get_string ,
+.Nm ppath_dup_string ,
+.Nm ppath_delete_string
+.Nd property object path operations
+.Sh LIBRARY
+.Lb libppath
+.Sh SYNOPSIS
+.In ppath/ppath.h
+.\"
+.Ft int
+.Fn ppath_copydel_object "prop_object_t" "prop_object_t *" "const ppath_t *"
+.Ft int
+.Fn ppath_copyset_object "prop_object_t" "prop_object_t *" "const ppath_t *" \
+    "prop_object_t"
+.Ft int
+.Fn ppath_set_object "prop_object_t" "const ppath_t *" "prop_object_t"
+.Ft int
+.Fn ppath_get_object "prop_object_t" "const ppath_t *" "prop_object_t *"
+.Ft int
+.Fn ppath_delete_object "prop_object_t" "const ppath_t *"
+.\"
+.Ft int
+.Fn ppath_copydel_data "prop_object_t" "prop_object_t *" "const ppath_t *"
+.Ft int
+.Fn ppath_copyset_data "prop_object_t" "prop_object_t *" "const ppath_t *" \
+    "const void *" "size_t"
+.Ft int
+.Fn ppath_set_data "prop_object_t" "const ppath_t *" "const void *" "size_t"
+.Ft int
+.Fn ppath_get_data "prop_object_t" "const ppath_t *" "const void **" "size_t *"
+.Ft int
+.Fn ppath_dup_data "prop_object_t" "const ppath_t *" "void **" "size_t *"
+.Ft int
+.Fn ppath_delete_data "prop_object_t" "const ppath_t *"
+.\"
+.Ft int
+.Fn ppath_copydel_string "prop_object_t" "prop_object_t *" "const ppath_t *"
+.Ft int
+.Fn ppath_copyset_string "prop_object_t" "prop_object_t *" "const ppath_t *" \
+    "const char *"
+.Ft int
+.Fn ppath_set_string "prop_object_t" "const ppath_t *" "const char *"
+.Ft int
+.Fn ppath_get_string "prop_object_t" "const ppath_t *" "const char **"
+.Ft int
+.Fn ppath_dup_string "prop_object_t" "const ppath_t *" "char **"
+.Ft int
+.Fn ppath_delete_string "prop_object_t" "const ppath_t *"
+.Sh DESCRIPTION
+The
+.Nm
+routines read, write, or
+delete objects in a property list by path.
+.Sh FUNCTIONS
+.Nm
+provides these functions for manipulating objects in a property list
+by the objects' paths:
+.Bl -tag -width ppath
+.It Fn ppath_copydel_object "prop_object_t o" "prop_object_t *op" \
+    "const ppath_t *p"
+Create a copy of the property list
+.Fa o
+at
+.Fa *op .
+Delete from the copy the property named by
+.Fa p .
+.Pp
+If
+.Fa *op
+is
+.Dv NULL ,
+.Fn ppath_copydel_object
+creates a shallow copy of
+.Fa o
+at
+.Fa *op .
+If
+.Fa *op
+is not
+.Dv NULL ,
+.Fn ppath_copydel_object
+expects for
+.Fa *op
+to be an existing shallow copy of
+.Fa o .
+.Pp
+For the purposes of
+.Fn ppath_copydel_object ,
+.Fa *op
+is a shallow copy of property list
+.Fa o
+if equal properties at equal paths are shared between the two.
+Before
+.Fn ppath_copydel_object
+modifies a property shared by
+.Fa *op
+and
+.Fa o ,
+it creates a private copy of the property for
+.Fa *op .
+.It Fn ppath_copyset_object "prop_object_t o" "prop_object_t *op" \
+    "const ppath_t *p" "prop_object_t v"
+Create a copy of the property list
+.Fa o
+at
+.Fa *op .
+In the copy, replace with
+.Fa v
+the property named by
+.Fa p .
+.Pp
+If
+.Fa *op
+is
+.Dv NULL ,
+.Fn ppath_copyset_object
+creates a shallow copy of
+.Fa o
+at
+.Fa *op .
+If
+.Fa *op
+is not
+.Dv NULL ,
+.Fn ppath_copyset_object
+expects for
+.Fa *op
+to be an existing shallow copy of
+.Fa o .
+.Pp
+For the purposes of
+.Fn ppath_copyset_object ,
+.Fa *op
+is a shallow copy of property list
+.Fa o
+if equal properties at equal paths are shared between the two.
+Before
+.Fn ppath_copydel_object
+modifies a property shared by
+.Fa *op
+and
+.Fa o ,
+it creates a private copy of the property for
+.Fa *op .
+.It Fn ppath_set_object "prop_object_t o" "const ppath_t *p" "prop_object_t v"
+Replace with
+.Fa v
+the
+.Vt prop_object_t
+in
+.Fa o
+named by
+.Fa p .
+.It Fn ppath_get_object "prop_object_t o" "const ppath_t *p" "prop_object_t *vp"
+Retrieve the
+.Vt prop_object_t
+named by
+.Fa p
+from
+.Fa o ,
+and write it to
+.Fa *vp .
+.Fn ppath_get_object
+does
+.Em not
+increase the reference count of the retrieved object.
+.It Fn ppath_delete_object "prop_object_t o" "const ppath_t *p"
+Delete the
+.Vt prop_object_t
+named by
+.Fa p
+from
+.Fa o .
+.Fn ppath_delete_object
+decreases by one the deleted object's reference count.
+.El
+.\"
+.\" This next request is for sections 2 and 3 function return values only.
+.Sh RETURN VALUES
+.Nm
+routines return 0 on success, and non-zero on error.
+.\" The next request is for sections 2 and 3 error and signal handling only.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EFTYPE
+The
+.Nm
+call requested a
+.It Bq Er ENOENT
+.Fn ppath_copyset_object ,
+.Fn ppath_delete_object ,
+.Fn ppath_get_object ,
+and
+.Fn ppath_set_object
+return
+.Er ENOENT
+if the path
+.Fa p
+does not exist in
+.Fa o .
+.It Bq Er ENOMEM
+.Fn ppath_set_object
+and
+.Fn ppath_copyset_object
+will return
+.Er ENOMEM
+if there was insufficient memory to complete the operation.
+.El
+.Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.Xr ppath 3 ,
+.\" .Xr ppath_data 3 ,
+.Xr ppath_number 3 ,
+.\" .Xr ppath_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm
+property container path library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An David Young
+.Aq dyoung@pobox.com
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS

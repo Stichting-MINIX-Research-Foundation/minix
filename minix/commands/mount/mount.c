@@ -20,9 +20,7 @@ int mount_all(void);
 
 static int write_mtab = 1;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int all = 0, i, v = 0, mountflags, srvflags;
   char **ap, *opt, *err, *type, *args, *device;
@@ -74,6 +72,7 @@ char *argv[];
 		case FSVERSION_MFS3: type = MINIX_FS_TYPE; break;
 		case FSVERSION_EXT2: type = "ext2"; break;
 		case FSVERSION_ISO9660: type = "isofs"; break;
+		case FSVERSION_FFS: type = "ffs"; break;
 	}
   }
 
@@ -88,7 +87,7 @@ char *argv[];
   return(EXIT_SUCCESS);
 }
 
-void list()
+void list(void)
 {
   int n;
   char dev[PATH_MAX], mountpoint[PATH_MAX], type[MNTNAMELEN], flags[MNTFLAGLEN];
@@ -105,8 +104,7 @@ void list()
   exit(0);
 }
 
-int
-has_opt(char *mntopts, char *option)
+int has_opt(char *mntopts, char *option)
 {
 	char *optbuf, *opt;
 	int found = 0;
@@ -120,8 +118,7 @@ has_opt(char *mntopts, char *option)
 }
 
 
-int
-mount_all()
+int mount_all(void)
 {
 	struct fstab *fs;
 	int ro, mountflags;
@@ -165,7 +162,7 @@ mount_all()
 	return(EXIT_SUCCESS);
 }
 
-void usage()
+void usage(void)
 {
   std_err("Usage: mount [-a] [-r] [-e] [-t type] [-o options] special name\n");
   exit(1);

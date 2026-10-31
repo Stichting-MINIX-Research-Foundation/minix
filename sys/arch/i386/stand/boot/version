@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.16 2013/08/30 16:43:33 jmcneill Exp $
+$NetBSD: version,v 1.17 2017/10/07 10:32:56 maxv Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -48,3 +48,4 @@ is taken as the current.
 5.8:	Support for splash images.
 5.9:	VESA VBE/DDC EDID support.
 5.10:	Support for using raw file-system images as memory disks.
+5.11:	Support for booting KASLR amd64 kernels.

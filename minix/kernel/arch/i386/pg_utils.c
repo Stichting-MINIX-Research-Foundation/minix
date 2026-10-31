@@ -78,6 +78,7 @@ phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len)
 		if(cbi->memmap[m].mm_base_addr < lowest) lowest = cbi->memmap[m].mm_base_addr;
 	}
 	assert(lowest != EMPTY);
+	if (lowest == 0) lowest = 0x8000;
 	cut_memmap(cbi, lowest, len);
 	cbi->kernel_allocated_bytes_dynamic += len;
 	return lowest;
@@ -138,7 +139,7 @@ u32_t *alloc_pagetable(phys_bytes *ph)
 phys_bytes pg_alloc_page(kinfo_t *cbi)
 {
 	int m;
-	multiboot_memory_map_t *mmap;
+	kinfo_memory_map_t *mmap;
 
 	assert(kernel_may_alloc);
 

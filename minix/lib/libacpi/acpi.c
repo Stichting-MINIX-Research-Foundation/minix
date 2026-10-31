@@ -10,13 +10,12 @@
 #include <minix/log.h>
 #include <minix/sysutil.h>
 
-static struct log log =
+static struct log log1 =
 { .name = "libacpi", .log_level = LEVEL_TRACE, .log_func = default_log };
 
 static endpoint_t acpi_ep = NONE;
 
-int
-acpi_init(void)
+int acpi_init(void)
 {
 	int res;
 	res = ds_retrieve_label_endpt("acpi", &acpi_ep);
@@ -26,8 +25,7 @@ acpi_init(void)
 /*===========================================================================*
  *				IRQ handling				     *
  *===========================================================================*/
-int
-acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
+int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 {
 	int err;
 	message m;
@@ -38,7 +36,7 @@ acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 			panic("libacpi: ds_retrieve_label_endpt failed for 'acpi': %d", err);
 		}
 		else {
-			log_info(&log, "resolved acpi to endpoint: %d\n", acpi_ep);
+			log_info(&log1, "resolved acpi to endpoint: %d\n", acpi_ep);
 		}
 	}
 
@@ -58,8 +56,7 @@ acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
  * (pbnr) must be already known to acpi and it must map dev as the connection to
  * the secondary (sbnr) bus
  */
-void
-acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr)
+void acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr)
 {
 	int err;
 	message m;

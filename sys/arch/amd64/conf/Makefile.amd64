@@ -1,0 +1,154 @@
+#	$NetBSD: Makefile.amd64,v 1.85 2020/05/11 15:15:15 joerg Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/amd64/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/amd64/conf/Makefile.amd64
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=x86_64
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+NOSANITIZER=
+.include <bsd.init.mk>
+
+USE_SSP?=	yes
+
+##
+## (1) port identification
+##
+AMD64=		$S/arch/amd64
+GENASSYM_CONF=	${AMD64}/amd64/genassym.cf
+
+##
+## (2) compile settings
+##
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
+CPPFLAGS+=	-Damd64 -Dx86_64
+CFLAGS+=	-mcmodel=kernel
+# -mno-sse implies -mno-sse2 (etc), explicitly disable avx to be extra sure
+CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
+# make absolutely sure we don't get x87 registers used as well
+CFLAGS+=	-msoft-float
+# For gcc we might need this, but other compilers barf
+# CFLAGS+=	-mno-fp-ret-in-387
+
+.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch=thunk :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch-register :}
+.endif
+
+.if ${KASAN:U0} > 0
+.if ${HAVE_GCC:U0} > 0
+KASANFLAGS=	-fsanitize=kernel-address \
+		--param asan-globals=1 --param asan-stack=1 \
+		--param asan-instrument-allocas=1 \
+		-fsanitize-address-use-after-scope \
+		-fasan-shadow-offset=0xDFFF900000000000
+.elif ${HAVE_LLVM:Uno} == "yes"
+KASANFLAGS=	-fsanitize=kernel-address \
+		-mllvm -asan-globals=1 -mllvm -asan-stack=1 \
+		-mllvm -asan-instrument-dynamic-allocas=1 \
+		-mllvm -asan-use-after-scope=1 \
+		-mllvm -asan-instrumentation-with-call-threshold=0 \
+		-mllvm -asan-mapping-offset=0xDFFF900000000000
+.endif
+.for f in subr_asan.c subr_kcov.c
+KASANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
+.endif
+
+.if ${KCSAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+KCSANFLAGS=	-fsanitize=thread
+.for f in subr_csan.c subr_kcov.c clock.c lapic.c
+KCSANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KCSANFLAGS.${.IMPSRC:T}:U${KCSANFLAGS}}
+.endif
+
+.if ${KMSAN:U0} > 0 && ${HAVE_LLVM:Uno} == "yes"
+KMSANFLAGS=	-fsanitize=kernel-memory
+.for f in subr_msan.c
+KMSANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KMSANFLAGS.${.IMPSRC:T}:U${KMSANFLAGS}}
+.endif
+
+EXTRA_INCLUDES= -I$S/external/mit/xen-include-public/dist/
+
+##
+## (3) libkern and compat
+##
+OPT_MODULAR=	%MODULAR%
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+
+##
+## (5) link settings
+##
+TEXTADDR?=	0xffffffff80200000
+.if defined(KASLR)
+EXTRA_LINKFLAGS=	--split-by-file=0x100000 -r -d
+KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript.kaslr
+.else
+EXTRA_LINKFLAGS=	-z max-page-size=0x200000
+KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
+.endif
+LINKFLAGS_NORMAL=	-X
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+locore.o machdep.o: Makefile
+
+acpi_wakeup_low.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
+linux_sigcode.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
+netbsd32_sigcode.o: assym.h
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+## Include rules for ACPI wakecode
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

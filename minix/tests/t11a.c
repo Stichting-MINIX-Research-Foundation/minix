@@ -15,9 +15,7 @@ int main(int argc, char *argv [], char *envp []);
 int diff(char *s1, char *s2);
 void e(int n);
 
-int main(argc, argv, envp)
-int argc;
-char *argv[], *envp[];
+int main(int argc, char *argv[], char *envp[])
 {
 /* See if arguments passed ok. */
 
@@ -45,8 +43,7 @@ char *argv[], *envp[];
   exit(100);
 }
 
-int diff(s1, s2)
-char *s1, *s2;
+int diff(char *s1, char *s2)
 {
   while (1) {
 	if (*s1 == 0 && *s2 == 0) return(0);
@@ -56,8 +53,7 @@ char *s1, *s2;
   }
 }
 
-void e(n)
-int n;
+void e(int n)
 {
   printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
   perror("");

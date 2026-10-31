@@ -50,8 +50,7 @@
  * reply message has already been generated.  Return a negative error code on
  * failure, in which case the caller will generate a reply message instead.
  */
-static int
-lldata_arp_process(unsigned int type, const ip_addr_t * dst_addr,
+static int lldata_arp_process(unsigned int type, const ip_addr_t * dst_addr,
 	const struct eth_addr * gw_addr, struct ifdev * ifdev,
 	unsigned int flags, const struct rtsock_request * rtr)
 {
@@ -151,8 +150,7 @@ lldata_arp_process(unsigned int type, const ip_addr_t * dst_addr,
  * 'num' to 0 initially, and increase it by one between a successful call and
  * the next call.  Return FALSE if there are no more ARP table entries.
  */
-int
-lldata_arp_enum(lldata_arp_num_t * num)
+int lldata_arp_enum(lldata_arp_num_t * num)
 {
 	ip4_addr_t *ip4addr;
 	struct netif *netif;
@@ -172,8 +170,7 @@ lldata_arp_enum(lldata_arp_num_t * num)
  * 'gateway'.  The associated interface is stored in 'ifdevp', and the entry's
  * routing flags (RTF_) are stored in 'flagsp'.
  */
-void
-lldata_arp_get(lldata_arp_num_t num, struct sockaddr_in * addr,
+void lldata_arp_get(lldata_arp_num_t num, struct sockaddr_in * addr,
 	struct sockaddr_dlx * gateway, struct ifdev ** ifdevp,
 	unsigned int * flagsp)
 {
@@ -298,8 +295,7 @@ nd6_get_neighbor_cache_entry(int8_t i, struct netif ** netif,
  *
  * TODO: make this function public in lwIP.
  */
-static int8_t
-nd6_find_neighbor_cache_entry(const ip6_addr_t * addr)
+static int8_t nd6_find_neighbor_cache_entry(const ip6_addr_t * addr)
 {
 	int8_t i;
 
@@ -316,8 +312,7 @@ nd6_find_neighbor_cache_entry(const ip6_addr_t * addr)
  * success, return OK, with the entry's index number stored in 'nump'.  On
  * failure, return an appropriate error code.
  */
-int
-lldata_ndp_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr,
+int lldata_ndp_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr,
 	lldata_ndp_num_t * nump)
 {
 	ip_addr_t ipaddr;
@@ -358,8 +353,7 @@ lldata_ndp_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr,
  * reply message has already been generated.  Return a negative error code on
  * failure, in which case the caller will generate a reply message instead.
  */
-static int
-lldata_ndp_process(unsigned int type, const ip_addr_t * dst_addr,
+static int lldata_ndp_process(unsigned int type, const ip_addr_t * dst_addr,
 	const struct eth_addr * gw_addr,
 	struct ifdev * ifdev, unsigned int flags,
 	const struct rtsock_request * rtr)
@@ -398,8 +392,7 @@ lldata_ndp_process(unsigned int type, const ip_addr_t * dst_addr,
  * 'num' to 0 initially, and increase it by one between a successful call and
  * the next call.  Return FALSE if there are no more NDP table entries.
  */
-int
-lldata_ndp_enum(lldata_ndp_num_t * num)
+int lldata_ndp_enum(lldata_ndp_num_t * num)
 {
 
 	for (; *num < LWIP_ND6_NUM_NEIGHBORS; ++*num) {
@@ -418,8 +411,7 @@ lldata_ndp_enum(lldata_ndp_num_t * num)
  * 'gateway'.  The associated interface is stored in 'ifdevp', and the entry's
  * routing flags (RTF_) are stored in 'flagsp'.
  */
-void
-lldata_ndp_get(lldata_ndp_num_t num, struct sockaddr_in6 * addr,
+void lldata_ndp_get(lldata_ndp_num_t num, struct sockaddr_in6 * addr,
 	struct sockaddr_dlx * gateway, struct ifdev ** ifdevp,
 	unsigned int * flagsp)
 {
@@ -464,8 +456,7 @@ lldata_ndp_get(lldata_ndp_num_t num, struct sockaddr_in6 * addr,
  * either the UNIX timestamp of expiry for the entry; 0 for permanent entries.
  * None of the given pointers must be NULL.  This function always succeeds.
  */
-void
-lldata_ndp_get_info(lldata_ndp_num_t num, long * asked, int * isrouter,
+void lldata_ndp_get_info(lldata_ndp_num_t num, long * asked, int * isrouter,
 	int * state, int * expire)
 {
 	uint32_t nd6_probes_sent = 0 /*gcc*/, nd6_expire_time = 0 /*gcc*/;
@@ -508,8 +499,7 @@ lldata_ndp_get_info(lldata_ndp_num_t num, long * asked, int * isrouter,
  * ARP/NDP routes.  Return OK or a negative error code, following the same
  * semantics as route_process().
  */
-int
-lldata_process(unsigned int type, const ip_addr_t * dst_addr,
+int lldata_process(unsigned int type, const ip_addr_t * dst_addr,
 	const struct sockaddr * gateway, struct ifdev * ifdev,
 	unsigned int flags, const struct rtsock_request * rtr)
 {

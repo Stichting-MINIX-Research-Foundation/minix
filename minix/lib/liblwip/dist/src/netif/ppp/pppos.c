@@ -135,8 +135,7 @@ static const u16_t fcstab[256] = {
 #else /* PPP_FCS_TABLE */
 /* The HDLC polynomial: X**0 + X**5 + X**12 + X**16 (0x8408) */
 #define PPP_FCS_POLYNOMIAL 0x8408
-static u16_t
-ppp_get_fcs(u8_t byte)
+static u16_t ppp_get_fcs(u8_t byte)
 {
   unsigned int octet;
   int bit;
@@ -298,8 +297,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   return err;
 }
 
-static void
-pppos_connect(ppp_pcb *ppp, void *ctx)
+static void pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -330,8 +328,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 }
 
 #if PPP_SERVER
-static void
-pppos_listen(ppp_pcb *ppp, void *ctx)
+static void pppos_listen(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -362,8 +359,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
 }
 #endif /* PPP_SERVER */
 
-static void
-pppos_disconnect(ppp_pcb *ppp, void *ctx)
+static void pppos_disconnect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
@@ -460,8 +456,7 @@ PACK_STRUCT_END
  * @param s received data
  * @param l length of received data
  */
-void
-pppos_input(ppp_pcb *ppp, u8_t *s, int l)
+void pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
   struct pbuf *next_pbuf;
@@ -714,8 +709,7 @@ drop:
 }
 #endif /* PPP_INPROC_IRQ_SAFE */
 
-static void
-pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
+static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -734,8 +728,7 @@ pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
             pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
 }
 
-static void
-pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
+static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -759,8 +752,7 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 /*
  * Drop the input packet.
  */
-static void
-pppos_input_free_current_packet(pppos_pcb *pppos)
+static void pppos_input_free_current_packet(pppos_pcb *pppos)
 {
   if (pppos->in_head != NULL) {
     if (pppos->in_tail && (pppos->in_tail != pppos->in_head)) {
@@ -775,8 +767,7 @@ pppos_input_free_current_packet(pppos_pcb *pppos)
 /*
  * Drop the input packet and increase error counters.
  */
-static void
-pppos_input_drop(pppos_pcb *pppos)
+static void pppos_input_drop(pppos_pcb *pppos)
 {
   if (pppos->in_head != NULL) {
 #if 0

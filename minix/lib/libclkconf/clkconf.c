@@ -32,8 +32,7 @@ static struct log clk_log = {
 static u32_t base = 0;
 static u32_t use_count = 0;
 
-int
-clkconf_init()
+int clkconf_init()
 {
 	use_count++;
 	struct machine machine;
@@ -72,15 +71,13 @@ clkconf_init()
 	return OK;
 }
 
-int
-clkconf_set(u32_t clk, u32_t mask, u32_t value)
+int clkconf_set(u32_t clk, u32_t mask, u32_t value)
 {
 	set32(base + clk, mask, value);
 	return OK;
 }
 
-int
-clkconf_release()
+int clkconf_release()
 {
 	assert(use_count > 0);
 	use_count--;

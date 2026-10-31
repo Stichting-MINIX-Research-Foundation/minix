@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.40 2015/07/25 07:06:11 isaki Exp $	*/
+/*	$NetBSD: bootp.c,v 1.43 2019/04/05 20:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -134,18 +134,18 @@ bootp(int sock)
 
 #ifdef BOOTP_DEBUG
  	if (debug)
-		printf("bootp: socket=%d\n", sock);
+		printf("%s: socket=%d\n", __func__, sock);
 #endif
 	if (!bot)
 		bot = getsecs();
 
 	if (!(d = socktodesc(sock))) {
-		printf("bootp: bad socket. %d\n", sock);
+		printf("%s: bad socket. %d\n", __func__, sock);
 		return;
 	}
 #ifdef BOOTP_DEBUG
  	if (debug)
-		printf("bootp: d=%lx\n", (long)d);
+		printf("%s: d=%p\n", __func__, d);
 #endif
 
 	bp = &wbuf.wbootp;
@@ -176,11 +176,9 @@ bootp(int sock)
 	dhcp_ok = 0;
 #endif
 
-	if (sendrecv(d,
-		    bootpsend, bp, sizeof(*bp),
-		    bootprecv, &rbuf.rbootp, sizeof(rbuf.rbootp))
-	   == -1) {
-		printf("bootp: no reply\n");
+	if (sendrecv(d, bootpsend, bp, sizeof(*bp),
+	    bootprecv, &rbuf.rbootp, sizeof(rbuf.rbootp)) == -1) {
+		printf("%s: no reply\n", __func__);
 		return;
 	}
 
@@ -287,7 +285,7 @@ bootpsend(struct iodesc *d, void *pkt, size_t len)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootpsend: d=%lx called.\n", (long)d);
+		printf("%s: d=%p called.\n", __func__, d);
 #endif
 
 	bp = pkt;
@@ -295,7 +293,7 @@ bootpsend(struct iodesc *d, void *pkt, size_t len)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootpsend: calling sendudp\n");
+		printf("%s: calling sendudp\n", __func__);
 #endif
 
 	return sendudp(d, pkt, len);
@@ -307,9 +305,9 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	ssize_t n;
 	struct bootp *bp;
 
-#ifdef BOOTP_DEBUGx
+#ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootp_recvoffer: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	n = readudp(d, pkt, len, tleft);
@@ -320,13 +318,12 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: checked.  bp = 0x%lx, n = %d\n",
-		    (long)bp, (int)n);
+		printf("%s: checked. bp = %p, n = %zd\n", __func__, bp, n);
 #endif
 	if (bp->bp_xid != htonl(d->xid)) {
 #ifdef BOOTP_DEBUG
 		if (debug) {
-			printf("bootprecv: expected xid 0x%lx, got 0x%x\n",
+			printf("%s: expected xid 0x%lx, got 0x%x\n", __func__,
 			    d->xid, ntohl(bp->bp_xid));
 		}
 #endif
@@ -340,7 +337,7 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: got one!\n");
+		printf("%s: got one!\n", __func__);
 #endif
 
 	/* Suck out vendor info */
@@ -353,7 +350,7 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 		vend_cmu(bp->bp_vend);
 #endif
 	else
-		printf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
+		printf("%s: unknown vendor %p\n", __func__, bp->bp_vend);
 
 	return n;
 bad:
@@ -365,12 +362,12 @@ static int
 vend_rfc1048(u_char *cp, u_int len)
 {
 	u_char *ep;
-	int size;
+	size_t size;
 	u_char tag;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("vend_rfc1048 bootp info. len=%d\n", len);
+		printf("%s: bootp info. len=%d\n", __func__, len);
 #endif
 	ep = cp + len;
 
@@ -433,7 +430,7 @@ vend_cmu(u_char *cp)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("vend_cmu bootp info.\n");
+		printf("%s: bootp info.\n", __func__);
 #endif
 	vp = (struct cmu_vend *)cp;
 

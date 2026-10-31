@@ -183,14 +183,18 @@ static int vfs_memmap(struct exec_info *execi,
  *				pm_exec					     *
  *===========================================================================*/
 int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
-	vir_bytes *pc, vir_bytes *newsp, vir_bytes *UNUSED(ps_str))
+	vir_bytes *pc, vir_bytes *newsp, vir_bytes *ps_str)
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  *
- * ps_str is not currently used, but may be if the ps_strings structure has to
- * be moved to another location.
+ * ps_str is computed here (output) from the final stack pointer rather than
+ * trusting the value the caller's libc guessed: VFS may relocate the frame
+ * (scripts via patch_stack, dynamic binaries via aux vectors), and on LP64 a
+ * caller built against a stale libc may have computed it wrongly.  The
+ * ps_strings struct always sits at the very top of the frame, so its address
+ * is authoritative as (vsp + frame_len - sizeof(struct ps_strings)).
  */
   int r;
   vir_bytes vsp;
@@ -371,6 +375,10 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   /* Return new stack pointer to caller */
   *newsp = vsp;
 
+  /* The ps_strings struct sits at the top of the (possibly relocated) frame.
+   * Compute its address authoritatively rather than echoing the caller's. */
+  *ps_str = vsp + frame_len - sizeof(struct ps_strings);
+
   clo_exec(fp);
 
   if (execi.args.allow_setuid) {
@@ -531,12 +539,7 @@ static int is_script(struct vfs_exec_info *execi)
 /*===========================================================================*
  *				patch_stack				     *
  *===========================================================================*/
-static int patch_stack(vp, stack, stk_bytes, path, vsp)
-struct vnode *vp;		/* pointer for open script file */
-char stack[ARG_MAX];		/* pointer to stack image within VFS */
-size_t *stk_bytes;		/* size of initial stack */
-char path[PATH_MAX];		/* path to script file */
-vir_bytes *vsp;
+static int patch_stack(struct vnode *vp, char stack[ARG_MAX], size_t *stk_bytes, char path[PATH_MAX], vir_bytes *vsp)
 {
 /* Patch the argument vector to include the path name of the script to be
  * interpreted, and all strings on the #! line.  Returns the path name of
@@ -666,7 +669,7 @@ static int insert_arg(char stack[ARG_MAX], size_t *stk_bytes, char *arg,
 	}
 
 	/* set argv[0] correctly */
-	((char **) stack)[1] = (char *) a0 - arg_len + *vsp;
+	((char **) stack)[1] = (char *)(*vsp + a0 - arg_len);
 
 	/* Update stack pointer in the process address space. */
 	*vsp -= offset;

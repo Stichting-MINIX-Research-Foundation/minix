@@ -34,8 +34,7 @@ static void getsockopt_copy(void *return_value, size_t return_len,
 /*
  * Get socket options.
  */
-static int
-__getsockopt(int fd, int level, int option_name,
+static int __getsockopt(int fd, int level, int option_name,
 	void * __restrict option_value, socklen_t * __restrict option_len)
 {
 	message m;

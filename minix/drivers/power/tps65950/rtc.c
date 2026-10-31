@@ -19,8 +19,7 @@ static struct log log = {
 static int bcd_to_dec(int n);
 static int dec_to_bcd(int n);
 
-int
-rtc_init(void)
+int rtc_init(void)
 {
 	int r;
 	uint8_t val;
@@ -49,8 +48,7 @@ rtc_init(void)
 	return OK;
 }
 
-int
-rtc_get_time(struct tm *t, int flags)
+int rtc_get_time(struct tm *t, int flags)
 {
 	int r;
 	uint8_t val;
@@ -125,8 +123,7 @@ rtc_get_time(struct tm *t, int flags)
 	return OK;
 }
 
-int
-rtc_set_time(struct tm *t, int flags)
+int rtc_set_time(struct tm *t, int flags)
 {
 	int r;
 
@@ -170,20 +167,17 @@ rtc_set_time(struct tm *t, int flags)
 	return OK;
 }
 
-int
-rtc_exit(void)
+int rtc_exit(void)
 {
 	return OK;
 }
 
-static int
-bcd_to_dec(int n)
+static int bcd_to_dec(int n)
 {
 	return ((n >> 4) & 0x0F) * 10 + (n & 0x0F);
 }
 
-static int
-dec_to_bcd(int n)
+static int dec_to_bcd(int n)
 {
 	return ((n / 10) << 4) | (n % 10);
 }

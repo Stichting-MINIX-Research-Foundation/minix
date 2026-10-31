@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.28 2013/02/03 06:16:53 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.28 2013/02/03 06:16:53 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ static	fsinode	*link_check(fsinode *);
  */
 fsnode *
 walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
-    int replace)
+    int replace, int follow)
 {
 	fsnode		*first, *cur, *prev, *last;
 	DIR		*dirp;
@@ -127,8 +127,13 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 		if (snprintf(path + len, sizeof(path) - len, "/%s", name) >=
 		    (int)sizeof(path) - len)
 			errx(1, "Pathname too long.");
-		if (lstat(path, &stbuf) == -1)
-			err(1, "Can't lstat `%s'", path);
+		if (follow) {
+			if (stat(path, &stbuf) == -1)
+				err(1, "Can't stat `%s'", path);
+		} else {
+			if (lstat(path, &stbuf) == -1)
+				err(1, "Can't lstat `%s'", path);
+		}
 #ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
 			if (debug & DEBUG_WALK_DIR_NODE)
@@ -155,7 +160,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 						printf("merging %s with %p\n",
 						    path, cur->child);
 					cur->child = walk_dir(root, rp, cur,
-					    cur->child, replace);
+					    cur->child, replace, follow);
 					continue;
 				}
 				if (!replace)
@@ -200,7 +205,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 			cur->first = first;
 			if (S_ISDIR(cur->type)) {
 				cur->child = walk_dir(root, rp, cur, NULL,
-				    replace);
+				    replace, follow);
 				continue;
 			}
 		}
@@ -252,13 +257,27 @@ create_fsnode(const char *root, const char *path, const char *name,
 	cur->type = stbuf->st_mode & S_IFMT;
 	cur->inode->nlink = 1;
 	cur->inode->st = *stbuf;
+	if (stampst.st_ino) {
+		cur->inode->st.st_atime = stampst.st_atime;
+		cur->inode->st.st_mtime = stampst.st_mtime;
+		cur->inode->st.st_ctime = stampst.st_ctime;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
+		cur->inode->st.st_atimensec = stampst.st_atimensec;
+		cur->inode->st.st_mtimensec = stampst.st_mtimensec;
+		cur->inode->st.st_ctimensec = stampst.st_ctimensec;
+#endif
+#if HAVE_STRUCT_STAT_BIRTHTIME
+		cur->inode->st.st_birthtime = stampst.st_birthtime;
+		cur->inode->st.st_birthtimensec = stampst.st_birthtimensec;
+#endif
+	}
 	return (cur);
 }
 
 /*
  * free_fsnodes --
  *	Removes node from tree and frees it and all of
- *   its decendents.
+ *   its descendents.
  */
 void
 free_fsnodes(fsnode *node)
@@ -620,7 +639,7 @@ inode_type(mode_t mode)
  *	return pointer to fsinode matching `entry's st_ino & st_dev if it exists,
  *	otherwise add `entry' to table and return NULL
  */
-/* This was borrowed from du.c and tweaked to keep an fsnode 
+/* This was borrowed from du.c and tweaked to keep an fsnode
  * pointer instead. -- dbj@netbsd.org
  */
 static fsinode *
@@ -639,7 +658,7 @@ link_check(fsinode *entry)
 	 */
 	const uint64_t HTCONST = 11400714819323198485ULL;
 	const int HTBITS = 64;
-	
+
 	/* Never store zero in hashtable */
 	assert(entry);
 
@@ -674,7 +693,7 @@ link_check(fsinode *entry)
 	tmp *= HTCONST;
 	h  = tmp >> (HTBITS - htshift);
 	h2 = 1 | ( tmp >> (HTBITS - (htshift<<1) - 1)); /* must be odd */
-	
+
 	/* open address hashtable search with double hash probing */
 	while (htable[h].data) {
 		if ((htable[h].data->st.st_ino == entry->st.st_ino) &&

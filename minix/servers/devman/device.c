@@ -41,8 +41,7 @@ static struct devman_inode event_inode;
 /*===========================================================================*
  *           devman_generate_path                                            *
  *===========================================================================*/
-static int 
-devman_generate_path(char* buf, int len, struct devman_device *dev)
+static int devman_generate_path(char* buf, int len, struct devman_device *dev)
 {
 	int res =0;
  	const char * name = ".";
@@ -71,8 +70,7 @@ devman_generate_path(char* buf, int len, struct devman_device *dev)
 /*===========================================================================*
  *          devman_device_add_event                                          *
  *===========================================================================*/
-static void 
-devman_device_add_event(struct devman_device* dev)
+static void devman_device_add_event(struct devman_device* dev)
 {
 	struct devman_event * event;
 	char buf[12]; /* this fits the device ID " 0xXXXXXXXX" */
@@ -104,8 +102,7 @@ devman_device_add_event(struct devman_device* dev)
 /*===========================================================================*
  *          devman_device_remove_event                                       *
  *===========================================================================*/
-static void 
-devman_device_remove_event(struct devman_device* dev)
+static void devman_device_remove_event(struct devman_device* dev)
 {
 	struct devman_event * event;
 	char buf[12]; /* this fits the device ID " 0xXXXXXXXX" */
@@ -138,8 +135,7 @@ devman_device_remove_event(struct devman_device* dev)
 /*===========================================================================*
  *          devman_event_read                                                *
  *===========================================================================*/
-static ssize_t
-devman_event_read(char *ptr, size_t len, off_t offset, void *data)
+static ssize_t devman_event_read(char *ptr, size_t len, off_t offset, void *data)
 {
 	struct devman_event *ev = NULL;
 	struct devman_event_inode *n;
@@ -169,8 +165,7 @@ devman_event_read(char *ptr, size_t len, off_t offset, void *data)
 /*===========================================================================*
  *          devman_static_info_read                                          *
  *===========================================================================*/
-static ssize_t
-devman_static_info_read(char *ptr, size_t len, off_t offset, void *data)
+static ssize_t devman_static_info_read(char *ptr, size_t len, off_t offset, void *data)
 {
 	struct devman_static_info_inode *n;
 

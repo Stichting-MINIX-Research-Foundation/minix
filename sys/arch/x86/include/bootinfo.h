@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.23 2013/08/30 16:42:17 jmcneill Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.30 2019/06/21 02:08:55 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -38,6 +38,13 @@
 #define BTINFO_MODULELIST	11
 #define BTINFO_FRAMEBUFFER	12
 #define BTINFO_USERCONFCOMMANDS	13
+#define BTINFO_EFI		14
+#define BTINFO_EFIMEMMAP	15
+#define BTINFO_PREKERN		16
+
+#define BTINFO_STR "bootpath", "rootdevice", "bootdisk", "netif", \
+    "console", "biosgeom", "symtab", "memmap", "bootwedge", "modulelist", \
+    "framebuffer", "userconfcommands", "efi", "efimemmap", "prekern",
 
 #ifndef _LOCORE
 
@@ -113,6 +120,10 @@ struct bi_memmap_entry {
 #define	BIM_Reserved	2	/* in use or reserved by the system */
 #define	BIM_ACPI	3	/* ACPI Reclaim memory */
 #define	BIM_NVS		4	/* ACPI NVS memory */
+#define	BIM_Unusable	5	/* errors have been detected */
+#define	BIM_Disabled	6	/* not enabled */
+#define	BIM_PMEM	7	/* Persistent memory */
+#define	BIM_PRAM	12	/* legacy NVDIMM (OEM defined) */
 
 struct btinfo_memmap {
 	struct btinfo_common common;
@@ -213,11 +224,34 @@ struct btinfo_userconfcommands {
 	/* bi_userconfcommand list follows */
 };
 
+/* EFI Information */
+struct btinfo_efi {
+	struct btinfo_common common;
+	uint64_t systblpa;	/* Physical address of the EFI System Table */
+	uint32_t flags;
+#define BI_EFI_32BIT	__BIT(0)	/* 32bit UEFI */
+	uint8_t reserved[12];
+};
+
+struct btinfo_prekern {
+	struct btinfo_common common;
+	uint32_t kernpa_start;
+	uint32_t kernpa_end;
+};
+
+struct btinfo_efimemmap {
+	struct btinfo_common common;
+	uint32_t num;		/* number of memory descriptor */
+	uint32_t version;	/* version of memory descriptor */
+	uint32_t size;		/* size of memory descriptor */
+	uint8_t memmap[1];	/* whole memory descriptors */
+};
+
 #endif /* _LOCORE */
 
 #ifdef _KERNEL
 
-#define BOOTINFO_MAXSIZE 4096
+#define BOOTINFO_MAXSIZE 16384
 
 #ifndef _LOCORE
 /*
@@ -237,6 +271,7 @@ struct bootinfo {
 extern struct bootinfo bootinfo;
 
 void *lookup_bootinfo(int);
+void  aprint_bootinfo(void);
 #endif /* _LOCORE */
 
 #endif /* _KERNEL */

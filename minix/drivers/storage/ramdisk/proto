@@ -2,7 +2,7 @@ boot
 0 0
 d--755 0 0
 	bin d--755 0 0
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 		cdprobe ---755 0 0 cdprobe
 #endif
 		sysenv ---755 0 0 sysenv
@@ -18,7 +18,7 @@ d--755 0 0
 		minix-service ---755 0 0 minix-service
 	$
 	service d--755 0 0
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
 		floppy ---755 0 0 floppy
 		ahci ---755 0 0 ahci
 		virtio_blk ---755 0 0 virtio_blk

@@ -54,16 +54,13 @@
 
 /* Local Prototypes */
 
-static void
-AcpiPsStartTrace (
+static void AcpiPsStartTrace (
     ACPI_EVALUATE_INFO      *Info);
 
-static void
-AcpiPsStopTrace (
+static void AcpiPsStopTrace (
     ACPI_EVALUATE_INFO      *Info);
 
-static void
-AcpiPsUpdateParameterList (
+static void AcpiPsUpdateParameterList (
     ACPI_EVALUATE_INFO      *Info,
     UINT16                  Action);
 
@@ -131,8 +128,7 @@ AcpiDebugTrace (
  *
  ******************************************************************************/
 
-static void
-AcpiPsStartTrace (
+static void AcpiPsStartTrace (
     ACPI_EVALUATE_INFO      *Info)
 {
     ACPI_STATUS             Status;
@@ -186,8 +182,7 @@ Exit:
  *
  ******************************************************************************/
 
-static void
-AcpiPsStopTrace (
+static void AcpiPsStopTrace (
     ACPI_EVALUATE_INFO      *Info)
 {
     ACPI_STATUS             Status;
@@ -416,8 +411,7 @@ Cleanup:
  *
  ******************************************************************************/
 
-static void
-AcpiPsUpdateParameterList (
+static void AcpiPsUpdateParameterList (
     ACPI_EVALUATE_INFO      *Info,
     UINT16                  Action)
 {

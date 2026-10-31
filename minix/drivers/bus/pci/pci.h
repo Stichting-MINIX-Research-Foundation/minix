@@ -53,7 +53,7 @@ void _pci_rescan_bus(u8_t busnr);
 const char *_pci_dev_name(u16_t vid, u16_t did);
 
 
-int _pci_get_bar(int devind, int port, u32_t *base, u32_t *size, int
+int _pci_get_bar(int devind, int port, u64_t *base, u32_t *size, int
 	*ioflag);
 int _pci_slot_name(int devind, char **cpp);
 int _pci_ids(int devind, u16_t *vidp, u16_t *didp);

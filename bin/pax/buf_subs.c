@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.29 2018/03/19 03:11:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.28 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.29 2018/03/19 03:11:39 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ wr_rdbuf(char *out, int outcnt)
 	int cnt;
 
 	/*
-	 * while there is data to copy copy into the write buffer. when the
+	 * while there is data to copy into the write buffer. when the
 	 * write buffer fills, flush it to the archive and continue
 	 */
 	while (outcnt > 0) {

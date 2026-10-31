@@ -37,8 +37,7 @@ static char *flags_str(int flags)
 	return str;
 }
 
-void
-mproc_dmp(void)
+void mproc_dmp(void)
 {
   struct mproc *mp;
   int i, n=0;
@@ -71,8 +70,7 @@ mproc_dmp(void)
 /*===========================================================================*
  *				sigaction_dmp				     *
  *===========================================================================*/
-void
-sigaction_dmp(void)
+void sigaction_dmp(void)
 {
   struct mproc *mp;
   int i, n=0;

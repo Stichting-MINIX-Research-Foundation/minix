@@ -42,8 +42,7 @@ static int check_revision(void);
 static int fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
 static int store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t);
 
-static int
-fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
+static int fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
 {
 	int r;
 
@@ -57,8 +56,7 @@ fetch_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
 	return OK;
 }
 
-static int
-store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
+static int store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
 {
 	int r;
 
@@ -72,8 +70,7 @@ store_t(endpoint_t ep, cp_grant_id_t gid, struct tm *t)
 	return OK;
 }
 
-static int
-check_revision(void)
+static int check_revision(void)
 {
 	int r;
 	uint32_t idcode;
@@ -141,16 +138,14 @@ check_revision(void)
 	return OK;
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	/* The addresses are fixed/non-configurable so bus is the only state */
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -162,8 +157,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r, i;
 
@@ -220,8 +214,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -239,8 +232,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r, i;
 	struct tm t;

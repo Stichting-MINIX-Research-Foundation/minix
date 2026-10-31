@@ -34,6 +34,13 @@ int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
  */
   mthread_key_t k;
 
+  /* Ensure the library is initialized; the __constructor__ may not have run
+   * yet (e.g. a C++ program using thread-specific data from a global
+   * constructor, before libmthread.so's own constructor). Must happen before
+   * any key state is set, because mthread_init() resets the key table.
+   */
+  mthread_init();
+
   keys_used = 1;
 
   /* We do not yet allocate storage space for the values here, because we can
@@ -82,6 +89,8 @@ void *mthread_getspecific(mthread_key_t key)
 /* Get this thread's local value for the given key. The default is NULL.
  */
 
+  mthread_init();	/* Ensure initialized; __constructor__ may not run */
+
   if (key < 0 || key >= MTHREAD_KEYS_MAX || !keys[key].used)
 	return(NULL);
 
@@ -103,6 +112,8 @@ int mthread_setspecific(mthread_key_t key, void *value)
  * necessary.
  */
   void **p;
+
+  mthread_init();	/* Ensure initialized; __constructor__ may not run */
 
   if (key < 0 || key >= MTHREAD_KEYS_MAX || !keys[key].used)
 	return(EINVAL);

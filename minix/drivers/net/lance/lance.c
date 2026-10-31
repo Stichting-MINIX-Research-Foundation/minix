@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 /*===========================================================================*
  *                              lance_dump                                   *
  *===========================================================================*/
-static void lance_dump()
+static void lance_dump(void)
 {
    ether_card_t *ec;
    int isr, csr;
@@ -749,7 +749,7 @@ static void lance_init_hw(ether_card_t *ec, netdriver_addr_t *addr,
 {
    phys_bytes lance_buf_phys;
    int i, r;
-   Address l;
+   vir_bytes l;
    unsigned short ioaddr = ec->ec_port;
 
    /* ============= setup init_block(cf. lance_probe1) ================ */
@@ -758,7 +758,7 @@ static void lance_init_hw(ether_card_t *ec, netdriver_addr_t *addr,
    /* Allocate memory */
    if ((lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M,
      &lance_buf_phys)) == NULL)
-      panic("alloc_contig failed: %d", LANCE_BUF_SIZE);
+      panic("alloc_contig failed: %zu", LANCE_BUF_SIZE);
 
    l = (vir_bytes)lance_buf;
    lp = (struct lance_interface *)l;

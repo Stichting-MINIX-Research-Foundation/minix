@@ -5,8 +5,7 @@
 /*
  * Initialize a directory entry listing.
  */
-void
-fsdriver_dentry_init(struct fsdriver_dentry * __restrict dentry,
+void fsdriver_dentry_init(struct fsdriver_dentry * __restrict dentry,
 	const struct fsdriver_data * __restrict data, size_t bytes,
 	char * __restrict buf, size_t bufsize)
 {
@@ -24,8 +23,7 @@ fsdriver_dentry_init(struct fsdriver_dentry * __restrict dentry,
  * added, zero if no more entries could be added and the listing should stop,
  * or an error code in case of an error.
  */
-ssize_t
-fsdriver_dentry_add(struct fsdriver_dentry * __restrict dentry, ino_t ino_nr,
+ssize_t fsdriver_dentry_add(struct fsdriver_dentry * __restrict dentry, ino_t ino_nr,
 	const char * __restrict name, size_t namelen, unsigned int type)
 {
 	struct dirent *dirent;
@@ -82,8 +80,7 @@ fsdriver_dentry_add(struct fsdriver_dentry * __restrict dentry, ino_t ino_nr,
  * Finish a directory entry listing operation.  Return the total number of
  * bytes copied to the caller, or an error code in case of an error.
  */
-ssize_t
-fsdriver_dentry_finish(struct fsdriver_dentry *dentry)
+ssize_t fsdriver_dentry_finish(struct fsdriver_dentry *dentry)
 {
 	int r;
 

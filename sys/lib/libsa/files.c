@@ -10,3 +10,4 @@
 #include "stand.h"
 
 struct open_file files[SOPEN_MAX];
+const char *fsmod = NULL;	/* file system module name to load */

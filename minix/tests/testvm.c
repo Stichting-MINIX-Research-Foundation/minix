@@ -79,8 +79,7 @@ int readblock(int b, int blocksize, u32_t seed, char *block)
 
 void testend(void) { }
 
-static void
-writepipe(struct info *i)
+static void writepipe(struct info *i)
 {
 	if(write(pipefd, i, sizeof(*i)) != sizeof(*i)) {
 		printf("%s: pipe write failed\n", progname);
@@ -88,8 +87,7 @@ writepipe(struct info *i)
 	}
 }
 
-static int
-testinit(void)
+static int testinit(void)
 {
 	struct stat st;
 	int attempts = 0;
@@ -118,14 +116,12 @@ testinit(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 {
 	return OK;
 }
 
-static void
-init(void)
+static void init(void)
 {
 	/* SEF init */
 	sef_setcb_init_fresh(sef_cb_init);
@@ -137,8 +133,7 @@ init(void)
 
 
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct info info;
 	int big;

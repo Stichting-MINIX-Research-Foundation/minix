@@ -281,8 +281,7 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
 
 #if TCP_CHECKSUM_ON_COPY
 /** Add a checksum of newly added data to the segment */
-static void
-tcp_seg_add_chksum(u16_t chksum, u16_t len, u16_t *seg_chksum,
+static void tcp_seg_add_chksum(u16_t chksum, u16_t len, u16_t *seg_chksum,
                    u8_t *seg_chksum_swapped)
 {
   u32_t helper;
@@ -886,8 +885,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
  * @param pcb tcp_pcb
  * @param opts option pointer where to store the timestamp option
  */
-static void
-tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
+static void tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 {
   /* Pad with two NOP options to make everything nicely aligned */
   opts[0] = PP_HTONL(0x0101080A);
@@ -901,8 +899,7 @@ tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
  *
  * @param opts option pointer where to store the window scale option
  */
-static void
-tcp_build_wnd_scale_option(u32_t *opts)
+static void tcp_build_wnd_scale_option(u32_t *opts)
 {
   /* Pad with one NOP option to make everything nicely aligned */
   opts[0] = PP_HTONL(0x01030300 | TCP_RCV_SCALE);
@@ -1340,8 +1337,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
  * @param local_port the local TCP port to send the segment from
  * @param remote_port the remote TCP port to send the segment to
  */
-void
-tcp_rst(u32_t seqno, u32_t ackno,
+void tcp_rst(u32_t seqno, u32_t ackno,
   const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
   u16_t local_port, u16_t remote_port)
 {
@@ -1395,8 +1391,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
  *
  * @param pcb the tcp_pcb for which to re-enqueue all unacked segments
  */
-void
-tcp_rexmit_rto(struct tcp_pcb *pcb)
+void tcp_rexmit_rto(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg;
 
@@ -1438,8 +1433,7 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb for which to retransmit the first unacked segment
  */
-void
-tcp_rexmit(struct tcp_pcb *pcb)
+void tcp_rexmit(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg;
   struct tcp_seg **cur_seg;
@@ -1486,8 +1480,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb for which to retransmit the first unacked segment
  */
-void
-tcp_rexmit_fast(struct tcp_pcb *pcb)
+void tcp_rexmit_fast(struct tcp_pcb *pcb)
 {
   if (pcb->unacked != NULL && !(pcb->flags & TF_INFR)) {
     /* This is fast retransmit. Retransmit the first unacked segment. */

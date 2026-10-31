@@ -13,8 +13,7 @@ int max_error = 2;
 
 int subtest = 0;
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 #define CHUNKSIZE 8192
 #define CHUNKS1	3

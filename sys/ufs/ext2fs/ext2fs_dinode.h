@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.37 2017/01/13 18:04:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -67,6 +67,10 @@
 #ifndef _UFS_EXT2FS_EXT2FS_DINODE_H_
 #define _UFS_EXT2FS_EXT2FS_DINODE_H_
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h> /* for offsetof */
+#endif
+
 #include <sys/stat.h>
 
 /*
@@ -101,6 +105,7 @@
 #define	EXT2FS_NIADDR	3		/* Indirect addresses in inode. */
 
 #define EXT2_MAXSYMLINKLEN ((EXT2FS_NDADDR+EXT2FS_NIADDR) * sizeof (uint32_t))
+#define E2MAXSYMLINKLEN	EXT2_MAXSYMLINKLEN
 
 struct ext2fs_dinode {
 	uint16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
@@ -118,19 +123,46 @@ struct ext2fs_dinode {
 	uint32_t	e2di_blocks[EXT2FS_NDADDR+EXT2FS_NIADDR];
 					/* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
-	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) */
-	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
-	uint32_t	e2di_faddr;	/* 112: fragment address */
-	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 */
-	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 */
-	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
-	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
-	uint32_t	e2di_linux_reserved3; /* 124 */
+	uint32_t	e2di_facl;	/* 104: file ACL (ext3) */
+	uint32_t	e2di_size_high;	/* 108: Size (in bytes) high */
+	uint32_t	e2di_obso_faddr;/* 112: obsolete fragment address (ext2) */
+	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 (ext4) */
+	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4/64bit) */
+	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits (ext4) */
+	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits (ext4) */
+	uint16_t 	e2di_checksum_low;  /* 124: crc LE (not implemented) (ext4) */
+	uint16_t 	e2di_reserved;      /* 126: reserved */
+	uint16_t	e2di_extra_isize;   /* 128: inode extra size (over 128) actually used (ext4) */
+	uint16_t	e2di_checksum_high; /* 130: crc BE (not implemented) (ext4) */
+	uint32_t	e2di_ctime_extra;   /* 132: ctime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_mtime_extra;   /* 136: mtime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_atime_extra;   /* 140: atime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_crtime;        /* 144: creation time (epoch) (ext4) */
+	uint32_t	e2di_crtime_extra;  /* 148: creation time (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_version_high;  /* 152: version high (ext4) */
+	uint32_t	e2di_projid;        /* 156: project id (not implemented) (ext4) */
 };
 
-
-/* XXX how does this differ from EXT2_MAXSYMLINKLEN above? */
-#define	E2MAXSYMLINKLEN	((EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t))
+#define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
+#define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
+#define	i_e2fs_size		i_din.e2fs_din->e2di_size
+#define	i_e2fs_atime		i_din.e2fs_din->e2di_atime
+#define	i_e2fs_ctime		i_din.e2fs_din->e2di_ctime
+#define	i_e2fs_mtime		i_din.e2fs_din->e2di_mtime
+#define	i_e2fs_dtime		i_din.e2fs_din->e2di_dtime
+#define	i_e2fs_gid		i_din.e2fs_din->e2di_gid
+#define	i_e2fs_nlink		i_din.e2fs_din->e2di_nlink
+#define	i_e2fs_nblock		i_din.e2fs_din->e2di_nblock
+#define	i_e2fs_flags		i_din.e2fs_din->e2di_flags
+#define	i_e2fs_version		i_din.e2fs_din->e2di_version
+#define	i_e2fs_blocks		i_din.e2fs_din->e2di_blocks
+#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
+#define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
+#define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
+#define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
+#define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
+#define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
+#define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
 
 /* File permissions. */
 #define	EXT2_IEXEC		0000100		/* Executable. */
@@ -167,13 +199,66 @@ struct ext2fs_dinode {
 #define EXT2_TOPDIR		0x00020000 /* Top of directory hierarchies*/
 #define EXT2_HUGE_FILE		0x00040000 /* Set to each huge file */
 #define EXT2_EXTENTS		0x00080000 /* Inode uses extents */
+#define EXT2_EA_INODE		0x00200000 /* Inode used for large EA */
 #define EXT2_EOFBLOCKS		0x00400000 /* Blocks allocated beyond EOF */
+#define EXT2_INLINE_DATA	0x10000000 /* Inode has inline data */
+#define EXT2_PROJINHERIT	0x20000000 /* Children inherit project ID */
 
 /* Size of on-disk inode. */
-#define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
+#define EXT2_REV0_DINODE_SIZE	128U
 #define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?	\
 				    (fs)->e2fs.e2fs_inode_size :	\
 				    EXT2_REV0_DINODE_SIZE)
+#define EXT2_DINODE_FITS(dinode, field, isize) (\
+	(isize > EXT2_REV0_DINODE_SIZE) \
+	&& ((EXT2_REV0_DINODE_SIZE + (dinode)->e2di_extra_isize)  >= offsetof(struct ext2fs_dinode, field) + sizeof((dinode)->field)) \
+	)
+
+/*
+ * Time encoding
+ * Lower two bits of extra field are extra high bits for epoch; unfortunately still, Linux kernels treat 11 there as 00 for compatibility
+ * Rest of extra fields are nanoseconds
+ */
+static __inline void
+ext2fs_dinode_time_get(struct timespec *ts, uint32_t epoch, uint32_t extra)
+{
+	ts->tv_sec = (signed) epoch;
+
+	if (extra) {
+		uint64_t epoch_bits = extra & 0x3;
+		/* XXX compatibility with linux kernel < 4.20 */
+		if (epoch_bits == 3 && ts->tv_sec < 0)
+			epoch_bits = 0;
+
+		ts->tv_sec |= epoch_bits << 32;
+
+		ts->tv_nsec = extra >> 2;
+	} else {
+		ts->tv_nsec = 0;
+	}
+}
+#define EXT2_DINODE_TIME_GET(ts, dinode, field, isize) \
+	ext2fs_dinode_time_get(ts, (dinode)->field, \
+		EXT2_DINODE_FITS(dinode, field ## _extra, isize) \
+			? (dinode)->field ## _extra : 0 \
+	)
+
+static __inline void
+ext2fs_dinode_time_set(const struct timespec *ts, uint32_t *epoch, uint32_t *extra)
+{
+	*epoch = (int32_t) ts->tv_sec;
+
+	if (extra) {
+		uint32_t epoch_bits = (ts->tv_sec >> 32) & 0x3;
+
+		*extra = (ts->tv_nsec << 2) | epoch_bits;
+	}
+}
+#define EXT2_DINODE_TIME_SET(ts, dinode, field, isize) \
+	ext2fs_dinode_time_set(ts, &(dinode)->field, \
+		EXT2_DINODE_FITS(dinode, field ## _extra, isize) \
+			? &(dinode)->field ## _extra : NULL \
+	)
 
 /*
  * The e2di_blocks fields may be overlaid with other information for
@@ -188,14 +273,14 @@ struct ext2fs_dinode {
 
 /* e2fs needs byte swapping on big-endian systems */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#	define e2fs_iload(old, new)	\
-		memcpy((new),(old),sizeof(struct ext2fs_dinode))
-#	define e2fs_isave(old, new)	\
-		memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_iload(old, new, isize)	\
+		memcpy((new),(old),(isize))
+#	define e2fs_isave(old, new, isize)	\
+		memcpy((new),(old),(isize))
 #else
-void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *);
-#	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
-#	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
+void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *, size_t);
+#	define e2fs_iload(old, new, isize) e2fs_i_bswap((old), (new), (isize))
+#	define e2fs_isave(old, new, isize) e2fs_i_bswap((old), (new), (isize))
 #endif
 
 #endif /* !_UFS_EXT2FS_EXT2FS_DINODE_H_ */

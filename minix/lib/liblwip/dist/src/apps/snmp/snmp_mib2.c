@@ -58,8 +58,7 @@
 #if SNMP_USE_NETCONN
 #include "lwip/tcpip.h"
 #include "lwip/priv/tcpip_priv.h"
-void
-snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg)
+void snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg)
 {
 #if LWIP_TCPIP_CORE_LOCKING
   LOCK_TCPIP_CORE();

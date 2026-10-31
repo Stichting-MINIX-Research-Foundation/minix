@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.11 2011/05/11 16:23:40 zoltan Exp $	*/
+/*	$NetBSD: udp.c,v 1.13 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -71,7 +71,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 
 #ifdef NET_DEBUG
  	if (debug) {
-		printf("sendudp: d=%lx called.\n", (long)d);
+		printf("%s: d=%p called.\n", __func__, d);
 		if (d) {
 			printf("saddr: %s:%d",
 			    inet_ntoa(d->myip), ntohs(d->myport));
@@ -94,7 +94,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 	if (cc == -1)
 		return -1;
 	if ((size_t)cc != len)
-		panic("sendudp: bad write (%zd != %zu)", cc, len);
+		panic("%s: bad write (%zd != %zu)", __func__, cc, len);
 	return (cc - sizeof(*uh));
 }
 
@@ -116,8 +116,8 @@ readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (uh->uh_dport != d->myport) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad dport %d != %d\n",
-				d->myport, ntohs(uh->uh_dport));
+			printf("%s: bad dport %d != %d\n", __func__,
+			    ntohs(d->myport), ntohs(uh->uh_dport));
 #endif
 		return -1;
 	}
@@ -125,8 +125,8 @@ readudp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	if (ntohs(uh->uh_ulen) < sizeof(*uh)) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad udp len %d < %d\n",
-				ntohs(uh->uh_ulen), (int)sizeof(*uh));
+			printf("%s: bad udp len %d < %zu\n", __func__,
+				ntohs(uh->uh_ulen), sizeof(*uh));
 #endif
 		return -1;
 	}

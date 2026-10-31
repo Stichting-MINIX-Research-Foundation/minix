@@ -53,8 +53,7 @@
 /* Local prototypes */
 
 #ifdef ACPI_OBSOLETE_FUNCTIONS
-void
-AcpiNsDumpRootDevices (
+void AcpiNsDumpRootDevices (
     void);
 
 static ACPI_STATUS
@@ -96,8 +95,7 @@ AcpiNsGetMaxDepth (
  *
  ******************************************************************************/
 
-void
-AcpiNsPrintPathname (
+void AcpiNsPrintPathname (
     UINT32                  NumSegments,
     char                    *Pathname)
 {
@@ -155,8 +153,7 @@ AcpiNsPrintPathname (
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpPathname (
+void AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
     char                    *Msg,
     UINT32                  Level,
@@ -669,8 +666,7 @@ Cleanup:
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpObjects (
+void AcpiNsDumpObjects (
     ACPI_OBJECT_TYPE        Type,
     UINT8                   DisplayType,
     UINT32                  MaxDepth,
@@ -808,8 +804,7 @@ AcpiNsGetMaxDepth (
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpObjectPaths (
+void AcpiNsDumpObjectPaths (
     ACPI_OBJECT_TYPE        Type,
     UINT8                   DisplayType,
     UINT32                  MaxDepth,
@@ -865,8 +860,7 @@ AcpiNsDumpObjectPaths (
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpEntry (
+void AcpiNsDumpEntry (
     ACPI_HANDLE             Handle,
     UINT32                  DebugLevel)
 {
@@ -900,8 +894,7 @@ AcpiNsDumpEntry (
  *
  ******************************************************************************/
 
-void
-AcpiNsDumpTables (
+void AcpiNsDumpTables (
     ACPI_HANDLE             SearchBase,
     UINT32                  MaxDepth)
 {

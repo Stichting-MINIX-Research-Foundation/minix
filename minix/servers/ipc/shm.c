@@ -47,8 +47,7 @@ shm_find_id(int id)
 	return shm;
 }
 
-int
-do_shmget(message * m)
+int do_shmget(message * m)
 {
 	struct shm_struct *shm;
 	unsigned int i, seq;
@@ -126,8 +125,7 @@ do_shmget(message * m)
 	return OK;
 }
 
-int
-do_shmat(message * m)
+int do_shmat(message * m)
 {
 	int id, flag, mask;
 	vir_bytes addr;
@@ -169,8 +167,7 @@ do_shmat(message * m)
 	return OK;
 }
 
-void
-update_refcount_and_destroy(void)
+void update_refcount_and_destroy(void)
 {
 	u8_t rc;
 	unsigned int i;
@@ -205,8 +202,7 @@ update_refcount_and_destroy(void)
 		shm_list_nr--;
 }
 
-int
-do_shmdt(message * m)
+int do_shmdt(message * m)
 {
 	struct shm_struct *shm;
 	vir_bytes addr;
@@ -244,8 +240,7 @@ do_shmdt(message * m)
 /*
  * Fill a shminfo structure with actual information.
  */
-static void
-fill_shminfo(struct shminfo * sinfo)
+static void fill_shminfo(struct shminfo * sinfo)
 {
 
 	memset(sinfo, 0, sizeof(*sinfo));
@@ -253,12 +248,11 @@ fill_shminfo(struct shminfo * sinfo)
 	sinfo->shmmax = (unsigned long)-1;
 	sinfo->shmmin = 1;
 	sinfo->shmmni = __arraycount(shm_list);
-	sinfo->shmseg = (unsigned long)-1;
-	sinfo->shmall = (unsigned long)-1;
+	sinfo->shmseg = (uint32_t)-1;
+	sinfo->shmall = (uint32_t)-1;
 }
 
-int
-do_shmctl(message * m)
+int do_shmctl(message * m)
 {
 	struct shmid_ds tmp_ds;
 	struct shm_struct *shm;
@@ -375,8 +369,7 @@ do_shmctl(message * m)
  * node in the kern.ipc subtree.  The particular semantics of this call are
  * tightly coupled to the implementation of the ipcs(1) userland utility.
  */
-ssize_t
-get_shm_mib_info(struct rmib_oldp * oldp)
+ssize_t get_shm_mib_info(struct rmib_oldp * oldp)
 {
 	struct shm_sysctl_info shmsi;
 	struct shmid_ds *shmds;
@@ -444,8 +437,7 @@ get_shm_mib_info(struct rmib_oldp * oldp)
 }
 
 #if 0
-static void
-list_shm_ds(void)
+static void list_shm_ds(void)
 {
 	unsigned int i;
 
@@ -461,8 +453,7 @@ list_shm_ds(void)
 }
 #endif
 
-int
-is_shm_nil(void)
+int is_shm_nil(void)
 {
 
 	return (shm_list_nr == 0);

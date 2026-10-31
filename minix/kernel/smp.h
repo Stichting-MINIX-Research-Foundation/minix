@@ -68,6 +68,8 @@ void smp_schedule_vminhibit(struct proc * p);
 void smp_schedule_stop_proc_save_ctx(struct proc * p);
 /* migrate the full context of a process to the destination CPU */
 void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu);
+/* true while a cross-CPU scheduling request is in flight (run queues in flux) */
+int smp_sched_ipi_pending(void);
 
 void arch_send_smp_schedule_ipi(unsigned cpu);
 void arch_smp_halt_cpu(void);

@@ -274,9 +274,7 @@ static int ccp_anycompress(ccp_options *opt) {
 /*
  * Option parsing
  */
-static int
-setbsdcomp(argv)
-    char **argv;
+static int setbsdcomp(char **argv)
 {
     int rbits, abits;
     char *str, *endp;
@@ -313,9 +311,7 @@ setbsdcomp(argv)
     return 1;
 }
 
-static int
-setdeflate(argv)
-    char **argv;
+static int setdeflate(char **argv)
 {
     int rbits, abits;
     char *str, *endp;

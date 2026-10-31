@@ -42,8 +42,7 @@ struct hook_entry {
 /*===========================================================================*
  *				map_unmap_keys				     *
  *===========================================================================*/
-void
-map_unmap_fkeys(int map)
+void map_unmap_fkeys(int map)
 {
   int fkeys, sfkeys;
   int h, s;
@@ -70,8 +69,7 @@ map_unmap_fkeys(int map)
 #define pressed(start, end, bitfield, key) \
 	(((start) <= (key)) && ((end) >= (key)) && \
 	 bit_isset((bitfield), ((key) - (start) + 1)))
-int do_fkey_pressed(m)
-message *m;					/* notification message */
+int do_fkey_pressed(message *m)
 {
   int s, h;
   int fkeys, sfkeys;

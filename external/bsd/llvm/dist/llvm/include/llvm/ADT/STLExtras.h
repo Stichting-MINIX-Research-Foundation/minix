@@ -23,6 +23,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <cstdint>
 #include <utility> // for std::pair
 
 namespace llvm {

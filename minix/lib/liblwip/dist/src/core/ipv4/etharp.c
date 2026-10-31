@@ -144,8 +144,7 @@ static err_t etharp_raw(struct netif *netif,
  *
  * @param q a qeueue of etharp_q_entry's to free
  */
-static void
-free_etharp_q(struct etharp_q_entry *q)
+static void free_etharp_q(struct etharp_q_entry *q)
 {
   struct etharp_q_entry *r;
   LWIP_ASSERT("q != NULL", q != NULL);
@@ -166,8 +165,7 @@ free_etharp_q(struct etharp_q_entry *q)
 #endif /* ARP_QUEUEING */
 
 /** Clean up ARP table entries */
-static void
-etharp_free_entry(int i)
+static void etharp_free_entry(int i)
 {
   /* remove from SNMP ARP index tree */
   mib2_remove_arp_entry(arp_table[i].netif, &arp_table[i].ipaddr);
@@ -195,8 +193,7 @@ etharp_free_entry(int i)
  * This function should be called every ARP_TMR_INTERVAL milliseconds (1 second),
  * in order to expire entries in the ARP table.
  */
-void
-etharp_tmr(void)
+void etharp_tmr(void)
 {
   u8_t i;
 
@@ -254,8 +251,7 @@ etharp_tmr(void)
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
-static s8_t
-etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
+static s8_t etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
@@ -555,8 +551,7 @@ etharp_remove_static_entry(const ip4_addr_t *ipaddr)
  *
  * @param netif points to a network interface
  */
-void
-etharp_cleanup_netif(struct netif *netif)
+void etharp_cleanup_netif(struct netif *netif)
 {
   u8_t i;
 
@@ -579,8 +574,7 @@ etharp_cleanup_netif(struct netif *netif)
  * @param ip_ret points to return pointer
  * @return table index if found, -1 otherwise
  */
-s8_t
-etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
+s8_t etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
          struct eth_addr **eth_ret, const ip4_addr_t **ip_ret)
 {
   s8_t i;
@@ -608,8 +602,7 @@ etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
  * @param eth_ret return value: ETH address
  * @return 1 on valid index, 0 otherwise
  */
-u8_t
-etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_addr **eth_ret)
+u8_t etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_addr **eth_ret)
 {
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
   LWIP_ASSERT("netif != NULL", netif != NULL);
@@ -637,8 +630,7 @@ etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_a
  *
  * @see pbuf_free()
  */
-void
-etharp_input(struct pbuf *p, struct netif *netif)
+void etharp_input(struct pbuf *p, struct netif *netif)
 {
   struct etharp_hdr *hdr;
   /* these are aligned properly, whereas the ARP header fields might not be */

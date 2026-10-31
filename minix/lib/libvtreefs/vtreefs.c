@@ -12,8 +12,7 @@ static size_t extra_size;
  * Initialize internal state.  This is the only place where dynamic memory
  * allocation takes place.
  */
-static int
-init_server(int __unused type, sef_init_info_t * __unused info)
+static int init_server(int __unused type, sef_init_info_t * __unused info)
 {
 	int r;
 
@@ -35,8 +34,7 @@ init_server(int __unused type, sef_init_info_t * __unused info)
 /*
  * We received a signal.
  */
-static void
-got_signal(int sig)
+static void got_signal(int sig)
 {
 
 	if (sig != SIGTERM)
@@ -48,8 +46,7 @@ got_signal(int sig)
 /*
  * SEF initialization.
  */
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	sef_setcb_init_fresh(init_server);
 	sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
@@ -63,8 +60,7 @@ sef_local_startup(void)
  * We have received a message that is not a file system request from VFS.
  * Call the message hook, if there is one.
  */
-void
-fs_other(const message * m_ptr, int ipc_status)
+void fs_other(const message * m_ptr, int ipc_status)
 {
 	message msg;
 
@@ -84,8 +80,7 @@ fs_other(const message * m_ptr, int ipc_status)
  * by the fsdriver library.  The routine returns once the file system has been
  * unmounted and the process is signaled to exit.
  */
-void
-run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
+void run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 	size_t inode_extra, struct inode_stat * istat,
 	index_t nr_indexed_entries, size_t bufsize)
 {

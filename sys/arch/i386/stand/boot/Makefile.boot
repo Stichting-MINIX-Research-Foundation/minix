@@ -1,25 +1,21 @@
-# $NetBSD: Makefile.boot,v 1.67 2015/08/20 11:39:28 uebayasi Exp $
+# $NetBSD: Makefile.boot,v 1.72.4.1 2019/09/17 19:32:00 martin Exp $
 
 S=	${.CURDIR}/../../../../..
 
 NOMAN=
+NOLIBCSANITIZER=
+NOSANITIZER=
+NOPIE=
 PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
-VERSIONFILE?= ${.CURDIR}/../version
 
 AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
+SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c \
+	  exec_multiboot1.c exec_multiboot2.c
 SRCS= ${SOURCES}
-.if !make(depend)
-SRCS+= vers.c
-.endif
 
-PIE_CFLAGS=
-PIE_AFLAGS=
-PIE_LDFLAGS=
-
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# nothing
 
@@ -42,8 +38,9 @@ COPTS=  -Os
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
-AFLAGS+=   -m32
-CPUFLAGS=  -m32
+# MINIX's clang ignores -m32 and warns that it is unused.
+AFLAGS+=   ${${ACTIVE_CC} == "clang":?:-m32}
+CPUFLAGS=  ${${ACTIVE_CC} == "clang":?:-m32}
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
@@ -107,18 +104,10 @@ SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
-.if !defined(__MINIX)
 ### find out what to use for libkern
 KERN_AS= library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
-.else
-
-USE_BITCODE=no
-
-# use MINIX minc
-LIBKERN= ${DESTDIR}/usr/lib/libminc.a
-.endif # !defined(__MINIX)
 
 ### find out what to use for libz
 Z_AS= library
@@ -135,10 +124,10 @@ cleanlibdir:
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.sym vers.c
+CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.sym
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
 
 .if defined(__MINIX)
 # BJG

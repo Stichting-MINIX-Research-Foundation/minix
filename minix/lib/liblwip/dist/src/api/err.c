@@ -65,8 +65,7 @@ static const int err_to_errno_table[] = {
   EIO            /* ERR_ARG        -16     Illegal argument.        */
 };
 
-int
-err_to_errno(err_t err)
+int err_to_errno(err_t err)
 {
   if ((err > 0) || (-err >= (err_t)LWIP_ARRAYSIZE(err_to_errno_table))) {
     return EIO;

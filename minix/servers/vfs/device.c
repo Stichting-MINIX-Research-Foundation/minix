@@ -14,8 +14,7 @@
 /*
  * Perform the ioctl(2) system call.
  */
-int
-do_ioctl(void)
+int do_ioctl(void)
 {
 	unsigned long request;
 	struct filp *f;
@@ -61,8 +60,7 @@ do_ioctl(void)
 /*
  * Create a magic grant for the given IOCTL request.
  */
-cp_grant_id_t
-make_ioctl_grant(endpoint_t driver_e, endpoint_t user_e, vir_bytes buf,
+cp_grant_id_t make_ioctl_grant(endpoint_t driver_e, endpoint_t user_e, vir_bytes buf,
 	unsigned long request)
 {
 	cp_grant_id_t grant;

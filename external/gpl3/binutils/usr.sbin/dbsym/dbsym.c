@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.4 2014/08/17 19:12:59 joerg Exp $ */
+/* $NetBSD: dbsym.c,v 1.6 2017/07/11 21:19:42 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.4 2014/08/17 19:12:59 joerg Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.6 2017/07/11 21:19:42 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -362,8 +362,9 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 	Elf32_External_Shdr *s32hdr = NULL;
 	Elf64_External_Shdr *s64hdr = NULL;
 	void *shdr;
+	char *shstrtab = NULL;
 	u_int32_t osymtabsize, sh_offset;
-	int elftype, e_shnum, i, sh_size;
+	int elftype, e_shnum, i, sh_size, rv = 1, shstridx;
 	off_t e_shoff;
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
@@ -422,8 +423,19 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 	if (read(fd, shdr, sh_size) != sh_size)
 		goto out;
 
+	shstridx = (ISELF64
+	   ? bfd_get_16(abfd, e64_hdr.e_shstrndx)
+	   : bfd_get_16(abfd, e32_hdr.e_shstrndx));
+	shstrtab = malloc(SH_SIZE(shstridx));
+	if (shstrtab == NULL)
+		goto out;
+	if (pread(fd, shstrtab, SH_SIZE(shstridx), SH_OFFSET(shstridx)) != 
+	    SH_SIZE(shstridx))
+		goto out;
+
 	for (i = 0; i < e_shnum; i++) {
-		if (SH_TYPE(i) == SHT_SYMTAB || SH_TYPE(i) == SHT_STRTAB) {
+		if (SH_TYPE(i) == SHT_SYMTAB || SH_TYPE(i) == SHT_STRTAB ||
+		    !strcmp(shstrtab + SH_NAME(i), ".SUNW_ctf")) {
 			osymtabsize = *symtabsize;
 			*symtabsize += roundup(SH_SIZE(i), ISELF64 ? 8 : 4);
 			if ((*symtab = realloc(*symtab, *symtabsize)) == NULL)
@@ -467,10 +479,11 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 		bfd_put_16(abfd, 0, e32_hdr.e_phnum);
 	}
 	memcpy(*symtab, &ehdr, sizeof(ehdr));
+	rv = 0;
 
-	free(shdr);
-	return (0);
 out:
+	if (shstrtab != NULL)
+		free(shstrtab);
 	free(shdr);
-	return (1);
+	return (rv);
 }

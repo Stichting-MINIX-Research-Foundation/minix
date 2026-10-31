@@ -8,8 +8,7 @@
  * altogether.  Usage restrictions apply; see PM's event.c for details.  Return
  * OK or a negative error code.
  */
-int
-proceventmask(unsigned int mask)
+int proceventmask(unsigned int mask)
 {
 	message m;
 

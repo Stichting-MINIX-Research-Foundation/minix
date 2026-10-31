@@ -16,6 +16,7 @@
  */
 #define smp_single_cpu_fallback() do {		\
 	  tss_init(0, get_k_stack_top(0));	\
+	  setup_sysenter_syscall();		\
 	  bsp_cpu_id = 0;			\
 	  ncpus = 1;				\
 	  bsp_finish_booting();			\
