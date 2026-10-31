@@ -77,6 +77,9 @@ fi
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
 workdir_add_cd_files
+# Replace the inherited i386/IDE-era CD notes with amd64 UEFI-specific
+# information, including the current non-installer limitations.
+cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 workdir_add_kernel minix_default
 
 # The EFI boot manager loads BOOTX64.EFI from a FAT EFI System Partition
