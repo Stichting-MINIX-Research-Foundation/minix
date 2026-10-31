@@ -1,10 +1,12 @@
 # minix
-My personal MINIX branch to support uefi boot.
+This repository forked from https://github.com/nnonaka/minix/.
+
+This MINIX branch to support uefi boot.
 
 Develop enviromment
-- cross-compile on Ubuntu 24.04
+- cross-compile on Ubuntu 26.04
 
-Currently done.
+Currently done:
 - i386/amd64 support.
 - build gpt partitoned live image
   - fetch texinfo and binutils sources
@@ -18,7 +20,7 @@ Currently done.
 - show login prompt
 - posix test pass 94/97
 
-Not included (no plan).
+Plans:
 - self compile
 - MINIX installer for uefi/gpt
 - iso-image
