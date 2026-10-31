@@ -122,6 +122,40 @@ int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd,
 }
 
 /*===========================================================================*
+ *				vm_peek_fill				     *
+ *===========================================================================*/
+int vm_peek_fill(struct fproc *rfp, int fd, off_t pos, size_t nbytes,
+	int *result)
+{
+/* VM pages in a page of a MAP_SHARED file mapping.  If the file is a regular
+ * file open for writing, have the FS back any hole with a real block, so that
+ * the page lands in the shared cache instead of being a private one-time zero
+ * page.  Returns FALSE (and leaves *result alone) when not applicable; the
+ * caller then does a plain peek.
+ */
+  struct filp *f;
+  struct vnode *vp;
+
+  /* The FS may change the inode (block allocation): lock for writing. */
+  if ((f = get_filp2(rfp, fd, VNODE_WRITE)) == NULL) {
+	*result = err_code;
+	return TRUE;
+  }
+  vp = f->filp_vno;
+
+  if ((f->filp_mode & (R_BIT | W_BIT)) != (R_BIT | W_BIT) ||
+      !S_ISREG(vp->v_mode)) {
+	unlock_filp(f);
+	return FALSE;
+  }
+
+  *result = req_peek(vp->v_fs_e, vp->v_inode_nr, pos, nbytes, RW_PEEK_FILL);
+
+  unlock_filp(f);
+  return TRUE;
+}
+
+/*===========================================================================*
  *				do_read_write_peek			     *
  *===========================================================================*/
 int do_read_write_peek(int rw_flag, int fd, vir_bytes buf, size_t nbytes)
@@ -236,7 +270,7 @@ int read_write(struct fproc *rfp, int rw_flag, int fd, struct filp *f,
 
 	/* Issue request */
 	if(rw_flag == PEEKING) {
-		r = req_peek(vp->v_fs_e, vp->v_inode_nr, position, size);
+		r = req_peek(vp->v_fs_e, vp->v_inode_nr, position, size, 0);
 	} else {
 		off_t new_pos;
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position,

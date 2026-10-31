@@ -93,6 +93,7 @@ static int mmap_file(struct vmproc *vmp,
 	u32_t vrflags = 0;
 
 	if(writable) vrflags |= VR_WRITABLE;
+	if(flags & MAP_SHARED) vrflags |= VR_SHARED;
 
 	/* Do some page alignments. */
 	if((page_offset = (file_offset % VM_PAGE_SIZE))) {
@@ -157,6 +158,47 @@ int do_vfs_mmap(message *m)
 		clearend, flags, 0);
 }
 
+/*===========================================================================*
+ *				mmap_phys_cont				     *
+ *===========================================================================*/
+static int mmap_phys_cont(struct vmproc *vmp, message *origmsg,
+	message *replymsg, int writable, vir_bytes *retaddr)
+{
+/* VFS has looked up an mmap() of a character device, and its driver has
+ * named the physical memory backing it.  Map that memory directly, but only
+ * if the driver itself may access it (its system.conf memory ranges): VFS
+ * and the driver must not be able to hand out arbitrary RAM.
+ */
+	struct vir_region *vr;
+	phys_bytes phys = (phys_bytes) replymsg->VMV_PHYS;
+	vir_bytes len = (vir_bytes) replymsg->VMV_SIZE_PAGES * VM_PAGE_SIZE;
+	u32_t vrflags = VR_DIRECT;
+
+	/* Device memory cannot be copied on write. */
+	if(!(origmsg->m_mmap.flags & MAP_SHARED))
+		return EINVAL;
+	if(writable && !(replymsg->VMV_FLAGS & VMVF_WRITABLE))
+		return EACCES;
+	if(len == 0 || len < origmsg->m_mmap.len || phys % VM_PAGE_SIZE)
+		return EINVAL;
+
+	if(sys_privquery_mem(replymsg->VMV_DRIVER, phys, len) != OK) {
+		printf("VM: driver %d may not map 0x%lx+0x%lx for %d\n",
+			replymsg->VMV_DRIVER, phys, len, vmp->vm_endpoint);
+		return EPERM;
+	}
+
+	if(writable) vrflags |= VR_WRITABLE;
+
+	if(!(vr = mmap_region(vmp, (vir_bytes) origmsg->m_mmap.addr,
+		origmsg->m_mmap.flags, len, vrflags, &mem_type_directphys, 0)))
+		return ENOMEM;
+
+	phys_setphys(vr, phys);
+	*retaddr = vr->vaddr;
+	return OK;
+}
+
 static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 	void *origmsg_v)
 {
@@ -175,6 +217,18 @@ static void mmap_file_cont(struct vmproc *vmp, message *replymsg, void *cbarg,
 		sys_diagctl_stacktrace(vmp->vm_endpoint);
 #endif
 		result = replymsg->VMV_RESULT;
+	} else if(replymsg->VMV_FLAGS & VMVF_PHYS) {
+		/* Character device: no fd was duplicated for us. */
+		result = mmap_phys_cont(vmp, origmsg, replymsg, writable, &v);
+	} else if((origmsg->m_mmap.flags & MAP_SHARED) && writable &&
+		!(replymsg->VMV_FLAGS & VMVF_WRITABLE)) {
+		/* Writable MAP_SHARED needs an fd open for writing (POSIX:
+		 * EACCES); otherwise a read-only opener could modify the
+		 * shared page cache of e.g. system files.  Drop the fd VFS
+		 * duplicated for us. */
+		result = EACCES;
+		vfs_request(VMVFSREQ_FDCLOSE, replymsg->VMV_FD, vmp, 0, 0,
+			NULL, NULL, NULL, 0);
 	} else {
 		/* Finish mmap */
 		result = mmap_file(vmp, replymsg->VMV_FD, origmsg->m_mmap.offset,
@@ -255,14 +309,19 @@ int do_mmap(message *m)
 		/* File mapping might be disabled */
 		if(!enable_filemap) return ENXIO;
 
-		/* For files, we only can't accept writable MAP_SHARED
-		 * mappings.
-		 */
-		if((m->m_mmap.flags & MAP_SHARED) && (m->m_mmap.prot & PROT_WRITE)) {
-			return ENXIO;
-		}
-
-		if(vfs_request(VMVFSREQ_FDLOOKUP, m->m_mmap.fd, vmp, 0, 0,
+		/* Writable MAP_SHARED mappings of files are supported:
+		 * the VM page cache page is shared directly (no COW), so
+		 * writes are immediately visible to all sharers (file holes
+		 * are backed by real blocks on first fault, see
+		 * VMVFSREQ_FDIO_FILL).  Changes reach the file only when the
+		 * FS happens to flush that block: munmap/msync writeback is
+		 * not implemented.  Fine for POSIX shm / wayland wl_shm,
+		 * whose files are transient.  Writability of the fd is
+		 * checked once VFS has looked it up (mmap_file_cont).
+		 * Offset and length are only used by VFS for character
+		 * devices, whose driver supplies physical memory. */
+		if(vfs_request(VMVFSREQ_FDLOOKUP, m->m_mmap.fd, vmp,
+			(u64_t) m->m_mmap.offset, roundup(len, VM_PAGE_SIZE),
 			mmap_file_cont, NULL, m, sizeof(*m)) != OK) {
 			printf("VM: vfs_request for mmap failed\n");
 			return ENXIO;

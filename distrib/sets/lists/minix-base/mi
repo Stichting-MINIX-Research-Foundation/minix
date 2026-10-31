@@ -65,6 +65,7 @@
 ./boot/minix_default                                    minix-base
 ./dev                                                   minix-base
 ./dev/pts                                               minix-base
+./dev/shm                                               minix-base
 ./etc                                                   minix-base
 ./etc/X11                                               minix-base      xorg
 ./etc/X11/ctwm                                          minix-base

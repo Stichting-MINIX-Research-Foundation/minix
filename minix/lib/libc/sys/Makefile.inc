@@ -28,6 +28,10 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 # Minix specific syscalls / utils.
 SRCS+= kernel_utils.c sprofile.c stack_utils.c _mcontext.c
 
+# Linux-compatible convenience APIs for ported userland (implemented over
+# pipe/FIFO + setitimer/signal plumbing; not kernel calls on MINIX).
+SRCS+= eventfd.c timerfd.c signalfd.c shm.c
+
 # Emulation for missing lchown/lchmod/lchflags
 OBJS+= lchflags.o lchmod.o lchown.o
 lchflags.go lchflags.o lchflags.pico lchflags.bc: ${NETBSDSRCDIR}/tools/compat/lchflags.c

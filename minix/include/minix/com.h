@@ -702,6 +702,9 @@
 #define VMVFSREQ_FDLOOKUP		101
 #define VMVFSREQ_FDCLOSE		102
 #define VMVFSREQ_FDIO			103
+#define VMVFSREQ_FDIO_FILL		104	/* FDIO for a MAP_SHARED page:
+						 * file holes get real blocks
+						 * if the fd is writable */
 
 /* Calls from VFS. */
 #define VM_VFS_REPLY		(VM_RQ_BASE+30)
@@ -712,6 +715,14 @@
 #	define VMV_INO			m10_l1
 #	define VMV_FD			m10_l2
 #	define VMV_SIZE_PAGES		m10_l3
+#	define VMV_FLAGS		m10_ull1	/* FDLOOKUP reply */
+#		define VMVF_WRITABLE	0x1	/* fd is open for writing */
+#		define VMVF_PHYS	0x2	/* character device: map the
+						 * physical range VMV_PHYS,
+						 * owned by VMV_DRIVER; no fd
+						 * was duplicated */
+#	define VMV_PHYS			m10_l1	/* FDLOOKUP+VMVF_PHYS reply */
+#	define VMV_DRIVER		m10_i4	/* FDLOOKUP+VMVF_PHYS reply */
 
 #define VM_REMAP		(VM_RQ_BASE+33)
 
