@@ -76,10 +76,20 @@ fi
 
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
-workdir_add_cd_files
-# Replace the inherited i386/IDE-era CD notes with amd64 UEFI-specific
-# information, including the current non-installer limitations.
+
+# Do not call workdir_add_cd_files() here: that legacy helper copies
+# usr/mdec/boot_monitor and creates /minixboot.  The amd64 port boots through
+# BOOTX64.EFI and Multiboot2, and does not build the BIOS boot monitor.
+cat > "${ROOT_DIR}/etc/fstab" <<'EOF'
+none            /sys            devman  rw,rslabel=devman       0       0
+none            /dev/pts        ptyfs   rw,rslabel=ptyfs         0       0
+EOF
+add_file_spec "etc/fstab" extra.fstab
+
+# Use amd64 UEFI-specific notes instead of the inherited i386/IDE-era text.
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
+add_file_spec "README.TXT" extra.cdfiles
+
 workdir_add_kernel minix_default
 
 # The EFI boot manager loads BOOTX64.EFI from a FAT EFI System Partition
