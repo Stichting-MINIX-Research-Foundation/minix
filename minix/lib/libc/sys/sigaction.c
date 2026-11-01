@@ -28,6 +28,9 @@ __libc_select_may_restart(void)
 	return 0;
 }
 
+/* sigprocmask.c */
+void __libc_sfd_sigaction(int sig, void (*handler)(int));
+
 int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
   message m;
@@ -41,6 +44,8 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 
   r = _syscall(PM_PROC_NR, PM_SIGACTION, &m);
 
+  if (r >= 0 && act != NULL)
+	__libc_sfd_sigaction(sig, act->sa_handler);	/* signalfd ownership */
   if (r >= 0) {
 	unsigned long mask = 1UL << ((sig - 1) % (8 * sizeof(long)));
 	int idx = (sig - 1) / (8 * sizeof(long));

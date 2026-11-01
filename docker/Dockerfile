@@ -28,7 +28,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     python3 \
     curl ca-certificates xz-utils bzip2 \
     git rsync cpio \
+    ninja-build pkg-config cmake python3-venv libexpat1-dev \
  && rm -rf /var/lib/apt/lists/*
+
+# Ports (minix-ports: libdrm, wayland, wlroots, mesa, ...) need a recent
+# meson and mako (mesa); Debian 12's meson is too old for some of them.
+RUN python3 -m venv /opt/py \
+ && /opt/py/bin/pip install --no-cache-dir meson==1.5.2 mako==1.3.5 \
+ && ln -s /opt/py/bin/meson /usr/local/bin/meson
 
 # Harness + ports entry assumptions live under the mounted workspace.
 ENV DEBIAN_FRONTEND=noninteractive

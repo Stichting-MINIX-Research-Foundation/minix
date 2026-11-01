@@ -37,6 +37,8 @@ static int ntfds;
 static int tfd_installed;	/* SIGALRM handler installed */
 static volatile sig_atomic_t tfd_inhandler;
 
+int __libc_sigprocmask_raw(int how, const sigset_t *set, sigset_t *oset);
+
 /* The SIGALRM handler walks tfds[]: block it while the table (or a 64-bit
  * deadline, which i386 can't store atomically) is being changed. */
 static void
@@ -46,13 +48,13 @@ tfd_lock(sigset_t *omask)
 
 	sigemptyset(&m);
 	sigaddset(&m, SIGALRM);
-	sigprocmask(SIG_BLOCK, &m, omask);
+	__libc_sigprocmask_raw(SIG_BLOCK, &m, omask);
 }
 
 static void
 tfd_unlock(const sigset_t *omask)
 {
-	sigprocmask(SIG_SETMASK, omask, NULL);
+	__libc_sigprocmask_raw(SIG_SETMASK, omask, NULL);
 }
 
 static uint64_t

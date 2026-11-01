@@ -241,6 +241,7 @@ test_drm(void)
 	pf.fb = hb;
 	pf.flags = MDRM_FLIP_EVENT;
 	pf.user_data = 0x123456789abcdefULL;
+	pf.crtc_id = 42;
 	if (ioctl(fd, MDRM_PAGE_FLIP, &pf) != 0) e(4);
 	if (ioctl(fd, MDRM_PAGE_FLIP, &pf) == 0 || errno != EBUSY) e(5);
 	if (readable(fd, 1000) != 1) e(6);
@@ -249,7 +250,7 @@ test_drm(void)
 	if (read(fd, &ev, sizeof(ev)) != sizeof(ev)) e(8);
 	if (ev.type != MDRM_EVENT_FLIP_COMPLETE || ev.length != sizeof(ev))
 		e(9);
-	if (ev.user_data != 0x123456789abcdefULL) e(10);
+	if (ev.user_data != 0x123456789abcdefULL || ev.crtc_id != 42) e(10);
 	if (readable(fd, 0) != 0) e(11);
 	if (ioctl(fd, MDRM_GETINFO, &info) != 0 || info.cur_fb != hb) e(12);
 

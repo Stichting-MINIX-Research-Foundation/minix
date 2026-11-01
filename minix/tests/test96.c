@@ -224,6 +224,39 @@ test_signalfd(void)
 	sigemptyset(&mask);
 	if (signalfd(12345, &mask, 0) >= 0 || errno != EBADF) e(76);
 
+	/* The Linux idiom (wayland's event loop): BLOCK the signal and read
+	 * it from the signalfd.  A signal that was already pending before the
+	 * signalfd existed arrives on it too, and sigprocmask keeps
+	 * reporting the signal as blocked. */
+	{
+		sigset_t m2, cur;
+		int fd2;
+
+		sigemptyset(&m2);
+		sigaddset(&m2, SIGHUP);
+		if (sigprocmask(SIG_BLOCK, &m2, NULL) != 0) e(77);
+		if (kill(getpid(), SIGHUP) != 0) e(78);	/* stays pending */
+		if ((fd2 = signalfd(-1, &m2, SFD_NONBLOCK)) < 0) e(79);
+		if (readable(fd2, 2000) != 1) e(80);
+		if (read(fd2, &ssi, sizeof(ssi)) != sizeof(ssi) ||
+		    ssi.ssi_signo != SIGHUP) e(81);
+		if (sigprocmask(SIG_BLOCK, NULL, &cur) != 0 ||
+		    sigismember(&cur, SIGHUP) != 1) e(82);
+		if (kill(getpid(), SIGHUP) != 0) e(83);
+		if (readable(fd2, 2000) != 1) e(84);
+		if (read(fd2, &ssi, sizeof(ssi)) != sizeof(ssi)) e(85);
+		/* Another handler ends the ownership: blocked means blocked
+		 * again (the default action would kill us). */
+		close(fd2);
+		signal(SIGHUP, SIG_DFL);
+		if (kill(getpid(), SIGHUP) != 0) e(86);
+		if (sigpending(&cur) != 0 || sigismember(&cur, SIGHUP) != 1)
+			e(87);
+		signal(SIGHUP, SIG_IGN);	/* discard the pending one */
+		if (sigprocmask(SIG_UNBLOCK, &m2, NULL) != 0) e(88);
+		signal(SIGHUP, SIG_DFL);
+	}
+
 	close(fd);
 	signal(SIGUSR1, SIG_DFL);
 	signal(SIGUSR2, SIG_DFL);

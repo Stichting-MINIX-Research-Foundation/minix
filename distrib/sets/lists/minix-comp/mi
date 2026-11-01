@@ -1510,6 +1510,7 @@
 ./usr/include/protocols/rwhod.h                         minix-comp
 ./usr/include/protocols/talkd.h                         minix-comp
 ./usr/include/protocols/timed.h                         minix-comp
+./usr/include/pthread.h                                 minix-comp
 ./usr/include/puffs.h                                   minix-comp
 ./usr/include/pwd.h                                     minix-comp
 ./usr/include/quota.h                                   minix-comp
@@ -1618,6 +1619,7 @@
 ./usr/include/sys/elf_generic.h                         minix-comp
 ./usr/include/sys/endian.h                              minix-comp
 ./usr/include/sys/envsys.h                              minix-comp
+./usr/include/sys/epoll.h                              minix-comp
 ./usr/include/sys/errno.h                               minix-comp
 ./usr/include/sys/eventfd.h                            minix-comp
 ./usr/include/sys/evcnt.h                               minix-comp
@@ -2123,6 +2125,7 @@
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp
 ./usr/lib/libprop_pic.a                                 minix-comp
+./usr/lib/libpthread.a                                  minix-comp
 ./usr/lib/libpuffs.a                                    minix-comp
 ./usr/lib/libpuffs_pic.a                                minix-comp
 ./usr/lib/librefuse.a                                   minix-comp

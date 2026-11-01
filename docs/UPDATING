@@ -32,6 +32,16 @@
 
 		# cd /dev && MAKEDEV drm0
 
+	More Linux-compatible interfaces in libc: epoll(7) (<sys/epoll.h>,
+	emulated over poll(2); level-triggered only, EPOLLET is refused),
+	msync(2), and pthread_sigmask(3).  <pthread.h> now exists: it maps
+	POSIX threads onto libmthread (cooperative user-level threads), and
+	libpthread is installed as an alias of libmthread.  signalfd(2) now
+	also works with the usual idiom of blocking the signals first: libc
+	keeps signals owned by a signalfd unblocked internally while reporting
+	them as blocked.  These are libc-only changes: dynamically linked
+	programs pick them up, statically linked ones must be relinked.
+
 20170303:
 	The entire network stack has been replaced.  This requires two updates.
 	First, BEFORE rebooting, either before or after rebuilding the system,

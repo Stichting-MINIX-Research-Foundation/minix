@@ -131,6 +131,7 @@ static u32_t vblank_seq;
 static int flip_pending;		/* a flip event is due next tick */
 static int flip_client;
 static u64_t flip_user_data;
+static u32_t flip_crtc_id;
 static int alarm_set;
 
 static const struct mdrm_mode std_modes[] = {
@@ -419,7 +420,7 @@ static void client_wakeup(int minor)
 	}
 }
 
-static void queue_event(int minor, u64_t user_data)
+static void queue_event(int minor, u64_t user_data, u32_t crtc_id)
 {
 	struct client *c = &clients[minor];
 	struct mdrm_event_vblank *ev;
@@ -443,7 +444,7 @@ static void queue_event(int minor, u64_t user_data)
 	ev->tv_sec = ticks / hz;
 	ev->tv_usec = (u32_t)((u64_t)(ticks % hz) * 1000000 / hz);
 	ev->sequence = vblank_seq;
-	ev->crtc_id = 0;
+	ev->crtc_id = crtc_id;
 
 	client_wakeup(minor);
 }
@@ -467,7 +468,7 @@ static void bochs_alarm(clock_t UNUSED(stamp))
 
 	if (flip_pending) {
 		flip_pending = FALSE;
-		queue_event(flip_client, flip_user_data);
+		queue_event(flip_client, flip_user_data, flip_crtc_id);
 	}
 }
 
@@ -552,6 +553,7 @@ static int do_page_flip(int minor, struct mdrm_page_flip *req)
 		flip_pending = TRUE;
 		flip_client = minor;
 		flip_user_data = req->user_data;
+		flip_crtc_id = req->crtc_id;
 		arm_alarm();
 	}
 	return OK;

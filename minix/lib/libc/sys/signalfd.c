@@ -50,6 +50,10 @@ sfd_handler(int signo)
 		}
 }
 
+/* sigprocmask.c */
+void __libc_sfd_own(const sigset_t *mask, void (*handler)(int));
+int __libc_sigprocmask_raw(int how, const sigset_t *set, sigset_t *oset);
+
 static int
 sfd_arm_mask(const sigset_t *mask)
 {
@@ -75,6 +79,9 @@ sfd_arm_mask(const sigset_t *mask)
 				return errno;
 		}
 	}
+	/* Applications block signalfd signals (as on Linux); make sure that
+	 * never keeps them from our handler. */
+	__libc_sfd_own(mask, sfd_handler);
 	return 0;
 }
 
@@ -109,7 +116,7 @@ signalfd(int fd, const sigset_t *mask, int flags)
 		if (pipe(fds) != 0) return -1;
 		/* sfd_handler walks sfds[]: keep it out while we edit */
 		sigfillset(&all);
-		sigprocmask(SIG_BLOCK, &all, &omask);
+		__libc_sigprocmask_raw(SIG_BLOCK, &all, &omask);
 		/* fd numbers are recycled after close(2): drop an entry of a
 		 * closed signalfd that names our new read end (its write end
 		 * is still open, so cannot collide with the new pipe). */
@@ -121,7 +128,7 @@ signalfd(int fd, const sigset_t *mask, int flags)
 			}
 		}
 		if (nsfds >= MAX_SIGFDS) {
-			sigprocmask(SIG_SETMASK, &omask, NULL);
+			__libc_sigprocmask_raw(SIG_SETMASK, &omask, NULL);
 			close(fds[0]);
 			close(fds[1]);
 			errno = ENFILE;
@@ -131,7 +138,7 @@ signalfd(int fd, const sigset_t *mask, int flags)
 		sfds[i].rfd = fds[0];
 		sfds[i].wfd = fds[1];
 		sfds[i].mask = *mask;
-		sigprocmask(SIG_SETMASK, &omask, NULL);
+		__libc_sigprocmask_raw(SIG_SETMASK, &omask, NULL);
 
 		if (flags & SFD_NONBLOCK) {
 			fcntl(fds[0], F_SETFL,

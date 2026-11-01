@@ -89,6 +89,8 @@ struct mdrm_page_flip {
 	uint32_t	fb;		/* buffer handle */
 	uint32_t	flags;		/* MDRM_FLIP_* */
 	uint64_t	user_data;	/* echoed in the completion event */
+	uint32_t	crtc_id;	/* echoed in the completion event */
+	uint32_t	pad;
 };
 #define MDRM_FLIP_EVENT		0x01	/* = DRM_MODE_PAGE_FLIP_EVENT */
 
