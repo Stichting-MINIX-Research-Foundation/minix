@@ -65,6 +65,7 @@
 ./boot/minix_default                                    minix-base
 ./dev                                                   minix-base
 ./dev/pts                                               minix-base
+./dev/shm                                               minix-base
 ./etc                                                   minix-base
 ./etc/X11                                               minix-base      xorg
 ./etc/X11/ctwm                                          minix-base
@@ -969,6 +970,7 @@
 ./usr/lib/libprop.so                                    minix-base
 ./usr/lib/libprop.so.1                                  minix-base
 ./usr/lib/libprop.so.1.1                                minix-base
+./usr/lib/libpthread.so                                 minix-base
 ./usr/lib/libpuffs.so                                   minix-base
 ./usr/lib/libpuffs.so.2                                 minix-base
 ./usr/lib/libpuffs.so.2.0                               minix-base

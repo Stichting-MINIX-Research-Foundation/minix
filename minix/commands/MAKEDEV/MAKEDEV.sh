@@ -34,6 +34,7 @@ STD_DEVICES="
 	${RAMDISK_DEVICES}
 	bmp085b1s77 bmp085b2s77 bmp085b3s77
 	bpf
+	drm0
 	eepromb1s50 eepromb1s51 eepromb1s52 eepromb1s53
 	eepromb1s54 eepromb1s55 eepromb1s56 eepromb1s57
 	eepromb2s50 eepromb2s51 eepromb2s52 eepromb2s53
@@ -113,6 +114,7 @@ Usage:	$0 [-n|-m] [-s|-r] key ...
 Where key is one of the following:
   ram mem kmem null boot zero	  # One of these makes all these memory devices
   fb0			  # Make /dev/fb0
+  drm0			  # Make /dev/drm0 (DRM-lite display device)
   i2c-1 i2c-2 i2c-3       # Make /dev/i2c-[1-3]
   tsl2550b{1,3}s39	  # TSL2550 Ambient Light Sensors
   sht21b{1,3}s40	  # SHT21 Relative Humidity and Temperature Sensors
@@ -283,6 +285,11 @@ do
 		major=`expr ${bus} '*' 8 + ${slave_low} + 17`
 
 		makedev eepromb${bus}s5${slave_low} b ${major} 0 ${uname} ${gname} ${permissions}
+		;;
+	drm0)
+		# DRM-lite display driver (bochs); clones a minor per open.
+		# Mode setting and video memory: root/operator only.
+		makedev ${dev} c 18 0 ${uname} operator 660
 		;;
 	fb0)
 		# Framebuffer driver

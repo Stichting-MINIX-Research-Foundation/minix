@@ -4,6 +4,9 @@ MODULE=		texinfo
 
 CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX}
 
+# Disable incompatible-pointer-types warning for old K&R style code
+HOST_CFLAGS+=	-Wno-incompatible-pointer-types
+
 .include "${.CURDIR}/../Makefile.gnuhost"
 
 .if !empty(.MAKE.OS:M*CYGWIN*) && target(install)

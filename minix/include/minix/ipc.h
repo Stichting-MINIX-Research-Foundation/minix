@@ -2125,8 +2125,9 @@ typedef struct {
 
 	cp_grant_id_t grant;
 	size_t nbytes;
+	int flags;		/* REQ_PEEK: RW_PEEK_* */
 
-	uint8_t data[32];
+	uint8_t data[28];
 } mess_vfs_fs_readwrite;
 _ASSERT_MSG_SIZE(mess_vfs_fs_readwrite);
 

@@ -45,6 +45,9 @@ struct fsdriver_dentry {
 #define FSC_READ	0		/* read or bread call */
 #define FSC_WRITE	1		/* write or bwrite call */
 #define FSC_PEEK	2		/* peek or bpeek call */
+#define FSC_PEEK_FILL	3		/* peek, allocating holes (see
+					 * RW_PEEK_FILL); file systems that
+					 * can't may treat it as FSC_PEEK */
 
 #define FSC_UNLINK	0		/* unlink call */
 #define FSC_RMDIR	1		/* rmdir call */

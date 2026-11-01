@@ -18,6 +18,7 @@
 ./boot/minix_default
 ./dev
 ./dev/pts
+./dev/shm			mode=01777
 ./etc
 ./etc/X11
 ./etc/X11/fs

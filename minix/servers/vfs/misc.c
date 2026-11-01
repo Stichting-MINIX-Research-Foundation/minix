@@ -19,6 +19,7 @@
  */
 
 #include "fs.h"
+#include <sys/ioc_file.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <unistd.h>
@@ -375,6 +376,55 @@ int dupvm(struct fproc *rfp, int pfd, int *vmfd, struct filp **newfilp)
 }
 
 /*===========================================================================*
+ *				vm_cdev_lookup				     *
+ *===========================================================================*/
+static int vm_cdev_lookup(struct fproc *rfp, int fd, u64_t offset,
+	u32_t length, int *result)
+{
+/* FDLOOKUP for an mmap() of a character device: instead of duplicating the
+ * fd for VM (character devices have no page cache), ask the driver which
+ * physical memory backs the range and hand that to VM (VMVF_PHYS).  Return
+ * FALSE if 'fd' is not a character device; the caller does a normal lookup.
+ */
+  struct filp *f;
+  struct vnode *vp;
+  phys_bytes phys;
+  endpoint_t drv;
+  int access = 0;
+
+  if ((f = get_filp2(rfp, fd, VNODE_READ)) == NULL)
+	return FALSE;		/* let dupvm() report the error */
+  vp = f->filp_vno;
+  if (!S_ISCHR(vp->v_mode)) {
+	unlock_filp(f);
+	return FALSE;
+  }
+
+  if (f->filp_mode & R_BIT) access |= DEVMMAP_R;
+  if (f->filp_mode & W_BIT) access |= DEVMMAP_W;
+
+  if (!(f->filp_mode & R_BIT))
+	*result = EACCES;	/* POSIX: fd must be open for reading */
+  else if (offset % PAGE_SIZE != 0 || length == 0 || length % PAGE_SIZE != 0)
+	*result = EINVAL;
+  else
+	*result = cdev_mmap(vp->v_sdev, rfp->fp_endpoint, offset, length,
+	    access, &phys, &drv);
+
+  if (*result == OK) {
+	job_m_out.VMV_FLAGS = VMVF_PHYS |
+	    ((f->filp_mode & W_BIT) ? VMVF_WRITABLE : 0);
+	job_m_out.VMV_PHYS = phys;
+	job_m_out.VMV_DRIVER = drv;
+	job_m_out.VMV_FD = -1;
+	job_m_out.VMV_SIZE_PAGES = length / PAGE_SIZE;
+  }
+
+  unlock_filp(f);
+  return TRUE;
+}
+
+/*===========================================================================*
  *				do_vm_call				     *
  *===========================================================================*/
 int do_vm_call(void)
@@ -424,6 +474,12 @@ int do_vm_call(void)
 				goto reqdone;
 			}
 
+			/* Character devices are not file-backed: ask the
+			 * driver for physical memory instead. */
+			if (vm_cdev_lookup(rfp, req_fd, offset, length,
+			    &result))
+				goto reqdone;
+
 			if((result = dupvm(rfp, req_fd, &procfd, &f)) != OK) {
 #if 0   /* Noisy diagnostic for mmap() by ld.so */
 				printf("vfs: dupvm failed\n");
@@ -445,6 +501,10 @@ int do_vm_call(void)
 			}
 
 			job_m_out.VMV_FD = procfd;
+			/* VM needs this to refuse writable MAP_SHARED
+			 * mappings of fds not open for writing. */
+			job_m_out.VMV_FLAGS =
+			    (f->filp_mode & W_BIT) ? VMVF_WRITABLE : 0;
 
 			result = OK;
 
@@ -459,6 +519,11 @@ int do_vm_call(void)
 			}
 			break;
 		}
+		case VMVFSREQ_FDIO_FILL:
+			if (vm_peek_fill(fp, req_fd, offset, length, &result))
+				break;
+			/* Not a writable regular file: plain FDIO. */
+			/* FALLTHROUGH */
 		case VMVFSREQ_FDIO:
 		{
 			result = actual_lseek(fp, req_fd, SEEK_SET, offset,

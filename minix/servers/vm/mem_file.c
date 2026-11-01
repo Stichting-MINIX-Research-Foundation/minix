@@ -122,11 +122,18 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 			pb_unreferenced(region, ph, 0);
 			pb_link(ph, cp->page, ph->offset, region);
 
+			/*
+			 * For MAP_SHARED there is no COW: the page cache block
+			 * is mapped in place (writable if the region allows it),
+			 * so writes are visible to all sharers immediately.
+			 */
 			if(roundup(ph->offset+region->param.file.clearend,
 				VM_PAGE_SIZE) >= region->length) {
-				result = cow_block(vmp, region, ph,
-					region->param.file.clearend);
-			} else if(result == OK && write) {
+				if(!(region->flags & VR_SHARED))
+					result = cow_block(vmp, region, ph,
+						region->param.file.clearend);
+			} else if(result == OK && write &&
+				!(region->flags & VR_SHARED)) {
 				result = cow_block(vmp, region, ph, 0);
 			}
 
@@ -145,8 +152,15 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 			return EFAULT;
 		}
 
-                if(vfs_request(VMVFSREQ_FDIO, procfd, vmp, referenced_offset,
-			VM_PAGE_SIZE, cb, NULL, state, statelen) != OK) {
+		/*
+		 * A hole in the file comes back as a one-time zero page that
+		 * only this mapping would see.  Shared mappings must all see
+		 * the same page, so have the FS back holes with real blocks.
+		 */
+		if(vfs_request((region->flags & VR_SHARED) ?
+			VMVFSREQ_FDIO_FILL : VMVFSREQ_FDIO, procfd, vmp,
+			referenced_offset, VM_PAGE_SIZE, cb, NULL, state,
+			statelen) != OK) {
 			printf("VM: mappedfile_pagefault: vfs_request failed\n");
 			return ENOMEM;
 		}
@@ -161,6 +175,11 @@ static int mappedfile_pagefault(struct vmproc *vmp, struct vir_region *region,
 		return OK;
 	}
 
+	/* Shared mappings never COW: the shared (cache) page stays and is
+	 * mapped writable by the caller via mappedfile_writable(). */
+	if(region->flags & VR_SHARED)
+		return OK;
+
 	return cow_block(vmp, region, ph, 0);
 }
 
@@ -172,8 +191,15 @@ static int mappedfile_sanitycheck(struct phys_region *pr, const char *file, int 
 
 static int mappedfile_writable(struct phys_region *pr)
 {
-	/* We are never writable. */
-	return 0;
+	/* For MAP_SHARED mappings, the page cache block itself is shared
+	 * across mappers: once present it may be writable in place (the
+	 * caller additionally checks VR_WRITABLE on the region).  Private
+	 * mappings are copy-on-write and are therefore never writable
+	 * directly.
+	 */
+	if(!(pr->parent->flags & VR_SHARED))
+		return 0;
+	return pr->ph->phys != MAP_NONE;
 }
 
 int mappedfile_copy(struct vir_region *vr, struct vir_region *newvr)

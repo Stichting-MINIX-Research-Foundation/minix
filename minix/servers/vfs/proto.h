@@ -32,6 +32,8 @@ void bdev_up(devmajor_t major);
 dev_t cdev_map(dev_t dev, struct fproc *rfp);
 int cdev_open(int fd, dev_t dev, int flags);
 int cdev_close(dev_t dev);
+int cdev_mmap(dev_t dev, endpoint_t user_e, u64_t pos, size_t len,
+	int access, phys_bytes *physp, endpoint_t *drvp);
 int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	unsigned long bytes, int flags);
 int cdev_select(dev_t dev, int ops);
@@ -203,6 +205,8 @@ void check_bsf_lock(void);
 int do_read_write_peek(int rw_flag, int fd, vir_bytes buf, size_t bytes);
 int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd,
 	vir_bytes buf, size_t bytes);
+int vm_peek_fill(struct fproc *rfp, int fd, off_t pos, size_t nbytes,
+	int *result);
 int read_write(struct fproc *rfp, int rw_flag, int fd, struct filp *f,
 	vir_bytes buffer, size_t nbytes, endpoint_t for_e);
 int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, int callnr, int fd,
@@ -245,7 +249,8 @@ int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos, int rw_flag,
 	endpoint_t user_e, vir_bytes user_addr, unsigned int num_of_bytes,
 	off_t *new_posp, size_t *cum_iop);
 int req_bpeek(endpoint_t fs_e, dev_t dev, off_t pos, unsigned int num_of_bytes);
-int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes);
+int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes,
+	int flags);
 int req_rename(endpoint_t fs_e, ino_t old_dir, char *old_name, ino_t new_dir,
 	char *new_name);
 int req_rmdir(endpoint_t fs_e, ino_t inode_nr, char *lastc);
