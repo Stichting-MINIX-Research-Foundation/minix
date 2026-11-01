@@ -13,6 +13,7 @@
  *   cdev_open:   open a character device
  *   cdev_close:  close a character device
  *   cdev_io:     initiate a read, write, or ioctl to a character device
+ *   cdev_mmap:   ask a character driver which physical memory to mmap()
  *   cdev_select: initiate a select call on a device
  *   cdev_cancel: cancel an I/O request, blocking until it has been cancelled
  *   cdev_reply:  process the result of a character driver request
@@ -24,6 +25,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ttycom.h>
+#include <sys/ioc_file.h>
 #include <assert.h>
 
 /*
@@ -339,6 +341,79 @@ cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	suspend(FP_BLOCKED_ON_CDEV);
 
 	return SUSPEND;
+}
+
+/*
+ * Ask the driver of the given character device which physical memory backs
+ * the device range [pos, pos + len), for an mmap() by process 'user_e'.  The
+ * request is a FIOMMAP ioctl on a VFS-owned buffer, so that drivers without
+ * mmap support simply fail it (ENOTTY); like open and close it blocks the
+ * calling thread rather than suspending a process.  Called on behalf of VM.
+ * On success, return OK with the physical address in 'physp' and the driver
+ * endpoint (whose memory privileges VM checks) in 'drvp'.
+ */
+int
+cdev_mmap(dev_t dev, endpoint_t user_e, u64_t pos, size_t len, int access,
+	phys_bytes * physp, endpoint_t * drvp)
+{
+	devminor_t minor_dev;
+	struct dmap *dp;
+	struct devmmap req;
+	message dev_mess;
+	cp_grant_id_t gid;
+	int r;
+
+	if ((dp = cdev_get(dev, &minor_dev)) == NULL)
+		return ENXIO;
+
+	memset(&req, 0, sizeof(req));
+	req.dm_offset = pos;
+	req.dm_len = len;
+	req.dm_access = access;
+
+	gid = cpf_grant_direct(dp->dmap_driver, (vir_bytes)&req, sizeof(req),
+	    CPF_READ | CPF_WRITE);
+	if (!GRANT_VALID(gid))
+		panic("VFS: cpf_grant_direct failed");
+
+	memset(&dev_mess, 0, sizeof(dev_mess));
+	dev_mess.m_type = CDEV_IOCTL;
+	dev_mess.m_vfs_lchardriver_readwrite.minor = minor_dev;
+	dev_mess.m_vfs_lchardriver_readwrite.request = FIOMMAP;
+	dev_mess.m_vfs_lchardriver_readwrite.user = user_e;
+	/* The reply is routed back to this thread through the caller (VM). */
+	dev_mess.m_vfs_lchardriver_readwrite.id = who_e;
+	dev_mess.m_vfs_lchardriver_readwrite.grant = gid;
+	dev_mess.m_vfs_lchardriver_readwrite.flags = 0;
+
+	if ((r = asynsend3(dp->dmap_driver, &dev_mess, AMF_NOREPLY)) != OK)
+		panic("VFS: asynsend in cdev_mmap failed: %d", r);
+
+	/* Block the thread waiting for a reply, as cdev_opcl does. */
+	self->w_task = dp->dmap_driver;
+	self->w_drv_sendrec = &dev_mess;
+
+	worker_wait();
+
+	self->w_task = NONE;
+	assert(self->w_drv_sendrec == NULL);
+
+	(void)cpf_revoke(gid);
+
+	if (dev_mess.m_type == EIO)	/* the driver died */
+		return EIO;
+
+	r = dev_mess.m_lchardriver_vfs_reply.status;
+	if (r == ENOTTY)
+		return ENODEV;		/* driver has no mmap support */
+	if (r != OK)
+		return r;
+	if (req.dm_phys % PAGE_SIZE != 0 || req.dm_phys != (phys_bytes)req.dm_phys)
+		return EIO;
+
+	*physp = (phys_bytes)req.dm_phys;
+	*drvp = dp->dmap_driver;
+	return OK;
 }
 
 /*

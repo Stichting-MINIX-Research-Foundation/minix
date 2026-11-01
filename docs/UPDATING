@@ -1,3 +1,47 @@
+20261031:
+	VM now supports writable MAP_SHARED mappings of files (refused with
+	EACCES unless the fd is open for writing).  This changed the VM <-> VFS
+	protocol (FDLOOKUP reply flags, new VMVFSREQ_FDIO_FILL request) and the
+	VFS -> file system REQ_PEEK message (new RW_PEEK_FILL flag, with which
+	MFS and ext2 back file holes with real blocks for shared mappings).
+	VM, VFS and the file system servers must be updated together: rebuild
+	and install the whole boot image (make hdboot) and all of
+	/service, not a single service, then reboot.
+
+	libc gained Linux-compatible eventfd(2), timerfd_create(2) and
+	signalfd(2) shims (<sys/eventfd.h>, <sys/timerfd.h>, <sys/signalfd.h>)
+	and shm_open(3)/shm_unlink(3) backed by /dev/shm.  Create the
+	directory if your /dev was not populated by a fresh install:
+
+		# mkdir -p /dev/shm && chmod 1777 /dev/shm
+
+	(/etc/rc.minix does this at boot, too, and empties /dev/shm like a
+	tmpfs.)  select(2) is now restarted after a signal handler
+	installed with SA_RESTART returns, as POSIX requires; use
+	siginterrupt(3) to get the old EINTR behavior.
+
+	Character devices can now be mmap(2)ed if their driver supports it:
+	VFS asks the driver for the backing physical memory with the new
+	FIOMMAP ioctl (<sys/ioc_file.h>) and VM maps it only if the driver
+	itself holds the privilege for that memory.  This is another VM <->
+	VFS protocol change (VMVF_PHYS FDLOOKUP replies), covered by the
+	whole-boot-image update above.  The new "bochs" driver (QEMU/Bochs
+	standard VGA, PCI 1234:1111) uses it to offer the DRM-lite display
+	device /dev/drm0 (<sys/ioc_mdrm.h>); /usr/etc/rc starts it when the
+	device is present.  On an existing system create the node with:
+
+		# cd /dev && MAKEDEV drm0
+
+	More Linux-compatible interfaces in libc: epoll(7) (<sys/epoll.h>,
+	emulated over poll(2); level-triggered only, EPOLLET is refused),
+	msync(2), and pthread_sigmask(3).  <pthread.h> now exists: it maps
+	POSIX threads onto libmthread (cooperative user-level threads), and
+	libpthread is installed as an alias of libmthread.  signalfd(2) now
+	also works with the usual idiom of blocking the signals first: libc
+	keeps signals owned by a signalfd unblocked internally while reporting
+	them as blocked.  These are libc-only changes: dynamically linked
+	programs pick them up, statically linked ones must be relinked.
+
 20170303:
 	The entire network stack has been replaced.  This requires two updates.
 	First, BEFORE rebooting, either before or after rebuilding the system,

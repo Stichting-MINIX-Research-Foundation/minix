@@ -75,8 +75,12 @@ static void do_parent(int child) {
   struct timeval tv, start_time, end_time;
   int retval;
 
-  /* Install signal handler for SIGUSR1 */
+  /* Install signal handler for SIGUSR1.  signal() on MINIX (as on other
+     BSD-derived systems) implies SA_RESTART, and select(2) legitimately
+     restarts for SA_RESTART handlers; this subtest wants to verify
+     interruption, so opt out of restarting explicitly. */
   signal(SIGUSR1, catch_signal);
+  siginterrupt(SIGUSR1, 1);
 
   /* Parent and child share an anonymous pipe. Select for read and wait for the
    timeout to occur. We wait for DO_PAUSE seconds. Let's see if that's

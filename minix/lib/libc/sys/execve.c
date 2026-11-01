@@ -10,10 +10,17 @@
 #include <minix/param.h>
 #include <sys/exec_elf.h>
 #include <sys/exec.h>
+#include <signal.h>
+
+/* sigprocmask.c: signalfd-owned signals blocked across exec, as on Linux */
+void __libc_sfd_preexec(sigset_t *saved, int *changed);
+void __libc_sfd_postexec(const sigset_t *saved, int changed);
 
 int execve(const char *path, char * const *argv, char * const *envp)
 {
 	message m;
+	sigset_t sfd_saved;
+	int sfd_changed;
 	size_t frame_size = 0;	/* Size of the new initial stack. */
 	int argc = 0;		/* Argument count. */
 	int envc = 0;		/* Environment count */
@@ -50,7 +57,9 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	m.m_lc_pm_exec.framelen = frame_size;
 	m.m_lc_pm_exec.ps_str = (vir_bytes)(vsp + ((char *)psp - frame));
 
+	__libc_sfd_preexec(&sfd_saved, &sfd_changed);
 	(void) _syscall(PM_PROC_NR, PM_EXEC, &m);
+	__libc_sfd_postexec(&sfd_saved, sfd_changed);
 
 	/* Failure, return the memory used for the frame and exit. */
 	(void) sbrk(-frame_size);

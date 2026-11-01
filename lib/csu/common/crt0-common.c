@@ -53,7 +53,21 @@ __RCSID("$NetBSD: crt0-common.c,v 1.13 2013/01/31 22:24:25 matt Exp $");
 
 extern int main(int, char **, char **);
 
-#ifndef HAVE_INITFINI_ARRAY
+/*
+ * MINIX i386 note (dual stack): with HAVE_INITFINI_ARRAY the static _init
+ * below walks .init_array (used by modern compilers). The in-tree compiler
+ * still emits ctors into .ctors, walked by the legacy extern _init from
+ * crti.S/crtbegin.S. On minix-i386 we keep BOTH: walk the arrays and call
+ * the legacy _init/_fini. (Without the legacy call, statically linked
+ * binaries built with the in-tree compiler -- e.g. all boot modules --
+ * would lose their ctors: libc's __minix_init never runs and RS panics
+ * with "_minix_kerninfo != NULL".)
+ */
+#if defined(__minix) && defined(__i386__) && defined(HAVE_INITFINI_ARRAY)
+#define MINIX_CSU_DUAL_INIT 1
+#endif
+
+#if !defined(HAVE_INITFINI_ARRAY) || defined(MINIX_CSU_DUAL_INIT)
 extern void	_init(void);
 extern void	_fini(void);
 #endif
@@ -116,6 +130,18 @@ __weakref_visible const fptr_t fini_array_start[1]
 __weakref_visible const fptr_t fini_array_end[1]
     __weak_reference(__fini_array_end);
 
+/*
+ * Under MINIX_CSU_DUAL_INIT the walkers get different names so that the
+ * legacy extern _init/_fini from crti.S/crtn.S remain callable.
+ */
+#ifdef MINIX_CSU_DUAL_INIT
+#define	CSU_INITFN	minix_csu_run_init_array
+#define	CSU_FINIFN	minix_csu_run_fini_array
+#else
+#define	CSU_INITFN	_init
+#define	CSU_FINIFN	_fini
+#endif
+
 static inline void
 _preinit(void)
 {
@@ -125,7 +151,7 @@ _preinit(void)
 }
 
 static inline void
-_init(void)
+CSU_INITFN(void)
 {
 	for (const fptr_t *f = init_array_start; f < init_array_end; f++) {
 		(*f)();
@@ -133,7 +159,7 @@ _init(void)
 }
 
 static void
-_fini(void)
+CSU_FINIFN(void)
 {
 	for (const fptr_t *f = fini_array_start; f < fini_array_end; f++) {
 		(*f)();
@@ -185,8 +211,15 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	monstartup((u_long)&__eprol, (u_long)&__etext);
 #endif
 
-	atexit(_fini);
-	_init();
+#ifdef MINIX_CSU_DUAL_INIT
+	/* Legacy in-tree binaries: .ctors/.dtors walked by crti's _init
+	 * (through crtbegin.S' .init/.fini section contributions). Run these
+	 * first, then the array walkers. */
+	atexit(_fini);		/* legacy: .dtors walk (runs after arrays) */
+	_init();		/* legacy: .ctors walk */
+#endif
+	atexit(CSU_FINIFN);
+	CSU_INITFN();
 
 	exit(main(ps_strings->ps_nargvstr, ps_strings->ps_argvstr, environ));
 }

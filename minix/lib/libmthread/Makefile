@@ -1,5 +1,7 @@
 # Makefile for libmthread
 
+.include <bsd.own.mk>
+
 LIB=	mthread
 
 SRCS=	\
@@ -16,6 +18,13 @@ SRCS=	\
 	scheduler.c \
 
 WARNS?=	4
+
+# <pthread.h> maps POSIX threads onto libmthread: let -lpthread (gcc
+# -pthread) find it under the usual name.
+SYMLINKS+=	libmthread.a ${LIBDIR}/libpthread.a
+.if ${MKPIC} != "no"
+SYMLINKS+=	libmthread.so ${LIBDIR}/libpthread.so
+.endif
 
 CFLAGS+= -fno-builtin
 

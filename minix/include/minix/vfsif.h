@@ -22,6 +22,12 @@
 #define RES_HASPEEK		002	/* FS implements REQ_PEEK/REQ_BPEEK */
 #define RES_64BIT		004	/* FS can handle 64-bit file sizes */
 
+/* REQ_PEEK flags (m_vfs_fs_readwrite.flags) */
+#define RW_PEEK_FILL		001	/* page is for a writable shared
+					 * mapping: back holes with real
+					 * (zeroed) blocks, so that all
+					 * mappers share one cached page */
+
 /* VFS/FS error messages */
 #define EENTERMOUNT              (-301)
 #define ELEAVEMOUNT              (-302)

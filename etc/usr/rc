@@ -255,6 +255,13 @@ start)
     # pty needs to know the "tty" group ID
     up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
 
+    # DRM-lite display driver for the Bochs/QEMU standard VGA, if present.
+    if [ -f /proc/pci ] && [ -c /dev/drm0 ] && \
+       cut -d' ' -f3 /proc/pci | grep -q '^1234:1111'
+    then
+	up bochs -dev /dev/drm0
+    fi
+
     # Start the LWIP service.
     up lwip -dev /dev/bpf -script /etc/rs.lwip
 

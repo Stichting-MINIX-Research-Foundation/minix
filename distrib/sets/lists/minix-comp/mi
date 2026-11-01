@@ -1510,6 +1510,7 @@
 ./usr/include/protocols/rwhod.h                         minix-comp
 ./usr/include/protocols/talkd.h                         minix-comp
 ./usr/include/protocols/timed.h                         minix-comp
+./usr/include/pthread.h                                 minix-comp
 ./usr/include/puffs.h                                   minix-comp
 ./usr/include/pwd.h                                     minix-comp
 ./usr/include/quota.h                                   minix-comp
@@ -1618,7 +1619,9 @@
 ./usr/include/sys/elf_generic.h                         minix-comp
 ./usr/include/sys/endian.h                              minix-comp
 ./usr/include/sys/envsys.h                              minix-comp
+./usr/include/sys/epoll.h                              minix-comp
 ./usr/include/sys/errno.h                               minix-comp
+./usr/include/sys/eventfd.h                            minix-comp
 ./usr/include/sys/evcnt.h                               minix-comp
 ./usr/include/sys/event.h                               minix-comp
 ./usr/include/sys/exec.h                                minix-comp
@@ -1652,6 +1655,7 @@
 ./usr/include/sys/ioc_fb.h                              minix-comp
 ./usr/include/sys/ioc_fbd.h                             minix-comp
 ./usr/include/sys/ioc_file.h                            minix-comp
+./usr/include/sys/ioc_mdrm.h                            minix-comp
 ./usr/include/sys/ioc_memory.h                          minix-comp
 ./usr/include/sys/ioc_net.h                             minix-comp
 ./usr/include/sys/ioc_sound.h                           minix-comp
@@ -1730,6 +1734,7 @@
 ./usr/include/sys/sha2.h                                minix-comp
 ./usr/include/sys/shm.h                                 minix-comp
 ./usr/include/sys/siginfo.h                             minix-comp
+./usr/include/sys/signalfd.h                            minix-comp
 ./usr/include/sys/signal.h                              minix-comp
 ./usr/include/sys/signalvar.h                           minix-comp
 ./usr/include/sys/sigtypes.h                            minix-comp
@@ -1762,6 +1767,7 @@
 ./usr/include/sys/timepps.h                             minix-comp
 ./usr/include/sys/times.h                               minix-comp
 ./usr/include/sys/timespec.h                            minix-comp
+./usr/include/sys/timerfd.h                             minix-comp
 ./usr/include/sys/timex.h                               minix-comp
 ./usr/include/sys/tls.h                                 minix-comp
 ./usr/include/sys/trace.h                               minix-comp
@@ -2119,6 +2125,7 @@
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp
 ./usr/lib/libprop_pic.a                                 minix-comp
+./usr/lib/libpthread.a                                  minix-comp
 ./usr/lib/libpuffs.a                                    minix-comp
 ./usr/lib/libpuffs_pic.a                                minix-comp
 ./usr/lib/librefuse.a                                   minix-comp

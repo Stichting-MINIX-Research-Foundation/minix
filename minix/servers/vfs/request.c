@@ -900,7 +900,8 @@ int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 /*===========================================================================*
  *				req_peek				     *
  *===========================================================================*/
-int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
+int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes,
+	int flags)
 {
   message m;
 
@@ -915,6 +916,7 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
   m.m_vfs_fs_readwrite.grant = -1;
   m.m_vfs_fs_readwrite.seek_pos = pos;
   m.m_vfs_fs_readwrite.nbytes = bytes;
+  m.m_vfs_fs_readwrite.flags = flags;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

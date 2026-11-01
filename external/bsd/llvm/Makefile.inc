@@ -41,7 +41,11 @@ MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
-HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
+HOST_CXXFLAGS+=	-O1 -fno-rtti -fno-exceptions
+# Modern GCC miscompiles this LLVM: it relies on stores before object lifetime
+# and on this == nullptr checks (upstream LLVM uses the same flags), and at
+# -O2 GCC 16 still breaks it (clang marks every i386 argument inreg).
+HOST_CXXFLAGS+=	-fno-lifetime-dse -fno-delete-null-pointer-checks
 HOST_CPPFLAGS+=	-std=c++11
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config

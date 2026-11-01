@@ -88,6 +88,9 @@ do_fork(void)
   rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
   memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
+  /* POSIX: the child starts with no pending signals. */
+  (void) sigemptyset(&rmc->mp_sigpending);
+  (void) sigemptyset(&rmc->mp_ksigpending);
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;
@@ -191,6 +194,9 @@ do_srv_fork(void)
   rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
   memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
+  /* POSIX: the child starts with no pending signals. */
+  (void) sigemptyset(&rmc->mp_sigpending);
+  (void) sigemptyset(&rmc->mp_ksigpending);
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;

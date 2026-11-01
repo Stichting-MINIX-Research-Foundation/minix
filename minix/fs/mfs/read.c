@@ -153,16 +153,25 @@ int *completed;			/* number of bytes copied */
 			printf("MFS: fsdriver_zero failed\n");
 		}
 		return r;
-	} else if (call == FSC_PEEK) {
+	} else if (call == FSC_PEEK || (call == FSC_PEEK_FILL &&
+	    (rip->i_sp->s_rd_only ||
+	    (off_t) ex64lo(position) >= rip->i_size))) {
 		/* Peeking a nonexistent block. Report to VM. */
 		lmfs_zero_block_ino(dev, ino, ino_off);
 		return OK;
 	} else {
-		/* Writing to a nonexistent block.
+		/* Writing to a nonexistent block, or peeking it for a
+		 * writable shared mapping (FSC_PEEK_FILL; the one-time zero
+		 * page of a plain peek would not be shared between mappers).
 		 * Create and enter in inode.
 		 */
-		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)
-			return(err_code);
+		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL) {
+			if (call != FSC_PEEK_FILL)
+				return(err_code);
+			/* e.g. out of space: fall back to a private page */
+			lmfs_zero_block_ino(dev, ino, ino_off);
+			return OK;
+		}
 	}
   } else if (call != FSC_WRITE) {
 	/* Read and read ahead if convenient. */

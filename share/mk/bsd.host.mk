@@ -19,6 +19,11 @@ HOST_CC?=   gcc
 # Helpers for cross-compiling
 HOST_CC?=	cc
 HOST_CFLAGS?=	-O
+# Host tool sources predate C23 (the GCC 15+ default) and GCC 14's stricter
+# defaults: build them as GNU C11 and keep those diagnostics as warnings.
+HOST_CFLAGS+=	-std=gnu11 -Wno-error=implicit-function-declaration \
+		-Wno-error=implicit-int -Wno-error=int-conversion \
+		-Wno-error=incompatible-pointer-types
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
 HOST_LINK.cc?=  ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}

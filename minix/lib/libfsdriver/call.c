@@ -303,7 +303,8 @@ fsdriver_peek(const struct fsdriver * __restrict fdp,
 		r = builtin_peek(fdp, ino_nr, nbytes, pos);
 	} else
 		r = fdp->fdr_peek(ino_nr, NULL /*data*/, nbytes, pos,
-		    FSC_PEEK);
+		    (m_in->m_vfs_fs_readwrite.flags & RW_PEEK_FILL) ?
+		    FSC_PEEK_FILL : FSC_PEEK);
 
 	/* Do not return a new position. */
 	if (r >= 0) {
