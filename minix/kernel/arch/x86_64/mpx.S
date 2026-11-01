@@ -73,7 +73,7 @@ IMPORT(multiboot_init)
  * i386 — irq_handle(int) reads %rdi, so a pushed arg leaves it garbage. */
 #define PIC_IRQ_HANDLER(irq)						\
 	movl	$irq, %edi						;\
-	call	_C_LABEL(irq_handle)					;
+	CALL_C_ALIGNED(_C_LABEL(irq_handle))					;
 
 #define hwint_master(irq) \
 	TEST_INT_IN_KERNEL(8, 0f)					;\
@@ -82,7 +82,7 @@ IMPORT(multiboot_init)
 	movq	%rbp, %rdi	/* context_stop(proc_ptr) */		;\
 	push	%rbp							;\
 	movq	$0, %rbp						;\
-	call	_C_LABEL(context_stop)					;\
+	CALL_C_ALIGNED(_C_LABEL(context_stop))					;\
 	pop	%rbp							;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
@@ -91,7 +91,7 @@ IMPORT(multiboot_init)
 									\
 0:									\
 	pushaq								;\
-	call	_C_LABEL(context_stop_idle)				;\
+	CALL_C_ALIGNED(_C_LABEL(context_stop_idle))				;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL						;\
@@ -115,7 +115,7 @@ ENTRY(hwint07)	hwint_master(7)
 	movq	%rbp, %rdi	/* context_stop(proc_ptr) */		;\
 	push	%rbp							;\
 	movq	$0, %rbp						;\
-	call	_C_LABEL(context_stop)					;\
+	CALL_C_ALIGNED(_C_LABEL(context_stop))					;\
 	pop	%rbp							;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
@@ -125,7 +125,7 @@ ENTRY(hwint07)	hwint_master(7)
 									\
 0:									\
 	pushaq								;\
-	call	_C_LABEL(context_stop_idle)				;\
+	CALL_C_ALIGNED(_C_LABEL(context_stop_idle))				;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL						;\
@@ -258,7 +258,7 @@ ENTRY(ipc_entry_common)
 	/* context_stop(proc_ptr) -- first arg in %rdi (AMD64 ABI) */
 	movq	%rbp, %rdi
 	movq	$0, %rbp		/* clear frame pointer for stack trace */
-	call	_C_LABEL(context_stop)
+	CALL_C_ALIGNED(_C_LABEL(context_stop))
 
 	/* Reload proc_ptr (context_stop clobbered %rbp) */
 	movq	(%rsp), %rbp
@@ -268,7 +268,7 @@ ENTRY(ipc_entry_common)
 	movq	SIREG(%rbp), %rsi	/* endpoint -> arg 2 */
 	movq	DXREG(%rbp),  %rdx	/* msg_ptr  -> arg 3 */
 
-	call	_C_LABEL(do_ipc)	/* do_ipc(rdi, rsi, rdx) */
+	CALL_C_ALIGNED(_C_LABEL(do_ipc))	/* do_ipc(rdi, rsi, rdx) */
 
 	pop	%rsi			/* recover proc_ptr */
 	movq	%rax, AXREG(%rsi)	/* save return value */
@@ -298,13 +298,13 @@ ENTRY(kernel_call_entry_common)
 	movq	%rbp, %rdi
 	push	%rbp
 	movq	$0, %rbp
-	call	_C_LABEL(context_stop)
+	CALL_C_ALIGNED(_C_LABEL(context_stop))
 	pop	%rbp
 
 	/* kernel_call(m_user=%rdi, caller=%rsi) -- AMD64 ABI */
 	movq	DIREG(%rbp), %rdi	/* m_user: msg ptr from saved %rdi (first C arg) */
 	movq	%rbp, %rsi		/* caller: proc_ptr */
-	call	_C_LABEL(kernel_call)
+	CALL_C_ALIGNED(_C_LABEL(kernel_call))
 
 	jmp	_C_LABEL(switch_to_user)
 
@@ -424,12 +424,12 @@ exception_entry_from_user:
 	movq	%rbp, %rdi
 	push	%rbp
 	movq	$0, %rbp
-	call	_C_LABEL(context_stop)
+	CALL_C_ALIGNED(_C_LABEL(context_stop))
 	pop	%rbp
 
 	movq	%rsp, %rsi		/* frame ptr -> 2nd arg (%rsi) */
 	xorl	%edi, %edi		/* is_nested=0  -> 1st arg (%rdi) */
-	call	_C_LABEL(exception_handler)
+	CALL_C_ALIGNED(_C_LABEL(exception_handler))
 
 	jmp	_C_LABEL(switch_to_user)
 
@@ -438,7 +438,7 @@ exception_entry_nested:
 	movq	%rsp, %rsi
 	addq	$(15 * 8), %rsi		/* skip pushaq frame; point at exception frame */
 	movl	$1, %edi		/* is_nested=1  -> 1st arg (%rdi) */
-	call	_C_LABEL(exception_handler)
+	CALL_C_ALIGNED(_C_LABEL(exception_handler))
 	popaq
 	add	$16, %rsp		/* discard error code + vector */
 	iretq
@@ -466,7 +466,7 @@ LABEL(nmi)
 	pushaq
 	mov	%ss, %si;  mov	%si, %ds;  mov	%si, %es
 	mov	%rsp, %rdi
-	call	_C_LABEL(nmi_watchdog_handler)
+	CALL_C_ALIGNED(_C_LABEL(nmi_watchdog_handler))
 	popaq
 	popw	%gs; popw	%fs; popw	%es; popw	%ds
 	iretq
@@ -483,9 +483,9 @@ LABEL(copr_not_available)
 	SAVE_PROCESS_CTX(0, KTS_INT_HARD)
 	movq	%rbp, %rdi
 	push	%rbp;  movq	$0, %rbp
-	call	_C_LABEL(context_stop)
+	CALL_C_ALIGNED(_C_LABEL(context_stop))
 	pop	%rbp			/* balance the push; restore proc_ptr */
-	call	_C_LABEL(copr_not_available_handler)
+	CALL_C_ALIGNED(_C_LABEL(copr_not_available_handler))
 	jmp	_C_LABEL(switch_to_user)
 
 copr_not_available_in_kernel:
@@ -522,7 +522,7 @@ ENTRY(startup_ap_32)
 	mov	%ax, %ds
 	mov	%ax, %ss
 	mov	$_C_LABEL(k_boot_stktop) - 8, %rsp
-	call	_C_LABEL(prot_load_selectors)
+	CALL_C_ALIGNED(_C_LABEL(prot_load_selectors))
 	jmp	_C_LABEL(smp_ap_boot)
 	hlt
 #endif

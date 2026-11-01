@@ -169,4 +169,19 @@
 	andq	$~(1 << 9), %rax				;\
 	mov	%rax, where					;
 
+/*
+ * C code can be interrupted at any point, so the interrupted RSP does not
+ * have a predictable alignment.  Before calling C from an interrupt/exception
+ * entry stub, align RSP as required by the AMD64 SysV ABI and save the
+ * unmodified stack pointer in a temporary slot.  The callee may clobber all
+ * caller-saved registers, so keep the saved pointer in memory, not a register.
+ */
+#define CALL_C_ALIGNED(target) \
+	movq	%rsp, %r11			;\
+	andq	$-16, %rsp			;\
+	subq	$16, %rsp			;\
+	movq	%r11, (%rsp)			;\
+	call	target				;\
+	movq	(%rsp), %rsp
+
 #endif /* __SCONST_H__ */
