@@ -11,10 +11,12 @@
 
 void __assert13(const char *file, int line, const char *function, const char *failedexpr)
 {
-	(void)printf("%s:%d: assert \"%s\" failed", file, line, failedexpr);
-	if(function) printf(", function \"%s\"", function);
-	printf("\n");
-	panic("assert failed");
+	if (function != NULL)
+		panic("%s:%d: assert \"%s\" failed, function \"%s\"",
+		    file, line, failedexpr, function);
+	else
+		panic("%s:%d: assert \"%s\" failed", file, line,
+		    failedexpr);
 	/* NOTREACHED */
 }
 
