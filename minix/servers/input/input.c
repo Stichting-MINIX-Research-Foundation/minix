@@ -13,6 +13,8 @@ static int input_open(devminor_t, int, endpoint_t);
 static int input_close(devminor_t);
 static ssize_t input_read(devminor_t, u64_t, endpoint_t, cp_grant_id_t, size_t,
 	int, cdev_id_t);
+static ssize_t input_write(devminor_t, u64_t, endpoint_t, cp_grant_id_t,
+	size_t, int, cdev_id_t);
 static int input_ioctl(devminor_t, unsigned long, endpoint_t, cp_grant_id_t,
 	int, endpoint_t, cdev_id_t);
 static int input_cancel(devminor_t, endpoint_t, cdev_id_t);
@@ -20,6 +22,9 @@ static int input_select(devminor_t, unsigned int, endpoint_t);
 static void input_other(message *, int);
 
 static struct input_dev devs[INPUT_DEV_MAX];
+
+/* Keyboard LED mask last set through the multiplexer (by TTY, usually). */
+static unsigned int mux_leds;
 
 #define input_dev_active(dev)		((dev)->owner != NONE || \
 					 (dev)->minor == KBDMUX_MINOR || \
@@ -32,6 +37,7 @@ static struct chardriver input_tab = {
 	.cdr_open	= input_open,
 	.cdr_close	= input_close,
 	.cdr_read	= input_read,
+	.cdr_write	= input_write,
 	.cdr_ioctl	= input_ioctl,
 	.cdr_cancel	= input_cancel,
 	.cdr_select	= input_select,
@@ -87,6 +93,9 @@ input_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 {
 	struct input_dev *input_dev;
 
+	if (evdev_minor(minor))
+		return evdev_open(minor);
+
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
 
@@ -108,6 +117,9 @@ static int
 input_close(devminor_t minor)
 {
 	struct input_dev *input_dev;
+
+	if (evdev_minor(minor))
+		return evdev_close(minor);
 
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
@@ -166,6 +178,9 @@ input_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
 	unsigned int event_count;
 	struct input_dev *input_dev;
 
+	if (evdev_minor(minor))
+		return evdev_read(minor, endpt, grant, size, flags, id);
+
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
 
@@ -199,9 +214,35 @@ input_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
 }
 
 /*
+ * Write to an input device.  Only the evdev devices accept writes.
+ */
+static ssize_t
+input_write(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
+	cp_grant_id_t grant, size_t size, int UNUSED(flags),
+	cdev_id_t UNUSED(id))
+{
+
+	if (evdev_minor(minor))
+		return evdev_write(minor, endpt, grant, size);
+
+	return EIO;
+}
+
+/*
+ * Restore the keyboard LEDs as last set through the multiplexer, after an
+ * evdev reader that controlled them went away.
+ */
+void
+input_restore_leds(void)
+{
+
+	input_set_leds(KBDMUX_MINOR, mux_leds);
+}
+
+/*
  * Set keyboard LEDs on one or all keyboards.
  */
-static void
+void
 input_set_leds(devminor_t minor, unsigned int mask)
 {
 	struct input_dev *dev;
@@ -247,6 +288,9 @@ input_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	unsigned int mask;
 	int r;
 
+	if (evdev_minor(minor))
+		return evdev_ioctl(minor, request, endpt, grant);
+
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
 
@@ -267,6 +311,8 @@ input_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		if (leds.kl_bits & KBD_LEDS_SCROLL)
 			mask |= (1 << INPUT_LED_SCROLLLOCK);
 
+		if (minor == KBDMUX_MINOR)
+			mux_leds = mask;
 		input_set_leds(minor, mask);
 
 		return OK;
@@ -283,6 +329,9 @@ static int
 input_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	struct input_dev *input_dev;
+
+	if (evdev_minor(minor))
+		return evdev_cancel(minor, endpt, id);
 
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
@@ -305,6 +354,9 @@ input_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 {
 	struct input_dev *input_dev;
 	int ready_ops;
+
+	if (evdev_minor(minor))
+		return evdev_select(minor, ops, endpt);
 
 	if ((input_dev = input_map(minor)) == NULL)
 		return ENXIO;
@@ -397,12 +449,14 @@ input_event(message *m)
 		mux_dev = &devs[MOUSEMUX_DEV];
 
 	/*
-	 * Try to deliver the event to the input device or otherwise the
-	 * corresponding multiplexer.  If neither are opened, forward the event
-	 * to TTY.
+	 * Try to deliver the event to the input device, otherwise the evdev
+	 * device of its kind, otherwise the corresponding multiplexer.  If none
+	 * of them are opened, forward the event to TTY.
 	 */
 	if (input_dev->opened)
 		input_process(input_dev, m);
+	else if (evdev_input(mux_dev == &devs[MOUSEMUX_DEV], m))
+		;	/* queued (or dropped) by the evdev device */
 	else if (mux_dev->opened)
 		input_process(mux_dev, m);
 	else {
@@ -629,7 +683,8 @@ input_other(message *m, int ipc_status)
 
 	case INPUT_SETLEDS:
 		if (m->m_source == TTY_PROC_NR) {
-			input_set_leds(KBDMUX_MINOR, m->m_input_linputdriver_setleds.led_mask);
+			mux_leds = m->m_input_linputdriver_setleds.led_mask;
+			input_set_leds(KBDMUX_MINOR, mux_leds);
 
 			break;
 		}
@@ -660,6 +715,8 @@ input_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		devs[i].selector = NONE;
 		devs[i].leds = 0;
 	}
+
+	evdev_init();
 
 	/* Subscribe to driver registration events for input drivers. */
 	if ((r = ds_subscribe("drv\\.inp\\..*", DSF_INITIAL)) != OK)

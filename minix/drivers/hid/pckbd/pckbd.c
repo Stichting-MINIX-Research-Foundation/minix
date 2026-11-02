@@ -404,6 +404,13 @@ kbdaux_process(unsigned char scode)
 			if (aux_bytes[0] & (0x10 << i))
 				delta |= 0xFFFFFF00; /* make signed */
 
+			/*
+			 * PS/2 counts Y upward; HID (and thus the input
+			 * server) counts it downward, like screen coordinates.
+			 */
+			if (i == 1)
+				delta = -delta;
+
 			inputdriver_send_event(TRUE /*mouse*/, INPUT_PAGE_GD,
 			    !i ? INPUT_GD_X : INPUT_GD_Y, delta,
 			    INPUT_FLAG_REL);

@@ -141,7 +141,8 @@ Where key is one of the following:
   video                   # Make /dev/video
   pci                     # Make /dev/pci
   vnd0 vnd0p0 vnd0p0s0 .. # Make vnode disks /dev/vnd[0-7] and (sub)partitions
-  input                   # Make /dev/kbdmux, /dev/kbd[0-3], idem /dev/mouse~
+  input                   # Make /dev/kbdmux, /dev/kbd[0-3], idem /dev/mouse~,
+                          # and /dev/input/event[01] (evdev)
 EOF
 	exit 1
 }
@@ -347,6 +348,16 @@ do
 			makedev kbd${n} c 64 ${minor_keyboard} ${uname} ${gname} ${permissions}
 			makedev mouse${n} c 64 ${minor_mouse} ${uname} ${gname} ${permissions}
 		done
+
+		# Linux evdev compatible devices (<minix/evdev.h>): all keyboards,
+		# all mice.  Like drm0, for root and the operator group (the
+		# users of the local display).
+		if [ ${MTREE} != "yes" ]
+		then
+			${ECHO} mkdir -p input
+		fi
+		makedev input/event0 c 64 128 ${uname} operator 660
+		makedev input/event1 c 64 129 ${uname} operator 660
 		;;
 	klog)
 		# Logging device.

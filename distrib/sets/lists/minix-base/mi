@@ -64,6 +64,7 @@
 ./boot/minix                                            minix-base
 ./boot/minix_default                                    minix-base
 ./dev                                                   minix-base
+./dev/input                                             minix-base
 ./dev/pts                                               minix-base
 ./dev/shm                                               minix-base
 ./etc                                                   minix-base

@@ -42,4 +42,23 @@ struct input_dev {
 	unsigned int leds;		/* LED mask - saved across connects */
 };
 
+/* input.c */
+void input_set_leds(devminor_t minor, unsigned int mask);
+void input_restore_leds(void);
+
+/* evdev.c */
+void evdev_init(void);
+int evdev_minor(devminor_t minor);
+int evdev_open(devminor_t minor);
+int evdev_close(devminor_t minor);
+ssize_t evdev_read(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
+	size_t size, int flags, cdev_id_t id);
+ssize_t evdev_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
+	size_t size);
+int evdev_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+	cp_grant_id_t grant);
+int evdev_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
+int evdev_select(devminor_t minor, unsigned int ops, endpoint_t endpt);
+int evdev_input(int mouse, const message *m);
+
 #endif /* !_SERVERS_INPUT_H */

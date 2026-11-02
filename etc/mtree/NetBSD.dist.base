@@ -17,6 +17,7 @@
 ./boot/minix
 ./boot/minix_default
 ./dev
+./dev/input
 ./dev/pts
 ./dev/shm			mode=01777
 ./etc

@@ -27,6 +27,11 @@
 #   --log FILE        serial log destination (default: x86_qemu.log)
 #   --keep            leave qemu running after the commands (implies exit 0
 #                     once commands are sent; for interactive debugging)
+#   --input NAME=CMDS inject input: whenever the guest prints a line
+#                     "HARNESS:INPUT:NAME", send the ';'-separated QEMU
+#                     monitor commands CMDS (e.g. "sendkey a", "mouse_move
+#                     10 5", "mouse_button 1"; "sleep 0.5" pauses) - lets
+#                     in-guest tests read keyboard/mouse input (repeatable)
 #   -h,--help         show this text
 #
 # Exit status: 0 when every --cmd returned 0 in the guest and every
@@ -104,6 +109,11 @@ class QemuMinix:
         self.serial = None
         self.buf = ""
         self.logf = open(args.log, "wb", buffering=0)
+        self.inputs = {}
+        for spec in args.input:
+            name, _, cmds = spec.partition("=")
+            self.inputs[name] = [c.strip() for c in cmds.split(";") if c.strip()]
+        self.input_pos = 0
 
     def log(self, data: bytes):
         self.logf.write(data)
@@ -195,9 +205,45 @@ class QemuMinix:
                     return False
                 self.log(data)
                 self.buf += data.decode("utf-8", "replace")
+                self.check_inputs()
             except socket.timeout:
                 pass
         return True
+
+    def check_inputs(self):
+        """Run the --input monitor commands for every new complete
+        HARNESS:INPUT:<name> output line."""
+        rx = re.compile(r"[\r\n]HARNESS:INPUT:(\w+)[\r\n]")
+        while True:
+            m = rx.search(self.buf, self.input_pos)
+            if not m:
+                return
+            self.input_pos = m.end() - 1
+            cmds = self.inputs.get(m.group(1))
+            if cmds is None:
+                print(f"x86_qemu: no --input for {m.group(1)!r}")
+                continue
+            self.monitor(cmds)
+
+    def monitor(self, cmds):
+        """Send QEMU monitor (HMP) commands; "sleep N" pauses."""
+        s = self._connect(self.monsock, tries=10)
+        s.settimeout(0.2)
+        def drain():
+            try:
+                while s.recv(4096):
+                    pass
+            except (socket.timeout, BlockingIOError):
+                pass
+        drain()
+        for c in cmds:
+            if c.startswith("sleep "):
+                time.sleep(float(c.split()[1]))
+                continue
+            s.sendall((c + "\n").encode())
+            time.sleep(0.15)
+            drain()
+        s.close()
 
     def wait_for(self, pattern, timeout, what=""):
         end = time.time() + timeout
@@ -393,6 +439,9 @@ def main():
     ap.add_argument("--screendump")
     ap.add_argument("--log", default="x86_qemu.log")
     ap.add_argument("--keep", action="store_true")
+    ap.add_argument("--input", action="append", default=[],
+                    help="NAME=CMD;CMD: monitor commands to send when the "
+                         "guest prints HARNESS:INPUT:NAME")
     ap.add_argument("--raw", action="store_true",
                     help="run --cmd directly on the login shell; no test disk")
     args = ap.parse_args()
