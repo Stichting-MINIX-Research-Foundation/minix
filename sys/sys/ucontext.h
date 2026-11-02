@@ -61,6 +61,10 @@ struct __ucontext {
 #define	_UC_SWAPPED	0x10000
 #define _UC_IGNFPU      0x20000
 #define _UC_IGNSIGM     0x40000
+#if defined(__x86_64__)
+/* Userspace-only marker: getcontext() saved callee-saved GPRs only. */
+#define _UC_NOVOLATILE  0x80000000U
+#endif /* defined(__x86_64__) */
 #endif /* defined(__minix) */
 #define	_UC_MD		0x400f0020	/* MD bits.  see below */
 
