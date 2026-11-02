@@ -21,7 +21,9 @@ ENTRY(_getcontext)
 	decl	%eax			/* return -1 */
 	ret
 
-3:	/* Check flags for fast path */
+3:	/* Clear a stale marker when reusing this ucontext_t. */
+	btrl	$31, UC_FLAGS(%rdi)	/* clear _UC_NOVOLATILE */
+	/* Check flags for fast path */
 	movl	UC_FLAGS(%rdi), %eax
 	andl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
 	cmpl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
@@ -31,6 +33,12 @@ ENTRY(_getcontext)
 	pushq	%rdi			/* preserve ucp across call */
 	call	PIC_PLT(_C_LABEL(getuctx))	/* getuctx(ucp) */
 	popq	%rdi			/* restore ucp */
+	jmp	7f
+
+5:	/* Fast getcontext leaves caller-saved GPRs undefined. */
+	orl	$[_UC_NOVOLATILE], UC_FLAGS(%rdi)
+
+7:	/* Continue by saving callee-saved GP registers. */
 
 5:	/* Save callee-saved GP registers, RIP, and RSP */
 	movq	0(%rsp), %rax		/* return address */
@@ -103,10 +111,8 @@ ENTRY(setcontext)
 	 * slots when restoring such a context.  The full path has obtained
 	 * those registers through getuctx()/setuctx(), so restore them there.
 	 */
-	movl	UC_FLAGS(%rdi), %eax
-	andl	$[_UC_IGNSIGM|_UC_IGNFPU], %eax
-	cmpl	$[_UC_IGNSIGM|_UC_IGNFPU], %eax
-	jz	6f			/* fast path: caller-saved registers were not saved */
+	testl	$[_UC_NOVOLATILE], UC_FLAGS(%rdi)
+	jnz	6f			/* fast getcontext: caller-saved registers are undefined */
 
 	movq	SI(%rdi), %rsi		/* restore RSI (arg reg, used by makecontext) */
 	movq	DX(%rdi), %rdx		/* restore RDX */
