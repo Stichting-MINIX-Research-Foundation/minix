@@ -94,4 +94,9 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	}
 
 	va_end(ap);
+
+#if defined(__minix) && defined(__x86_64__)
+	/* makecontext populated the argument GPRs, so setcontext must restore them. */
+	ucp->uc_flags &= ~_UC_NOVOLATILE;
+#endif
 }

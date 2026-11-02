@@ -21,7 +21,9 @@ ENTRY(_getcontext)
 	decl	%eax			/* return -1 */
 	ret
 
-3:	/* Check flags for fast path */
+3:	/* Clear a stale marker when reusing this ucontext_t. */
+	btrl	$31, UC_FLAGS(%rdi)	/* clear _UC_NOVOLATILE */
+	/* Check flags for fast path */
 	movl	UC_FLAGS(%rdi), %eax
 	andl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
 	cmpl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
@@ -31,6 +33,12 @@ ENTRY(_getcontext)
 	pushq	%rdi			/* preserve ucp across call */
 	call	PIC_PLT(_C_LABEL(getuctx))	/* getuctx(ucp) */
 	popq	%rdi			/* restore ucp */
+	jmp	7f
+
+5:	/* Fast getcontext leaves caller-saved GPRs undefined. */
+	orl	$[_UC_NOVOLATILE], UC_FLAGS(%rdi)
+
+7:	/* Continue by saving callee-saved GP registers. */
 
 5:	/* Save callee-saved GP registers, RIP, and RSP */
 	movq	0(%rsp), %rax		/* return address */
@@ -59,7 +67,8 @@ ENTRY(setcontext)
 	testq	%rdi, %rdi
 	jnz	3f
 	movl	$EFAULT, %edx
-0:	pushq	%rdx			/* preserve errno value */
+0:
+	pushq	%rdx			/* preserve errno value */
 	call	PIC_PLT(_C_LABEL(__errno))
 	popq	%rdx
 	movl	%edx, (%rax)
@@ -79,12 +88,14 @@ ENTRY(setcontext)
 	cmpl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
 	jz	5f			/* both set → skip setuctx */
 
+	/* Do not pass this libc-private marker to the kernel. */
+	btrl	$31, UC_FLAGS(%rdi)	/* clear _UC_NOVOLATILE */
 	/* Slow path: restore signal mask and FPU state via PM/kernel */
 	pushq	%rdi			/* preserve ucp across call */
 	call	PIC_PLT(_C_LABEL(setuctx))	/* setuctx(ucp) */
 	popq	%rdi			/* restore ucp */
 
-5:	/* Restore GP registers, RSP, then jump to saved RIP.
+5:	/* Restore callee-saved GP registers, RSP, then jump to saved RIP.
 	 * Load PC into %r11 (caller-saved scratch) before clobbering %rdi. */
 	movq	R15(%rdi), %r15		/* restore R15 */
 	movq	R14(%rdi), %r14		/* restore R14 */
@@ -94,13 +105,25 @@ ENTRY(setcontext)
 	movq	BP(%rdi), %rbp		/* restore RBP */
 	movq	SP(%rdi), %rsp		/* restore RSP */
 	movq	PC(%rdi), %r11		/* stash saved RIP in scratch */
+
+	/*
+	 * The fast getcontext() path above saves only callee-saved registers.
+	 * In particular, it leaves the caller-saved slots (RDI, RSI, RDX,
+	 * RCX, R8, and R9) untouched.  Do not restore stale values from those
+	 * slots when restoring such a context.  The full path has obtained
+	 * those registers through getuctx()/setuctx(), so restore them there.
+	 */
+	testl	$[_UC_NOVOLATILE], UC_FLAGS(%rdi)
+	jnz	6f			/* fast getcontext: caller-saved registers are undefined */
+
 	movq	SI(%rdi), %rsi		/* restore RSI (arg reg, used by makecontext) */
 	movq	DX(%rdi), %rdx		/* restore RDX */
 	movq	CX(%rdi), %rcx		/* restore RCX */
 	movq	R8(%rdi), %r8		/* restore R8 */
 	movq	R9(%rdi), %r9		/* restore R9 */
 	movq	DI(%rdi), %rdi		/* restore RDI last (was ucp pointer) */
-	xorl	%eax, %eax		/* return 0 */
+
+6:	xorl	%eax, %eax		/* return 0 */
 	jmp	*%r11			/* jump to saved RIP */
 
 
