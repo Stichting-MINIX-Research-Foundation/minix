@@ -59,7 +59,8 @@ ENTRY(setcontext)
 	testq	%rdi, %rdi
 	jnz	3f
 	movl	$EFAULT, %edx
-0:	pushq	%rdx			/* preserve errno value */
+0:
+	pushq	%rdx			/* preserve errno value */
 	call	PIC_PLT(_C_LABEL(__errno))
 	popq	%rdx
 	movl	%edx, (%rax)
@@ -84,7 +85,7 @@ ENTRY(setcontext)
 	call	PIC_PLT(_C_LABEL(setuctx))	/* setuctx(ucp) */
 	popq	%rdi			/* restore ucp */
 
-5:	/* Restore GP registers, RSP, then jump to saved RIP.
+5:	/* Restore callee-saved GP registers, RSP, then jump to saved RIP.
 	 * Load PC into %r11 (caller-saved scratch) before clobbering %rdi. */
 	movq	R15(%rdi), %r15		/* restore R15 */
 	movq	R14(%rdi), %r14		/* restore R14 */
@@ -94,13 +95,27 @@ ENTRY(setcontext)
 	movq	BP(%rdi), %rbp		/* restore RBP */
 	movq	SP(%rdi), %rsp		/* restore RSP */
 	movq	PC(%rdi), %r11		/* stash saved RIP in scratch */
+
+	/*
+	 * The fast getcontext() path above saves only callee-saved registers.
+	 * In particular, it leaves the caller-saved slots (RDI, RSI, RDX,
+	 * RCX, R8, and R9) untouched.  Do not restore stale values from those
+	 * slots when restoring such a context.  The full path has obtained
+	 * those registers through getuctx()/setuctx(), so restore them there.
+	 */
+	movl	UC_FLAGS(%rdi), %eax
+	andl	$[_UC_IGNSIGM|_UC_IGNFPU], %eax
+	cmpl	$[_UC_IGNSIGM|_UC_IGNFPU], %eax
+	jz	6f			/* fast path: caller-saved registers were not saved */
+
 	movq	SI(%rdi), %rsi		/* restore RSI (arg reg, used by makecontext) */
 	movq	DX(%rdi), %rdx		/* restore RDX */
 	movq	CX(%rdi), %rcx		/* restore RCX */
 	movq	R8(%rdi), %r8		/* restore R8 */
 	movq	R9(%rdi), %r9		/* restore R9 */
 	movq	DI(%rdi), %rdi		/* restore RDI last (was ucp pointer) */
-	xorl	%eax, %eax		/* return 0 */
+
+6:	xorl	%eax, %eax		/* return 0 */
 	jmp	*%r11			/* jump to saved RIP */
 
 
