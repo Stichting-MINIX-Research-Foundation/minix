@@ -11,6 +11,10 @@
 
 #include "kernel/system.h"
 
+#ifdef __x86_64__
+extern void direct_com_print_char(char);
+#endif
+
 
 /*===========================================================================*
  *			        do_diagctl				     *
@@ -36,8 +40,19 @@ int do_diagctl(struct proc * caller, message * m_ptr)
 			caller->p_endpoint, len, s);
 		return s;
 	}
-	for(i = 0; i < len; i++)
+	for(i = 0; i < len; i++) {
 		kputc(mybuf[i]);
+#ifdef __x86_64__
+#if defined(DEBUG_SERIAL)
+		if (!kinfo.do_serial_debug)
+#endif
+		{
+			if (mybuf[i] == '\n')
+				direct_com_print_char('\r');
+			direct_com_print_char(mybuf[i]);
+		}
+#endif
+	}
 	kputc(END_OF_KMESS);
 	return OK;
     case DIAGCTL_CODE_STACKTRACE:
