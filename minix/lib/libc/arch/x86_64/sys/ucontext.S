@@ -88,6 +88,8 @@ ENTRY(setcontext)
 	cmpl	$[_UC_IGNFPU|_UC_IGNSIGM], %eax
 	jz	5f			/* both set → skip setuctx */
 
+	/* Do not pass this libc-private marker to the kernel. */
+	btrl	$31, UC_FLAGS(%rdi)	/* clear _UC_NOVOLATILE */
 	/* Slow path: restore signal mask and FPU state via PM/kernel */
 	pushq	%rdi			/* preserve ucp across call */
 	call	PIC_PLT(_C_LABEL(setuctx))	/* setuctx(ucp) */
