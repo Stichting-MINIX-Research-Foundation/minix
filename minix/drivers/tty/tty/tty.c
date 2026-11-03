@@ -82,6 +82,11 @@ static ssize_t do_read(devminor_t minor, u64_t position, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
 static ssize_t do_write(devminor_t minor, u64_t position, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
+static ssize_t do_write_common(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, const char *kernel_buf, size_t size, int flags,
+	cdev_id_t id);
+static ssize_t do_kernel_write(devminor_t minor, const char *buf,
+	size_t size, int flags, cdev_id_t id);
 static int do_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id);
 static int do_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id);
@@ -243,8 +248,7 @@ static void set_color(tty_t *tp, int color)
 
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[1;%dm", color);
-	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		CDEV_NONBLOCK, 0);
+	do_kernel_write(tp->tty_minor, buf, sizeof(buf), CDEV_NONBLOCK, 0);
 }
 
 static void reset_color(tty_t *tp)
@@ -254,8 +258,7 @@ static void reset_color(tty_t *tp)
 #define SGR_COLOR_RESET	39
 	buf[0] = '\033';
 	snprintf(&buf[1], sizeof(buf) - 1, "[0;%dm", SGR_COLOR_RESET);
-	do_write(tp->tty_minor, 0, KERNEL, (cp_grant_id_t) buf, sizeof(buf),
-		CDEV_NONBLOCK, 0);
+	do_kernel_write(tp->tty_minor, buf, sizeof(buf), CDEV_NONBLOCK, 0);
 }
 
 tty_t *
@@ -424,8 +427,7 @@ static void do_new_kmess(void)
 
 		if (kernel_msg_color != 0)
 			set_color(tp, kernel_msg_color);
-		do_write(tp->tty_minor, 0, KERNEL,
-			(cp_grant_id_t) kernel_buf_copy, bytes,
+		do_kernel_write(tp->tty_minor, kernel_buf_copy, bytes,
 			CDEV_NONBLOCK, 0);
 		if (kernel_msg_color != 0)
 			reset_color(tp);
@@ -534,6 +536,23 @@ static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
 	endpoint_t endpt, cp_grant_id_t grant, size_t size, int flags,
 	cdev_id_t id)
 {
+	return do_write_common(minor, endpt, grant, NULL, size, flags, id);
+}
+
+/*
+ * Kernel-generated output uses a direct pointer in the TTY process.  Do not
+ * encode that pointer in cp_grant_id_t: grant IDs are 32-bit values.
+ */
+static ssize_t do_kernel_write(devminor_t minor, const char *buf,
+	size_t size, int flags, cdev_id_t id)
+{
+	return do_write_common(minor, KERNEL, 0, buf, size, flags, id);
+}
+
+static ssize_t do_write_common(devminor_t minor, endpoint_t endpt,
+	cp_grant_id_t grant, const char *kernel_buf, size_t size, int flags,
+	cdev_id_t id)
+{
 /* A process wants to write on a terminal. */
   tty_t *tp;
   int r;
@@ -548,11 +567,14 @@ static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
 	return EIO;
   if (size <= 0)
 	return EINVAL;
+  if ((endpt == KERNEL) != (kernel_buf != NULL))
+	return EINVAL;
 
   /* Copy message parameters to the tty structure. */
   tp->tty_outcaller = endpt;
   tp->tty_outid = id;
   tp->tty_outgrant = grant;
+  tp->tty_outbuf = kernel_buf;
   assert(tp->tty_outcum == 0);
   tp->tty_outleft = size;
 
@@ -566,6 +588,7 @@ static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = 0;
 	tp->tty_outcaller = NONE;
+	tp->tty_outbuf = NULL;
 	return r;
   }
 
@@ -795,6 +818,7 @@ static int do_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = 0;
 	tp->tty_outcaller = NONE;
+	tp->tty_outbuf = NULL;
   } else if (tp->tty_ioreq != 0 && endpt == tp->tty_iocaller &&
 	id == tp->tty_ioid) {
 	/* Process was waiting for output to drain. */
