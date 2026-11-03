@@ -541,11 +541,14 @@ static ssize_t do_write(devminor_t minor, u64_t UNUSED(position),
 
 /*
  * Kernel-generated output uses a direct pointer in the TTY process.  Do not
- * encode that pointer in cp_grant_id_t: grant IDs are 32-bit values.
+ * encode that pointer in cp_grant_id_t: grant IDs are 32-bit values.  These
+ * buffers may be stack-allocated, so kernel writes must be nonblocking.
  */
 static ssize_t do_kernel_write(devminor_t minor, const char *buf,
 	size_t size, int flags, cdev_id_t id)
 {
+	if (!(flags & CDEV_NONBLOCK))
+		return EINVAL;
 	return do_write_common(minor, KERNEL, 0, buf, size, flags, id);
 }
 
@@ -553,7 +556,7 @@ static ssize_t do_write_common(devminor_t minor, endpoint_t endpt,
 	cp_grant_id_t grant, const char *kernel_buf, size_t size, int flags,
 	cdev_id_t id)
 {
-/* A process wants to write on a terminal. */
+/* A process or the kernel wants to write on a terminal. */
   tty_t *tp;
   int r;
 
