@@ -81,6 +81,20 @@ fi
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
 
+# The installer root is extracted from release-set archives.  On an
+# incremental build those archives can lag behind the checked-out source,
+# even when the ISO itself is recreated.  Keep the two files that control
+# rc logging and the active console getty in sync with this source tree.
+if ! grep -Fq 'if [ "$RC_LOG_FILE" = "/dev/log" ]; then' etc/rc; then
+	echo "etc/rc is missing the /dev/log logging fallback; refusing to create a stale installer image." >&2
+	exit 1
+fi
+cp -p etc/rc etc/ttys "${ROOT_DIR}/etc/"
+if ! grep -Fq 'RC_LOG_FILE="/var/run/rc.log"' "${ROOT_DIR}/etc/rc"; then
+	echo "The staged installer /etc/rc does not contain the rc log fallback." >&2
+	exit 1
+fi
+
 # Do not call workdir_add_cd_files() here: that legacy helper copies
 # usr/mdec/boot_monitor and creates /minixboot.  The amd64 port boots through
 # BOOTX64.EFI and Multiboot2, and does not build the BIOS boot monitor.
