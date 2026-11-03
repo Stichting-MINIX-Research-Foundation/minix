@@ -100,10 +100,12 @@ fi
 if ! sysenv bootramdisk >/dev/null; then
 	mount -n $bin_img"$rootdevname" /
 
-	# Reopen standard file descriptors, so that we can unmount the ramdisk.
-	# That is essentially a VFS shortcoming that should be fixed, though..
-	exec >/dev/log
-	exec 2>/dev/log
+	# Reopen standard file descriptors on the real root, so that we can
+	# unmount the ramdisk.  /dev/log is a TTY diagnostics device, not a
+	# general-purpose console handle.  Use /dev/console so console= redirection
+	# (including the serial console) is honored.
+	exec >/dev/console
+	exec 2>&1
 	exec </dev/console
 fi
 
