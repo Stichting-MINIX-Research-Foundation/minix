@@ -24,11 +24,10 @@ _rc_conf_loaded=true
 
 : ${RC_LOG_FILE:="/var/run/rc.log"}
 
-# /dev/log is a TTY diagnostics device, not a regular log file.  Some
-# installation media may not contain that device node.  Do not let an
-# inherited RC_LOG_FILE setting make the startup logger try to create a
-# regular file on the read-only root file system.
-if [ "$RC_LOG_FILE" = "/dev/log" ] && [ ! -c "$RC_LOG_FILE" ]; then
+# /dev/log is a TTY diagnostics device, not a regular log file.
+# The rc logger appends to RC_LOG_FILE, so do not use /dev/log even when
+# the device node exists on the installation media.
+if [ "$RC_LOG_FILE" = "/dev/log" ]; then
 	RC_LOG_FILE="/var/run/rc.log"
 fi
 
