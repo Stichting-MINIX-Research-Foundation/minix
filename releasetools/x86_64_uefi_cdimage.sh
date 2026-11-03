@@ -134,7 +134,7 @@ banner==========================================================================
 banner=
 menu=Start MINIX 3 (UEFI x86_64):modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
 menu=Start MINIX 3 in single-user mode:modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 bootopts=-s
-menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
+menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes console=tty00
 menu=Drop to UEFI boot prompt:prompt
 clear=1
 timeout=10
