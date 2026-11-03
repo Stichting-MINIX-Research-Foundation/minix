@@ -19,6 +19,8 @@ TARGETS+=	release
 
 # Build an x86_64 UEFI El Torito ISO.  The legacy cdroms target uses the
 # 32-bit BIOS boot path and is not suitable for the amd64 EFI loader.
+# Let the image script rebuild the release sets by default.  In particular,
+# changes to the boot ramdisk must reach minix-kernel.tgz before the ISO is made.
 iso_image: .PHONY
 	ARCH=amd64 \
 	OBJ=${.OBJDIR:Q}/../.. \
@@ -26,7 +28,6 @@ iso_image: .PHONY
 	RELEASEDIR=${RELEASEDIR:Q} \
 	SETS_DIR=${RELEASEDIR:Q}/${RELEASEMACHINEDIR}/binary/sets \
 	CROSS_TOOLS=${TOOLDIR:Q}/bin \
-	CREATE_IMAGE_ONLY=1 \
 	bash ${NETBSDSRCDIR:Q}/releasetools/x86_64_uefi_cdimage.sh
 
 live_image:
