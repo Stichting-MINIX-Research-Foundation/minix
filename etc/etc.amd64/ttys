@@ -1,20 +1,44 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.7 2019/09/25 23:09:19 abs Exp $
 #
-# name	getty				type	status		comments
+# name		getty			type	status		comments
 #
-console	"/usr/libexec/getty Pc"		vt100	off secure
-constty	"/usr/libexec/getty Pc"		vt100	on secure
-ttyE0	"/usr/libexec/getty Pc"		wsvt25	off secure
-ttyE1	"/usr/libexec/getty Pc"		wsvt25	off secure
-ttyE2	"/usr/libexec/getty Pc"		wsvt25	off secure
-ttyE3	"/usr/libexec/getty Pc"		wsvt25	off secure
-tty00	"/usr/libexec/getty std.9600"	unknown off secure
-tty01	"/usr/libexec/getty std.9600"	unknown off secure
-tty02	"/usr/libexec/getty std.9600"	unknown off secure
-tty03	"/usr/libexec/getty std.9600"	unknown off secure
-tty04	"/usr/libexec/getty std.9600"	unknown off secure
-tty05	"/usr/libexec/getty std.9600"	unknown off secure
-tty06	"/usr/libexec/getty std.9600"	unknown off secure
-tty07	"/usr/libexec/getty std.9600"	unknown off secure
+console		"/usr/libexec/getty default"	wsvt25	on secure
+ttyc1		"/usr/libexec/getty default"	wsvt25	on secure
+ttyc2		"/usr/libexec/getty default"	wsvt25	on secure
+ttyc3		"/usr/libexec/getty default"	wsvt25	on secure
+tty00		""		unknown	off secure
+tty01		""		unknown off secure
+
+ttyp0		""		network	off 
+ttyp1		""		network	off
+ttyp2		""		network off
+ttyp3		""		network off
+ttyp4		""		network off
+ttyp5		""		network off
+ttyp6		""		network off
+ttyp7		""		network off
+ttyp8		""		network off
+ttyp9		""		network off
+ttypa		""		network off
+ttypb		""		network off
+ttypc		""		network off
+ttypd		""		network off
+ttype		""		network off
+ttypf		""		network off
+ttyq0		""		network off
+ttyq1		""		network off
+ttyq2		""		network off
+ttyq3		""		network off
+ttyq4		""		network off
+ttyq5		""		network off
+ttyq6		""		network off
+ttyq7		""		network off
+ttyq8		""		network off
+ttyq9		""		network off
+ttyqa		""		network off
+ttyqb		""		network off
+ttyqc		""		network off
+ttyqd		""		network off
+ttyqe		""		network off
+ttyqf		""		network off
