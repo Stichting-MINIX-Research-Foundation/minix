@@ -24,6 +24,14 @@ _rc_conf_loaded=true
 
 : ${RC_LOG_FILE:="/var/run/rc.log"}
 
+# /dev/log is a TTY diagnostics device, not a regular log file.  Some
+# installation media may not contain that device node.  Do not let an
+# inherited RC_LOG_FILE setting make the startup logger try to create a
+# regular file on the read-only root file system.
+if [ "$RC_LOG_FILE" = "/dev/log" ] && [ ! -c "$RC_LOG_FILE" ]; then
+	RC_LOG_FILE="/var/run/rc.log"
+fi
+
 # rc.subr redefines echo and printf.  Undo that here.
 unset echo ; unalias echo
 unset printf ; unalias printf
