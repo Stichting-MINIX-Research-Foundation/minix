@@ -259,7 +259,14 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	gr[_REG_R12] = (uintptr_t)(void (*)(void))func;  /* for ctx_start */
 	gr[_REG_R13] = (uintptr_t)ucp;                   /* for ctx_start */
 
-	/* First 6 args go into argument registers (gregs[0..5] = RDI..R9) */
+	/* First 6 args go into argument registers (gregs[0..5] = RDI..R9).
+	 * The context may have come from the fast getcontext() path, which
+	 * leaves caller-saved GPR slots untouched. Initialize all six slots
+	 * before filling the arguments supplied by the caller.
+	 */
+	for (i = 0; i < 6; i++)
+		gr[i] = 0;
+
 	va_start(ap, argc);
 	for (i = 0; i < nregargs; i++)
 		gr[i] = va_arg(ap, __greg_t);
@@ -268,6 +275,12 @@ void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	for (i = 0; i < nstackargs; i++)
 		sp[i] = va_arg(ap, uintptr_t);
 	va_end(ap);
+
+	/* All caller-saved argument GPRs are now initialized.  setcontext()
+	 * must restore them even when this context originated in fast
+	 * getcontext(), which marks the uninitialized-register state.
+	 */
+	ucp->uc_flags &= ~_UC_NOVOLATILE;
 
 	/* Invalidate if stack space was exhausted */
 	if ((char *)sp < (char *)ucp->uc_stack.ss_sp)
