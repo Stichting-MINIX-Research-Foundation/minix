@@ -61,6 +61,7 @@ typedef struct tty {
   endpoint_t tty_outcaller;	/* process that made the call, or NONE */
   cdev_id_t tty_outid;		/* ID of suspended write request */
   cp_grant_id_t tty_outgrant;	/* grant where data comes from */
+  const char *tty_outbuf;	/* direct kernel output buffer */
   size_t tty_outleft;		/* # chars yet to be output */
   size_t tty_outcum;		/* # chars output so far */
   endpoint_t tty_iocaller;	/* process that made the call, or NONE */
