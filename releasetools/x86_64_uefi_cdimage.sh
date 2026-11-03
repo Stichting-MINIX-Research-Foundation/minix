@@ -19,7 +19,11 @@ cd "${SCRIPT_DIR}/.."
 : ${BUILDSH:=build.sh}
 : ${SETS:=minix-base}
 : ${BUNDLE_SETS:=1}
-: ${CREATE_IMAGE_ONLY:=1}
+# Rebuild release sets by default. Image-only mode consumes the existing
+# minix-base.tgz, which can silently omit source changes to /etc/rc,
+# /etc/ttys, and other installed files even when the ISO is recreated.
+# Set CREATE_IMAGE_ONLY=1 only when the release sets already match this tree.
+: ${CREATE_IMAGE_ONLY:=0}
 : ${EFIMB:=64}
 : ${RELEASEDIR:=${OBJ}/releasedir}
 : ${SETS_DIR:=${RELEASEDIR}/${ARCH}/binary/sets}
