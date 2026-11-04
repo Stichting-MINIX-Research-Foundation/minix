@@ -33,6 +33,7 @@ IMGFILE_EXTRA=								\
 	${.CURDIR}/etc.ttys		etc/ttys			\
 	${.CURDIR}/etc.rc		etc/rc				\
 	${.CURDIR}/install.sh		.				\
+	${.CURDIR}/setup-amd64.sh	.				\
 	${.OBJDIR}/boot.cfg		.				\
 #	${SYSINSTDIR}/sysinstmsgs.de	.				\
 #	${SYSINSTDIR}/sysinstmsgs.es	.				\
