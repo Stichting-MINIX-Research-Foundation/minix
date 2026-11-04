@@ -100,6 +100,24 @@ fi
 if ! sysenv bootramdisk >/dev/null; then
 	mount -n $bin_img"$rootdevname" /
 
+	# A CD root is read-only and may not contain /dev/console.  init(8)
+	# ran MAKEDEV before this root switch, while /dev still referred to the
+	# boot ramdisk.  Create the initial device set on the new root now.
+	# -MM makes MAKEDEV mount a memory filesystem over /dev, preserving the
+	# read-only lower filesystem while allowing device nodes to be created.
+	if [ ! -c /dev/console ]; then
+		if [ -x /dev/MAKEDEV ]; then
+			(cd /dev && ./MAKEDEV -MM init) || :
+		else
+			(cd /dev && /etc/MAKEDEV -MM init) || :
+		fi
+	fi
+
+	if [ ! -c /dev/console ]; then
+		echo "Unable to create /dev/console on the root filesystem"
+		exit 1
+	fi
+
 	# Reopen standard file descriptors on the real root, so that we can
 	# unmount the ramdisk.  /dev/log is a TTY diagnostics device, not a
 	# general-purpose console handle.  Use /dev/console so console= redirection
