@@ -82,7 +82,36 @@ if ! grep -Fq 'if [ "$RC_LOG_FILE" = "/dev/log" ]; then' etc/rc; then
 	echo "etc/rc is missing the /dev/log logging fallback; refusing to create a stale installer image." >&2
 	exit 1
 fi
-cp -p etc/rc etc/ttys "${ROOT_DIR}/etc/"
+cp -p etc/rc "${ROOT_DIR}/etc/rc"
+cp -p etc/ttys "${ROOT_DIR}/etc/ttys"
+# Autologin on the primary console and start the guided installer.
+awk '
+/^console[[:space:]]/ {
+	print "console\t\\\"/usr/libexec/getty sysinst\\\"\twsvt25\ton secure"
+	next
+}
+{ print }
+' "${ROOT_DIR}/etc/ttys" > "${WORK_DIR}/installer.ttys"
+mv "${WORK_DIR}/installer.ttys" "${ROOT_DIR}/etc/ttys"
+INSTALLER_DIR="${SCRIPT_DIR}/../distrib/amd64/installimage"
+cp -p "${INSTALLER_DIR}/install.sh" "${ROOT_DIR}/install.sh"
+cp -p "${INSTALLER_DIR}/setup-amd64.sh" "${ROOT_DIR}/setup-amd64.sh"
+awk '
+$0 == "rc_real_work \\"$@\\" 2>&1 | rc_postprocess" {
+	print "# Autostart MINIX amd64 UEFI installer on the console."
+	print "if [ -x /install.sh ]; then"
+	print "\techo \\"# MINIX amd64 installer\\" > /etc/gettytab"
+	print "\techo -n \\"sysinst:al=root:lo=/install.sh:im=:sp#\\" >> /etc/gettytab"
+	print "\tstty speed >> /etc/gettytab"
+	print "fi"
+}
+{ print }
+' "${ROOT_DIR}/etc/rc" > "${WORK_DIR}/installer.rc"
+mv "${WORK_DIR}/installer.rc" "${ROOT_DIR}/etc/rc"
+if ! grep -Fq 'Autostart MINIX amd64 UEFI installer' "${ROOT_DIR}/etc/rc"; then
+	echo "Could not add the installer startup hook to the staged /etc/rc." >&2
+	exit 1
+fi
 mkdir -p "${ROOT_DIR}/usr/etc"
 cp -p etc/usr/rc "${ROOT_DIR}/usr/etc/rc"
 if ! grep -Fq 'RC_LOG_FILE="/var/run/rc.log"' "${ROOT_DIR}/etc/rc"; then
@@ -204,6 +233,27 @@ mkdir -p "${EFI_DIR}/EFI/BOOT"
 cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DIR}/EFI/BOOT/BOOTX64.EFI"
 "${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
 	-t msdos -o F=32,c=1 "${EFI_IMAGE}" "${EFI_DIR}"
+
+# Also make an ESP image for a hard-disk installation. Unlike the El Torito
+# image above, this one carries a boot.cfg that loads MINIX from GPT partition
+# 1 (hd0b / c0d0p1). The installer copies this image to the target ESP.
+EFI_DISK_DIR="${WORK_DIR}/efi-disk"
+EFI_DISK_IMAGE="${ROOT_DIR}/efiboot-disk.img"
+mkdir -p "${EFI_DISK_DIR}/EFI/BOOT"
+cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DISK_DIR}/EFI/BOOT/BOOTX64.EFI"
+cat > "${EFI_DISK_DIR}/boot.cfg" <<'EOF_EFI_DISK'
+banner=MINIX 3.4.0 amd64 UEFI disk boot
+banner================================================
+banner=
+menu=Start MINIX 3 (UEFI x86_64):modules on; load hd0b:/boot/minix_default/mod01_ds; load hd0b:/boot/minix_default/mod02_rs; load hd0b:/boot/minix_default/mod03_pm; load hd0b:/boot/minix_default/mod04_sched; load hd0b:/boot/minix_default/mod05_vfs; load hd0b:/boot/minix_default/mod06_memory; load hd0b:/boot/minix_default/mod07_tty; load hd0b:/boot/minix_default/mod08_mib; load hd0b:/boot/minix_default/mod09_vm; load hd0b:/boot/minix_default/mod10_pfs; load hd0b:/boot/minix_default/mod11_mfs; load hd0b:/boot/minix_default/mod12_init; multiboot2 hd0b:/boot/minix_default/kernel rootdevname=c0d0p1 acpi=yes ahci=yes cttyline=0 no_smp=0 no_apic=0
+menu=Start MINIX 3 in single-user mode:modules on; load hd0b:/boot/minix_default/mod01_ds; load hd0b:/boot/minix_default/mod02_rs; load hd0b:/boot/minix_default/mod03_pm; load hd0b:/boot/minix_default/mod04_sched; load hd0b:/boot/minix_default/mod05_vfs; load hd0b:/boot/minix_default/mod06_memory; load hd0b:/boot/minix_default/mod07_tty; load hd0b:/boot/minix_default/mod08_mib; load hd0b:/boot/minix_default/mod09_vm; load hd0b:/boot/minix_default/mod10_pfs; load hd0b:/boot/minix_default/mod11_mfs; load hd0b:/boot/minix_default/mod12_init; multiboot2 hd0b:/boot/minix_default/kernel rootdevname=c0d0p1 acpi=yes ahci=yes bootopts=-s
+menu=Drop to UEFI boot prompt:prompt
+clear=1
+timeout=5
+default=1
+EOF_EFI_DISK
+"${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
+	-t msdos -o F=32,c=1 "${EFI_DISK_IMAGE}" "${EFI_DISK_DIR}"
 
 mkdir -p "$(dirname "${IMG}")"
 IMG_DIR=$(cd "$(dirname "${IMG}")" && pwd)
