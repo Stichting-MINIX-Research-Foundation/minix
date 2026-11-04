@@ -100,21 +100,12 @@ fi
 if ! sysenv bootramdisk >/dev/null; then
 	mount -n $bin_img"$rootdevname" /
 
-	# A CD root is read-only and may not contain /dev/console.  init(8)
-	# ran MAKEDEV before this root switch, while /dev still referred to the
-	# boot ramdisk.  Create the initial device set on the new root now.
-	# -MM makes MAKEDEV mount a memory filesystem over /dev, preserving the
-	# read-only lower filesystem while allowing device nodes to be created.
+	# The installation CD is read-only.  /dev/console therefore has to
+	# be present in the ISO image; the NetBSD MAKEDEV -MM path is not usable
+	# on MINIX because mount_tmpfs and mount_mfs are not provided here.
 	if [ ! -c /dev/console ]; then
-		if [ -x /dev/MAKEDEV ]; then
-			(cd /dev && ./MAKEDEV -MM init) || :
-		else
-			(cd /dev && /etc/MAKEDEV -MM init) || :
-		fi
-	fi
-
-	if [ ! -c /dev/console ]; then
-		echo "Unable to create /dev/console on the root filesystem"
+		echo "Missing /dev/console on the root filesystem"
+		echo "Rebuild the UEFI installation ISO with the MINIX console device."
 		exit 1
 	fi
 
