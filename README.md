@@ -37,14 +37,37 @@ the release build before packaging. Paths and image settings can be overridden
 with `OBJ`, `DESTDIR`, `RELEASEDIR`, `SETS_DIR`, `CROSS_TOOLS`,
 `WORK_DIR`, `IMG`, `XORRISO`, and `EFIMB`.
 
-### Installer scope
+### Installing MINIX to a UEFI disk
 
-This change makes a bootable amd64 UEFI installation CD and bundles the
-release set archives in `/usr/amd64/binary/sets`. It boots MINIX from the CD
-so the system and set archives are available for installation or recovery.
-It does **not** add an unattended installer or a new interactive UEFI/GPT
-partitioning front end; that remains separate work (the existing
-`distrib/amd64/installimage` uses the older `sysinst` path).
+The amd64 UEFI ISO includes an interactive installer at
+`/usr/sbin/minix-install`. Build the release and ISO as described above,
+boot the ISO in UEFI x86-64 mode, open a root shell, and run:
+
+```sh
+/usr/sbin/minix-install
+```
+
+The installer reads the release archives from
+`/usr/amd64/binary/sets`. It creates a GPT with a 64 MiB FAT32 EFI System
+Partition (`c0d0p0`) and an MFS root partition (`c0d0p1`), installs the
+available release sets plus the amd64 kernel and boot modules, and writes
+the EFI loader and installed-system boot menu to the ESP. The root filesystem
+uses MFS and the installation does not create a swap partition.
+
+**Current limitation:** the installer targets the first MINIX disk,
+`c0d0`, because the prebuilt UEFI boot menu uses `rootdevname=c0d0p1`.
+Make sure the disk you intend to erase is enumerated as `c0d0`. You may
+preselect it with `--disk c0d0`; the destructive confirmation is still
+required.
+
+**Destructive operation:** all existing data and partitions on `c0d0`
+will be erased. The disk must not be mounted. Before partitioning, the
+installer requires you to type the exact confirmation `ERASE c0d0`.
+
+The older `distrib/amd64/installimage` target still follows the legacy
+`sysinst` path and is not the supported installer entry point. Use the
+amd64 UEFI ISO described above. The amd64 port and installer are experimental;
+test in a VM before installing on physical hardware.
 
 ## Existing amd64 live image
 

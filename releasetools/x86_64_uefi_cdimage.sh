@@ -85,6 +85,33 @@ fi
 cp -p etc/rc etc/ttys "${ROOT_DIR}/etc/"
 mkdir -p "${ROOT_DIR}/usr/etc"
 cp -p etc/usr/rc "${ROOT_DIR}/usr/etc/rc"
+
+# Include the interactive amd64 UEFI/GPT installer in the live ISO.
+# workdir_add_sets() places the release archives under /usr/amd64/binary/sets.
+mkdir -p "${ROOT_DIR}/usr/sbin"
+cp -p distrib/amd64/installer/install.sh "${ROOT_DIR}/usr/sbin/minix-install"
+chmod 0755 "${ROOT_DIR}/usr/sbin/minix-install"
+
+# Build a separate ESP image for the installed disk.  The El Torito image
+# above intentionally has no boot.cfg because CD boot reads it from ISO9660.
+# The installed system instead needs its boot menu on the ESP itself.
+INSTALL_EFI_DIR="${WORK_DIR}/install-efi"
+INSTALL_EFI_IMAGE="${ROOT_DIR}/install-efiboot.img"
+mkdir -p "${INSTALL_EFI_DIR}/EFI/BOOT"
+cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${INSTALL_EFI_DIR}/EFI/BOOT/BOOTX64.EFI"
+cat > "${INSTALL_EFI_DIR}/boot.cfg" <<'EOF_INSTALL_BOOTCFG'
+banner=Welcome to MINIX 3.4.0 amd64 (UEFI)
+banner================================================================================
+banner=
+menu=Start MINIX 3 amd64:modules on; load hd0b:/boot/minix_default/mod01_ds; load hd0b:/boot/minix_default/mod02_rs; load hd0b:/boot/minix_default/mod03_pm; load hd0b:/boot/minix_default/mod04_sched; load hd0b:/boot/minix_default/mod05_vfs; load hd0b:/boot/minix_default/mod06_memory; load hd0b:/boot/minix_default/mod07_tty; load hd0b:/boot/minix_default/mod08_mib; load hd0b:/boot/minix_default/mod09_vm; load hd0b:/boot/minix_default/mod10_pfs; load hd0b:/boot/minix_default/mod11_mfs; load hd0b:/boot/minix_default/mod12_init; multiboot2 hd0b:/boot/minix_default/kernel rootdevname=c0d0p1 acpi=yes ahci=yes cttyline=0 no_smp=0 no_apic=0
+menu=Start MINIX 3 amd64 in single-user mode:modules on; load hd0b:/boot/minix_default/mod01_ds; load hd0b:/boot/minix_default/mod02_rs; load hd0b:/boot/minix_default/mod03_pm; load hd0b:/boot/minix_default/mod04_sched; load hd0b:/boot/minix_default/mod05_vfs; load hd0b:/boot/minix_default/mod06_memory; load hd0b:/boot/minix_default/mod07_tty; load hd0b:/boot/minix_default/mod08_mib; load hd0b:/boot/minix_default/mod09_vm; load hd0b:/boot/minix_default/mod10_pfs; load hd0b:/boot/minix_default/mod11_mfs; load hd0b:/boot/minix_default/mod12_init; multiboot2 hd0b:/boot/minix_default/kernel rootdevname=c0d0p1 bootopts=-s
+menu=Drop to UEFI boot prompt:prompt
+clear=1
+timeout=10
+default=1
+EOF_INSTALL_BOOTCFG
+"${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
+	-t msdos -o F=32,c=1 "${INSTALL_EFI_IMAGE}" "${INSTALL_EFI_DIR}"
 if ! grep -Fq 'RC_LOG_FILE="/var/run/rc.log"' "${ROOT_DIR}/etc/rc"; then
 	echo "The staged installer /etc/rc does not contain the rc log fallback." >&2
 	exit 1
