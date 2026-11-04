@@ -41,7 +41,6 @@ ask_yes_no()
 
 [ "`id -u 2>/dev/null`" = 0 ] || fail "Run the installer as root."
 command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
-command -v printroot >/dev/null 2>&1 || fail "The printroot utility is not available."
 [ -d "$SETS_DIR" ] || fail "Release sets not found at $SETS_DIR. Boot the amd64 installation media."
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "Required set minix-base.tgz is missing."
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "Required set minix-kernel.tgz is missing."
@@ -104,11 +103,10 @@ esac
 diskmb=$((size / 2048))
 [ "$diskmb" -ge "$MIN_DISK_MB" ] || fail "$diskdev has ${diskmb} MiB; at least ${MIN_DISK_MB} MiB is required."
 
-# Never destroy the disk from which the installer is currently running.
-running_root=`printroot -r 2>/dev/null || true`
-running_disk=`echo "$running_root" | sed 's/p[0-9][0-9]*$//'`
-if [ -n "$running_disk" ] && [ "$running_disk" = "$diskdev" ]; then
-	fail "$diskdev contains the running installer. Boot from a separate USB/CD device and choose another disk."
+# The install-image USB's boot configuration and fstab use c0d0p0/p1.
+# Do not allow that source disk to be selected as the installation target.
+if [ ! -s "$EFI_IMAGE" ] && [ "$diskdev" = "/dev/c0d0" ]; then
+	fail "/dev/c0d0 is the install-image USB source disk. Select a different target disk."
 fi
 
 if mount 2>/dev/null | grep -F "$diskdev" >/dev/null 2>&1; then
@@ -143,15 +141,13 @@ command -v mkfs.mfs >/dev/null 2>&1 || fail "The mkfs.mfs utility is not availab
 command -v pax >/dev/null 2>&1 || fail "The pax utility is not available."
 command -v dd >/dev/null 2>&1 || fail "The dd utility is not available."
 # Resolve the UEFI boot image before any destructive operation.
-# CD media carries a disk-specific ESP image; the install-image USB can reuse
-# its own EFI partition, provided the target is a different disk.
+# CD media carries a disk-specific ESP image. The install-image USB uses
+# c0d0p0 for its EFI System Partition (its fstab uses c0d0p1 as the MFS root).
 if [ -s "$EFI_IMAGE" ]; then
 	efi_source=$EFI_IMAGE
 else
-	if [ -z "$running_disk" ] || [ ! -b "${running_disk}p0" ]; then
-		fail "Cannot locate the running install media's EFI partition, and $EFI_IMAGE is not present."
-	fi
-	efi_source=${running_disk}p0
+	efi_source=/dev/c0d0p0
+	[ -b "$efi_source" ] || fail "Cannot locate the install-image USB EFI partition at $efi_source."
 fi
 [ -s "$efi_source" ] || [ -b "$efi_source" ] || fail "UEFI boot source $efi_source is not readable."
 
