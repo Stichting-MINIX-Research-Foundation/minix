@@ -9,7 +9,7 @@ INSTIMAGEMB?=	1900			# for all installation binaries
 # This installer is UEFI-only; do not request legacy BIOS boot blocks.
 EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
 
-USE_MBR=		yes
+USE_MBR=		no
 USE_GPT=        yes
 FSTAB_IN=       ${.CURDIR}/fstab.in
 EFIMB=          64
