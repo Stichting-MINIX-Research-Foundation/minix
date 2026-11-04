@@ -37,6 +37,8 @@ ask_yes_no()
 }
 
 [ "`id -u 2>/dev/null`" = 0 ] || fail "Run the installer as root."
+command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
+command -v printroot >/dev/null 2>&1 || fail "The printroot utility is not available."
 [ -d "$SETS_DIR" ] || fail "Release sets not found at $SETS_DIR. Boot the amd64 installation media."
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "Required set minix-base.tgz is missing."
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "Required set minix-kernel.tgz is missing."
@@ -137,8 +139,6 @@ command -v gpt >/dev/null 2>&1 || fail "The gpt utility is not available."
 command -v mkfs.mfs >/dev/null 2>&1 || fail "The mkfs.mfs utility is not available."
 command -v pax >/dev/null 2>&1 || fail "The pax utility is not available."
 command -v dd >/dev/null 2>&1 || fail "The dd utility is not available."
-command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
-
 # Resolve the UEFI boot image before any destructive operation.
 # CD media carries a disk-specific ESP image; the install-image USB can reuse
 # its own EFI partition, provided the target is a different disk.
