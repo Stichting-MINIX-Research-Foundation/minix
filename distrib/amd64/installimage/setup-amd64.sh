@@ -5,7 +5,10 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
+# The CD ISO stages release archives below /usr/amd64; the generic
+# install-image target copies the machine release tree to /amd64.
 SETS_DIR=/usr/amd64/binary/sets
+[ -d "$SETS_DIR" ] || SETS_DIR=/amd64/binary/sets
 EFI_IMAGE=/efiboot-disk.img
 EFI_SIZE_MB=64
 MIN_DISK_MB=2048
