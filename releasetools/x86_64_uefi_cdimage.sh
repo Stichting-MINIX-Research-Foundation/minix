@@ -109,6 +109,26 @@ add_file_spec "etc/fstab" extra.fstab
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 add_file_spec "README.TXT" extra.cdfiles
 
+# The ISO9660 root is read-only after boot.  MINIX's logical console is
+# character device major 4, minor 0, so create it in the image now rather
+# than trying to overlay /dev with the NetBSD MAKEDEV -MM implementation
+# at runtime (which requires mount_tmpfs or mount_mfs).
+mkdir -p "${ROOT_DIR}/dev"
+if [ -d "${ROOT_DIR}/dev/console" ]; then
+	echo "${ROOT_DIR}/dev/console exists as a directory, expected a device node." >&2
+	exit 1
+fi
+rm -f "${ROOT_DIR}/dev/console"
+if ! mknod "${ROOT_DIR}/dev/console" c 4 0; then
+	echo "Unable to create ${ROOT_DIR}/dev/console; run the UEFI ISO build with permission to create device nodes." >&2
+	exit 1
+fi
+chmod 600 "${ROOT_DIR}/dev/console"
+if [ ! -c "${ROOT_DIR}/dev/console" ]; then
+	echo "${ROOT_DIR}/dev/console is not a character device." >&2
+	exit 1
+fi
+
 workdir_add_kernel minix_default
 
 # The MINIX EFI boot monitor's block-device interface exposes the optical
