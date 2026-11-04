@@ -14,6 +14,7 @@ EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
 
 USE_MBR=		yes
 USE_GPT=        yes
+FSTAB_IN=       ${.CURDIR}/fstab.in
 EFIMB=          64
 USE_GPTMBR=		no
 
