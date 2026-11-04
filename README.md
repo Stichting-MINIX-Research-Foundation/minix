@@ -37,37 +37,37 @@ the release build before packaging. Paths and image settings can be overridden
 with `OBJ`, `DESTDIR`, `RELEASEDIR`, `SETS_DIR`, `CROSS_TOOLS`,
 `WORK_DIR`, `IMG`, `XORRISO`, and `EFIMB`.
 
-### Guided amd64 UEFI installer
+### Installing MINIX to a UEFI disk
 
-The amd64 installation ISO and `distrib/amd64/installimage` use the same
-guided installer. When the media boots in UEFI mode, the installer starts on
-the primary console. It can be cancelled at its first prompt to return to a
-root recovery shell, or used to install the bundled release sets onto another
-disk.
+The amd64 UEFI ISO includes an interactive installer at
+`/usr/sbin/minix-install`. Build the release and ISO as described above,
+boot the ISO in UEFI x86-64 mode, open a root shell, and run:
 
-The installer creates this GPT layout on the selected target disk:
+```sh
+/usr/sbin/minix-install
+```
 
-- `p0`: 64 MiB FAT32 EFI System Partition.
-- `p1`: remaining space, formatted as a MINIX MFS root filesystem.
+The installer reads the release archives from
+`/usr/amd64/binary/sets`. It creates a GPT with a 64 MiB FAT32 EFI System
+Partition (`c0d0p0`) and an MFS root partition (`c0d0p1`), installs the
+available release sets plus the amd64 kernel and boot modules, and writes
+the EFI loader and installed-system boot menu to the ESP. The root filesystem
+uses MFS and the installation does not create a swap partition.
 
-It installs the amd64 release sets, places the kernel and boot modules under
-`/boot/minix_default`, creates the device nodes, and writes an
-`/etc/fstab` entry for the selected root partition. The EFI boot menu uses
-paths relative to the MFS partition on the UEFI boot device, so it does not
-assume that the target is enumerated as `hd0`. The minimum target size is
-2048 MiB.
+**Current limitation:** the installer targets the first MINIX disk,
+`c0d0`, because the prebuilt UEFI boot menu uses `rootdevname=c0d0p1`.
+Make sure the disk you intend to erase is enumerated as `c0d0`. You may
+preselect it with `--disk c0d0`; the destructive confirmation is still
+required.
 
-**Destructive operation:** the whole selected disk is repartitioned and all
-existing data on it is erased. Before proceeding, the installer displays the
-target and requires its device name to be typed exactly. Do not select the
-disk containing the currently running install-image USB. The installer
-copies the EFI partition from the running USB image or, for the ISO, uses
-the bundled `/efiboot-disk.img`. The install-image USB uses a fixed `/dev/c0d0p0` EFI and
-`/dev/c0d0p1` MFS layout; the USB itself must therefore enumerate as
-`/dev/c0d0`. The UEFI ISO is preferable on systems with a different USB
-disk enumeration order.
+**Destructive operation:** all existing data and partitions on `c0d0`
+will be erased. The disk must not be mounted. Before partitioning, the
+installer requires you to type the exact confirmation `ERASE c0d0`.
 
-Test in a VM and back up any important data before using physical hardware.
+The older `distrib/amd64/installimage` target still follows the legacy
+`sysinst` path and is not the supported installer entry point. Use the
+amd64 UEFI ISO described above. The amd64 port and installer are experimental;
+test in a VM before installing on physical hardware.
 
 ## Existing amd64 live image
 
