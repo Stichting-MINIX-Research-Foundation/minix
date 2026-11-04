@@ -76,13 +76,15 @@ build_workdir "${SETS}"
 
 # The installer root is extracted from release-set archives.  On an
 # incremental build those archives can lag behind the checked-out source,
-# even when the ISO itself is recreated.  Keep the two files that control
-# rc logging and the active console getty in sync with this source tree.
+# even when the ISO itself is recreated.  Keep the boot and post-mount rc
+# scripts, plus the active console table, synchronized with this source tree.
 if ! grep -Fq 'if [ "$RC_LOG_FILE" = "/dev/log" ]; then' etc/rc; then
 	echo "etc/rc is missing the /dev/log logging fallback; refusing to create a stale installer image." >&2
 	exit 1
 fi
 cp -p etc/rc etc/ttys "${ROOT_DIR}/etc/"
+mkdir -p "${ROOT_DIR}/usr/etc"
+cp -p etc/usr/rc "${ROOT_DIR}/usr/etc/rc"
 if ! grep -Fq 'RC_LOG_FILE="/var/run/rc.log"' "${ROOT_DIR}/etc/rc"; then
 	echo "The staged installer /etc/rc does not contain the rc log fallback." >&2
 	exit 1
@@ -102,13 +104,14 @@ add_file_spec "etc/fstab" extra.fstab
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 add_file_spec "README.TXT" extra.cdfiles
 
-# The ISO9660 root is read-only after boot.  Create all memory devices
+# The ISO9660 root is read-only after boot.  Create every static device
 # needed by the CD startup path in the image itself.  rc.cd uses ram0-ram3
 # to make /var, /tmp, /usr/run and /root writable, and rc.minix later frees
-# the boot image through /dev/imgrd.  Missing nodes make ramdisk/mkfs/mount
-# fail and leave /var/run unavailable to the rest of the startup scripts.
+# the boot image through /dev/imgrd.  The /usr startup script also starts
+# random, pty, LWIP, log and printer services, which require these nodes.
 mkdir -p "${ROOT_DIR}/dev"
-for device in console null zero ram imgrd ram0 ram1 ram2 ram3 ram4 ram5; do
+for device in console tty null zero ram mem kmem boot imgrd \
+    ram0 ram1 ram2 ram3 ram4 ram5 log lp bpf bpf0 klog ptmx random urandom; do
 	if [ -d "${ROOT_DIR}/dev/${device}" ]; then
 		echo "${ROOT_DIR}/dev/${device} exists as a directory, expected a device node." >&2
 		exit 1
@@ -120,9 +123,13 @@ cat > "${DEVICE_SPEC}" <<'EOF_DEVICES'
 . type=dir uid=0 gid=0 mode=0755
 ./dev type=dir uid=0 gid=0 mode=0755
 ./dev/console type=char device=netbsd,4,0 mode=600 uid=0 gid=0
+./dev/tty type=char device=netbsd,5,0 mode=666 uid=0 gid=0
 ./dev/null type=char device=netbsd,1,3 mode=666 uid=0 gid=0
 ./dev/zero type=char device=netbsd,1,5 mode=666 uid=0 gid=0
-./dev/ram type=block device=netbsd,1,0 mode=600 uid=0 gid=0
+./dev/ram type=block device=netbsd,1,0 mode=600 uid=0 gid=2
+./dev/mem type=char device=netbsd,1,1 mode=640 uid=0 gid=2
+./dev/kmem type=char device=netbsd,1,2 mode=640 uid=0 gid=2
+./dev/boot type=block device=netbsd,1,4 mode=600 uid=0 gid=2
 ./dev/imgrd type=block device=netbsd,1,6 mode=600 uid=0 gid=0
 ./dev/ram0 type=block device=netbsd,1,7 mode=600 uid=0 gid=0
 ./dev/ram1 type=block device=netbsd,1,8 mode=600 uid=0 gid=0
@@ -130,6 +137,14 @@ cat > "${DEVICE_SPEC}" <<'EOF_DEVICES'
 ./dev/ram3 type=block device=netbsd,1,10 mode=600 uid=0 gid=0
 ./dev/ram4 type=block device=netbsd,1,11 mode=600 uid=0 gid=0
 ./dev/ram5 type=block device=netbsd,1,12 mode=600 uid=0 gid=0
+./dev/log type=char device=netbsd,4,15 mode=222 uid=0 gid=0
+./dev/lp type=char device=netbsd,6,0 mode=200 uid=1 gid=1
+./dev/bpf type=char device=netbsd,7,0 mode=600 uid=0 gid=0
+./dev/bpf0 type=link link=bpf mode=0700 uid=0 gid=0
+./dev/klog type=char device=netbsd,15,0 mode=600 uid=0 gid=0
+./dev/ptmx type=char device=netbsd,9,0 mode=666 uid=0 gid=4
+./dev/random type=char device=netbsd,16,0 mode=644 uid=0 gid=0
+./dev/urandom type=char device=netbsd,16,0 mode=644 uid=0 gid=0
 EOF_DEVICES
 
 workdir_add_kernel minix_default
