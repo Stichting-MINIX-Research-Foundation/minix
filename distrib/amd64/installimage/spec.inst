@@ -4,6 +4,7 @@
 
 ./install.sh		type=file mode=0755 uname=root gname=wheel
 ./setup-amd64.sh	type=file mode=0755 uname=root gname=wheel
+./boot.cfg		type=file mode=0644 uname=root gname=wheel
 
 # For manual inspection of the release tree on the installation media.
 ./release		type=link mode=0755 uname=root gname=wheel link=.
