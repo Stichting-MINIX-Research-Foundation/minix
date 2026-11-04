@@ -48,7 +48,10 @@ installation, remove the media and select the target disk's UEFI entry.
 The ISO carries /efiboot-disk.img, the FAT image copied to the target EFI
 System Partition. Its boot menu uses paths relative to the UEFI boot device,
 so it does not depend on the target disk being enumerated as hd0. The
-install-image USB instead reuses its existing EFI partition.
+install-image USB instead reuses its existing EFI partition. That USB
+image expects its own disk to enumerate as `/dev/c0d0`, with the EFI
+partition at `/dev/c0d0p0` and the MFS root at `/dev/c0d0p1`. Use the UEFI
+ISO when the USB disk is enumerated differently.
 
 Release sets
 ------------
