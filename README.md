@@ -62,8 +62,12 @@ existing data on it is erased. Before proceeding, the installer displays the
 target and requires its device name to be typed exactly. Do not select the
 disk containing the currently running install-image USB. The installer
 copies the EFI partition from the running USB image or, for the ISO, uses
-the bundled `/efiboot-disk.img`. Test in a VM and back up any important
-data before using physical hardware.
+the bundled `/efiboot-disk.img`. The install-image USB uses a fixed `/dev/c0d0p0` EFI and
+`/dev/c0d0p1` MFS layout; the USB itself must therefore enumerate as
+`/dev/c0d0`. The UEFI ISO is preferable on systems with a different USB
+disk enumeration order.
+
+Test in a VM and back up any important data before using physical hardware.
 
 ## Existing amd64 live image
 
