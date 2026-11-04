@@ -278,7 +278,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 
 	const option_t cd9660_options[] = {
 		OPT_NUM('l', "isolevel", isoLevel,
-		    1, 3, "ISO Level"),
+		    1, 2, "ISO Level"),
 		OPT_NUM('v', "verbose",  verbose_level,
 		    0, 2, "Turns on verbose output"),
 
@@ -496,6 +496,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	int error;
 	cd9660node *real_root;
 	iso9660_disk *diskStructure = fsopts->fs_specific;
+
+	if (diskStructure->isoLevel < 1 || diskStructure->isoLevel > 2)
+		errx(EXIT_FAILURE, "unsupported ISO level %d",
+		    diskStructure->isoLevel);
 
 	if (diskStructure->verbose_level > 0)
 		printf("%s: ISO level is %i\n", __func__,
@@ -1074,10 +1078,8 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 	/* TODO : A LOT of chanes regarding 8.3 filenames */
 	if (diskStructure->isoLevel == 1)
 		maxlength = 8;
-	else if (diskStructure->isoLevel == 2)
-		maxlength = 31;
 	else
-		maxlength = ISO_FILENAME_MAXLENGTH_BEFORE_VERSION;
+		maxlength = 31;
 
 	tmp = emalloc(ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 
@@ -1102,7 +1104,8 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 
 		dot = -1;
 		semi = -1;
-		while (count < maxlength) {
+		/* Directory identifiers do not have a `;version' suffix. */
+		while (count < maxlength && *naming != '\0') {
 			if (*naming == '.')
 				dot = count;
 			else if (*naming == ';') {
@@ -1118,6 +1121,8 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 		else
 			numbts = maxlength - (digits);
 		numbts -= delete_chars;
+		if (numbts < 0)
+			numbts = 0;
 
 		/* 8.3 rules - keep the extension, add before the dot */
 
@@ -1157,8 +1162,9 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 			powers = powers / 10;
 		}
 
-		while ((*naming != ';')  && (numbts < maxlength)) {
-			tmp[numbts] = (*naming);
+		while (*naming != '\0' && *naming != ';' &&
+		    numbts < maxlength) {
+			tmp[numbts] = *naming;
 			naming++;
 			numbts++;
 		}
@@ -1776,6 +1782,9 @@ cd9660_convert_filename(iso9660_disk *diskStructure, const char *oldname,
 		conversion_function = &cd9660_level1_convert_filename;
 	else if (diskStructure->isoLevel == 2)
 		conversion_function = &cd9660_level2_convert_filename;
+	else
+		errx(EXIT_FAILURE, "unsupported ISO level %d",
+		    diskStructure->isoLevel);
 	return (*conversion_function)(diskStructure, oldname, newname, is_file);
 }
 
