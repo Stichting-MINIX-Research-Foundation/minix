@@ -178,20 +178,10 @@ EOF_DEVICES
 
 workdir_add_kernel minix_default
 
-# The MINIX EFI boot monitor's block-device interface exposes the optical
-# ISO9660 volume as hdN a (partition index zero).  In an El Torito boot the
-# firmware may not identify that volume as the bootloader's default device,
-# so unqualified /boot paths can resolve against no device at all.  Keep the
-# default suitable for a VM with only the installer CD attached, while
-# allowing builders to select another hdN a when a firmware enumerates disks
-# before the CD-ROM.
-: ${UEFI_CD_DEVICE:=hd0a}
-if [[ ! "${UEFI_CD_DEVICE}" =~ ^hd[0-9]+[a-z]$ ]]; then
-	echo "UEFI_CD_DEVICE must be an efiboot device such as hd0a (got: ${UEFI_CD_DEVICE})." >&2
-	exit 2
-fi
-
-BOOT_MODULES="load ${UEFI_CD_DEVICE}:/boot/minix_default/mod01_ds; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod02_rs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod03_pm; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod04_sched; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod05_vfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod06_memory; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod07_tty; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod08_mib; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod09_vm; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod10_pfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod11_mfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod12_init"
+# efiboot automatically selects the MFS or ISO9660 partition belonging
+# to the EFI boot device. Use relative paths so the CD can be enumerated as
+# any hdN device, even when other disks are attached.
+BOOT_MODULES="load /boot/minix_default/mod01_ds; load /boot/minix_default/mod02_rs; load /boot/minix_default/mod03_pm; load /boot/minix_default/mod04_sched; load /boot/minix_default/mod05_vfs; load /boot/minix_default/mod06_memory; load /boot/minix_default/mod07_tty; load /boot/minix_default/mod08_mib; load /boot/minix_default/mod09_vm; load /boot/minix_default/mod10_pfs; load /boot/minix_default/mod11_mfs; load /boot/minix_default/mod12_init"
 
 # Fail the ISO build instead of generating media with an incomplete boot tree.
 for file in kernel mod01_ds mod02_rs mod03_pm mod04_sched mod05_vfs mod06_memory mod07_tty mod08_mib mod09_vm mod10_pfs mod11_mfs mod12_init; do
@@ -217,9 +207,9 @@ cat > "${ROOT_DIR}/boot.cfg" <<EOF
 banner=Welcome to MINIX 3 amd64 UEFI installation media
 banner================================================================================
 banner=
-menu=Start MINIX 3 (UEFI x86_64):modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
-menu=Start MINIX 3 in single-user mode:modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 bootopts=-s
-menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes console=tty00
+menu=Start MINIX 3 (UEFI x86_64):modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
+menu=Start MINIX 3 in single-user mode:modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 bootopts=-s
+menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes console=tty00
 menu=Drop to UEFI boot prompt:prompt
 clear=1
 timeout=10
