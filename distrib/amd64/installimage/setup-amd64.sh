@@ -184,9 +184,23 @@ for set_name in $set_list; do
 	}
 done
 
+# The kernel release archive is staged under boot/minix/.temp by the
+# release tooling. Move it to the directory referenced by the UEFI boot.cfg.
+if [ ! -s "$MOUNT_POINT/boot/minix_default/kernel" ]; then
+	[ -d "$MOUNT_POINT/boot/minix/.temp" ] || {
+		umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+		fail "The kernel set did not install boot/minix/.temp."
+	}
+	rm -rf "$MOUNT_POINT/boot/minix_default"
+	cp -r "$MOUNT_POINT/boot/minix/.temp" "$MOUNT_POINT/boot/minix_default" || {
+		umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+		fail "Could not stage the kernel and boot modules under /boot/minix_default."
+	}
+	rm -rf "$MOUNT_POINT/boot/minix/.temp"
+fi
 [ -s "$MOUNT_POINT/boot/minix_default/kernel" ] || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
-	fail "The kernel set did not install /boot/minix_default/kernel."
+	fail "The installed kernel is missing from /boot/minix_default."
 }
 
 cat > "$MOUNT_POINT/etc/fstab" <<END_FSTAB
