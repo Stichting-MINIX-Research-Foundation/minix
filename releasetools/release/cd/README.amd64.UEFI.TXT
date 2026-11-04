@@ -28,7 +28,7 @@ The installer creates the following GPT layout on the selected disk:
 
 The kernel and boot modules are placed in /boot/minix_default. The EFI
 System Partition receives a disk-specific boot image with a menu entry that
-loads MINIX from GPT partition 1 (hd0b / c0d0p1). The installation requires
+loads MINIX from the MFS partition belonging to the UEFI boot device. The bootloader resolves this partition dynamically; `/etc/fstab` selects the installed root device. The installation requires
 a target disk of at least 2048 MiB.
 
 Destructive operation
@@ -44,7 +44,8 @@ disk. The installer does not change the firmware boot order; after the
 installation, remove the media and select the target disk's UEFI entry.
 
 The ISO carries /efiboot-disk.img, the FAT image copied to the target EFI
-System Partition. The install-image USB instead reuses its existing EFI
+System Partition. Its boot menu uses paths relative to the UEFI boot device,
+so it does not depend on the target disk being enumerated as hd0. The install-image USB instead reuses its existing EFI
 partition.
 
 Release sets
