@@ -37,14 +37,34 @@ the release build before packaging. Paths and image settings can be overridden
 with `OBJ`, `DESTDIR`, `RELEASEDIR`, `SETS_DIR`, `CROSS_TOOLS`,
 `WORK_DIR`, `IMG`, `XORRISO`, and `EFIMB`.
 
-### Installer scope
+### Guided amd64 UEFI installer
 
-This change makes a bootable amd64 UEFI installation CD and bundles the
-release set archives in `/usr/amd64/binary/sets`. It boots MINIX from the CD
-so the system and set archives are available for installation or recovery.
-It does **not** add an unattended installer or a new interactive UEFI/GPT
-partitioning front end; that remains separate work (the existing
-`distrib/amd64/installimage` uses the older `sysinst` path).
+The amd64 installation ISO and `distrib/amd64/installimage` now use the
+same guided installer. When the media boots in UEFI mode, the installer is
+started on the primary console. It can be cancelled to use the recovery
+shell, or used to install the bundled release sets onto another disk.
+
+The installer creates this GPT layout on the selected target disk:
+
+- `p0`: 64 MiB FAT32 EFI System Partition.
+- `p1`: remaining space, formatted as a MINIX MFS root filesystem.
+
+It installs the amd64 release sets, places the kernel and boot modules under
+`/boot/minix_default`, and installs a disk-specific EFI boot image whose
+menu loads the system from `hd0b` / `c0d0p1`. The installer requires a
+target disk of at least 2048 MiB.
+
+**Destructive operation:** the whole selected disk is repartitioned and all
+existing data on it is erased. Before proceeding, the installer displays
+the target and requires its device name to be typed exactly. Do not select
+the disk containing the currently running install-image USB; boot that
+image from separate media and install to a different disk. Test in a VM and
+back up any important data before using physical hardware.
+
+The ISO build also includes `/efiboot-disk.img`, a 64 MiB FAT image used to
+populate the target EFI System Partition. When booted from the install-image
+USB, the installer copies the EFI partition from the running installation
+media instead.
 
 ## Existing amd64 live image
 
