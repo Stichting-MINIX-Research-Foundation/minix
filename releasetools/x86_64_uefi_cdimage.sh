@@ -224,9 +224,9 @@ cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DIR}/EFI/BOOT/BOOTX64.EFI"
 "${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
 	-t msdos -o F=32,c=1 "${EFI_IMAGE}" "${EFI_DIR}"
 
-# Also make an ESP image for a hard-disk installation. Unlike the El Torito
-# image above, this one carries a boot.cfg that loads MINIX from GPT partition
-# 1 (hd0b / c0d0p1). The installer copies this image to the target ESP.
+# Also make an ESP image for a hard-disk installation. The UEFI loader
+# resolves relative boot paths against the MFS partition on the boot device.
+# The installer copies this image to the target ESP.
 EFI_DISK_DIR="${WORK_DIR}/efi-disk"
 EFI_DISK_IMAGE="${ROOT_DIR}/efiboot-disk.img"
 mkdir -p "${EFI_DISK_DIR}/EFI/BOOT"
