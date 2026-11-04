@@ -16,7 +16,7 @@ MOUNT_POINT=/mnt
 
 fail()
 {
-	echo "\nERROR: $*" >&2
+	printf "\\nERROR: %s\\n" "$*"
 	echo "No further installation steps will be performed." >&2
 	exit 1
 }
