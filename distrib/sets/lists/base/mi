@@ -775,6 +775,7 @@
 ./usr/bin/mailq					base-mailwrapper-bin
 ./usr/bin/mailx					base-mail-bin
 ./usr/bin/make					base-util-bin
+./usr/bin/bmake					base-util-bin
 ./usr/bin/man					base-man-bin
 ./usr/bin/mandoc				base-man-bin
 ./usr/bin/md2					base-util-bin
