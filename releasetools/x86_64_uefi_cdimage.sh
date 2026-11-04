@@ -82,7 +82,36 @@ if ! grep -Fq 'if [ "$RC_LOG_FILE" = "/dev/log" ]; then' etc/rc; then
 	echo "etc/rc is missing the /dev/log logging fallback; refusing to create a stale installer image." >&2
 	exit 1
 fi
-cp -p etc/rc etc/ttys "${ROOT_DIR}/etc/"
+cp -p etc/rc "${ROOT_DIR}/etc/rc"
+cp -p etc/ttys "${ROOT_DIR}/etc/ttys"
+# Autologin on the primary console and start the guided installer.
+awk '
+/^console[[:space:]]/ {
+	print "console\t\"/usr/libexec/getty minix-installer\"\twsvt25\ton secure"
+	next
+}
+{ print }
+' "${ROOT_DIR}/etc/ttys" > "${WORK_DIR}/installer.ttys"
+mv "${WORK_DIR}/installer.ttys" "${ROOT_DIR}/etc/ttys"
+INSTALLER_DIR="${SCRIPT_DIR}/../distrib/amd64/installimage"
+cp -p "${INSTALLER_DIR}/install.sh" "${ROOT_DIR}/install.sh"
+cp -p "${INSTALLER_DIR}/setup-amd64.sh" "${ROOT_DIR}/setup-amd64.sh"
+awk '
+$0 == "rc_real_work \"$@\" 2>&1 | rc_postprocess" {
+	print "# Autostart MINIX amd64 UEFI installer on the console."
+	print "if [ -x /install.sh ]; then"
+	print "\techo \"# MINIX amd64 installer\" > /etc/gettytab"
+	print "\techo -n \"minix-installer:al=root:lo=/install.sh:im=:sp#\" >> /etc/gettytab"
+	print "\tstty speed >> /etc/gettytab"
+	print "fi"
+}
+{ print }
+' "${ROOT_DIR}/etc/rc" > "${WORK_DIR}/installer.rc"
+mv "${WORK_DIR}/installer.rc" "${ROOT_DIR}/etc/rc"
+if ! grep -Fq 'Autostart MINIX amd64 UEFI installer' "${ROOT_DIR}/etc/rc"; then
+	echo "Could not add the installer startup hook to the staged /etc/rc." >&2
+	exit 1
+fi
 mkdir -p "${ROOT_DIR}/usr/etc"
 cp -p etc/usr/rc "${ROOT_DIR}/usr/etc/rc"
 
@@ -176,20 +205,10 @@ EOF_DEVICES
 
 workdir_add_kernel minix_default
 
-# The MINIX EFI boot monitor's block-device interface exposes the optical
-# ISO9660 volume as hdN a (partition index zero).  In an El Torito boot the
-# firmware may not identify that volume as the bootloader's default device,
-# so unqualified /boot paths can resolve against no device at all.  Keep the
-# default suitable for a VM with only the installer CD attached, while
-# allowing builders to select another hdN a when a firmware enumerates disks
-# before the CD-ROM.
-: ${UEFI_CD_DEVICE:=hd0a}
-if [[ ! "${UEFI_CD_DEVICE}" =~ ^hd[0-9]+[a-z]$ ]]; then
-	echo "UEFI_CD_DEVICE must be an efiboot device such as hd0a (got: ${UEFI_CD_DEVICE})." >&2
-	exit 2
-fi
-
-BOOT_MODULES="load ${UEFI_CD_DEVICE}:/boot/minix_default/mod01_ds; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod02_rs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod03_pm; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod04_sched; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod05_vfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod06_memory; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod07_tty; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod08_mib; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod09_vm; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod10_pfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod11_mfs; load ${UEFI_CD_DEVICE}:/boot/minix_default/mod12_init"
+# efiboot automatically selects the MFS or ISO9660 partition belonging
+# to the EFI boot device. Use relative paths so the CD can be enumerated as
+# any hdN device, even when other disks are attached.
+BOOT_MODULES="load /boot/minix_default/mod01_ds; load /boot/minix_default/mod02_rs; load /boot/minix_default/mod03_pm; load /boot/minix_default/mod04_sched; load /boot/minix_default/mod05_vfs; load /boot/minix_default/mod06_memory; load /boot/minix_default/mod07_tty; load /boot/minix_default/mod08_mib; load /boot/minix_default/mod09_vm; load /boot/minix_default/mod10_pfs; load /boot/minix_default/mod11_mfs; load /boot/minix_default/mod12_init"
 
 # Fail the ISO build instead of generating media with an incomplete boot tree.
 for file in kernel mod01_ds mod02_rs mod03_pm mod04_sched mod05_vfs mod06_memory mod07_tty mod08_mib mod09_vm mod10_pfs mod11_mfs mod12_init; do
@@ -215,9 +234,9 @@ cat > "${ROOT_DIR}/boot.cfg" <<EOF
 banner=Welcome to MINIX 3 amd64 UEFI installation media
 banner================================================================================
 banner=
-menu=Start MINIX 3 (UEFI x86_64):modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
-menu=Start MINIX 3 in single-user mode:modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 bootopts=-s
-menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 ${UEFI_CD_DEVICE}:/boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes console=tty00
+menu=Start MINIX 3 (UEFI x86_64):modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes
+menu=Start MINIX 3 in single-user mode:modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 bootopts=-s
+menu=Start MINIX 3 on serial console:consdev com0,115200; modules on; ${BOOT_MODULES}; multiboot2 /boot/minix_default/kernel bootcd=1 cdproberoot=1 acpi=yes console=tty00
 menu=Drop to UEFI boot prompt:prompt
 clear=1
 timeout=10
@@ -231,6 +250,27 @@ mkdir -p "${EFI_DIR}/EFI/BOOT"
 cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DIR}/EFI/BOOT/BOOTX64.EFI"
 "${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
 	-t msdos -o F=32,c=1 "${EFI_IMAGE}" "${EFI_DIR}"
+
+# Also make an ESP image for a hard-disk installation. The UEFI loader
+# resolves relative boot paths against the MFS partition on the boot device.
+# The installer copies this image to the target ESP.
+EFI_DISK_DIR="${WORK_DIR}/efi-disk"
+EFI_DISK_IMAGE="${ROOT_DIR}/efiboot-disk.img"
+mkdir -p "${EFI_DISK_DIR}/EFI/BOOT"
+cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DISK_DIR}/EFI/BOOT/BOOTX64.EFI"
+cat > "${EFI_DISK_DIR}/boot.cfg" <<'EOF_EFI_DISK'
+banner=MINIX 3.4.0 amd64 UEFI disk boot
+banner================================================
+banner=
+menu=Start MINIX 3 (UEFI x86_64):modules on; load /boot/minix_default/mod01_ds; load /boot/minix_default/mod02_rs; load /boot/minix_default/mod03_pm; load /boot/minix_default/mod04_sched; load /boot/minix_default/mod05_vfs; load /boot/minix_default/mod06_memory; load /boot/minix_default/mod07_tty; load /boot/minix_default/mod08_mib; load /boot/minix_default/mod09_vm; load /boot/minix_default/mod10_pfs; load /boot/minix_default/mod11_mfs; load /boot/minix_default/mod12_init; multiboot2 /boot/minix_default/kernel acpi=yes ahci=yes cttyline=0 no_smp=0 no_apic=0
+menu=Start MINIX 3 in single-user mode:modules on; load /boot/minix_default/mod01_ds; load /boot/minix_default/mod02_rs; load /boot/minix_default/mod03_pm; load /boot/minix_default/mod04_sched; load /boot/minix_default/mod05_vfs; load /boot/minix_default/mod06_memory; load /boot/minix_default/mod07_tty; load /boot/minix_default/mod08_mib; load /boot/minix_default/mod09_vm; load /boot/minix_default/mod10_pfs; load /boot/minix_default/mod11_mfs; load /boot/minix_default/mod12_init; multiboot2 /boot/minix_default/kernel acpi=yes ahci=yes bootopts=-s
+menu=Drop to UEFI boot prompt:prompt
+clear=1
+timeout=5
+default=1
+EOF_EFI_DISK
+"${CROSS_TOOLS}/nbmakefs" -M "${EFIMB}m" -m "${EFIMB}m" \
+	-t msdos -o F=32,c=1 "${EFI_DISK_IMAGE}" "${EFI_DISK_DIR}"
 
 mkdir -p "$(dirname "${IMG}")"
 IMG_DIR=$(cd "$(dirname "${IMG}")" && pwd)

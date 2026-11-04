@@ -6,14 +6,13 @@ INSTIMGBASE=	Minix-${DISTRIBVER}-x86_64-install	# gives ${IMGBASE}.img
 
 INSTIMAGEMB?=	1900			# for all installation binaries
 
-#PRIMARY_BOOT=		bootxx_ffsv1
-PRIMARY_BOOT=		bootxx_minixfs3
-SECONDARY_BOOT=		boot_monitor
-#SECONDARY_BOOT_ARG=	# unnecessary
+# This installer is UEFI-only; do not request legacy BIOS boot blocks.
 EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
 
-USE_MBR=		yes
+USE_MBR=		no
 USE_GPT=        yes
+FSTAB_IN=       ${.CURDIR}/fstab.in
+EFIMB=          64
 USE_GPTMBR=		no
 
 CLEANFILES+=	boot.cfg
@@ -25,18 +24,13 @@ prepare_md_post:
 	    < ${.CURDIR}/boot.cfg.in > boot.cfg
 
 DISTRIBDIR!= cd ${.CURDIR}/../.. ; pwd
-#SYSINSTDIR!= cd ${.CURDIR}/../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 SPEC_EXTRA=		${.CURDIR}/spec.inst
 IMGFILE_EXTRA=								\
 	${.CURDIR}/etc.ttys		etc/ttys			\
 	${.CURDIR}/etc.rc		etc/rc				\
 	${.CURDIR}/install.sh		.				\
-	${.OBJDIR}/boot.cfg		.				\
-#	${SYSINSTDIR}/sysinstmsgs.de	.				\
-#	${SYSINSTDIR}/sysinstmsgs.es	.				\
-#	${SYSINSTDIR}/sysinstmsgs.fr	.				\
-#	${SYSINSTDIR}/sysinstmsgs.pl	.				\
-#	${SYSINSTDIR}/sysinst		.
+	${.CURDIR}/setup-amd64.sh	.				\
+	${.OBJDIR}/boot.cfg		.
 
 .include "${DISTRIBDIR}/common/bootimage/Makefile.installimage"
