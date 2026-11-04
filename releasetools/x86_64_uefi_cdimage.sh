@@ -27,7 +27,6 @@ cd "${SCRIPT_DIR}/.."
 : ${EFIMB:=64}
 : ${RELEASEDIR:=${OBJ}/releasedir}
 : ${SETS_DIR:=${RELEASEDIR}/${ARCH}/binary/sets}
-: ${XORRISO:=xorriso}
 
 if [ "${ARCH}" != "amd64" ]; then
 	echo "This script creates an amd64 UEFI image; ARCH must be amd64." >&2
@@ -36,12 +35,6 @@ fi
 
 if [ ! -f "${BUILDSH}" ]; then
 	echo "Run this script from the source root (where ${BUILDSH} is)." >&2
-	exit 1
-fi
-
-if ! command -v "${XORRISO}" >/dev/null 2>&1; then
-	echo "xorriso is required to create an EFI El Torito ISO." >&2
-	echo "Install it with: sudo apt install xorriso" >&2
 	exit 1
 fi
 
@@ -109,25 +102,19 @@ add_file_spec "etc/fstab" extra.fstab
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 add_file_spec "README.TXT" extra.cdfiles
 
-# The ISO9660 root is read-only after boot.  MINIX's logical console is
-# character device major 4, minor 0, so create it in the image now rather
-# than trying to overlay /dev with the NetBSD MAKEDEV -MM implementation
-# at runtime (which requires mount_tmpfs or mount_mfs).
+# The ISO9660 root is read-only after boot.  Arrange for the logical
+# MINIX console (character device 4:0) to be created by nbmakefs from an
+# mtree entry; unlike host mknod, this also works for unprivileged builds.
 mkdir -p "${ROOT_DIR}/dev"
 if [ -d "${ROOT_DIR}/dev/console" ]; then
 	echo "${ROOT_DIR}/dev/console exists as a directory, expected a device node." >&2
 	exit 1
 fi
 rm -f "${ROOT_DIR}/dev/console"
-if ! mknod "${ROOT_DIR}/dev/console" c 4 0; then
-	echo "Unable to create ${ROOT_DIR}/dev/console; run the UEFI ISO build with permission to create device nodes." >&2
-	exit 1
-fi
-chmod 600 "${ROOT_DIR}/dev/console"
-if [ ! -c "${ROOT_DIR}/dev/console" ]; then
-	echo "${ROOT_DIR}/dev/console is not a character device." >&2
-	exit 1
-fi
+CONSOLE_SPEC="${WORK_DIR}/uefi-console.mtree"
+cat > "${CONSOLE_SPEC}" <<'EOF_CONSOLE'
+./dev/console type=char device=netbsd,4,0 mode=600 uid=0 gid=0
+EOF_CONSOLE
 
 workdir_add_kernel minix_default
 
@@ -188,16 +175,21 @@ cp "${ROOT_DIR}/usr/mdec/bootx64.efi" "${EFI_DIR}/EFI/BOOT/BOOTX64.EFI"
 	-t msdos -o F=32,c=1 "${EFI_IMAGE}" "${EFI_DIR}"
 
 mkdir -p "$(dirname "${IMG}")"
-rm -f "${IMG}"
-echo "Writing UEFI El Torito ISO: ${IMG}"
-"${XORRISO}" -as mkisofs \
-	-iso-level 3 -r -J -joliet-long \
-	-V "${ISO_VOLID}" -publisher "MINIX Project" \
-	-e efiboot.img -no-emul-boot \
-	-o "${IMG}" "${ROOT_DIR}"
+IMG_DIR=$(cd "$(dirname "${IMG}")" && pwd)
+IMG_PATH="${IMG_DIR}/$(basename "${IMG}")"
+NBMAKEFS="$(cd "${CROSS_TOOLS}" && pwd)/nbmakefs"
+rm -f "${IMG_PATH}"
+echo "Writing UEFI El Torito ISO with nbmakefs: ${IMG_PATH}"
+(
+	cd "${ROOT_DIR}"
+	"${NBMAKEFS}" -N "${ROOT_DIR}/etc" -t cd9660 \
+		-F "${CONSOLE_SPEC}" \
+		-o "rockridge,isolevel=3,allow-multidot,label=${ISO_VOLID},publisher=MINIX Project,bootimage=efi;efiboot.img,no-emul-boot" \
+		"${IMG_PATH}" .
+)
 
-if [ ! -s "${IMG}" ]; then
-	echo "ISO creation failed: ${IMG} was not produced." >&2
+if [ ! -s "${IMG_PATH}" ]; then
+	echo "ISO creation failed: ${IMG_PATH} was not produced." >&2
 	exit 1
 fi
 
