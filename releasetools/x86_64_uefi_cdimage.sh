@@ -113,6 +113,8 @@ fi
 rm -f "${ROOT_DIR}/dev/console"
 CONSOLE_SPEC="${WORK_DIR}/uefi-console.mtree"
 cat > "${CONSOLE_SPEC}" <<'EOF_CONSOLE'
+. type=dir uid=0 gid=0 mode=0755
+./dev type=dir uid=0 gid=0 mode=0755
 ./dev/console type=char device=netbsd,4,0 mode=600 uid=0 gid=0
 EOF_CONSOLE
 
