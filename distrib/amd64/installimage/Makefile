@@ -27,7 +27,6 @@ prepare_md_post:
 	    < ${.CURDIR}/boot.cfg.in > boot.cfg
 
 DISTRIBDIR!= cd ${.CURDIR}/../.. ; pwd
-#SYSINSTDIR!= cd ${.CURDIR}/../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 SPEC_EXTRA=		${.CURDIR}/spec.inst
 IMGFILE_EXTRA=								\
@@ -36,10 +35,5 @@ IMGFILE_EXTRA=								\
 	${.CURDIR}/install.sh		.				\
 	${.CURDIR}/setup-amd64.sh	.				\
 	${.OBJDIR}/boot.cfg		.				\
-#	${SYSINSTDIR}/sysinstmsgs.de	.				\
-#	${SYSINSTDIR}/sysinstmsgs.es	.				\
-#	${SYSINSTDIR}/sysinstmsgs.fr	.				\
-#	${SYSINSTDIR}/sysinstmsgs.pl	.				\
-#	${SYSINSTDIR}/sysinst		.
 
 .include "${DISTRIBDIR}/common/bootimage/Makefile.installimage"
