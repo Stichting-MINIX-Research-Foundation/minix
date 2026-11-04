@@ -87,7 +87,7 @@ cp -p etc/ttys "${ROOT_DIR}/etc/ttys"
 # Autologin on the primary console and start the guided installer.
 awk '
 /^console[[:space:]]/ {
-	print "console\t\"/usr/libexec/getty sysinst\"\twsvt25\ton secure"
+	print "console\t\"/usr/libexec/getty minix-installer\"\twsvt25\ton secure"
 	next
 }
 { print }
@@ -101,7 +101,7 @@ $0 == "rc_real_work \"$@\" 2>&1 | rc_postprocess" {
 	print "# Autostart MINIX amd64 UEFI installer on the console."
 	print "if [ -x /install.sh ]; then"
 	print "\techo \"# MINIX amd64 installer\" > /etc/gettytab"
-	print "\techo -n \"sysinst:al=root:lo=/install.sh:im=:sp#\" >> /etc/gettytab"
+	print "\techo -n \"minix-installer:al=root:lo=/install.sh:im=:sp#\" >> /etc/gettytab"
 	print "\tstty speed >> /etc/gettytab"
 	print "fi"
 }
