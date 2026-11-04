@@ -186,7 +186,7 @@ echo "Writing UEFI El Torito ISO with nbmakefs: ${IMG_PATH}"
 	cd "${ROOT_DIR}"
 	"${NBMAKEFS}" -N "${ROOT_DIR}/etc" -t cd9660 \
 		-F "${CONSOLE_SPEC}" \
-		-o "rockridge,isolevel=3,allow-multidot,label=${ISO_VOLID},publisher=MINIX Project,bootimage=efi;efiboot.img,no-emul-boot" \
+		-o "rockridge,isolevel=2,allow-multidot,label=${ISO_VOLID},publisher=MINIX Project,bootimage=efi;efiboot.img,no-emul-boot" \
 		"${IMG_PATH}" .
 )
 
