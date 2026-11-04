@@ -51,7 +51,7 @@ The installer creates this GPT layout on the selected target disk:
 
 It installs the amd64 release sets, places the kernel and boot modules under
 `/boot/minix_default`, and installs a disk-specific EFI boot image whose
-menu loads the system from `hd0b` / `c0d0p1`. The installer requires a
+menu loads the system from the MFS partition associated with the UEFI boot device. The loader resolves the boot partition dynamically, and the installed `/etc/fstab` identifies the MINIX root partition. The installer requires a
 target disk of at least 2048 MiB.
 
 **Destructive operation:** the whole selected disk is repartitioned and all
@@ -62,7 +62,8 @@ image from separate media and install to a different disk. Test in a VM and
 back up any important data before using physical hardware.
 
 The ISO build also includes `/efiboot-disk.img`, a 64 MiB FAT image used to
-populate the target EFI System Partition. When booted from the install-image
+populate the target EFI System Partition. Its boot menu uses paths relative
+to the UEFI boot device, so it does not assume that the target is `hd0`. When booted from the install-image
 USB, the installer copies the EFI partition from the running installation
 media instead.
 
