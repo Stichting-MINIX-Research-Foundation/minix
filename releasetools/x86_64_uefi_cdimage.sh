@@ -102,17 +102,13 @@ add_file_spec "etc/fstab" extra.fstab
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 add_file_spec "README.TXT" extra.cdfiles
 
-# The ISO9660 root is read-only after boot.  Arrange for the MINIX
-# console and memory pseudo-devices used during startup to be created by
-# nbmakefs from mtree entries.  In particular, /dev/null must exist before
-# /etc/rc starts: creating it on the CD9660 root fails with ENOSYS.
+# The ISO9660 root is read-only after boot.  Create all memory devices
+# needed by the CD startup path in the image itself.  rc.cd uses ram0-ram3
+# to make /var, /tmp, /usr/run and /root writable, and rc.minix later frees
+# the boot image through /dev/imgrd.  Missing nodes make ramdisk/mkfs/mount
+# fail and leave /var/run unavailable to the rest of the startup scripts.
 mkdir -p "${ROOT_DIR}/dev"
-if [ -d "${ROOT_DIR}/dev/console" ]; then
-	echo "${ROOT_DIR}/dev/console exists as a directory, expected a device node." >&2
-	exit 1
-fi
-rm -f "${ROOT_DIR}/dev/console"
-for device in null zero; do
+for device in console null zero ram imgrd ram0 ram1 ram2 ram3 ram4 ram5; do
 	if [ -d "${ROOT_DIR}/dev/${device}" ]; then
 		echo "${ROOT_DIR}/dev/${device} exists as a directory, expected a device node." >&2
 		exit 1
@@ -126,6 +122,14 @@ cat > "${DEVICE_SPEC}" <<'EOF_DEVICES'
 ./dev/console type=char device=netbsd,4,0 mode=600 uid=0 gid=0
 ./dev/null type=char device=netbsd,1,3 mode=666 uid=0 gid=0
 ./dev/zero type=char device=netbsd,1,5 mode=666 uid=0 gid=0
+./dev/ram type=block device=netbsd,1,0 mode=600 uid=0 gid=0
+./dev/imgrd type=block device=netbsd,1,6 mode=600 uid=0 gid=0
+./dev/ram0 type=block device=netbsd,1,7 mode=600 uid=0 gid=0
+./dev/ram1 type=block device=netbsd,1,8 mode=600 uid=0 gid=0
+./dev/ram2 type=block device=netbsd,1,9 mode=600 uid=0 gid=0
+./dev/ram3 type=block device=netbsd,1,10 mode=600 uid=0 gid=0
+./dev/ram4 type=block device=netbsd,1,11 mode=600 uid=0 gid=0
+./dev/ram5 type=block device=netbsd,1,12 mode=600 uid=0 gid=0
 EOF_DEVICES
 
 workdir_add_kernel minix_default
