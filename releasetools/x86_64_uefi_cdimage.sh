@@ -102,21 +102,31 @@ add_file_spec "etc/fstab" extra.fstab
 cp releasetools/release/cd/README.amd64.UEFI.TXT "${ROOT_DIR}/README.TXT"
 add_file_spec "README.TXT" extra.cdfiles
 
-# The ISO9660 root is read-only after boot.  Arrange for the logical
-# MINIX console (character device 4:0) to be created by nbmakefs from an
-# mtree entry; unlike host mknod, this also works for unprivileged builds.
+# The ISO9660 root is read-only after boot.  Arrange for the MINIX
+# console and memory pseudo-devices used during startup to be created by
+# nbmakefs from mtree entries.  In particular, /dev/null must exist before
+# /etc/rc starts: creating it on the CD9660 root fails with ENOSYS.
 mkdir -p "${ROOT_DIR}/dev"
 if [ -d "${ROOT_DIR}/dev/console" ]; then
 	echo "${ROOT_DIR}/dev/console exists as a directory, expected a device node." >&2
 	exit 1
 fi
 rm -f "${ROOT_DIR}/dev/console"
-CONSOLE_SPEC="${WORK_DIR}/uefi-console.mtree"
-cat > "${CONSOLE_SPEC}" <<'EOF_CONSOLE'
+for device in null zero; do
+	if [ -d "${ROOT_DIR}/dev/${device}" ]; then
+		echo "${ROOT_DIR}/dev/${device} exists as a directory, expected a device node." >&2
+		exit 1
+	fi
+	rm -f "${ROOT_DIR}/dev/${device}"
+done
+DEVICE_SPEC="${WORK_DIR}/uefi-devices.mtree"
+cat > "${DEVICE_SPEC}" <<'EOF_DEVICES'
 . type=dir uid=0 gid=0 mode=0755
 ./dev type=dir uid=0 gid=0 mode=0755
 ./dev/console type=char device=netbsd,4,0 mode=600 uid=0 gid=0
-EOF_CONSOLE
+./dev/null type=char device=netbsd,1,3 mode=666 uid=0 gid=0
+./dev/zero type=char device=netbsd,1,5 mode=666 uid=0 gid=0
+EOF_DEVICES
 
 workdir_add_kernel minix_default
 
@@ -185,7 +195,7 @@ echo "Writing UEFI El Torito ISO with nbmakefs: ${IMG_PATH}"
 (
 	cd "${ROOT_DIR}"
 	"${NBMAKEFS}" -N "${ROOT_DIR}/etc" -t cd9660 \
-		-F "${CONSOLE_SPEC}" \
+		-F "${DEVICE_SPEC}" \
 		-o "rockridge,isolevel=2,allow-multidot,label=${ISO_VOLID},publisher=MINIX Project,bootimage=efi;efiboot.img,no-emul-boot" \
 		"${IMG_PATH}" .
 )
