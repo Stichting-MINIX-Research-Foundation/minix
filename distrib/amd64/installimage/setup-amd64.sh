@@ -224,13 +224,15 @@ no_swap=YES
 savecore=NO
 END_RCCONF
 
-# Recreate standard device nodes if the release set ships MAKEDEV.
-if [ -x "$MOUNT_POINT/dev/MAKEDEV" ]; then
-	(cd "$MOUNT_POINT/dev" && ./MAKEDEV -s all) || {
-		umount "$MOUNT_POINT" >/dev/null 2>&1 || true
-		fail "MAKEDEV could not create the target device nodes."
-	}
-fi
+# The image builder uses the same MAKEDEV script to populate /dev.
+[ -x "$MOUNT_POINT/dev/MAKEDEV" ] || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "The base set did not install /dev/MAKEDEV."
+}
+(cd "$MOUNT_POINT/dev" && ./MAKEDEV -s all ipty imgrd) || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "MAKEDEV could not create the target device nodes."
+}
 
 sync
 umount "$MOUNT_POINT" || fail "Could not unmount $MOUNT_POINT cleanly."
