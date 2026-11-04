@@ -62,7 +62,8 @@ image from separate media and install to a different disk. Test in a VM and
 back up any important data before using physical hardware.
 
 The ISO build also includes `/efiboot-disk.img`, a 64 MiB FAT image used to
-populate the target EFI System Partition. Its boot menu uses paths relative
+populate the target EFI System Partition. The boot menu uses paths relative
+to the UEFI boot device and does not assume the target is `hd0`. Its boot menu uses paths relative
 to the UEFI boot device, so it does not assume that the target is `hd0`. When booted from the install-image
 USB, the installer copies the EFI partition from the running installation
 media instead.
