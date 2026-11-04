@@ -39,10 +39,11 @@ with `OBJ`, `DESTDIR`, `RELEASEDIR`, `SETS_DIR`, `CROSS_TOOLS`,
 
 ### Guided amd64 UEFI installer
 
-The amd64 installation ISO and `distrib/amd64/installimage` now use the
-same guided installer. When the media boots in UEFI mode, the installer is
-started on the primary console. It can be cancelled to use the recovery
-shell, or used to install the bundled release sets onto another disk.
+The amd64 installation ISO and `distrib/amd64/installimage` use the same
+guided installer. When the media boots in UEFI mode, the installer starts on
+the primary console. It can be cancelled at its first prompt to return to a
+root recovery shell, or used to install the bundled release sets onto another
+disk.
 
 The installer creates this GPT layout on the selected target disk:
 
@@ -50,23 +51,19 @@ The installer creates this GPT layout on the selected target disk:
 - `p1`: remaining space, formatted as a MINIX MFS root filesystem.
 
 It installs the amd64 release sets, places the kernel and boot modules under
-`/boot/minix_default`, and installs a disk-specific EFI boot image whose
-menu loads the system from the MFS partition associated with the UEFI boot device. The loader resolves the boot partition dynamically, and the installed `/etc/fstab` identifies the MINIX root partition. The installer requires a
-target disk of at least 2048 MiB.
+`/boot/minix_default`, creates the device nodes, and writes an
+`/etc/fstab` entry for the selected root partition. The EFI boot menu uses
+paths relative to the MFS partition on the UEFI boot device, so it does not
+assume that the target is enumerated as `hd0`. The minimum target size is
+2048 MiB.
 
 **Destructive operation:** the whole selected disk is repartitioned and all
-existing data on it is erased. Before proceeding, the installer displays
-the target and requires its device name to be typed exactly. Do not select
-the disk containing the currently running install-image USB; boot that
-image from separate media and install to a different disk. Test in a VM and
-back up any important data before using physical hardware.
-
-The ISO build also includes `/efiboot-disk.img`, a 64 MiB FAT image used to
-populate the target EFI System Partition. The boot menu uses paths relative
-to the UEFI boot device and does not assume the target is `hd0`. Its boot menu uses paths relative
-to the UEFI boot device, so it does not assume that the target is `hd0`. When booted from the install-image
-USB, the installer copies the EFI partition from the running installation
-media instead.
+existing data on it is erased. Before proceeding, the installer displays the
+target and requires its device name to be typed exactly. Do not select the
+disk containing the currently running install-image USB. The installer
+copies the EFI partition from the running USB image or, for the ISO, uses
+the bundled `/efiboot-disk.img`. Test in a VM and back up any important
+data before using physical hardware.
 
 ## Existing amd64 live image
 
