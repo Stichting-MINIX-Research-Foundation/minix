@@ -211,6 +211,19 @@ none		/sys		devman	rw,rslabel=devman	0 0
 none		/dev/pts	ptyfs	rw,rslabel=ptyfs	0 0
 END_FSTAB
 
+# Enable multiuser startup for the freshly installed root filesystem.
+[ -f "$MOUNT_POINT/etc/rc.conf" ] || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "The base set did not install /etc/rc.conf."
+}
+cat >> "$MOUNT_POINT/etc/rc.conf" <<END_RCCONF
+
+# Settings for the amd64 single-root UEFI installation.
+rc_configured=YES
+no_swap=YES
+savecore=NO
+END_RCCONF
+
 # Recreate standard device nodes if the release set ships MAKEDEV.
 if [ -x "$MOUNT_POINT/dev/MAKEDEV" ]; then
 	(cd "$MOUNT_POINT/dev" && ./MAKEDEV -s all) || {
