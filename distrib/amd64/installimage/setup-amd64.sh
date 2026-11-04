@@ -137,6 +137,20 @@ command -v gpt >/dev/null 2>&1 || fail "The gpt utility is not available."
 command -v mkfs.mfs >/dev/null 2>&1 || fail "The mkfs.mfs utility is not available."
 command -v pax >/dev/null 2>&1 || fail "The pax utility is not available."
 command -v dd >/dev/null 2>&1 || fail "The dd utility is not available."
+command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
+
+# Resolve the UEFI boot image before any destructive operation.
+# CD media carries a disk-specific ESP image; the install-image USB can reuse
+# its own EFI partition, provided the target is a different disk.
+if [ -s "$EFI_IMAGE" ]; then
+	efi_source=$EFI_IMAGE
+else
+	if [ -z "$running_disk" ] || [ ! -b "${running_disk}p0" ]; then
+		fail "Cannot locate the running install media's EFI partition, and $EFI_IMAGE is not present."
+	fi
+	efi_source=${running_disk}p0
+fi
+[ -s "$efi_source" ] || [ -b "$efi_source" ] || fail "UEFI boot source $efi_source is not readable."
 
 printf "\nCreating GPT on %s...\n" "$diskdev"
 gpt "$diskdev" create -f || fail "Could not create the GPT on $diskdev."
@@ -153,18 +167,6 @@ done
 
 printf "\nCreating the MINIX root filesystem...\n"
 mkfs.mfs "$rootdev" || fail "Could not create the MFS filesystem on $rootdev."
-
-# A CD image carries a disk-specific EFI image as a regular file. When the
-# installer is booted from the install-image USB, reuse its existing EFI
-# partition, which contains this installer's loader and disk boot.cfg.
-if [ -s "$EFI_IMAGE" ]; then
-	efi_source=$EFI_IMAGE
-else
-	if [ -z "$running_disk" ] || [ ! -b "${running_disk}p0" ]; then
-		fail "Cannot locate the running install media's EFI partition, and $EFI_IMAGE is not present."
-	fi
-	efi_source=${running_disk}p0
-fi
 
 printf "Installing UEFI boot files from %s...\n" "$efi_source"
 dd if="$efi_source" of="$espdev" || fail "Could not copy the UEFI boot files to $espdev."
