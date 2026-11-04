@@ -197,11 +197,10 @@ if [ ! -s "$MOUNT_POINT/boot/minix_default/kernel" ]; then
 		fail "The kernel set did not install boot/minix/.temp."
 	}
 	rm -rf "$MOUNT_POINT/boot/minix_default"
-	cp -r "$MOUNT_POINT/boot/minix/.temp" "$MOUNT_POINT/boot/minix_default" || {
+	mv "$MOUNT_POINT/boot/minix/.temp" "$MOUNT_POINT/boot/minix_default" || {
 		umount "$MOUNT_POINT" >/dev/null 2>&1 || true
 		fail "Could not stage the kernel and boot modules under /boot/minix_default."
 	}
-	rm -rf "$MOUNT_POINT/boot/minix/.temp"
 fi
 [ -s "$MOUNT_POINT/boot/minix_default/kernel" ] || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
