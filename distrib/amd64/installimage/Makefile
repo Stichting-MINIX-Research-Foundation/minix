@@ -6,10 +6,7 @@ INSTIMGBASE=	Minix-${DISTRIBVER}-x86_64-install	# gives ${IMGBASE}.img
 
 INSTIMAGEMB?=	1900			# for all installation binaries
 
-#PRIMARY_BOOT=		bootxx_ffsv1
-PRIMARY_BOOT=		bootxx_minixfs3
-SECONDARY_BOOT=		boot_monitor
-#SECONDARY_BOOT_ARG=	# unnecessary
+# This installer is UEFI-only; do not request legacy BIOS boot blocks.
 EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
 
 USE_MBR=		yes
@@ -34,6 +31,6 @@ IMGFILE_EXTRA=								\
 	${.CURDIR}/etc.rc		etc/rc				\
 	${.CURDIR}/install.sh		.				\
 	${.CURDIR}/setup-amd64.sh	.				\
-	${.OBJDIR}/boot.cfg		.				\
+	${.OBJDIR}/boot.cfg		.
 
 .include "${DISTRIBDIR}/common/bootimage/Makefile.installimage"
