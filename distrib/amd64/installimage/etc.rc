@@ -41,7 +41,7 @@ mount -t tmpfs tmpfs /tmp
 
 # create a gettytab to autologin and run the amd64 installer
 echo "# Autostart the amd64 UEFI installer" > /tmp/gettytab
-echo -n "sysinst:al=root:lo=/install.sh:im=:sp#" >> /tmp/gettytab
+echo -n "minix-installer:al=root:lo=/install.sh:im=:sp#" >> /tmp/gettytab
 stty speed >> /tmp/gettytab
 cp /tmp/gettytab /etc
 
