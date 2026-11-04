@@ -37,14 +37,37 @@ the release build before packaging. Paths and image settings can be overridden
 with `OBJ`, `DESTDIR`, `RELEASEDIR`, `SETS_DIR`, `CROSS_TOOLS`,
 `WORK_DIR`, `IMG`, `XORRISO`, and `EFIMB`.
 
-### Installer scope
+### Guided amd64 UEFI installer
 
-This change makes a bootable amd64 UEFI installation CD and bundles the
-release set archives in `/usr/amd64/binary/sets`. It boots MINIX from the CD
-so the system and set archives are available for installation or recovery.
-It does **not** add an unattended installer or a new interactive UEFI/GPT
-partitioning front end; that remains separate work (the existing
-`distrib/amd64/installimage` uses the older `sysinst` path).
+The amd64 installation ISO and `distrib/amd64/installimage` use the same
+guided installer. When the media boots in UEFI mode, the installer starts on
+the primary console. It can be cancelled at its first prompt to return to a
+root recovery shell, or used to install the bundled release sets onto another
+disk.
+
+The installer creates this GPT layout on the selected target disk:
+
+- `p0`: 64 MiB FAT32 EFI System Partition.
+- `p1`: remaining space, formatted as a MINIX MFS root filesystem.
+
+It installs the amd64 release sets, places the kernel and boot modules under
+`/boot/minix_default`, creates the device nodes, and writes an
+`/etc/fstab` entry for the selected root partition. The EFI boot menu uses
+paths relative to the MFS partition on the UEFI boot device, so it does not
+assume that the target is enumerated as `hd0`. The minimum target size is
+2048 MiB.
+
+**Destructive operation:** the whole selected disk is repartitioned and all
+existing data on it is erased. Before proceeding, the installer displays the
+target and requires its device name to be typed exactly. Do not select the
+disk containing the currently running install-image USB. The installer
+copies the EFI partition from the running USB image or, for the ISO, uses
+the bundled `/efiboot-disk.img`. The install-image USB uses a fixed `/dev/c0d0p0` EFI and
+`/dev/c0d0p1` MFS layout; the USB itself must therefore enumerate as
+`/dev/c0d0`. The UEFI ISO is preferable on systems with a different USB
+disk enumeration order.
+
+Test in a VM and back up any important data before using physical hardware.
 
 ## Existing amd64 live image
 
