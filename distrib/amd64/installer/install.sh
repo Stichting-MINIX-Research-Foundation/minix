@@ -32,7 +32,7 @@ Usage: minix-install [--disk c0d0] [--help]
 Install MINIX 3.4.0 amd64. The current UEFI boot menu requires the target
 disk to be c0d0 and the installed root to be c0d0p1. Automatic mode replaces
 the whole disk. Expert mode reuses an existing GPT with ESP p0 and root p1.
-Release sets: /usr/amd64/binary/sets (override with SETS_DIR).
+Release sets: /usr/amd64/binary/sets.
 EOF
 }
 
@@ -65,6 +65,17 @@ ask_number() {
 	done
 }
 
+wait_for_device() {
+	device=$1
+	attempt=0
+	while [ "$attempt" -lt 15 ]; do
+		if [ -b "$device" ] || [ -c "$device" ]; then return 0; fi
+		attempt=$((attempt + 1))
+		sleep 1
+	done
+	fail "partition device was not created: $device"
+}
+
 cleanup() {
 	[ "$MOUNTED_HOME" = yes ] && umount "$MNT/home" >/dev/null 2>&1 || :
 	[ "$MOUNTED_USR" = yes ] && umount "$MNT/usr" >/dev/null 2>&1 || :
@@ -84,7 +95,7 @@ done
 
 [ "$(id -u)" = 0 ] || fail "run this installer as root"
 [ "$DISK" = c0d0 ] || fail "the current UEFI boot menu requires the target disk to be c0d0"
-for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm awk cut sed uname; do need "$cmd"; done
+for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm awk cut sed uname basename; do need "$cmd"; done
 [ -d "$SETS_DIR" ] || fail "release set directory not found: $SETS_DIR"
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "minix-base.tgz is missing"
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "minix-kernel.tgz is missing"
@@ -231,6 +242,13 @@ else
 	printf "To continue, type INSTALL %s: " "$ROOT"
 	read CONFIRM || fail "installation cancelled"
 	[ "$CONFIRM" = "INSTALL $ROOT" ] || fail "confirmation did not match; no partition changed"
+fi
+
+if [ "$MODE" = automatic ]; then
+	wait_for_device "$ESP"
+	wait_for_device "$ROOT"
+	[ "$HOME_ENABLED" != yes ] || wait_for_device "$HOME_PART"
+	wait_for_device "$USR_PART"
 fi
 
 echo
