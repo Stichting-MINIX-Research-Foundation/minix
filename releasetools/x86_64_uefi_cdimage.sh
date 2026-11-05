@@ -114,12 +114,10 @@ prepare_pkgsrc_set()
 		esac
 		archive="${WORK_DIR}/pkgsrc-${PKGSRC_COMMIT}.tar.gz"
 		if [ ! -s "${archive}" ]; then
-			archive_tmp="${archive}.tmp.$"
+			archive_tmp="${archive}.tmp"
 			rm -f "${archive_tmp}"
 			echo "Downloading pkgsrc source snapshot ${PKGSRC_COMMIT}..."
-			python3 -c 'import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])' \\
-				"https://codeload.github.com/eclairdosesleekman/pkgsrc/tar.gz/${PKGSRC_COMMIT}" \\
-				"${archive_tmp}"
+			python3 -c 'import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])' "https://codeload.github.com/eclairdosesleekman/pkgsrc/tar.gz/${PKGSRC_COMMIT}" "${archive_tmp}"
 			mv -f "${archive_tmp}" "${archive}"
 		fi
 	fi
@@ -136,8 +134,7 @@ prepare_pkgsrc_set()
 
 	mv "${source_dir}" "${staging_dir}/usr/pkgsrc"
 	echo "Creating ${SETS_DIR}/pkgsrc.tgz..."
-	tar -czf "${SETS_DIR}/pkgsrc.tgz" --numeric-owner --owner=0 --group=0 \\
-		-C "${staging_dir}" usr/pkgsrc
+	tar -czf "${SETS_DIR}/pkgsrc.tgz" --numeric-owner --owner=0 --group=0 -C "${staging_dir}" usr/pkgsrc
 
 	# Keep the release-set checksum manifests accurate for the extra set.
 	python3 - "${SETS_DIR}" <<'PY_CHECKSUMS'
@@ -160,13 +157,12 @@ for manifest, algorithm in (("MD5", "md5"), ("SHA512", "sha512")):
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     lines.append(f"{manifest} (pkgsrc.tgz) = {digest.hexdigest()}")
-    path.write_text("\\n".join(lines) + "\\n")
+    path.write_text("\n".join(lines) + "\n")
 PY_CHECKSUMS
 }
 
 # Add pkgsrc before build_workdir() bundles every release set onto the ISO.
 prepare_pkgsrc_set()
-
 
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
