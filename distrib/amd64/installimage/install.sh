@@ -1,10 +1,17 @@
 #!/bin/sh
-# Entry point used by the installation media's automatic console login.
+# Automatic console entry point for the amd64 installation media.
+# Prefer the guided UEFI installer shipped in the ISO. The install-image
+# target predates the UEFI media layout, so retain its legacy fallback.
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
-/setup-amd64.sh
-status=$?
+if [ -x /usr/sbin/minix-install ] && [ -s /install-efiboot.img ]; then
+	/usr/sbin/minix-install "$@"
+	status=$?
+else
+	/setup-amd64.sh "$@"
+	status=$?
+fi
 
 echo
 if [ "$status" -eq 0 ]; then
