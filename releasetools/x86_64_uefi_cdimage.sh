@@ -173,7 +173,9 @@ add_file_spec "README.TXT" extra.cdfiles
 # the boot image through /dev/imgrd.  The /usr startup script also starts
 # random, pty, LWIP, log and printer services, which require these nodes.
 mkdir -p "${ROOT_DIR}/dev"
+# The guided installer needs the whole target disk and its GPT partitions.
 for device in console tty null zero ram mem kmem boot imgrd \
+    c0d0 c0d0p0 c0d0p1 c0d0p2 c0d0p3 \
     ram0 ram1 ram2 ram3 ram4 ram5 log lp bpf bpf0 klog ptmx random urandom; do
 	if [ -d "${ROOT_DIR}/dev/${device}" ]; then
 		echo "${ROOT_DIR}/dev/${device} exists as a directory, expected a device node." >&2
@@ -189,6 +191,11 @@ cat > "${DEVICE_SPEC}" <<'EOF_DEVICES'
 ./dev/tty type=char device=netbsd,5,0 mode=666 uid=0 gid=0
 ./dev/null type=char device=netbsd,1,3 mode=666 uid=0 gid=0
 ./dev/zero type=char device=netbsd,1,5 mode=666 uid=0 gid=0
+./dev/c0d0 type=block device=netbsd,3,0 mode=600 uid=0 gid=0
+./dev/c0d0p0 type=block device=netbsd,3,1 mode=600 uid=0 gid=0
+./dev/c0d0p1 type=block device=netbsd,3,2 mode=600 uid=0 gid=0
+./dev/c0d0p2 type=block device=netbsd,3,3 mode=600 uid=0 gid=0
+./dev/c0d0p3 type=block device=netbsd,3,4 mode=600 uid=0 gid=0
 ./dev/ram type=block device=netbsd,1,0 mode=600 uid=0 gid=2
 ./dev/mem type=char device=netbsd,1,1 mode=640 uid=0 gid=2
 ./dev/kmem type=char device=netbsd,1,2 mode=640 uid=0 gid=2
