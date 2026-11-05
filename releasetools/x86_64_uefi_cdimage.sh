@@ -74,6 +74,13 @@ fi
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
 
+# Keep the installer root's MAKEDEV in sync with this source tree. The
+# minix-base release archive can be older than the ISO when image-only mode
+# is used, which would otherwise retain broken device-name parsing.
+mkdir -p "${ROOT_DIR}/dev"
+cp -p minix/commands/MAKEDEV/MAKEDEV.sh "${ROOT_DIR}/dev/MAKEDEV"
+chmod 0755 "${ROOT_DIR}/dev/MAKEDEV"
+
 # The MINIX-specific release set manifest must include the bmake executable.
 # Refuse to produce an ISO that would boot without the build tool.
 if [ ! -x "${ROOT_DIR}/usr/bin/bmake" ]; then
