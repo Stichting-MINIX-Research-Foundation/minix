@@ -623,6 +623,12 @@ gpt_close(gpt_t gpt)
 	if (!(gpt->flags & GPT_MODIFIED) || !(gpt->flags & GPT_SYNC))
 		goto out;
 
+#ifndef __minix
+	/*
+	 * NetBSD disk wedges are not supported by MINIX block drivers.
+	 * MINIX discovers GPT partitions through its own disk-device path,
+	 * so do not issue DIOCMWEDGES or print the dkctl makewedges hint.
+	 */
 	if (!(gpt->flags & GPT_NOSYNC)) {
 #ifdef DIOCMWEDGES
 		int bits;
@@ -635,6 +641,7 @@ gpt_close(gpt_t gpt)
 	if (!(gpt->flags & GPT_FILE))
 		gpt_msg(gpt, "You need to run \"dkctl %s makewedges\""
 		    " for the changes to take effect\n", gpt->device_name);
+#endif /* !__minix */
 
 out:
 	close(gpt->fd);
