@@ -200,10 +200,10 @@ ar_open(const char *name)
 		if (arfd != -1 && gzip_program != NULL && pax_use_inline_gzip()) {
 			pax_gzfile = gzdopen(arfd, "rb");
 			if (pax_gzfile == NULL) {
-				syswarn(0, errno, "Failed to initialize gzip reader on %s",
+				/* Keep the original filter path as a fallback. */
+				syswarn(0, errno, "Cannot initialize inline gzip reader on %s",
 				    arcname);
-				(void)close(arfd);
-				arfd = -1;
+				ar_start_gzip(arfd, gzip_program, 0);
 			}
 		} else
 #endif
@@ -248,6 +248,12 @@ ar_open(const char *name)
 	 */
 	if (fstat(arfd, &arsb) < 0) {
 		syswarn(0, errno, "Failed stat on %s", arcname);
+#if defined(__minix) && defined(__x86_64__)
+		if (pax_gzfile != NULL) {
+			(void)gzclose(pax_gzfile);
+			pax_gzfile = NULL;
+		} else
+#endif
 		(void)close(arfd);
 		arfd = -1;
 		can_unlnk = 0;
@@ -256,6 +262,12 @@ ar_open(const char *name)
 	if (S_ISDIR(arsb.st_mode)) {
 		tty_warn(0, "Cannot write an archive on top of a directory %s",
 		    arcname);
+#if defined(__minix) && defined(__x86_64__)
+		if (pax_gzfile != NULL) {
+			(void)gzclose(pax_gzfile);
+			pax_gzfile = NULL;
+		} else
+#endif
 		(void)close(arfd);
 		arfd = -1;
 		can_unlnk = 0;
