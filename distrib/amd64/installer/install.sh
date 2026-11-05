@@ -9,6 +9,9 @@ SETS_DIR=$(env | sed -n 's/^SETS_DIR=//p')
 [ -n "$SETS_DIR" ] || SETS_DIR=/usr/amd64/binary/sets
 EFI_IMAGE=$(env | sed -n 's/^EFI_IMAGE=//p')
 [ -n "$EFI_IMAGE" ] || EFI_IMAGE=/install-efiboot.img
+# This copy is staged by x86_64_uefi_cdimage.sh and is newer than the
+# MAKEDEV script shipped in the minix-base release set.
+MAKEDEV_SOURCE=/minix-MAKEDEV
 DISK=c0d0
 ESP=/dev/$DISK"p0"
 ROOT=/dev/$DISK"p1"
@@ -97,7 +100,8 @@ done
 
 [ "$(id -u)" = 0 ] || fail "run this installer as root"
 [ "$DISK" = c0d0 ] || fail "the current UEFI boot menu requires the target disk to be c0d0"
-for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm mknod awk cut sed uname basename env; do need "$cmd"; done
+for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp mv rm mknod awk cut sed uname basename env; do need "$cmd"; done
+[ -x "$MAKEDEV_SOURCE" ] || fail "updated MAKEDEV script is missing from installation media: $MAKEDEV_SOURCE"
 [ -d "$SETS_DIR" ] || fail "release set directory not found: $SETS_DIR"
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "minix-base.tgz is missing"
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "minix-kernel.tgz is missing"
@@ -341,6 +345,13 @@ no_swap=YES
 savecore=NO
 EOF
 [ -x "$MNT/dev/MAKEDEV" ] || fail "base set did not install /dev/MAKEDEV"
+# The extracted minix-base set may contain an older MAKEDEV. Replace it with
+# the version carried separately on the installation ISO before creating
+# target device nodes.
+MAKEDEV_TMP="$MNT/dev/.MAKEDEV.tmp"
+cp "$MAKEDEV_SOURCE" "$MAKEDEV_TMP" || fail "could not copy updated MAKEDEV"
+chmod 0755 "$MAKEDEV_TMP" || fail "could not make updated MAKEDEV executable"
+mv -f "$MAKEDEV_TMP" "$MNT/dev/MAKEDEV" || fail "could not install updated MAKEDEV"
 (cd "$MNT/dev" && ./MAKEDEV -s all) || fail "MAKEDEV failed"
 
 # MAKEDEV can finish successfully even if an individual mknod fails.
