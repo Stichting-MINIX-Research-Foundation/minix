@@ -2,7 +2,8 @@
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
-LINKS+=	${BINDIR}/make ${BINDIR}/bmake
+PROGNAME=	bmake
+SYMLINKS+=	bmake ${BINDIR}/make
 SRCS=	arch.c
 SRCS+=  buf.c
 SRCS+=  compat.c
