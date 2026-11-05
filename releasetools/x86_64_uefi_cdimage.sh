@@ -71,6 +71,99 @@ if [ ! -s "${SETS_DIR}/minix-kernel.tgz" ]; then
 	exit 1
 fi
 
+
+# Bundle a pinned pkgsrc source snapshot as an additional MINIX release set.
+# The installer extracts every *.tgz in SETS_DIR, so pkgsrc.tgz is installed
+# automatically under /usr/pkgsrc without requiring network tools on MINIX.
+: ${PKGSRC_COMMIT:=825ca9c6714db32a318e4e4b5969ffd41e18d809}
+: ${PKGSRC_ARCHIVE:=}
+
+prepare_pkgsrc_set()
+{
+	local archive archive_tmp source_dir staging_dir
+
+	command -v python3 >/dev/null 2>&1 || {
+		echo "python3 is required on the build host to fetch the pkgsrc source archive." >&2
+		exit 1
+	}
+	command -v tar >/dev/null 2>&1 || {
+		echo "tar is required on the build host to prepare pkgsrc.tgz." >&2
+		exit 1
+	}
+
+	mkdir -p "${WORK_DIR}" "${SETS_DIR}"
+	if [ -n "${PKGSRC_ARCHIVE}" ]; then
+		archive=${PKGSRC_ARCHIVE}
+		if [ ! -s "${archive}" ]; then
+			echo "PKGSRC_ARCHIVE does not name a readable archive: ${archive}" >&2
+			exit 1
+		fi
+	else
+		case "${PKGSRC_COMMIT}" in
+			????????????????????????????????????????) ;;
+			*)
+				echo "PKGSRC_COMMIT must be a 40-character commit SHA." >&2
+				exit 2
+				;;
+		esac
+		case "${PKGSRC_COMMIT}" in
+			*[!0-9a-f]*)
+				echo "PKGSRC_COMMIT must be a lowercase hexadecimal commit SHA." >&2
+				exit 2
+				;;
+		esac
+		archive="${WORK_DIR}/pkgsrc-${PKGSRC_COMMIT}.tar.gz"
+		if [ ! -s "${archive}" ]; then
+			archive_tmp="${archive}.tmp"
+			rm -f "${archive_tmp}"
+			echo "Downloading pkgsrc source snapshot ${PKGSRC_COMMIT}..."
+			python3 -c 'import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])' "https://codeload.github.com/eclairdosesleekman/pkgsrc/tar.gz/${PKGSRC_COMMIT}" "${archive_tmp}"
+			mv -f "${archive_tmp}" "${archive}"
+		fi
+	fi
+
+	source_dir="${WORK_DIR}/pkgsrc-source"
+	staging_dir="${WORK_DIR}/pkgsrc-set"
+	rm -rf "${source_dir}" "${staging_dir}"
+	mkdir -p "${source_dir}" "${staging_dir}/usr"
+	tar -xzf "${archive}" --strip-components=1 -C "${source_dir}"
+	if [ ! -f "${source_dir}/bootstrap/bootstrap" ]; then
+		echo "The supplied archive is not a pkgsrc source snapshot (bootstrap/bootstrap is missing)." >&2
+		exit 1
+	fi
+
+	mv "${source_dir}" "${staging_dir}/usr/pkgsrc"
+	echo "Creating ${SETS_DIR}/pkgsrc.tgz..."
+	tar -czf "${SETS_DIR}/pkgsrc.tgz" --format=posix --numeric-owner --owner=0 --group=0 -C "${staging_dir}" usr/pkgsrc
+
+	# Keep the release-set checksum manifests accurate for the extra set.
+	python3 - "${SETS_DIR}" <<'PY_CHECKSUMS'
+import hashlib
+import pathlib
+import sys
+
+sets_dir = pathlib.Path(sys.argv[1])
+archive = sets_dir / "pkgsrc.tgz"
+for manifest, algorithm in (("MD5", "md5"), ("SHA512", "sha512")):
+    path = sets_dir / manifest
+    if not path.is_file():
+        raise SystemExit(f"missing release checksum manifest: {path}")
+    lines = [
+        line for line in path.read_text().splitlines()
+        if "(pkgsrc.tgz) =" not in line
+    ]
+    digest = hashlib.new(algorithm)
+    with archive.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    lines.append(f"{manifest} (pkgsrc.tgz) = {digest.hexdigest()}")
+    path.write_text("\n".join(lines) + "\n")
+PY_CHECKSUMS
+}
+
+# Add pkgsrc before build_workdir() bundles every release set onto the ISO.
+prepare_pkgsrc_set()
+
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
 
