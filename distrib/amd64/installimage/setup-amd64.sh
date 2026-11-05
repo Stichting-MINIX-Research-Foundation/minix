@@ -251,6 +251,12 @@ chmod 0600 "$MOUNT_POINT/dev/console" || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
 	fail "Installed /dev/console is not a character device."
 }
+for device in c0d0p0 c0d0p1; do
+	[ -b "$MOUNT_POINT/dev/$device" ] || {
+		umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+		fail "MAKEDEV did not create /dev/$device."
+	}
+done
 
 sync
 umount "$MOUNT_POINT" || fail "Could not unmount $MOUNT_POINT cleanly."

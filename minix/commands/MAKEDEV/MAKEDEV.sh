@@ -198,7 +198,7 @@ do
 	c2*) major=10 ;;
 	c3*) major=12 ;;
 	vnd*) # Whole vnode disk devices.
-		disk=`expr ${dev} : '...\\(.\\)'`
+		disk=`expr ${dev} : '...\(.\)'`
 		major=`expr ${disk} + 56`
 		;;
 	esac
@@ -212,7 +212,7 @@ do
 		;;
 	bmp085b[1-3]s77)
 		# Weather Cape: temperature & pressure sensor
-		bus=`expr ${dev} : 'bmp085b\\(.*\\)s77'` #bus number
+		bus=`expr ${dev} : 'bmp085b\(.*\)s77'` #bus number
 		major=`expr ${bus} + 52`
 
 		makedev bmp085b${bus}s77 c ${major} 0 ${uname} ${gname} 444
@@ -226,15 +226,15 @@ do
 		;;
 	c[0-3]d[0-7])
 		# Whole disk devices.
-		disk=`expr ${dev} : '...\\(.\\)'`
+		disk=`expr ${dev} : '...\(.\)'`
 		minor=`expr ${disk} '*' 5`
 
 		makedev ${dev} b ${major} ${minor} ${uname} ${gname} ${permissions}
 		;;
 	c[0-3]d[0-7]p[0-3])
 		# Disk primary partitions.
-		prefix=`expr ${dev} : '\\(.*\\).'`
-		disk=`expr ${dev} : '...\\(.\\)'`
+		prefix=`expr ${dev} : '\(.*\).'`
+		disk=`expr ${dev} : '...\(.\)'`
 
 		for p in 0 1 2 3
 		do
@@ -245,8 +245,8 @@ do
 		;;
 	c[0-3]d[0-7]p[0-3]s[0-3])
 		# Disk subpartition.
-		prefix=`expr ${dev} : '\\(.*\\)...'`
-		disk=`expr ${dev} : '...\\(.\\)'`
+		prefix=`expr ${dev} : '\(.*\)...'`
+		disk=`expr ${dev} : '...\(.\)'`
 
 		for p in 0 1 2 3
 		do
@@ -260,8 +260,8 @@ do
 		;;
 	c[0-3]t[0-7]|c[0-3]t[0-7]n)
 		# Tape devices.
-		prefix=`expr ${dev} : '\\(....\\)'`
-		tape=`expr ${dev} : '...\\(.\\)'`
+		prefix=`expr ${dev} : '\(....\)'`
+		tape=`expr ${dev} : '...\(.\)'`
 		minor=`expr 64 + ${tape} '*' 2`
 
 		makedev ${prefix}n c ${major} ${minor} ${uname} ${gname} 660
@@ -277,9 +277,9 @@ do
 		;;
 	eepromb[1-3]s5[0-7])
 		# cat24c256 driver
-		bus=`expr ${dev} : 'eepromb\\(.*\\)s'`
+		bus=`expr ${dev} : 'eepromb\(.*\)s'`
 		# configurable part of slave addr
-		slave_low=`expr ${dev} : 'eepromb.s5\\(.*\\)'`
+		slave_low=`expr ${dev} : 'eepromb.s5\(.*\)'`
 		major=`expr ${bus} '*' 8 + ${slave_low} + 17`
 
 		makedev eepromb${bus}s5${slave_low} b ${major} 0 ${uname} ${gname} ${permissions}
@@ -294,14 +294,14 @@ do
 		;;
 	fd[0-3])
 		# Floppy disk drive N has minor N.
-		minor=`expr ${dev} : '..\\(.\\)'`
+		minor=`expr ${dev} : '..\(.\)'`
 
 		makedev ${dev} b 2 ${minor} ${uname} ${gname} 666
 		;;
 	fd[0-3]p[0-3])
 		# Floppy disk partitions.
-		prefix=`expr ${dev} : '\\(.*\\).'`
-		drive=`expr ${dev} : '..\\(.\\)'`
+		prefix=`expr ${dev} : '\(.*\).'`
+		drive=`expr ${dev} : '..\(.\)'`
 
 		for p in 0 1 2 3
 		do
@@ -320,9 +320,9 @@ do
 		;;
 	i2c-[1-3])
 		# i2c driver
-		bus=`expr ${dev} : '....\\(.*\\)'` # bus number
+		bus=`expr ${dev} : '....\(.*\)'` # bus number
 		# least significant digit of major
-		major_low=`expr ${dev} : '....\\(.*\\)'`
+		major_low=`expr ${dev} : '....\(.*\)'`
 		major_low=`expr ${major_low} - 1`
 
 		makedev "i2c-${bus}" c 2${major_low} 0 ${uname} ${gname} ${permissions}
@@ -347,7 +347,7 @@ do
 		;;
 	pc[0-3]|at[0-3]|qd[0-3]|ps[0-3]|pat[0-3]|qh[0-3]|PS[0-3])
 		# Obsolete density locked floppy disk drive n.
-		drive=`expr ${dev} : '.*\\(.\\)'`
+		drive=`expr ${dev} : '.*\(.\)'`
 		minor=${drive}
 
 		for prefix in pc at qd ps pat qh PS
@@ -389,31 +389,31 @@ do
 		;;
 	sht21b[1-3]s40)
 		# Weather Cape: relative humidity & temperature sensor
-		bus=`expr ${dev} : 'sht21b\\(.*\\)s40'`
+		bus=`expr ${dev} : 'sht21b\(.*\)s40'`
 		major=`expr ${bus} + 49`
 
 		makedev sht21b${bus}s40 c ${major} 0 ${uname} ${gname} 444
 		;;
 	tsl2550b[1-3]s39)
 		# Weather Cape: ambient light sensor
-		bus=`expr ${dev} : 'tsl2550b\\(.*\\)s39'`
+		bus=`expr ${dev} : 'tsl2550b\(.*\)s39'`
 		major=`expr ${bus} + 46`
 
 		makedev tsl2550b${bus}s39 c ${major} 0 ${uname} ${gname} 444
 		;;
 	tty0[0-3])
 		# Serial lines.
-		line=`expr ${dev} : '.*\\(.\\)'`
+		line=`expr ${dev} : '.*\(.\)'`
 		minor=`expr ${line} + 16`
 
 		makedev ${dev} c 4 ${minor} ${uname} tty 666
 		;;
 	tty[p-s][0-9a-f]|pty[p-s][0-9a-f])
 		# Pseudo ttys.
-		dev=`expr ${dev} : '...\\(..\\)'`
-		group=`expr ${dev} : '\\(.\\)'`
+		dev=`expr ${dev} : '...\(..\)'`
+		group=`expr ${dev} : '\(.\)'`
 		group=`echo ${group} | tr 'pqrs' '0123'`
-		pty=`expr ${dev} : '.\\(.\\)'`
+		pty=`expr ${dev} : '.\(.\)'`
 		case ${pty} in
 			[a-f])	pty=1`/bin/echo ${pty} | tr 'abcdef' '012345'`
 		esac
@@ -425,7 +425,7 @@ do
 		;;
 	ttyc[1-7])
 		# Virtual consoles.
-		minor=`expr ${dev} : '....\\(.*\\)'`
+		minor=`expr ${dev} : '....\(.*\)'`
 
 		makedev ${dev} c 4 ${minor} ${uname} tty ${permissions}
 		;;
@@ -435,8 +435,8 @@ do
 		;;
 	vnd[0-7]p[0-3])
 		# Vnode disk primary partitions.
-		prefix=`expr ${dev} : '\\(.*\\).'`
-		disk=`expr ${dev} : '...\\(.\\)'`
+		prefix=`expr ${dev} : '\(.*\).'`
+		disk=`expr ${dev} : '...\(.\)'`
 
 		for p in 0 1 2 3
 		do
@@ -448,8 +448,8 @@ do
 		;;
 	vnd[0-7]p[0-3]s[0-3])
 		# Vnode disk subpartition.
-		prefix=`expr ${dev} : '\\(.*\\)...'`
-		disk=`expr ${dev} : '...\\(.\\)'`
+		prefix=`expr ${dev} : '\(.*\)...'`
+		disk=`expr ${dev} : '...\(.\)'`
 
 		for p in 0 1 2 3
 		do
