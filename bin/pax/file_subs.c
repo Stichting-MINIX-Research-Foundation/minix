@@ -107,7 +107,8 @@ pax_mkstemp(char *path)
 	suffix = path + len - 6;
 
 	for (i = 0; i < 1024; i++) {
-		(void)gettimeofday(&tv, NULL);
+		if (gettimeofday(&tv, NULL) == -1)
+			(void)memset(&tv, 0, sizeof(tv));
 		value = ((uint64_t)(uint32_t)getpid() << 32) ^
 		    ((uint64_t)(uint32_t)tv.tv_sec << 12) ^
 		    (uint64_t)(uint32_t)tv.tv_usec ^ sequence++;
