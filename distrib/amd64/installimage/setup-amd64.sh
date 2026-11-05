@@ -41,6 +41,7 @@ ask_yes_no()
 
 [ "`id -u 2>/dev/null`" = 0 ] || fail "Run the installer as root."
 command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
+command -v mknod >/dev/null 2>&1 || fail "The mknod utility is not available."
 [ -d "$SETS_DIR" ] || fail "Release sets not found at $SETS_DIR. Boot the amd64 installation media."
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "Required set minix-base.tgz is missing."
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "Required set minix-kernel.tgz is missing."
@@ -230,6 +231,25 @@ END_RCCONF
 (cd "$MOUNT_POINT/dev" && ./MAKEDEV -s all ipty imgrd) || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
 	fail "MAKEDEV could not create the target device nodes."
+}
+
+# MAKEDEV does not reliably propagate failures from individual mknod calls.
+# Create the boot-critical console explicitly and verify the resulting node.
+rm -f "$MOUNT_POINT/dev/console" || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not replace /dev/console."
+}
+mknod "$MOUNT_POINT/dev/console" c 4 0 || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not create /dev/console."
+}
+chmod 0600 "$MOUNT_POINT/dev/console" || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not set /dev/console permissions."
+}
+[ -c "$MOUNT_POINT/dev/console" ] || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Installed /dev/console is not a character device."
 }
 
 sync

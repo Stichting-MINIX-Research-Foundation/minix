@@ -97,7 +97,7 @@ done
 
 [ "$(id -u)" = 0 ] || fail "run this installer as root"
 [ "$DISK" = c0d0 ] || fail "the current UEFI boot menu requires the target disk to be c0d0"
-for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm awk cut sed uname basename env; do need "$cmd"; done
+for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm mknod awk cut sed uname basename env; do need "$cmd"; done
 [ -d "$SETS_DIR" ] || fail "release set directory not found: $SETS_DIR"
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "minix-base.tgz is missing"
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "minix-kernel.tgz is missing"
@@ -342,6 +342,13 @@ savecore=NO
 EOF
 [ -x "$MNT/dev/MAKEDEV" ] || fail "base set did not install /dev/MAKEDEV"
 (cd "$MNT/dev" && ./MAKEDEV -s all) || fail "MAKEDEV failed"
+
+# MAKEDEV can finish successfully even if an individual mknod fails.
+# /dev/console must exist before the installed kernel can start init.
+rm -f "$MNT/dev/console" || fail "could not replace /dev/console"
+mknod "$MNT/dev/console" c 4 0 || fail "could not create /dev/console"
+chmod 0600 "$MNT/dev/console" || fail "could not set /dev/console permissions"
+[ -c "$MNT/dev/console" ] || fail "installed /dev/console is not a character device"
 if [ -n "$KEYMAP" ] && [ -s "/usr/lib/keymaps/$KEYMAP.map" ]; then
 	cp -p "/usr/lib/keymaps/$KEYMAP.map" "$MNT/etc/keymap"
 fi
