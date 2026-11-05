@@ -10,6 +10,7 @@ export PATH
 SETS_DIR=/usr/amd64/binary/sets
 [ -d "$SETS_DIR" ] || SETS_DIR=/amd64/binary/sets
 EFI_IMAGE=/efiboot-disk.img
+MAKEDEV_SOURCE=/minix-MAKEDEV
 EFI_SIZE_MB=64
 MIN_DISK_MB=2048
 MOUNT_POINT=/mnt
@@ -42,6 +43,7 @@ ask_yes_no()
 [ "`id -u 2>/dev/null`" = 0 ] || fail "Run the installer as root."
 command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
 command -v mknod >/dev/null 2>&1 || fail "The mknod utility is not available."
+[ -x "$MAKEDEV_SOURCE" ] || fail "Updated MAKEDEV script is missing from the installation media: $MAKEDEV_SOURCE"
 [ -d "$SETS_DIR" ] || fail "Release sets not found at $SETS_DIR. Boot the amd64 installation media."
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "Required set minix-base.tgz is missing."
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "Required set minix-kernel.tgz is missing."
@@ -227,6 +229,20 @@ END_RCCONF
 [ -x "$MOUNT_POINT/dev/MAKEDEV" ] || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
 	fail "The base set did not install /dev/MAKEDEV."
+}
+# Do not run the possibly stale MAKEDEV extracted from minix-base.tgz.
+MAKEDEV_TMP="$MOUNT_POINT/dev/.MAKEDEV.$"
+cp "$MAKEDEV_SOURCE" "$MAKEDEV_TMP" || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not copy the updated MAKEDEV script."
+}
+chmod 0755 "$MAKEDEV_TMP" || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not make the updated MAKEDEV script executable."
+}
+mv -f "$MAKEDEV_TMP" "$MOUNT_POINT/dev/MAKEDEV" || {
+	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
+	fail "Could not install the updated MAKEDEV script."
 }
 (cd "$MOUNT_POINT/dev" && ./MAKEDEV -s all ipty imgrd) || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
