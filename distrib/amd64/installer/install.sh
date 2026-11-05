@@ -275,7 +275,7 @@ if [ "$HOME_ENABLED" = yes ] && [ "$PRESERVE_HOME" != yes ]; then
 	mkfs.mfs -B "$BLOCK_BYTES" "$HOME_PART" || fail "could not create /home MFS filesystem"
 fi
 mkfs.mfs -B "$BLOCK_BYTES" "$USR_PART" || fail "could not create /usr MFS filesystem"
-dd if="$EFI_IMAGE" of="$ESP" || fail "could not write UEFI system partition image"
+dd if="$EFI_IMAGE" of="$ESP" bs=64k || fail "could not write UEFI system partition image"
 sync
 
 echo
@@ -297,7 +297,7 @@ install_set() {
 	set_file=$SETS_DIR/$set_name.tgz
 	[ -s "$set_file" ] || return 0
 	echo "Extracting $set_name..."
-	(cd "$MNT" && pax -rz -pe -f "$set_file") || fail "failed to extract $set_name"
+	(cd "$MNT" && pax -rzv -pe -f "$set_file") || fail "failed to extract $set_name"
 }
 # Install every release set on the media, as the 32-bit setup script does.
 # The kernel set is extracted last so its temporary boot files can be moved
