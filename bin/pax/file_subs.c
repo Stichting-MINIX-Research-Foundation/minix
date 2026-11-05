@@ -47,6 +47,9 @@ __RCSID("$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#if defined(__minix) && defined(__x86_64__)
+#include <stdint.h>
+#endif
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -72,6 +75,57 @@ static int
 mk_link(char *,struct stat *,char *, int);
 
 static int warn_broken;
+
+#if defined(__minix) && defined(__x86_64__)
+/*
+ * MINIX libc's mkstemp() uses GETTEMP(), which obtains its initial
+ * filename characters through arc4random_uniform().  That path seeds
+ * arc4random from /dev/urandom and can block during early amd64 startup.
+ *
+ * Use a process/time-derived sequence instead.  O_EXCL makes creation
+ * atomic, so the candidate does not need to be unpredictable for safety.
+ * Bound retries as well: a broken filesystem must not leave extraction
+ * cycling through the entire six-character namespace.
+ */
+static int
+pax_mkstemp(char *path)
+{
+	static uint32_t sequence;
+	static const char alphabet[] =
+	    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	struct timeval tv;
+	char *suffix;
+	uint64_t value;
+	int fd, i, j;
+	size_t len;
+
+	len = strlen(path);
+	if (len < 6 || memcmp(path + len - 6, "XXXXXX", 6) != 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	suffix = path + len - 6;
+
+	for (i = 0; i < 1024; i++) {
+		(void)gettimeofday(&tv, NULL);
+		value = ((uint64_t)(uint32_t)getpid() << 32) ^
+		    ((uint64_t)(uint32_t)tv.tv_sec << 12) ^
+		    (uint64_t)(uint32_t)tv.tv_usec ^ sequence++;
+
+		for (j = 5; j >= 0; j--) {
+			suffix[j] = alphabet[value % (sizeof(alphabet) - 1)];
+			value /= sizeof(alphabet) - 1;
+		}
+
+		fd = open(path, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fd >= 0 || errno != EEXIST)
+			return fd;
+	}
+
+	errno = EEXIST;
+	return -1;
+}
+#endif
 
 /*
  * routines that deal with file operations such as: creating, removing;
@@ -180,7 +234,11 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
 		    arcn->name);
 #endif /* defined(__minix) */
+#if defined(__minix) && defined(__x86_64__)
+		fd = pax_mkstemp(arcn->tmp_name);
+#else
 		fd = mkstemp(arcn->tmp_name);
+#endif
 		if (fd >= 0)
 			break;
 		oerrno = errno;
