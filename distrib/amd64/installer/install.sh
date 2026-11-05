@@ -100,7 +100,7 @@ done
 
 [ "$(id -u)" = 0 ] || fail "run this installer as root"
 [ "$DISK" = c0d0 ] || fail "the current UEFI boot menu requires the target disk to be c0d0"
-for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm mknod awk cut sed uname basename env; do need "$cmd"; done
+for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp mv rm mknod awk cut sed uname basename env; do need "$cmd"; done
 [ -x "$MAKEDEV_SOURCE" ] || fail "updated MAKEDEV script is missing from installation media: $MAKEDEV_SOURCE"
 [ -d "$SETS_DIR" ] || fail "release set directory not found: $SETS_DIR"
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "minix-base.tgz is missing"
@@ -348,7 +348,7 @@ EOF
 # The extracted minix-base set may contain an older MAKEDEV. Replace it with
 # the version carried separately on the installation ISO before creating
 # target device nodes.
-MAKEDEV_TMP="$MNT/dev/.MAKEDEV.$"
+MAKEDEV_TMP="$MNT/dev/.MAKEDEV.tmp"
 cp "$MAKEDEV_SOURCE" "$MAKEDEV_TMP" || fail "could not copy updated MAKEDEV"
 chmod 0755 "$MAKEDEV_TMP" || fail "could not make updated MAKEDEV executable"
 mv -f "$MAKEDEV_TMP" "$MNT/dev/MAKEDEV" || fail "could not install updated MAKEDEV"
