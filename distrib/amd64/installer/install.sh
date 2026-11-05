@@ -254,10 +254,15 @@ if [ "$MODE" = automatic ]; then
 fi
 
 echo
-echo "Step 5: Select a filesystem block size"
-echo "The default filesystem block size is 4 KiB."
-ask_number "Block size in KiB" 1 64 4
-BLOCK_BYTES=$((NUMBER * 1024))
+if [ "$PRESERVE_HOME" = yes ]; then
+	echo "Step 5: Reinstall uses the default 4 KiB filesystem block size."
+	BLOCK_BYTES=4096
+else
+	echo "Step 5: Select a filesystem block size"
+	echo "The default filesystem block size is 4 KiB."
+	ask_number "Block size in KiB" 1 64 4
+	BLOCK_BYTES=$((NUMBER * 1024))
+fi
 
 # Validate every command needed for installation before formatting anything.
 need mkfs.mfs
