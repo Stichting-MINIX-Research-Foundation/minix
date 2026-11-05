@@ -51,6 +51,7 @@ __RCSID("$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $");
 #include <stdint.h>
 #endif
 #include <sys/time.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
