@@ -139,6 +139,11 @@ cp -p etc/usr/rc "${ROOT_DIR}/usr/etc/rc"
 mkdir -p "${ROOT_DIR}/usr/sbin"
 cp -p distrib/amd64/installer/install.sh "${ROOT_DIR}/usr/sbin/minix-install"
 chmod 0755 "${ROOT_DIR}/usr/sbin/minix-install"
+# Carry the fixed MAKEDEV independently from minix-base.tgz. The installer
+# extracts that archive onto the target, which would otherwise restore the
+# older MAKEDEV before populating the target /dev directory.
+cp -p minix/commands/MAKEDEV/MAKEDEV.sh "${ROOT_DIR}/minix-MAKEDEV"
+chmod 0755 "${ROOT_DIR}/minix-MAKEDEV"
 
 # Build a separate ESP image for the installed disk.  The El Torito image
 # above intentionally has no boot.cfg because CD boot reads it from ISO9660.
