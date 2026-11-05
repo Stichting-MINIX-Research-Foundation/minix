@@ -43,6 +43,8 @@ ask_yes_no()
 [ "`id -u 2>/dev/null`" = 0 ] || fail "Run the installer as root."
 command -v devsize >/dev/null 2>&1 || fail "The devsize utility is not available."
 command -v mknod >/dev/null 2>&1 || fail "The mknod utility is not available."
+command -v cp >/dev/null 2>&1 || fail "The cp utility is not available."
+command -v mv >/dev/null 2>&1 || fail "The mv utility is not available."
 [ -x "$MAKEDEV_SOURCE" ] || fail "Updated MAKEDEV script is missing from the installation media: $MAKEDEV_SOURCE"
 [ -d "$SETS_DIR" ] || fail "Release sets not found at $SETS_DIR. Boot the amd64 installation media."
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "Required set minix-base.tgz is missing."
@@ -231,7 +233,7 @@ END_RCCONF
 	fail "The base set did not install /dev/MAKEDEV."
 }
 # Do not run the possibly stale MAKEDEV extracted from minix-base.tgz.
-MAKEDEV_TMP="$MOUNT_POINT/dev/.MAKEDEV.$"
+MAKEDEV_TMP="$MOUNT_POINT/dev/.MAKEDEV.tmp"
 cp "$MAKEDEV_SOURCE" "$MAKEDEV_TMP" || {
 	umount "$MOUNT_POINT" >/dev/null 2>&1 || true
 	fail "Could not copy the updated MAKEDEV script."
