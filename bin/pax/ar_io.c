@@ -295,6 +295,13 @@ ar_open(const char *name)
 		switch (act) {
 		case LIST:
 		case EXTRACT:
+#if defined(__minix) && defined(__x86_64__)
+			if (pax_gzfile != NULL) {
+				(void)gzclose(pax_gzfile);
+				pax_gzfile = NULL;
+				arfd = -1;
+			}
+#endif
 			return -1;
 		case APPND:
 			act = -ARCHIVE;
