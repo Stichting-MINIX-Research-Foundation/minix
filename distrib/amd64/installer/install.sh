@@ -349,6 +349,12 @@ rm -f "$MNT/dev/console" || fail "could not replace /dev/console"
 mknod "$MNT/dev/console" c 4 0 || fail "could not create /dev/console"
 chmod 0600 "$MNT/dev/console" || fail "could not set /dev/console permissions"
 [ -c "$MNT/dev/console" ] || fail "installed /dev/console is not a character device"
+# The GPT installer uses p0 (ESP), p1 (root), p2 (optional /home),
+# and p3 (optional /usr). Make sure MAKEDEV created the static nodes
+# required by the installed fstab before reporting a successful install.
+for device in c0d0p0 c0d0p1 c0d0p2 c0d0p3; do
+	[ -b "$MNT/dev/$device" ] || fail "MAKEDEV did not create /dev/$device"
+done
 if [ -n "$KEYMAP" ] && [ -s "/usr/lib/keymaps/$KEYMAP.map" ]; then
 	cp -p "/usr/lib/keymaps/$KEYMAP.map" "$MNT/etc/keymap"
 fi
