@@ -198,7 +198,24 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 	 */
 	if (write_to_hardlink)
 		return (open(arcn->name, O_TRUNC | O_EXCL | O_RDWR, 0));
-	
+
+#if defined(__minix) && defined(__x86_64__)
+	/*
+	 * The amd64 installer extracts release sets onto a freshly formatted
+	 * MFS filesystem. In that case, there is no old file to protect, so
+	 * allow the installer to bypass the temporary-file/rename sequence.
+	 * Keep the normal atomic extraction path for all other pax callers.
+	 */
+	if (getenv("PAX_DIRECT_EXTRACT") != NULL &&
+	    strcmp(getenv("PAX_DIRECT_EXTRACT"), "1") == 0) {
+		arcn->tmp_name = NULL;
+		fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+		if (fd < 0)
+			syswarn(1, errno, "Cannot create %s", arcn->name);
+		return fd;
+	}
+#endif
+
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.

@@ -297,7 +297,9 @@ install_set() {
 	set_file=$SETS_DIR/$set_name.tgz
 	[ -s "$set_file" ] || return 0
 	echo "Extracting $set_name..."
-	(cd "$MNT" && pax -rzv -pe -f "$set_file") || fail "failed to extract $set_name"
+	# The destination was just formatted, so do not stage files under
+	# temporary names and rename them into place during extraction.
+	(cd "$MNT" && PAX_DIRECT_EXTRACT=1 pax -rzv -pe -f "$set_file") || fail "failed to extract $set_name"
 }
 # Install every release set on the media, as the 32-bit setup script does.
 # The kernel set is extracted last so its temporary boot files can be moved
