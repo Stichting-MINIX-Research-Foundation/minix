@@ -56,7 +56,10 @@ DPADD+=	${LIBRMT}
 .if defined(__MINIX)
 CPPFLAGS+= -DHOSTPROG
 LDADD+= -lz
+.if !defined(HOSTPROG)
+# LIBZ is the target system archive; host tools use the host's -lz linker path.
 DPADD+= ${LIBZ}
+.endif
 
 MLINKS+= pax.1 bsdtar.1
 .endif # defined(__MINIX)
