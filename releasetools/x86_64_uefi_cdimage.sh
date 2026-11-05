@@ -74,6 +74,13 @@ fi
 echo "Preparing amd64 UEFI installation media..."
 build_workdir "${SETS}"
 
+# The MINIX-specific release set manifest must include the bmake executable.
+# Refuse to produce an ISO that would boot without the build tool.
+if [ ! -x "${ROOT_DIR}/usr/bin/bmake" ]; then
+	echo "Missing /usr/bin/bmake in the staged ${SETS} release set; rebuild minix-base.tgz." >&2
+	exit 1
+fi
+
 # The installer root is extracted from release-set archives.  On an
 # incremental build those archives can lag behind the checked-out source,
 # even when the ISO itself is recreated.  Keep the boot and post-mount rc
