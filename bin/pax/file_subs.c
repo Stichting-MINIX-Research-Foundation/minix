@@ -77,6 +77,15 @@ mk_link(char *,struct stat *,char *, int);
 static int warn_broken;
 
 #if defined(__minix) && defined(__x86_64__)
+static int
+pax_direct_extract_enabled(void)
+{
+	const char *value;
+
+	value = getenv("PAX_DIRECT_EXTRACT");
+	return value != NULL && strcmp(value, "1") == 0;
+}
+
 /*
  * MINIX libc's mkstemp() uses GETTEMP(), which obtains its initial
  * filename characters through arc4random_uniform().  That path seeds
@@ -206,8 +215,7 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 	 * allow the installer to bypass the temporary-file/rename sequence.
 	 * Keep the normal atomic extraction path for all other pax callers.
 	 */
-	if (getenv("PAX_DIRECT_EXTRACT") != NULL &&
-	    strcmp(getenv("PAX_DIRECT_EXTRACT"), "1") == 0) {
+	if (pax_direct_extract_enabled()) {
 		arcn->tmp_name = NULL;
 		fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 		if (fd < 0)
@@ -290,6 +298,65 @@ file_close(ARCHD *arcn, int fd)
 		return;
 
 	tmp_name = (arcn->tmp_name != NULL) ? arcn->tmp_name : arcn->name;
+
+#if defined(__minix) && defined(__x86_64__)
+	/*
+	 * During installation the file is already at its final name.  Apply
+	 * metadata through the open descriptor instead of resolving that path
+	 * again.  This avoids a second VFS/MFS pathname walk after the data has
+	 * been written, while retaining the ownership, mode, and timestamp
+	 * semantics of pax -p e.
+	 */
+	if (arcn->tmp_name == NULL && pax_direct_extract_enabled()) {
+		mode_t mode;
+		struct stat sb;
+		struct timespec times[2];
+		int chown_error = 0;
+
+		if (pids && geteuid() == 0 &&
+		    fchown(fd, arcn->sb.st_uid, arcn->sb.st_gid) < 0) {
+			syswarn(1, errno, "Cannot set file uid/gid of %s", tmp_name);
+			chown_error = 1;
+		}
+
+		mode = arcn->sb.st_mode;
+		if (!pmode || chown_error)
+			mode &= ~SETBITS(0);
+		if (pmode)
+			mode &= A_BITS;
+		else
+			mode = apply_umask(mode & FILEBITS(0));
+		if (fchmod(fd, mode) < 0)
+			syswarn(1, errno, "Cannot set permissions on %s", tmp_name);
+
+		if (patime || pmtime) {
+			times[0].tv_sec = arcn->sb.st_atime;
+			times[0].tv_nsec = 0;
+			times[1].tv_sec = arcn->sb.st_mtime;
+			times[1].tv_nsec = 0;
+			if (!patime || !pmtime) {
+				if (fstat(fd, &sb) == 0) {
+					if (!patime)
+						times[0].tv_sec = sb.st_atime;
+					if (!pmtime)
+						times[1].tv_sec = sb.st_mtime;
+				} else {
+					syswarn(0, errno,
+					    "Cannot obtain file stats %s", tmp_name);
+				}
+			}
+			if (futimens(fd, times) < 0)
+				syswarn(1, errno,
+				    "Access/modification time set failed on: %s",
+				    tmp_name);
+		}
+
+		if (close(fd) < 0)
+			syswarn(0, errno,
+			    "Cannot close file descriptor on %s", tmp_name);
+		return;
+	}
+#endif
 
 	if (close(fd) < 0)
 		syswarn(0, errno, "Cannot close file descriptor on %s",
