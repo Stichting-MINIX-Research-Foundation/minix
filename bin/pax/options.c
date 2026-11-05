@@ -371,7 +371,7 @@ pax_options(int argc, char **argv)
 			/*
 			 * pass format specific options
 			 */
-			flg |= OF;
+			flg |= OFLAG;
 			if (opt_add(optarg) < 0)
 				pax_usage();
 			break;
