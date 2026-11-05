@@ -339,7 +339,7 @@ no_swap=YES
 savecore=NO
 EOF
 [ -x "$MNT/dev/MAKEDEV" ] || fail "base set did not install /dev/MAKEDEV"
-(cd "$MNT/dev" && ./MAKEDEV -s all ipty imgrd) || fail "MAKEDEV failed"
+(cd "$MNT/dev" && ./MAKEDEV -s all) || fail "MAKEDEV failed"
 if [ -n "$KEYMAP" ] && [ -s "/usr/lib/keymaps/$KEYMAP.map" ]; then
 	cp -p "/usr/lib/keymaps/$KEYMAP.map" "$MNT/etc/keymap"
 fi
