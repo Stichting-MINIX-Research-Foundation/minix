@@ -81,7 +81,7 @@ mkdir -p "${ROOT_DIR}/dev"
 # The release set already contains /dev/MAKEDEV, installed read-only.  Copying
 # over that file directly fails for an unprivileged build user.  Stage the new
 # script beside it, set its final mode, and rename it into place instead.
-MAKEDEV_TMP="${ROOT_DIR}/dev/.MAKEDEV.$"
+MAKEDEV_TMP="${ROOT_DIR}/dev/.MAKEDEV.tmp"
 cp minix/commands/MAKEDEV/MAKEDEV.sh "${MAKEDEV_TMP}"
 chmod 0755 "${MAKEDEV_TMP}"
 mv -f "${MAKEDEV_TMP}" "${ROOT_DIR}/dev/MAKEDEV"
