@@ -78,8 +78,13 @@ build_workdir "${SETS}"
 # minix-base release archive can be older than the ISO when image-only mode
 # is used, which would otherwise retain broken device-name parsing.
 mkdir -p "${ROOT_DIR}/dev"
-cp -p minix/commands/MAKEDEV/MAKEDEV.sh "${ROOT_DIR}/dev/MAKEDEV"
-chmod 0755 "${ROOT_DIR}/dev/MAKEDEV"
+# The release set already contains /dev/MAKEDEV, installed read-only.  Copying
+# over that file directly fails for an unprivileged build user.  Stage the new
+# script beside it, set its final mode, and rename it into place instead.
+MAKEDEV_TMP="${ROOT_DIR}/dev/.MAKEDEV.$"
+cp minix/commands/MAKEDEV/MAKEDEV.sh "${MAKEDEV_TMP}"
+chmod 0755 "${MAKEDEV_TMP}"
+mv -f "${MAKEDEV_TMP}" "${ROOT_DIR}/dev/MAKEDEV"
 
 # The MINIX-specific release set manifest must include the bmake executable.
 # Refuse to produce an ISO that would boot without the build tool.
