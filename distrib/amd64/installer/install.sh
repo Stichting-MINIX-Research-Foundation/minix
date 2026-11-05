@@ -5,8 +5,10 @@ set -eu
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
-SETS_DIR=/usr/amd64/binary/sets
-EFI_IMAGE=/install-efiboot.img
+SETS_DIR=$(env | sed -n 's/^SETS_DIR=//p')
+[ -n "$SETS_DIR" ] || SETS_DIR=/usr/amd64/binary/sets
+EFI_IMAGE=$(env | sed -n 's/^EFI_IMAGE=//p')
+[ -n "$EFI_IMAGE" ] || EFI_IMAGE=/install-efiboot.img
 DISK=c0d0
 ESP=/dev/$DISK"p0"
 ROOT=/dev/$DISK"p1"
@@ -32,7 +34,7 @@ Usage: minix-install [--disk c0d0] [--help]
 Install MINIX 3.4.0 amd64. The current UEFI boot menu requires the target
 disk to be c0d0 and the installed root to be c0d0p1. Automatic mode replaces
 the whole disk. Expert mode reuses an existing GPT with ESP p0 and root p1.
-Release sets: /usr/amd64/binary/sets.
+Release sets: /usr/amd64/binary/sets (override with SETS_DIR).
 EOF
 }
 
@@ -95,7 +97,7 @@ done
 
 [ "$(id -u)" = 0 ] || fail "run this installer as root"
 [ "$DISK" = c0d0 ] || fail "the current UEFI boot menu requires the target disk to be c0d0"
-for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm awk cut sed uname basename; do need "$cmd"; done
+for cmd in id gpt devsize mkfs.mfs mount umount pax dd sync wc grep sleep mkdir rmdir chmod chroot cp rm awk cut sed uname basename env; do need "$cmd"; done
 [ -d "$SETS_DIR" ] || fail "release set directory not found: $SETS_DIR"
 [ -s "$SETS_DIR/minix-base.tgz" ] || fail "minix-base.tgz is missing"
 [ -s "$SETS_DIR/minix-kernel.tgz" ] || fail "minix-kernel.tgz is missing"
@@ -106,17 +108,17 @@ DISKDEV=/dev/$DISK
 if mount | grep -F "$DISKDEV" >/dev/null 2>&1; then fail "$DISKDEV has a mounted filesystem"; fi
 SECTORS=$(devsize "$DISKDEV") || fail "cannot determine disk size"
 DISK_MB=$((SECTORS / 2048))
-# The 32-bit setup script totals the release-set .size manifests to estimate
-# the required /usr capacity. They are KiB counts; leave extra room for files
-# created during installation and later updates.
-USR_KB=0
+# The .size manifests contain byte counts. Estimate the unpacked /usr
+# requirement and leave 128 MiB for files created during installation and
+# later updates, following the 32-bit setup script's size calculation.
+USR_BYTES=0
 for size_file in "$SETS_DIR"/*.size; do
 	[ -f "$size_file" ] || continue
 	size_value=$(awk '{ sum += $1 } END { printf "%.0f", sum }' "$size_file")
-	case "$size_value" in ''|*[!0-9]*) ;; *) USR_KB=$((USR_KB + size_value)) ;; esac
+	case "$size_value" in ''|*[!0-9]*) ;; *) USR_BYTES=$((USR_BYTES + size_value)) ;; esac
 done
-if [ "$USR_KB" -gt 0 ]; then
-	USR_MB=$(((USR_KB + 1023) / 1024 + 128))
+if [ "$USR_BYTES" -gt 0 ]; then
+	USR_MB=$(((USR_BYTES + 1048575) / 1048576 + 128))
 else
 	USR_MB=1024
 fi
@@ -292,13 +294,15 @@ install_set() {
 	echo "Extracting $set_name..."
 	(cd "$MNT" && pax -rz -pe -f "$set_file") || fail "failed to extract $set_name"
 }
-install_set minix-base
-if [ -s "$SETS_DIR/minix-comp.tgz" ]; then
-	install_set minix-comp
-elif [ -s "$SETS_DIR/minix-comp-gcc.tgz" ]; then
-	install_set minix-comp-gcc
-fi
-for set_name in minix-games minix-man minix-tests tests; do install_set "$set_name"; done
+# Install every release set on the media, as the 32-bit setup script does.
+# The kernel set is extracted last so its temporary boot files can be moved
+# into the path expected by the prebuilt EFI boot menu.
+for set_file in "$SETS_DIR"/*.tgz; do
+	[ -s "$set_file" ] || continue
+	set_name=$(basename "$set_file" .tgz)
+	[ "$set_name" = minix-kernel ] && continue
+	install_set "$set_name"
+done
 echo "Installing amd64 kernel and boot modules..."
 install_set minix-kernel
 [ -d "$MNT/boot/minix/.temp" ] || fail "kernel set did not contain boot/minix/.temp"
