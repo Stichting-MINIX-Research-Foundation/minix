@@ -55,6 +55,8 @@ DPADD+=	${LIBRMT}
 
 .if defined(__MINIX)
 CPPFLAGS+= -DHOSTPROG
+LDADD+= -lz
+DPADD+= ${LIBZ}
 
 MLINKS+= pax.1 bsdtar.1
 .endif # defined(__MINIX)
