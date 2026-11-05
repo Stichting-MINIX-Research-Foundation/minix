@@ -134,7 +134,7 @@ prepare_pkgsrc_set()
 
 	mv "${source_dir}" "${staging_dir}/usr/pkgsrc"
 	echo "Creating ${SETS_DIR}/pkgsrc.tgz..."
-	tar -czf "${SETS_DIR}/pkgsrc.tgz" --numeric-owner --owner=0 --group=0 -C "${staging_dir}" usr/pkgsrc
+	tar -czf "${SETS_DIR}/pkgsrc.tgz" --format=posix --numeric-owner --owner=0 --group=0 -C "${staging_dir}" usr/pkgsrc
 
 	# Keep the release-set checksum manifests accurate for the extra set.
 	python3 - "${SETS_DIR}" <<'PY_CHECKSUMS'
