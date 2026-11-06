@@ -4,16 +4,29 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
+import re
 import sys
 import tarfile
 import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from pkgsrc_set import make_pkgsrc_set
+from pkgsrc_set import DEFAULT_COMMIT, make_pkgsrc_set
 
 
 class PkgsrcSetTest(unittest.TestCase):
+    def test_default_snapshot_matches_uefi_iso_pin(self) -> None:
+        iso_script = Path(__file__).resolve().parents[1] / "x86_64_uefi_cdimage.sh"
+        match = re.search(
+            r"^: \$\{PKGSRC_COMMIT:=([0-9a-f]{40})\}$",
+            iso_script.read_text(encoding="utf-8"),
+            re.MULTILINE,
+        )
+
+        self.assertIsNotNone(match, "UEFI ISO script must define a pkgsrc commit")
+        assert match is not None
+        self.assertEqual(DEFAULT_COMMIT, match.group(1))
+
     def test_bootstrap_entry_point_is_executable(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             directory = Path(temporary_directory)
