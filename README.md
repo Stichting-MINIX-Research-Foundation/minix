@@ -1,6 +1,6 @@
 # MINIX 3.4.0 — amd64 UEFI branch
 
-This repository is a fork of https://github.com/nnonaka/minix/ with UEFI
+This repository is a MINIX 3.4.0 with UEFI
 boot support and an x86_64 (amd64) port.
 
 ## Build an amd64 UEFI installation ISO
@@ -8,7 +8,6 @@ boot support and an x86_64 (amd64) port.
 The cross-build environment is Ubuntu 26.04.
 
 ```sh
-sudo apt install python3 xorriso
 ./build.sh -U -u -m amd64 -O ../build release
 ./build.sh -U -u -m amd64 -O ../build iso-image
 ```
@@ -90,10 +89,17 @@ reinstall path, an existing MFS `/home` is preserved.
 The amd64 installer is experimental. Test the ISO and both partitioning
 modes in a VM before installing on physical hardware.
 
-## Existing amd64 live image
+## Installing pkgsrc
 
 ```sh
 ./build.sh -U -u -m amd64 -O ../build live-image
+```
+
+## Existing amd64 live image
+
+```sh
+cd /usr/pkgsrc/bootstrap
+env CC=clang LDFLAGS="-L/usr/lib" ./bootstrap --machine-arch x86_64 --prefix /usr/pkg --pkgdbdir /usr/pkg/pkgdb --sysconfdir /usr/pkg/etc --varbase /var
 ```
 
 The live disk image is produced under
@@ -104,6 +110,7 @@ The live disk image is produced under
 - i386 and amd64 source/build support.
 - UEFI boot via `bootia32.efi` and `bootx64.efi`.
 - Multiboot2 kernel boot and login prompt on the tested live image.
+- Installation successful and boot from installed virtual disk.
 - POSIX test status recorded by the port author: 94/97 passed.
 
 The amd64 port and installation media are experimental; test the ISO in
