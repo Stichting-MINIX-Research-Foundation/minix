@@ -128,6 +128,13 @@ def make_pkgsrc_set(source_path: Path, output_path: Path) -> None:
                     # the newly rooted usr/pkgsrc archive.
                     new_member.pax_headers = {}
 
+                    if relative_parts == ("bootstrap", "bootstrap"):
+                        # pkgsrc documents this as its directly executable
+                        # bootstrap entry point. The pinned source snapshot
+                        # records it without execute bits, so restore the
+                        # required mode in the MINIX release set.
+                        new_member.mode = 0o755
+
                     if member.islnk():
                         link_parts = PurePosixPath(member.linkname).parts
                         if link_parts and link_parts[0] == source_root:
