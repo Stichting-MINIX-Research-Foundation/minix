@@ -92,16 +92,15 @@ modes in a VM before installing on physical hardware.
 ## Installing pkgsrc
 
 ```sh
-./build.sh -U -u -m amd64 -O ../build live-image
+cd /usr/pkgsrc/bootstrap
+env CC=clang LDFLAGS="-L/usr/lib" ./bootstrap --machine-arch x86_64 --prefix /usr/pkg --pkgdbdir /usr/pkg/pkgdb --sysconfdir /usr/pkg/etc --varbase /var
 ```
 
 ## Existing amd64 live image
 
 ```sh
-cd /usr/pkgsrc/bootstrap
-env CC=clang LDFLAGS="-L/usr/lib" ./bootstrap --machine-arch x86_64 --prefix /usr/pkg --pkgdbdir /usr/pkg/pkgdb --sysconfdir /usr/pkg/etc --varbase /var
+./build.sh -U -u -m amd64 -O ../build live-image
 ```
-
 The live disk image is produced under
 `../build/distrib/amd64/liveimage/emuimage/`.
 
