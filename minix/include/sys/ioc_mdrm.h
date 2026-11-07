@@ -98,7 +98,7 @@ struct mdrm_event_vblank {	/* = struct drm_event_vblank */
 	uint32_t	type;		/* MDRM_EVENT_FLIP_COMPLETE */
 	uint32_t	length;		/* sizeof(struct mdrm_event_vblank) */
 	uint64_t	user_data;
-	uint32_t	tv_sec;
+	uint32_t	tv_sec;		/* completion time, CLOCK_MONOTONIC */
 	uint32_t	tv_usec;
 	uint32_t	sequence;
 	uint32_t	crtc_id;

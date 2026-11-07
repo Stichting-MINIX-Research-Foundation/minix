@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 int max_error = 5;
@@ -251,6 +252,16 @@ test_drm(void)
 	if (ev.type != MDRM_EVENT_FLIP_COMPLETE || ev.length != sizeof(ev))
 		e(9);
 	if (ev.user_data != 0x123456789abcdefULL || ev.crtc_id != 42) e(10);
+	{
+		/* Timestamps are CLOCK_MONOTONIC (compositors compare). */
+		struct timespec now;
+		int64_t t, n;
+
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		t = (int64_t)ev.tv_sec * 1000000 + ev.tv_usec;
+		n = (int64_t)now.tv_sec * 1000000 + now.tv_nsec / 1000;
+		if (t > n || n - t > 5000000) e(18);
+	}
 	if (readable(fd, 0) != 0) e(11);
 	if (ioctl(fd, MDRM_GETINFO, &info) != 0 || info.cur_fb != hb) e(12);
 

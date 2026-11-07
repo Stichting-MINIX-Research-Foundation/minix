@@ -104,6 +104,9 @@ char	*stresep(char **, const char *, int);
 char	*strndup(const char *, size_t);
 char	*strnstr(const char *, const char *, size_t);
 void	*memrchr(const void *, int, size_t);
+#if defined(__minix)
+char	*strchrnul(const char *, int);
+#endif
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
 __END_DECLS

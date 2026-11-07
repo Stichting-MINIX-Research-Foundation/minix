@@ -29,6 +29,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     curl ca-certificates xz-utils bzip2 \
     git rsync cpio \
     ninja-build pkg-config cmake python3-venv libexpat1-dev \
+    gperf hwdata \
  && rm -rf /var/lib/apt/lists/*
 
 # Ports (minix-ports: libdrm, wayland, wlroots, mesa, ...) need a recent

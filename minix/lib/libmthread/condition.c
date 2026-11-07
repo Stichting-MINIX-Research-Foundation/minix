@@ -124,8 +124,6 @@ mthread_condattr_t *cattr;
 
   if (cond == NULL) 
 	return(EINVAL);
-  else if (cattr != NULL) 
-  	return(ENOSYS);
 
 #ifdef MTHREAD_STRICT
   else if (mthread_cond_valid(cond)) 
@@ -243,6 +241,7 @@ mthread_mutex_t *mutex;
   mthread_tcb_t *tcb;
   struct __mthread_cond *c;
   struct __mthread_mutex *m;
+  unsigned int count;
 
   if (cond == NULL || mutex == NULL)
 	return(EINVAL);
@@ -254,8 +253,12 @@ mthread_mutex_t *mutex;
 	return(EINVAL);
 
   c->mc_mutex = m;	/* Remember we're using this mutex in a cond_wait */
-  if (mthread_mutex_unlock(mutex) != 0) /* Fails when we're not the owner */
+  count = m->mm_count;	/* release a recursive mutex completely */
+  m->mm_count = 0;
+  if (mthread_mutex_unlock(mutex) != 0) { /* Fails when we're not the owner */
+	m->mm_count = count;
   	return(-1);
+  }
 
   tcb = mthread_find_tcb(current_thread);
   tcb->m_cond = c; /* Register condition variable. */
@@ -266,6 +269,7 @@ mthread_mutex_t *mutex;
   tcb->m_cond = NULL;				/* ... and condition var */
   if (mthread_mutex_lock(mutex) != 0)
   	return(-1);
+  m->mm_count = count;
 
   return(0);
 }

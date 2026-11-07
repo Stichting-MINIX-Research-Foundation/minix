@@ -14,7 +14,17 @@
  * initializer value, and the actual initialization, which could lead to double
  * initialization of the same mutex AND get two threads at the same time in the
  * critical section as they both hold a (different) mutex.
+ *
+ * Besides the static initializers, a zero-filled (NULL) mutex or condition
+ * variable is also initialized on first use: ported software allocates
+ * them with calloc()/memset() and relies on that, as with glibc.
  */
+
+#include <stdint.h>
+
+/* Static initializer, or zero-filled memory: initialize on first use. */
+#define MUTEX_LAZY(m)	(*(m) == PTHREAD_MUTEX_INITIALIZER || *(m) == NULL)
+#define COND_LAZY(c)	(*(c) == PTHREAD_COND_INITIALIZER || *(c) == NULL)
 
 
 /*===========================================================================*
@@ -30,7 +40,7 @@ int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mattr)
  *===========================================================================*/
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
-	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+	if (MUTEX_LAZY(mutex)) {
 		*mutex = NULL;
 		return 0;
 	}
@@ -43,7 +53,7 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
  *===========================================================================*/
 int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+	if (MUTEX_LAZY(mutex)) {
 		mthread_mutex_init(mutex, NULL);	
 	}
 
@@ -55,11 +65,11 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
  *===========================================================================*/
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+	if (MUTEX_LAZY(mutex)) {
 		mthread_mutex_init(mutex, NULL);	
 	}
 
-	return pthread_mutex_trylock(mutex);
+	return mthread_mutex_trylock(mutex);
 }
 
 /*===========================================================================*
@@ -67,7 +77,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
  *===========================================================================*/
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+	if (MUTEX_LAZY(mutex)) {
 		mthread_mutex_init(mutex, NULL);	
 	}
 
@@ -87,7 +97,7 @@ int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *cattr)
  *===========================================================================*/
 int pthread_cond_broadcast(pthread_cond_t *cond)
 {
-	if (PTHREAD_COND_INITIALIZER == *cond) {
+	if (COND_LAZY(cond)) {
 		mthread_cond_init(cond, NULL);
 	}
 
@@ -99,7 +109,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
  *===========================================================================*/
 int pthread_cond_destroy(pthread_cond_t *cond)
 {
-	if (PTHREAD_COND_INITIALIZER == *cond) {
+	if (COND_LAZY(cond)) {
 		*cond = NULL;
 		return 0;
 	}
@@ -112,7 +122,7 @@ int pthread_cond_destroy(pthread_cond_t *cond)
  *===========================================================================*/
 int pthread_cond_signal(pthread_cond_t *cond)
 {
-	if (PTHREAD_COND_INITIALIZER == *cond) {
+	if (COND_LAZY(cond)) {
 		mthread_cond_init(cond, NULL);
 	}
 
@@ -124,8 +134,12 @@ int pthread_cond_signal(pthread_cond_t *cond)
  *===========================================================================*/
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
-	if (PTHREAD_COND_INITIALIZER == *cond) {
+	if (COND_LAZY(cond)) {
 		mthread_cond_init(cond, NULL);
+	}
+
+	if (MUTEX_LAZY(mutex)) {
+		mthread_mutex_init(mutex, NULL);
 	}
 
 	return mthread_cond_wait(cond, mutex);
@@ -143,3 +157,35 @@ int pthread_rwlock_init(pthread_rwlock_t *rwlock, pthread_rwlockattr_t *UNUSED(a
 #error __weak_alias is required to compile the pthread compat library
 #endif
 
+/*===========================================================================*
+ *			pthread_mutexattr_* (type only)			     *
+ *===========================================================================*/
+int pthread_mutexattr_init(pthread_mutexattr_t *mattr)
+{
+	if (mattr == NULL)
+		return EINVAL;
+	*mattr = (pthread_mutexattr_t) (intptr_t) PTHREAD_MUTEX_DEFAULT;
+	return 0;
+}
+
+int pthread_mutexattr_destroy(pthread_mutexattr_t *mattr)
+{
+	return mattr == NULL ? EINVAL : 0;
+}
+
+int pthread_mutexattr_settype(pthread_mutexattr_t *mattr, int type)
+{
+	if (mattr == NULL || (type != PTHREAD_MUTEX_NORMAL &&
+	    type != PTHREAD_MUTEX_RECURSIVE && type != PTHREAD_MUTEX_ERRORCHECK))
+		return EINVAL;
+	*mattr = (pthread_mutexattr_t) (intptr_t) type;
+	return 0;
+}
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *mattr, int *type)
+{
+	if (mattr == NULL || type == NULL)
+		return EINVAL;
+	*type = (int) (intptr_t) *mattr;
+	return 0;
+}

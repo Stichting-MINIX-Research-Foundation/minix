@@ -13,8 +13,24 @@
 	poll(2) in libc now treats an epoll(7) descriptor in its set as
 	readable when one of the epoll instance's members is, so epoll
 	descriptors can be polled and added to other epoll instances
-	(select(2) on them still never fires).  Dynamically linked programs
-	pick this up; statically linked ones must be relinked.
+	(select(2) on them still never fires).  Epoll instances are now
+	identified by their descriptor's file, so dup(2)ed epoll descriptors
+	work too.  Dynamically linked programs pick this up; statically
+	linked ones must be relinked.
+
+	Also new in libc: posix_fadvise(2) (accepts and ignores the advice)
+	and strchrnul(3); <assert.h> defines C11's static_assert.
+
+	<pthread.h>/libmthread: pthread_mutexattr_settype() now works, with
+	PTHREAD_MUTEX_NORMAL, _RECURSIVE (now 1, was 0) and _ERRORCHECK;
+	mutexes and condition variables accept attribute arguments, and
+	zero-filled ones are initialized on first use.  Programs built
+	against the old <minix/mthread.h> macros must be recompiled to get
+	recursive mutexes.
+
+	The bochs display driver now stamps page-flip events with
+	CLOCK_MONOTONIC as clock_gettime(2) defines it (boot time plus
+	uptime); install it with the rest of the boot image.
 
 20261031:
 	VM now supports writable MAP_SHARED mappings of files (refused with

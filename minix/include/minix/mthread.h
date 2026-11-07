@@ -15,7 +15,14 @@ typedef int mthread_thread_t;
 typedef int mthread_once_t;
 typedef int mthread_key_t;
 typedef void * mthread_condattr_t;
-typedef void * mthread_mutexattr_t;
+typedef void * mthread_mutexattr_t;	/* holds the mutex type (below) */
+
+/* Mutex types (values as in glibc).  NORMAL and ERRORCHECK both report
+ * EDEADLK on relocking by the owner (there is no real deadlock with
+ * cooperative threads); RECURSIVE counts. */
+#define MTHREAD_MUTEX_NORMAL		0
+#define MTHREAD_MUTEX_RECURSIVE		1
+#define MTHREAD_MUTEX_ERRORCHECK	2
 
 struct __mthread_tcb;
 typedef struct {
@@ -26,6 +33,8 @@ typedef struct {
 struct __mthread_mutex {
   mthread_queue_t mm_queue;	/* Queue of threads blocked on this mutex */
   mthread_thread_t mm_owner;	/* Thread ID that currently owns mutex */
+  int mm_type;			/* MTHREAD_MUTEX_NORMAL etc. */
+  unsigned int mm_count;	/* extra locks held (recursive mutexes) */
 #ifdef MTHREAD_STRICT
   struct __mthread_mutex *mm_prev;
   struct __mthread_mutex *mm_next;
@@ -227,12 +236,15 @@ int pthread_yield(void);
 int sched_yield(void);
 void pthread_yield_all(void);
 
-/* LSC: FIXME: Maybe we should really do something with those... */
-#define pthread_mutexattr_init(u) (0)
-#define pthread_mutexattr_destroy(u) (0)
-
-#define PTHREAD_MUTEX_RECURSIVE 0
-#define pthread_mutexattr_settype(x, y) (EINVAL)
+/* Mutex attributes: only the type is supported. */
+#define PTHREAD_MUTEX_NORMAL		MTHREAD_MUTEX_NORMAL
+#define PTHREAD_MUTEX_RECURSIVE		MTHREAD_MUTEX_RECURSIVE
+#define PTHREAD_MUTEX_ERRORCHECK	MTHREAD_MUTEX_ERRORCHECK
+#define PTHREAD_MUTEX_DEFAULT		MTHREAD_MUTEX_NORMAL
+int pthread_mutexattr_init(pthread_mutexattr_t *mattr);
+int pthread_mutexattr_destroy(pthread_mutexattr_t *mattr);
+int pthread_mutexattr_settype(pthread_mutexattr_t *mattr, int type);
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *mattr, int *type);
 __END_DECLS
 
 #endif /* defined(_MTHREADIFY_PTHREADS) */

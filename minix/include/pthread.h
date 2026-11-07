@@ -27,11 +27,10 @@
 #define PTHREAD_STACK_MIN	MTHREAD_STACK_MIN
 #define PTHREAD_KEYS_MAX	MTHREAD_KEYS_MAX
 
-/* Mutex types: libmthread mutexes are all of one (non-recursive) kind;
- * pthread_mutexattr_settype() fails with EINVAL (see <minix/mthread.h>). */
-#define PTHREAD_MUTEX_NORMAL	0
-#define PTHREAD_MUTEX_DEFAULT	0
-#define PTHREAD_MUTEX_ERRORCHECK 2
+/* Mutex types (NORMAL, RECURSIVE, ERRORCHECK, DEFAULT) and the
+ * pthread_mutexattr_*() functions come from <minix/mthread.h>.  Statically
+ * initialized (PTHREAD_MUTEX_INITIALIZER) and zero-filled mutexes and
+ * condition variables are initialized on first use. */
 
 __BEGIN_DECLS
 static __inline int

@@ -425,6 +425,7 @@ static void queue_event(int minor, u64_t user_data, u32_t crtc_id)
 	struct client *c = &clients[minor];
 	struct mdrm_event_vblank *ev;
 	clock_t ticks;
+	time_t boottime;
 
 	if (!c->c_open)
 		return;
@@ -435,13 +436,15 @@ static void queue_event(int minor, u64_t user_data, u32_t crtc_id)
 		c->c_nev--;
 	}
 
-	ticks = getticks();
+	/* CLOCK_MONOTONIC, computed as PM's clock_gettime(2) does: boot time
+	 * plus uptime (compositors compare these with clock_gettime()). */
+	(void)getuptime(&ticks, NULL, &boottime);
 	ev = &c->c_ev[c->c_nev++];
 	memset(ev, 0, sizeof(*ev));
 	ev->type = MDRM_EVENT_FLIP_COMPLETE;
 	ev->length = sizeof(*ev);
 	ev->user_data = user_data;
-	ev->tv_sec = ticks / hz;
+	ev->tv_sec = (u32_t)(boottime + ticks / hz);
 	ev->tv_usec = (u32_t)((u64_t)(ticks % hz) * 1000000 / hz);
 	ev->sequence = vblank_seq;
 	ev->crtc_id = crtc_id;

@@ -14,6 +14,9 @@ SRCS+=	bm.c stpcpy.c stpncpy.c \
 	strmode.c strsignal.c strtok.c \
 	strtok_r.c strxfrm.c __strsignal.c strerror_r.c strndup.c \
 	stresep.c memrchr.c
+.if defined(__MINIX)
+SRCS+=	strchrnul.c
+.endif
 
 SRCS+=	bcmp.c bcopy.c bzero.c ffs.c memchr.c memcmp.c memset.c
 SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c

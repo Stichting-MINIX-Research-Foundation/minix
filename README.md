@@ -83,11 +83,13 @@ roadmap, ❌ missing or open problem.
 | DRM/KMS display | DRM drivers | 🟡 "DRM-lite" `/dev/drm0` for QEMU's Bochs/stdvga card: dumb buffers, mode setting, page flips, vblank events; libdrm emulates the KMS API |
 | Atomic KMS, PRIME/dma-buf | ✅ | ❌ not yet (PRIME is needed for wlroots; planned for Phase 8) |
 | Wayland libraries | ✅ | ✅ libwayland, wayland-protocols, pixman, xkbcommon, libffi |
+| Wayland compositor | ✅ | ✅ Weston 14 on `/dev/drm0` with the pixman renderer: desktop shell, panel, `weston-terminal` with working keyboard and mouse |
+| Fonts and 2D drawing | ✅ | ✅ freetype, fontconfig, cairo, libpng, DejaVu fonts |
 | Input (evdev/libinput) | ✅ | ✅ evdev devices `/dev/input/event0` (keyboards) and `event1` (mice) in the input server; libevdev and libinput ported. No mouse wheel yet |
 | Seat/session (logind, libseat) | ✅ | 🟡 libseat with its no-op backend: opens devices directly, no VT switching |
 | Device discovery (udev) | ✅ | 🟡 `libudev-minix`: the libudev API over a fixed view of the input and display devices; no hotplug |
 | OpenGL / EGL / GBM | Mesa + GPU | 🚧 Phase 7: Mesa softpipe (software), mini-GBM over dumb buffers |
-| Threads | 1:1 kernel threads | ❌ libmthread only: cooperative user-level threads behind `<pthread.h>`, so one blocking system call stalls the whole process. This is the main open problem |
+| Threads | 1:1 kernel threads | ❌ libmthread only: cooperative user-level threads behind `<pthread.h>` (now with recursive mutexes and zero-initialized locks), so one blocking system call stalls the whole process. This is the main open problem |
 | GPU acceleration, real hardware display | ✅ | ❌ out of scope for now (QEMU first) |
 | Audio, USB HID, power management | ✅ | ❌ not started |
 
@@ -107,8 +109,8 @@ before the phase counts as done. Details, notes and known problems are in
 | 3 | Graphics device: DRM-lite driver, device `mmap`, libdrm port | ✅ done |
 | 4 | Wayland library stack, epoll, pthread compatibility | ✅ done |
 | 5 | Input: evdev devices, libinput, libseat, libudev replacement | ✅ done |
-| 6 | **Weston** with software rendering: first usable desktop | 🚧 next |
-| 7 | OpenGL: Mesa softpipe, EGL, GBM | planned |
+| 6 | **Weston** with software rendering: first usable desktop | ✅ done |
+| 7 | OpenGL: Mesa softpipe, EGL, GBM | 🚧 next |
 | 8 | **Hyprland**: PRIME, wlroots, Hyprland port | planned |
 | 9 | Session integration: foot terminal, fonts, config, image packaging | planned |
 
@@ -190,7 +192,9 @@ These are the main in-tree changes. The full list is in
   - `poll()` on an epoll fd reports it ready when a member is, so epoll
     fds can be polled and nested.
 - **Threads:** `<pthread.h>` and `libpthread` on top of libmthread; gcc
-  accepts `-pthread`.
+  accepts `-pthread`; mutex types (recursive, error-checking) and
+  zero-initialized mutexes and condition variables.
+- **More libc:** `posix_fadvise`, `strchrnul`, C11 `static_assert`.
 - **Drivers:** `bochs`, the DRM-lite display driver for QEMU/Bochs stdvga
   (`/dev/drm0`, major 18).
 - **Input:** the input server offers Linux evdev devices
@@ -198,7 +202,8 @@ These are the main in-tree changes. The full list is in
   driver reports Y movement in the HID direction.
 - **Tests:** `test95` (shared mmap), `test96` (eventfd/timerfd/signalfd),
   `test97` (device mmap and DRM-lite), `test98` (epoll), `test99`
-  (evdev devices, optionally with real keyboard and mouse input).
+  (evdev devices, optionally with real keyboard and mouse input),
+  `test100` (pthread mutex types and initialization).
 
 ## Repository layout
 

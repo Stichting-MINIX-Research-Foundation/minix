@@ -72,6 +72,8 @@ test_basic(void)
 		e(11);
 	if (add(ep, p[0], EPOLLIN, 0x1111) != 0) e(12);
 	if (add(ep, p[0], EPOLLIN, 0x1111) != -1 || errno != EEXIST) e(13);
+	memset(&e, 0, sizeof(e));	/* (garbage could hold EPOLLET -> EINVAL) */
+	e.events = EPOLLIN;
 	if (epoll_ctl(ep, EPOLL_CTL_MOD, q[0], &e) != -1 || errno != ENOENT)
 		e(14);
 	if (epoll_ctl(ep, EPOLL_CTL_DEL, q[0], NULL) != -1 || errno != ENOENT)
@@ -386,6 +388,28 @@ test_nested(void)
 		if (poll(&pfd, 1, 5000) != 1 || !(pfd.revents & POLLIN))
 			e(20);
 		wait(NULL);
+	}
+
+	/* A dup() of an epoll fd names the same instance (libwayland's
+	 * wl_event_loop_add_fd() dups the fd it is given). */
+	{
+		int d, outer2;
+
+		if ((d = dup(inner)) < 0) e(23);
+		if (epoll_wait(d, out, 4, 0) != 1 || out[0].data.u32 != 1)
+			e(24);		/* "z" from the child is pending */
+		if ((outer2 = epoll_create1(0)) < 0) e(25);
+		ev.events = EPOLLIN;
+		ev.data.u32 = 9;
+		if (epoll_ctl(outer2, EPOLL_CTL_ADD, d, &ev) != 0) e(26);
+		if (epoll_wait(outer2, out, 4, 1000) != 1 ||
+		    out[0].data.u32 != 9) e(27);
+		if (read(p[0], &c, 1) != 1) e(28);
+		if (epoll_wait(outer2, out, 4, 0) != 0) e(29);
+		if (write(p[1], "w", 1) != 1) e(30);
+		if (epoll_wait(outer2, out, 4, 1000) != 1) e(31);
+		close(outer2);
+		close(d);
 	}
 
 	/* A closed member of the inner instance is dropped, not EBADF. */

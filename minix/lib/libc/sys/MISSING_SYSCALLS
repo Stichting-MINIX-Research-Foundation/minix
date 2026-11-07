@@ -39,7 +39,6 @@ msync
 nfs_svc
 pmc_*
 pollts
-posix_fadvise
 posix_madvise
 pselect /* Implementable as select wrapper */
 preadv

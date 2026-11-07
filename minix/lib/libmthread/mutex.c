@@ -1,4 +1,5 @@
 #include <minix/mthread.h>
+#include <stdint.h>
 #include "global.h"
 #include "proto.h"
 
@@ -89,14 +90,21 @@ int mthread_mutex_init(mutex, mattr)
 mthread_mutex_t *mutex;	/* Mutex that is to be initialized */
 mthread_mutexattr_t *mattr;	/* Mutex attribute */
 {
-/* Initialize the mutex to a known state. Attributes are not supported */
+/* Initialize the mutex to a known state.  The only attribute is the mutex
+ * type (see pthread_mutexattr_settype()). */
 
   struct __mthread_mutex *m;
+  int type;
+
+  type = MTHREAD_MUTEX_NORMAL;
+  if (mattr != NULL)
+	type = (int) (intptr_t) *mattr;
 
   if (mutex == NULL)
   	return(EAGAIN);
-  else if (mattr != NULL)
-  	return(ENOSYS);
+  else if (type != MTHREAD_MUTEX_NORMAL && type != MTHREAD_MUTEX_RECURSIVE &&
+	type != MTHREAD_MUTEX_ERRORCHECK)
+	return(EINVAL);
 #ifdef MTHREAD_STRICT
   else if (mthread_mutex_valid(mutex))
   	return(EBUSY);
@@ -106,6 +114,8 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 
   mthread_queue_init(&m->mm_queue);
   m->mm_owner = NO_THREAD;
+  m->mm_type = type;
+  m->mm_count = 0;
   *mutex = (mthread_mutex_t) m;
   mthread_mutex_add(mutex); /* Validate mutex; mutex now in use */
 
@@ -132,7 +142,9 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   else if (m->mm_owner == NO_THREAD) { /* Not locked */
 	m->mm_owner = current_thread;
   } else if (m->mm_owner == current_thread) {
-  	return(EDEADLK);
+	if (m->mm_type != MTHREAD_MUTEX_RECURSIVE)
+		return(EDEADLK);
+	m->mm_count++;
   } else {
 	mthread_queue_add(&m->mm_queue, current_thread);
 	mthread_suspend(MS_MUTEX);
@@ -180,9 +192,12 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   m = (struct __mthread_mutex *) *mutex;
   if (!mthread_mutex_valid(&m))
   	return(EINVAL);
-  else if (m->mm_owner == current_thread)
-	return(EDEADLK);
-  else if (m->mm_owner == NO_THREAD) {
+  else if (m->mm_owner == current_thread) {
+	if (m->mm_type != MTHREAD_MUTEX_RECURSIVE)
+		return(EDEADLK);
+	m->mm_count++;
+	return(0);
+  } else if (m->mm_owner == NO_THREAD) {
 	m->mm_owner = current_thread;
 	return(0);
   } 
@@ -210,6 +225,11 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 	return(EINVAL);
   else if (m->mm_owner != current_thread) 
   	return(EPERM);	/* Can't unlock a mutex locked by another thread. */
+
+  if (m->mm_count > 0) {	/* recursive mutex, locked again */
+	m->mm_count--;
+	return(0);
+  }
 
   m->mm_owner = mthread_queue_remove(&m->mm_queue);
   if (m->mm_owner != NO_THREAD) mthread_unsuspend(m->mm_owner);

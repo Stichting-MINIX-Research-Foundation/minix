@@ -13,6 +13,15 @@
  * be polled, and nested into another epoll instance (as Wayland
  * compositors do with libinput's fd).  select(2) on an epoll fd is not
  * covered.
+ *
+ * An instance is identified by its pipe (device and inode; libc keeps the
+ * write end open, so the identity stays unique while the instance lives),
+ * not by the descriptor number: dup()ed epoll fds - libwayland's
+ * wl_event_loop_add_fd() dups the fd it is given - name the same instance.
+ * Descriptors that epoll_ctl() found to be such duplicates are remembered
+ * as aliases, so that poll() can spot epoll fds without system calls.  The
+ * instance goes away when its original descriptor is closed (unlike Linux,
+ * where the last duplicate counts).
  */
 
 #include <sys/cdefs.h>
@@ -49,6 +58,9 @@ struct epinst {
 static struct epinst *eps;
 static int neps;
 
+static int *ep_alias;		/* fds found to be duplicates of epoll fds */
+static int nalias, capalias;
+
 #define EP_SUPPORTED	(EPOLLIN | EPOLLPRI | EPOLLOUT | EPOLLERR | EPOLLHUP | \
 	EPOLLRDNORM | EPOLLRDBAND | EPOLLWRNORM | EPOLLWRBAND | EPOLLMSG | \
 	EPOLLRDHUP | EPOLLEXCLUSIVE | EPOLLWAKEUP | EPOLLONESHOT)
@@ -65,25 +77,70 @@ ep_free(struct epinst *ep)
 }
 
 /* Find the live instance behind 'epfd'; set errno and return NULL if none. */
+/* The live instance whose pipe 'st' describes, or NULL. */
+static struct epinst *
+ep_by_identity(const struct stat *st)
+{
+	int i;
+
+	if (!S_ISFIFO(st->st_mode))
+		return NULL;
+	for (i = 0; i < neps; i++)
+		if (eps[i].epfd >= 0 && eps[i].dev == st->st_dev &&
+		    eps[i].ino == st->st_ino)
+			return &eps[i];
+	return NULL;
+}
+
 static struct epinst *
 ep_lookup(int epfd)
 {
+	struct epinst *ep;
 	struct stat st;
 	int i;
 
 	if (fstat(epfd, &st) != 0)
 		return NULL;		/* EBADF */
 	for (i = 0; i < neps; i++) {
-		struct epinst *ep = &eps[i];
-		if (ep->epfd != epfd)
-			continue;
-		if (ep->dev == st.st_dev && ep->ino == st.st_ino)
-			return ep;
-		ep_free(ep);		/* closed and reused: stale */
-		break;
+		ep = &eps[i];
+		if (ep->epfd == epfd &&
+		    (ep->dev != st.st_dev || ep->ino != st.st_ino))
+			ep_free(ep);	/* closed and reused: stale */
 	}
+	if ((ep = ep_by_identity(&st)) != NULL)
+		return ep;		/* the epoll fd itself, or a dup */
 	errno = EINVAL;
 	return NULL;
+}
+
+static void
+ep_alias_add(int fd)
+{
+	int i, *n;
+
+	for (i = 0; i < nalias; i++)
+		if (ep_alias[i] == fd)
+			return;
+	if (nalias == capalias) {
+		int cap = capalias ? capalias * 2 : 8;
+		if ((n = realloc(ep_alias, cap * sizeof(*n))) == NULL)
+			return;		/* only an optimization hint */
+		ep_alias = n;
+		capalias = cap;
+	}
+	ep_alias[nalias++] = fd;
+}
+
+static void
+ep_alias_del(int fd)
+{
+	int i;
+
+	for (i = 0; i < nalias; i++)
+		if (ep_alias[i] == fd) {
+			ep_alias[i] = ep_alias[--nalias];
+			return;
+		}
 }
 
 int
@@ -192,6 +249,10 @@ epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 			return -1;
 		}
 	}
+
+	/* A duplicate of an epoll fd (not the original): remember it. */
+	if (op != EPOLL_CTL_DEL && ep_by_identity(&st) != NULL)
+		ep_alias_add(fd);
 
 	i = ep_find(ep, fd);
 	switch (op) {
@@ -451,27 +512,40 @@ ep_candidate(int fd)
 	for (i = 0; i < neps; i++)
 		if (eps[i].epfd == fd)
 			return &eps[i];
+	for (i = 0; i < nalias; i++)
+		if (ep_alias[i] == fd)
+			return eps;	/* any non-NULL: verified by ep_lookup() */
 	return NULL;
 }
 
-/* Add the members of epoll instance 'epfd' (recursively) for 'owner'. */
+/*
+ * Add the members of epoll instance 'epfd' (recursively) for 'owner'.
+ * Return 0 when done, 1 if 'epfd' is not (or no longer) an epoll instance
+ * - the caller polls it as an ordinary descriptor - and -1 on ENOMEM.
+ */
 static int
 ep_pollset_expand(struct ep_pollset *ps, int epfd, nfds_t owner, int depth)
 {
 	struct epinst *ep;
-	int i, fd;
+	int i, fd, r;
+	short ev;
 
-	if (depth > EP_NEST_MAX || (ep = ep_lookup(epfd)) == NULL)
-		return 0;	/* stale or too deep: never ready */
+	if (depth > EP_NEST_MAX)
+		return 0;	/* too deep (a cycle?): never ready */
+	if ((ep = ep_lookup(epfd)) == NULL) {
+		ep_alias_del(epfd);	/* stale alias, or closed */
+		return 1;
+	}
 	for (i = 0; i < ep->nitems; i++) {
 		if (ep->items[i].events == 0)
 			continue;	/* fired EPOLLONESHOT */
 		fd = ep->items[i].fd;
-		if (ep_candidate(fd) != NULL) {
-			if (ep_pollset_expand(ps, fd, owner, depth + 1) != 0)
-				return -1;
-		} else if (ep_pollset_add(ps, fd,
-		    ep_to_poll(ep->items[i].events), owner) != 0)
+		ev = ep_to_poll(ep->items[i].events);
+		r = 1;
+		if (ep_candidate(fd) != NULL &&
+		    (r = ep_pollset_expand(ps, fd, owner, depth + 1)) < 0)
+			return -1;
+		if (r == 1 && ep_pollset_add(ps, fd, ev, owner) != 0)
 			return -1;
 	}
 	return 0;
@@ -501,10 +575,11 @@ again:
 	memset(&ps, 0, sizeof(ps));
 	for (i = 0; i < nfds; i++) {
 		p[i].revents = 0;
+		r = 1;
 		if ((p[i].events & (POLLIN | POLLRDNORM)) &&
 		    ep_candidate(p[i].fd) != NULL)
 			r = ep_pollset_expand(&ps, p[i].fd, i, 1);
-		else
+		if (r == 1)
 			r = ep_pollset_add(&ps, p[i].fd, p[i].events, i);
 		if (r != 0) {
 			free(ps.pfd);
