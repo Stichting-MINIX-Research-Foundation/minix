@@ -1,3 +1,21 @@
+20261107:
+	The input server now also offers Linux evdev compatible devices:
+	/dev/input/event0 (all keyboards) and /dev/input/event1 (all mice),
+	see <minix/evdev.h>.  While one is open, it receives all input of
+	its kind and the console does not.  The PS/2 driver (pckbd) now
+	reports mouse Y movement downward-positive, as the input server's
+	HID conventions say (it used to pass the PS/2 upward-positive value
+	through).  Rebuild and install input and pckbd together (make
+	hdboot), and create the new nodes on an existing system with:
+
+		# cd /dev && MAKEDEV input
+
+	poll(2) in libc now treats an epoll(7) descriptor in its set as
+	readable when one of the epoll instance's members is, so epoll
+	descriptors can be polled and added to other epoll instances
+	(select(2) on them still never fires).  Dynamically linked programs
+	pick this up; statically linked ones must be relinked.
+
 20261031:
 	VM now supports writable MAP_SHARED mappings of files (refused with
 	EACCES unless the fd is open for writing).  This changed the VM <-> VFS

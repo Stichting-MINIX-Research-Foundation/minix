@@ -29,8 +29,8 @@
 #define EV_BYTES		BITS_BYTES(EVDEV_EV_MAX + 1)
 #define PROP_BYTES		4
 
-#define SET_BIT(a, b)		((a)[(b) / 8] |= (1 << ((b) % 8)))
-#define CLR_BIT(a, b)		((a)[(b) / 8] &= ~(1 << ((b) % 8)))
+#define EV_SETBIT(a, b)		((a)[(b) / 8] |= (1 << ((b) % 8)))
+#define EV_CLRBIT(a, b)		((a)[(b) / 8] &= ~(1 << ((b) % 8)))
 
 struct evdev {
 	devminor_t minor;
@@ -302,17 +302,17 @@ evdev_init(void)
 	ev->id.vendor = 0x0001;
 	ev->id.product = 0x0001;
 	ev->id.version = 0x0001;
-	SET_BIT(ev->ev_bits, EVDEV_EV_SYN);
-	SET_BIT(ev->ev_bits, EVDEV_EV_KEY);
-	SET_BIT(ev->ev_bits, EVDEV_EV_LED);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_SYN);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_KEY);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_LED);
 	for (i = 0; i < __arraycount(hid_keys); i++)
 		if (hid_keys[i] != 0)
-			SET_BIT(ev->key_bits, hid_keys[i]);
+			EV_SETBIT(ev->key_bits, hid_keys[i]);
 	for (i = 0; i < __arraycount(hid_other_keys); i++)
-		SET_BIT(ev->key_bits, hid_other_keys[i].key);
-	SET_BIT(ev->led_bits, EVDEV_LED_NUML);
-	SET_BIT(ev->led_bits, EVDEV_LED_CAPSL);
-	SET_BIT(ev->led_bits, EVDEV_LED_SCROLLL);
+		EV_SETBIT(ev->key_bits, hid_other_keys[i].key);
+	EV_SETBIT(ev->led_bits, EVDEV_LED_NUML);
+	EV_SETBIT(ev->led_bits, EVDEV_LED_CAPSL);
+	EV_SETBIT(ev->led_bits, EVDEV_LED_SCROLLL);
 
 	/* Mice. */
 	ev = &evdevs[1];
@@ -323,15 +323,15 @@ evdev_init(void)
 	ev->id.vendor = 0x0002;
 	ev->id.product = 0x0001;
 	ev->id.version = 0x0001;
-	SET_BIT(ev->ev_bits, EVDEV_EV_SYN);
-	SET_BIT(ev->ev_bits, EVDEV_EV_KEY);
-	SET_BIT(ev->ev_bits, EVDEV_EV_REL);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_SYN);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_KEY);
+	EV_SETBIT(ev->ev_bits, EVDEV_EV_REL);
 	for (i = 0; i < __arraycount(hid_buttons); i++)
-		SET_BIT(ev->key_bits, hid_buttons[i]);
-	SET_BIT(ev->rel_bits, EVDEV_REL_X);
-	SET_BIT(ev->rel_bits, EVDEV_REL_Y);
-	SET_BIT(ev->rel_bits, EVDEV_REL_WHEEL);
-	SET_BIT(ev->rel_bits, EVDEV_REL_HWHEEL);
+		EV_SETBIT(ev->key_bits, hid_buttons[i]);
+	EV_SETBIT(ev->rel_bits, EVDEV_REL_X);
+	EV_SETBIT(ev->rel_bits, EVDEV_REL_Y);
+	EV_SETBIT(ev->rel_bits, EVDEV_REL_WHEEL);
+	EV_SETBIT(ev->rel_bits, EVDEV_REL_HWHEEL);
 
 	for (i = 0; i < NR_EVDEVS; i++) {
 		evdevs[i].clockid = CLOCK_MONOTONIC;
@@ -589,9 +589,9 @@ evdev_input(int mouse, const message *m)
 
 	if (type == EVDEV_EV_KEY) {
 		if (value)
-			SET_BIT(ev->key_state, code);
+			EV_SETBIT(ev->key_state, code);
 		else
-			CLR_BIT(ev->key_state, code);
+			EV_CLRBIT(ev->key_state, code);
 	}
 
 	(void)getuptime(&uptime, NULL, NULL);
@@ -742,9 +742,9 @@ evdev_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 			    in[i].code > EVDEV_LED_SCROLLL)
 				continue;
 			if (in[i].value)
-				SET_BIT(ev->led_state, in[i].code);
+				EV_SETBIT(ev->led_state, in[i].code);
 			else
-				CLR_BIT(ev->led_state, in[i].code);
+				EV_CLRBIT(ev->led_state, in[i].code);
 			leds_changed = TRUE;
 		}
 	}

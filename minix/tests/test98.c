@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -326,6 +327,80 @@ test_fairness_fork(void)
 	close(ep);
 }
 
+/*
+ * An epoll fd can be polled and nested into another epoll instance: it is
+ * readable while one of its members is (libinput's fd inside a Wayland
+ * event loop).
+ */
+static void
+test_nested(void)
+{
+	struct epoll_event ev, out[4];
+	struct pollfd pfd;
+	int inner, outer, p[2], q[2];
+	char c;
+
+	subtest = 7;
+
+	if (pipe(p) != 0 || pipe(q) != 0) e(1);
+	if ((inner = epoll_create1(EPOLL_CLOEXEC)) < 0) e(2);
+	if ((outer = epoll_create1(EPOLL_CLOEXEC)) < 0) e(3);
+	ev.events = EPOLLIN;
+	ev.data.u32 = 1;
+	if (epoll_ctl(inner, EPOLL_CTL_ADD, p[0], &ev) != 0) e(4);
+	ev.data.u32 = 2;
+	if (epoll_ctl(outer, EPOLL_CTL_ADD, inner, &ev) != 0) e(5);
+	ev.data.u32 = 3;
+	if (epoll_ctl(outer, EPOLL_CTL_ADD, q[0], &ev) != 0) e(6);
+
+	/* Nothing ready: poll() and epoll_wait() time out. */
+	pfd.fd = inner;
+	pfd.events = POLLIN;
+	if (poll(&pfd, 1, 50) != 0) e(7);
+	if (epoll_wait(outer, out, 4, 50) != 0) e(8);
+
+	/* A member of the inner instance becomes ready. */
+	if (write(p[1], "x", 1) != 1) e(9);
+	if (poll(&pfd, 1, 1000) != 1 || !(pfd.revents & POLLIN)) e(10);
+	if (epoll_wait(outer, out, 4, 1000) != 1) e(11);
+	if (out[0].data.u32 != 2 || !(out[0].events & EPOLLIN)) e(12);
+	if (epoll_wait(inner, out, 4, 0) != 1 || out[0].data.u32 != 1) e(13);
+
+	/* Drained: quiet again; a direct member of outer still works. */
+	if (read(p[0], &c, 1) != 1) e(14);
+	if (poll(&pfd, 1, 0) != 0) e(15);
+	if (write(q[1], "y", 1) != 1) e(16);
+	if (epoll_wait(outer, out, 4, 1000) != 1 || out[0].data.u32 != 3)
+		e(17);
+	if (read(q[0], &c, 1) != 1) e(18);
+
+	/* Blocking: a writer in a child wakes a poll() on the outer fd. */
+	switch (fork()) {
+	case -1: e(19); break;
+	case 0:
+		usleep(200000);
+		write(p[1], "z", 1);
+		_exit(0);
+	default:
+		pfd.fd = outer;
+		if (poll(&pfd, 1, 5000) != 1 || !(pfd.revents & POLLIN))
+			e(20);
+		wait(NULL);
+	}
+
+	/* A closed member of the inner instance is dropped, not EBADF. */
+	if (read(p[0], &c, 1) != 1) e(21);
+	close(p[0]);
+	pfd.fd = inner;
+	if (poll(&pfd, 1, 0) != 0) e(22);
+
+	close(p[1]);
+	close(q[0]);
+	close(q[1]);
+	close(outer);
+	close(inner);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -337,6 +412,7 @@ main(int argc, char **argv)
 	test_lfd_members();
 	test_socket_hup();
 	test_fairness_fork();
+	test_nested();
 
 	quit();
 	return 0;

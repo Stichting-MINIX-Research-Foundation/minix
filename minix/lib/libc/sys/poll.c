@@ -39,8 +39,32 @@
 #include <sys/poll.h>
 #include <errno.h>
 
+int __libc_poll_select(struct pollfd *, nfds_t, int);
+
+/*
+ * MINIX: epoll instances are emulated in libc (epoll.c), and an epoll fd
+ * itself never becomes readable.  When epoll is in use, epoll.c replaces
+ * epoll fds in the set by their members (weak: static programs that do not
+ * use epoll do not pull it in).
+ */
+int __libc_epoll_poll(struct pollfd *, nfds_t, int, int *) __weak;
+
 int
 poll(struct pollfd *p, nfds_t nfds, int timout)
+{
+	int handled, r;
+
+	if (__libc_epoll_poll != NULL) {
+		r = __libc_epoll_poll(p, nfds, timout, &handled);
+		if (handled)
+			return r;
+	}
+	return __libc_poll_select(p, nfds, timout);
+}
+
+/* poll(2) over select(2). */
+int
+__libc_poll_select(struct pollfd *p, nfds_t nfds, int timout)
 {
 	fd_set rd, wr, except;
 	struct timeval tv;

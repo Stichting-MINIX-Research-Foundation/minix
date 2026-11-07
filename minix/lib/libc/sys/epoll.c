@@ -5,6 +5,14 @@
  * here.  epoll_wait() turns the list into one poll(2) call.  To detect a
  * closed-and-reused epoll fd number, the pipe's inode is remembered and
  * checked on every call.  See <sys/epoll.h> for the semantics.
+ *
+ * Nobody writes to that pipe, so on its own an epoll fd never becomes
+ * readable.  poll(2) therefore asks __libc_epoll_poll() below to replace
+ * epoll fds in its set by their members (recursively), and reports an
+ * epoll fd readable when one of its members is ready - so an epoll fd can
+ * be polled, and nested into another epoll instance (as Wayland
+ * compositors do with libinput's fd).  select(2) on an epoll fd is not
+ * covered.
  */
 
 #include <sys/cdefs.h>
@@ -237,6 +245,22 @@ epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 	}
 }
 
+/* Drop members whose fd was closed; return whether any were. */
+static int
+ep_purge_closed(struct epinst *ep)
+{
+	int i, dropped = 0;
+
+	for (i = 0; i < ep->nitems; ) {
+		if (fcntl(ep->items[i].fd, F_GETFD) == -1) {
+			ep->items[i] = ep->items[--ep->nitems];
+			dropped = 1;
+		} else
+			i++;
+	}
+	return dropped;
+}
+
 static short
 ep_to_poll(uint32_t ev)
 {
@@ -302,14 +326,7 @@ epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 		/* MINIX poll() fails as a whole on a closed descriptor
 		 * (rather than POLLNVAL): drop closed members, as Linux does
 		 * when the last reference goes away, and try again. */
-		int dropped = 0;
-		for (i = 0; i < ep->nitems; ) {
-			if (fcntl(ep->items[i].fd, F_GETFD) == -1) {
-				ep->items[i] = ep->items[--ep->nitems];
-				dropped = 1;
-			} else
-				i++;
-		}
+		int dropped = ep_purge_closed(ep);
 		free(pfd);
 		free(idx);
 		if (!dropped) {
@@ -387,5 +404,151 @@ epoll_pwait(int epfd, struct epoll_event *events, int maxevents, int timeout,
 	if (sigmask != NULL)
 		sigprocmask(SIG_SETMASK, &old, NULL);
 	errno = e;
+	return r;
+}
+
+/*
+ * poll(2) support (see the top of this file).
+ */
+#define EP_NEST_MAX	8	/* nesting depth limit (Linux: 5) */
+
+struct ep_pollset {
+	struct pollfd	*pfd;
+	nfds_t		*owner;		/* index into the caller's set */
+	nfds_t		n, cap;
+};
+
+static int
+ep_pollset_add(struct ep_pollset *ps, int fd, short events, nfds_t owner)
+{
+	if (ps->n == ps->cap) {
+		nfds_t cap = ps->cap ? ps->cap * 2 : 32;
+		struct pollfd *np = realloc(ps->pfd, cap * sizeof(*np));
+		nfds_t *no;
+		if (np == NULL)
+			return -1;
+		ps->pfd = np;
+		if ((no = realloc(ps->owner, cap * sizeof(*no))) == NULL)
+			return -1;
+		ps->owner = no;
+		ps->cap = cap;
+	}
+	ps->pfd[ps->n].fd = fd;
+	ps->pfd[ps->n].events = events;
+	ps->pfd[ps->n].revents = 0;
+	ps->owner[ps->n++] = owner;
+	return 0;
+}
+
+/* Cheap check, no system call: is 'fd' the number of an epoll instance? */
+static struct epinst *
+ep_candidate(int fd)
+{
+	int i;
+
+	if (fd < 0)
+		return NULL;
+	for (i = 0; i < neps; i++)
+		if (eps[i].epfd == fd)
+			return &eps[i];
+	return NULL;
+}
+
+/* Add the members of epoll instance 'epfd' (recursively) for 'owner'. */
+static int
+ep_pollset_expand(struct ep_pollset *ps, int epfd, nfds_t owner, int depth)
+{
+	struct epinst *ep;
+	int i, fd;
+
+	if (depth > EP_NEST_MAX || (ep = ep_lookup(epfd)) == NULL)
+		return 0;	/* stale or too deep: never ready */
+	for (i = 0; i < ep->nitems; i++) {
+		if (ep->items[i].events == 0)
+			continue;	/* fired EPOLLONESHOT */
+		fd = ep->items[i].fd;
+		if (ep_candidate(fd) != NULL) {
+			if (ep_pollset_expand(ps, fd, owner, depth + 1) != 0)
+				return -1;
+		} else if (ep_pollset_add(ps, fd,
+		    ep_to_poll(ep->items[i].events), owner) != 0)
+			return -1;
+	}
+	return 0;
+}
+
+int __libc_poll_select(struct pollfd *, nfds_t, int);
+int __libc_epoll_poll(struct pollfd *, nfds_t, int, int *);
+
+int
+__libc_epoll_poll(struct pollfd *p, nfds_t nfds, int timeout, int *handled)
+{
+	struct ep_pollset ps;
+	nfds_t i, j;
+	int r, any, retried;
+
+	*handled = 0;
+	for (any = 0, i = 0; i < nfds && !any; i++)
+		if ((p[i].events & (POLLIN | POLLRDNORM)) &&
+		    ep_candidate(p[i].fd) != NULL)
+			any = 1;
+	if (!any)
+		return 0;	/* no epoll fds: plain poll() */
+
+	*handled = 1;
+	retried = 0;
+again:
+	memset(&ps, 0, sizeof(ps));
+	for (i = 0; i < nfds; i++) {
+		p[i].revents = 0;
+		if ((p[i].events & (POLLIN | POLLRDNORM)) &&
+		    ep_candidate(p[i].fd) != NULL)
+			r = ep_pollset_expand(&ps, p[i].fd, i, 1);
+		else
+			r = ep_pollset_add(&ps, p[i].fd, p[i].events, i);
+		if (r != 0) {
+			free(ps.pfd);
+			free(ps.owner);
+			errno = ENOMEM;
+			return -1;
+		}
+	}
+
+	r = __libc_poll_select(ps.pfd, ps.n, timeout);
+	if (r < 0 && errno == EBADF && !retried) {
+		/* A closed fd: drop closed members of all instances (as
+		 * epoll_wait() does), then try once more; an fd closed in
+		 * the caller's own set still fails with EBADF. */
+		int k, dropped = 0;
+		for (k = 0; k < neps; k++)
+			if (eps[k].epfd >= 0 && ep_purge_closed(&eps[k]))
+				dropped = 1;
+		free(ps.pfd);
+		free(ps.owner);
+		if (!dropped) {
+			errno = EBADF;
+			return -1;
+		}
+		retried = 1;
+		goto again;
+	}
+	if (r > 0) {
+		for (j = 0; j < ps.n; j++) {
+			if (ps.pfd[j].revents == 0)
+				continue;
+			i = ps.owner[j];
+			if (ps.pfd[j].fd != p[i].fd)
+				/* A member of epoll fd p[i]: it is readable. */
+				p[i].revents |= p[i].events &
+				    (POLLIN | POLLRDNORM);
+			else
+				p[i].revents |= ps.pfd[j].revents;
+		}
+		for (r = 0, i = 0; i < nfds; i++)
+			if (p[i].revents != 0)
+				r++;
+	}
+	free(ps.pfd);
+	free(ps.owner);
 	return r;
 }

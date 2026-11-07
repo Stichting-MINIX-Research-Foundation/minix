@@ -77,15 +77,15 @@ roadmap, ❌ missing or open problem.
 |---|---|---|
 | Modern C/C++ toolchain | gcc/clang, C++20+ | ✅ gcc 13.3 + binutils 2.43 cross toolchain (C++17 verified in the guest) |
 | `eventfd` / `timerfd` / `signalfd` | kernel | 🟡 libc emulation (socketpair, multiplexed itimer, pipe); handles the "block the signal" pattern |
-| `epoll` | kernel | 🟡 libc emulation over `poll()`; level-triggered only, no `EPOLLET` |
+| `epoll` | kernel | 🟡 libc emulation over `poll()`; level-triggered only, no `EPOLLET`; epoll fds can be polled and nested, but not `select()`ed |
 | POSIX shm + writable `MAP_SHARED` files | ✅ | 🟡 works, including sparse files; changes are not written back to disk (not needed for `wl_shm`) |
 | `mmap` of device memory | ✅ | ✅ character-device `mmap` (`FIOMMAP`) with VM privilege checks |
 | DRM/KMS display | DRM drivers | 🟡 "DRM-lite" `/dev/drm0` for QEMU's Bochs/stdvga card: dumb buffers, mode setting, page flips, vblank events; libdrm emulates the KMS API |
 | Atomic KMS, PRIME/dma-buf | ✅ | ❌ not yet (PRIME is needed for wlroots; planned for Phase 8) |
 | Wayland libraries | ✅ | ✅ libwayland, wayland-protocols, pixman, xkbcommon, libffi |
-| Input (evdev/libinput) | ✅ | 🚧 Phase 5: libinput backend over `/dev/kbdmux` and `/dev/mousemux` |
-| Seat/session (logind, libseat) | ✅ | 🚧 Phase 5: libseat "builtin" backend |
-| Device discovery (udev) | ✅ | 🚧 Phase 5: libudev stub |
+| Input (evdev/libinput) | ✅ | ✅ evdev devices `/dev/input/event0` (keyboards) and `event1` (mice) in the input server; libevdev and libinput ported. No mouse wheel yet |
+| Seat/session (logind, libseat) | ✅ | 🟡 libseat with its no-op backend: opens devices directly, no VT switching |
+| Device discovery (udev) | ✅ | 🟡 `libudev-minix`: the libudev API over a fixed view of the input and display devices; no hotplug |
 | OpenGL / EGL / GBM | Mesa + GPU | 🚧 Phase 7: Mesa softpipe (software), mini-GBM over dumb buffers |
 | Threads | 1:1 kernel threads | ❌ libmthread only: cooperative user-level threads behind `<pthread.h>`, so one blocking system call stalls the whole process. This is the main open problem |
 | GPU acceleration, real hardware display | ✅ | ❌ out of scope for now (QEMU first) |
@@ -106,8 +106,8 @@ before the phase counts as done. Details, notes and known problems are in
 | 2 | libc and VM gaps: event fds, shm, writable shared `mmap` | ✅ done |
 | 3 | Graphics device: DRM-lite driver, device `mmap`, libdrm port | ✅ done |
 | 4 | Wayland library stack, epoll, pthread compatibility | ✅ done |
-| 5 | Input: libinput backend, libseat, libudev stub | 🚧 next |
-| 6 | **Weston** with software rendering: first usable desktop | planned |
+| 5 | Input: evdev devices, libinput, libseat, libudev replacement | ✅ done |
+| 6 | **Weston** with software rendering: first usable desktop | 🚧 next |
 | 7 | OpenGL: Mesa softpipe, EGL, GBM | planned |
 | 8 | **Hyprland**: PRIME, wlroots, Hyprland port | planned |
 | 9 | Session integration: foot terminal, fonts, config, image packaging | planned |
@@ -186,13 +186,19 @@ These are the main in-tree changes. The full list is in
   - `eventfd`, `timerfd`, `signalfd` (including blocked signals), `epoll`;
   - `shm_open`/`shm_unlink` (over `/dev/shm`), `msync`, `pthread_sigmask`;
   - `select()` restarts after signals with `SA_RESTART`, as POSIX
-    requires.
+    requires;
+  - `poll()` on an epoll fd reports it ready when a member is, so epoll
+    fds can be polled and nested.
 - **Threads:** `<pthread.h>` and `libpthread` on top of libmthread; gcc
   accepts `-pthread`.
 - **Drivers:** `bochs`, the DRM-lite display driver for QEMU/Bochs stdvga
   (`/dev/drm0`, major 18).
+- **Input:** the input server offers Linux evdev devices
+  (`/dev/input/event0` for keyboards, `event1` for mice); the PS/2 mouse
+  driver reports Y movement in the HID direction.
 - **Tests:** `test95` (shared mmap), `test96` (eventfd/timerfd/signalfd),
-  `test97` (device mmap and DRM-lite), `test98` (epoll).
+  `test97` (device mmap and DRM-lite), `test98` (epoll), `test99`
+  (evdev devices, optionally with real keyboard and mouse input).
 
 ## Repository layout
 
