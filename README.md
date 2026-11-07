@@ -31,13 +31,15 @@ The ISO build also downloads a pinned snapshot of
 The installer extracts this set into `/usr/pkgsrc`, so the pkgsrc sources
 are available after installation without curl, wget, or git on MINIX.
 The default snapshot is commit
-`5a4274d630899abc6696465f69f320209495ef4d`. It includes MINIX-specific bmake, libnbcompat, and libarchive
+`5974761c656f18ad8fe8a3951f0bb7d94ceadf0f`. It includes MINIX-specific bmake, libnbcompat, and libarchive
 bootstrap fixes. The libnbcompat configure path avoids Autoconf
 finalization, bmake ignores spurious MINIX token-pipe readiness
 notifications that yield EAGAIN, and libarchive's Libtool configure uses a
 conservative 8 KiB command-line limit instead of its exponential probe and
-uses the NetBSD ELF linker path without GNU ld feature probes, avoiding a
-MINIX VM hang. The first ISO build needs
+uses the NetBSD ELF linker path without GNU ld feature probes. It also
+skips libarchive's heavyweight native libc/libmd digest probes on MINIX,
+which can freeze the VM; the existing unsupported-digest stubs are used
+unless an optional external crypto provider is enabled. The first ISO build needs
 network access on the Ubuntu build host; the downloaded archive is cached
 under the build work directory. To use a pre-fetched codeload archive instead,
 set `PKGSRC_ARCHIVE=/path/to/pkgsrc.tar.gz` when creating the ISO.
