@@ -31,9 +31,9 @@ The ISO build also downloads a pinned snapshot of
 The installer extracts this set into `/usr/pkgsrc`, so the pkgsrc sources
 are available after installation without curl, wget, or git on MINIX.
 The default snapshot is commit
-`22bd6015d66d876c4c75060e133b173bf8609f86`. It includes MINIX-specific bmake and libnbcompat bootstrap fixes. The
-libnbcompat fix generates its Makefile and configuration header directly,
-avoiding Autoconf's cache and config.status finalization on MINIX. The first ISO build needs
+`c68abf9e5c62fe6e971deb73d12becdb8f742e80`. It includes MINIX-specific bmake and libnbcompat bootstrap fixes. The
+libnbcompat configure path avoids Autoconf finalization, and bmake ignores
+spurious MINIX token-pipe readiness notifications that yield EAGAIN. The first ISO build needs
 network access on the Ubuntu build host; the downloaded archive is cached
 under the build work directory. To use a pre-fetched codeload archive instead,
 set `PKGSRC_ARCHIVE=/path/to/pkgsrc.tar.gz` when creating the ISO.
