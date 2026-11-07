@@ -15,7 +15,7 @@ import urllib.request
 
 
 DEFAULT_REPOSITORY = "eclairdosesleekman/pkgsrc"
-DEFAULT_COMMIT = "39c6cd8c6be474bd28cd67242744a3041a9619be"
+DEFAULT_COMMIT = "22bd6015d66d876c4c75060e133b173bf8609f86"
 
 
 def parse_args() -> argparse.Namespace:
