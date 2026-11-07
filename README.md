@@ -31,7 +31,7 @@ The ISO build also downloads a pinned snapshot of
 The installer extracts this set into `/usr/pkgsrc`, so the pkgsrc sources
 are available after installation without curl, wget, or git on MINIX.
 The default snapshot is commit
-`5974761c656f18ad8fe8a3951f0bb7d94ceadf0f`. It includes MINIX-specific bmake, libnbcompat, and libarchive
+`2acdb37125ce53efe30ff72172738fa7b84f76b7`. It includes MINIX-specific bmake, libnbcompat, and libarchive
 bootstrap fixes. The libnbcompat configure path avoids Autoconf
 finalization, bmake ignores spurious MINIX token-pipe readiness
 notifications that yield EAGAIN, and libarchive's Libtool configure uses a
