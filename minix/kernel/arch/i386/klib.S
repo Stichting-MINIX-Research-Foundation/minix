@@ -409,8 +409,17 @@ ENTRY(halt_cpu)
 	hlt /* interrupts enabled only after this instruction is executed! */
 	/*
 	 * interrupt handlers make sure that the interrupts are disabled when we
-	 * get here so we take only _one_ interrupt after halting the CPU
+	 * get here so we take only _one_ interrupt after halting the CPU.
+	 *
+	 * HLT may however also resume without any interrupt handler having
+	 * run (seen under KVM; NMI, SMI and spurious wakeups do the same).
+	 * Interrupts would then stay enabled in the kernel, and the next
+	 * halt_cpu() call's STI would no longer delay interrupts by one
+	 * instruction: an interrupt taken right before the HLT returns to it
+	 * with interrupts disabled, halting the CPU for good (system freeze).
+	 * So disable interrupts again explicitly.
 	 */
+	cli
 	ret
 
 /*===========================================================================*/

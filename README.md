@@ -184,6 +184,12 @@ These are the main in-tree changes. The full list is in
   - `EACCES` for writable shared mappings of read-only fds;
   - `mmap()` of character devices through a driver `FIOMMAP` ioctl.
 - **PM:** fork children start with no pending signals, as POSIX requires.
+- **Kernel/VM:** fixed a long-standing bug where stale temporary mappings
+  used for copies between address spaces could silently send system call
+  results to the wrong memory (it showed up as lost `fstat`/`read`
+  results and a hanging test after a fork).
+- **Kernel:** fixed random whole-system freezes under KVM, where the idle
+  loop could halt the CPU with interrupts disabled.
 - **libc:**
   - `eventfd`, `timerfd`, `signalfd` (including blocked signals), `epoll`;
   - `shm_open`/`shm_unlink` (over `/dev/shm`), `msync`, `pthread_sigmask`;

@@ -1433,6 +1433,11 @@ void pt_free(pt_t *pt)
 		if(pt->pt_pt[i])
 			vm_freepages((vir_bytes) pt->pt_pt[i], 1);
 
+	/* The kernel may still have temporary windows onto these page
+	 * tables in other page directories; the freed pages will be reused
+	 * for other data, so make it forget them all. */
+	pt_clearmapcache();
+
 	return;
 }
 

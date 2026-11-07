@@ -34,15 +34,24 @@ static u32_t phys_get32(phys_bytes v);
 
 void mem_clear_mapcache(void)
 {
+/* Forget all temporary mappings (windows, see createpde()) in the freepde
+ * slots - in EVERY page directory, not only the currently loaded one.  A
+ * window left behind in some process' page directory keeps pointing at the
+ * page table it was made for; once VM frees that page table and reuses the
+ * page for other data, the CPU may walk the stale window (also
+ * speculatively) whenever that process' page table is loaded, and garbage
+ * that looks like a present, global PTE then yields a global TLB entry for
+ * the window address.  Global entries survive CR3 reloads, so later copies
+ * through that window silently went to the wrong physical page.
+ */
+	struct proc *rp;
 	int i;
-	for(i = 0; i < nfreepdes; i++) {
-		struct proc *ptproc = get_cpulocal_var(ptproc);
-		int pde = freepdes[i];
-		u32_t *ptv;
-		assert(ptproc);
-		ptv = ptproc->p_seg.p_cr3_v;
-		assert(ptv);
-		ptv[pde] = 0;
+
+	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
+		if (isemptyp(rp) || !rp->p_seg.p_cr3 || !rp->p_seg.p_cr3_v)
+			continue;
+		for(i = 0; i < nfreepdes; i++)
+			rp->p_seg.p_cr3_v[freepdes[i]] = 0;
 	}
 }
 

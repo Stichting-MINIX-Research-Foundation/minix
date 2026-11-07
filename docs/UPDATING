@@ -32,6 +32,17 @@
 	CLOCK_MONOTONIC as clock_gettime(2) defines it (boot time plus
 	uptime); install it with the rest of the boot image.
 
+	Kernel and VM fix for a long-standing bug: the kernel's temporary
+	mappings for copies between address spaces could be left pointing at
+	page tables that VM had freed, which could make later copies into a
+	process (system call results) silently go to the wrong memory.  The
+	kernel and VM must be updated together: rebuild and install the boot
+	image (make hdboot) and reboot.
+
+	Kernel fix for random whole-system freezes (seen under KVM): the
+	idle loop could halt the CPU with interrupts disabled.  Rebuild and
+	install the boot image (make hdboot) and reboot.
+
 20261031:
 	VM now supports writable MAP_SHARED mappings of files (refused with
 	EACCES unless the fd is open for writing).  This changed the VM <-> VFS
