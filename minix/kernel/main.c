@@ -511,8 +511,9 @@ void minix_shutdown(int how)
    * such a state that we can perform the whole boot process once restarted from
    * monitor again
    */
-  if (ncpus > 1)
-	  smp_shutdown_aps();
+  if (ncpus > 1 && !kinfo.minix_panicing &&
+      smp_shutdown_aps() != 0)
+	  panic("failed to stop all application processors");
 #endif
   hw_intr_disable_all();
   stop_local_timer();
