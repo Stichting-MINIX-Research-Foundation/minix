@@ -303,7 +303,12 @@ static void smp_reinit_vars(void)
 	lapic_addr = lapic_eoi_addr = 0;
 	ioapic_enabled = 0;
 
-	ncpus = 1;
+	/*
+	 * Keep the BSP's logical CPU ID: cpuid is already stored in the active
+	 * bootstrap stack, and the online CPU mask may therefore be sparse even
+	 * when SMP initialization falls back to one processor.
+	 */
+	ncpus = bsp_cpu_id + 1;
 }
 
 static void tss_init_all(void)
