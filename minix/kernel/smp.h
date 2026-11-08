@@ -9,7 +9,7 @@
 #include "arch_smp.h"
 #include "spinlock.h"
 
-/* number of CPUs (execution strands in the system */
+/* Upper bound of discovered logical CPU IDs; not the online CPU count. */
 EXTERN unsigned ncpus;
 /* Number of virtual strands per physical core */
 EXTERN unsigned ht_per_core;
@@ -28,17 +28,28 @@ EXTERN unsigned bsp_cpu_id;
  */
 void smp_init(void);
 
-#define CPU_IS_BSP	1
-#define CPU_IS_READY	2
+#define CPU_IS_BSP		1
+#define CPU_IS_READY		2
+#define CPU_IS_BOOTING		4
+#define CPU_IS_FAILED		8
 
 struct cpu {
-	u32_t flags;
+	volatile u32_t flags;
 };
 
 EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 
-#define cpu_set_flag(cpu, flag)	do { cpus[cpu].flags |= (flag); } while(0)
-#define cpu_clear_flag(cpu, flag) do { cpus[cpu].flags &= ~(flag); } while(0)
+/*
+ * CPU state is updated by both the BSP and the AP during startup. Use atomic
+ * bit operations so a timeout racing with an AP entry cannot lose FAILED or
+ * BOOTING state.
+ */
+#define cpu_set_flag(cpu, flag) do { \
+	(void)__sync_fetch_and_or(&cpus[cpu].flags, (u32_t)(flag)); \
+} while (0)
+#define cpu_clear_flag(cpu, flag) do { \
+	(void)__sync_fetch_and_and(&cpus[cpu].flags, ~(u32_t)(flag)); \
+} while (0)
 #define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
 #define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
 
@@ -53,6 +64,9 @@ SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
 void ap_boot_finished(unsigned cpu);
+void ap_boot_failed(unsigned cpu);
+unsigned smp_online_count(void);
+u32_t smp_online_mask(void);
 void smp_shutdown_aps(void );
 
 /* IPI handlers */

@@ -126,11 +126,11 @@ void bsp_finish_booting(void)
 
 #ifdef CONFIG_SMP
   cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
-  machine.processors_count = ncpus;
   machine.bsp_id = bsp_cpu_id;
 #else
   machine.processors_count = 1;
   machine.bsp_id = 0;
+  machine.processors_online = 1U;
 #endif
   
 
@@ -141,6 +141,8 @@ void bsp_finish_booting(void)
   direct_com_print("MINIX/amd64: before wait_for_APs_to_finish_booting\r\n");
 #endif
   wait_for_APs_to_finish_booting();
+  machine.processors_count = smp_online_count();
+  machine.processors_online = smp_online_mask();
 #if defined(__x86_64__)
   direct_com_print("MINIX/amd64: wait_for_APs_to_finish_booting done\r\n");
 #endif

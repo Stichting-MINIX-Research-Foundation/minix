@@ -143,6 +143,8 @@ static void smp_start_aps(void)
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
+			cpu_set_flag(cpu, CPU_IS_FAILED);
+			cpu_clear_flag(cpu, CPU_IS_BOOTING);
 			printf("WARNING cannot boot cpu %d\n", cpu);
 			continue;
 		}
@@ -152,12 +154,16 @@ static void smp_start_aps(void)
 
 		while (lapic_read(LAPIC_TIMER_CCR)) {
 			if (ap_cpu_ready == cpu) {
-				cpu_set_flag(cpu, CPU_IS_READY);
+				/* The BSP observed the AP's entry acknowledgement. */
+				cpu_set_flag(cpu, CPU_IS_BOOTING);
 				break;
 			}
 		}
-		if (ap_cpu_ready == -1) {
-			printf("WARNING : CPU %d didn't boot\n", cpu);
+		if (ap_cpu_ready != cpu) {
+			cpu_set_flag(cpu, CPU_IS_FAILED);
+			cpu_clear_flag(cpu, CPU_IS_BOOTING);
+			printf("WARNING : CPU %d didn't reach its startup entry\n",
+					cpu);
 		}
 	}
 
@@ -179,7 +185,7 @@ void smp_shutdown_aps(void)
 {
 	unsigned cpu;
 
-	if (ncpus == 1)
+	if (smp_online_count() <= 1)
 		goto exit_shutdown_aps;
 
 	/* we must let the other cpus enter the kernel mode */
@@ -207,7 +213,7 @@ exit_shutdown_aps:
 
 	lapic_disable();
 
-	ncpus = 1; /* hopefully !!! */
+	ncpus = bsp_cpu_id + 1; /* retain the BSP's logical CPU ID */
 	lapic_addr = lapic_eoi_addr = 0;
 	return;
 }
@@ -215,8 +221,23 @@ exit_shutdown_aps:
 static void ap_finish_booting(void)
 {
 	unsigned cpu = cpuid;
+	int lapic_ready = 0;
 
-	/* inform the world of our presence. */
+	/*
+	 * The BSP may already have timed out this CPU. Do not let a late AP join
+	 * the online set after SCHED has received the boot-time CPU mask.
+	 */
+	if (cpu_test_flag(cpu, CPU_IS_FAILED)) {
+		intr_disable();
+		for (;;)
+			__asm__ volatile("hlt" ::: "memory");
+	}
+
+	/*
+	 * Tell the BSP that this AP reached its C entry point. The BSP sets
+	 * CPU_IS_BOOTING only after observing this acknowledgement; this is not
+	 * the online notification.
+	 */
 	ap_cpu_ready = cpu;
 
 	/* Set up sysenter/syscall. */
@@ -231,16 +252,26 @@ static void ap_finish_booting(void)
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
 
+	/* A timeout may have marked this AP failed while it waited for the BKL. */
+	if (cpu_test_flag(cpu, CPU_IS_FAILED))
+		goto failed;
+
 	printf("CPU %d is up\n", cpu);
 
 	cpu_identify();
 
-	lapic_enable(cpu);
+	if (!lapic_enable(cpu)) {
+		printf("WARNING : CPU %u failed to initialize its Local APIC\n",
+				cpu);
+		goto failed;
+	}
+	lapic_ready = 1;
 	fpu_init();
 
 	if (app_cpu_init_timer(system_hz)) {
-		panic("FATAL : failed to initialize timer interrupts CPU %d, "
-				"cannot continue without any clock source!", cpu);
+		printf("WARNING : CPU %u failed to initialize its local timer\n",
+				cpu);
+		goto failed;
 	}
 
 	/* FIXME assign CPU local idle structure */
@@ -252,6 +283,16 @@ static void ap_finish_booting(void)
 
 	switch_to_user();
 	NOT_REACHABLE;
+
+failed:
+	if (lapic_ready)
+		stop_local_timer();
+	intr_disable();
+	ap_boot_failed(cpu);
+	spinlock_unlock(&boot_lock);
+	BKL_UNLOCK();
+	for (;;)
+		__asm__ volatile("hlt" ::: "memory");
 }
 
 void smp_ap_boot(void)
@@ -265,7 +306,12 @@ static void smp_reinit_vars(void)
 	lapic_addr = lapic_eoi_addr = 0;
 	ioapic_enabled = 0;
 
-	ncpus = 1;
+	/*
+	 * Keep the BSP's logical CPU ID: cpuid is already stored in the active
+	 * bootstrap stack, and the online CPU mask may therefore be sparse even
+	 * when SMP initialization falls back to one processor.
+	 */
+	ncpus = bsp_cpu_id + 1;
 }
 
 static void tss_init_all(void)
