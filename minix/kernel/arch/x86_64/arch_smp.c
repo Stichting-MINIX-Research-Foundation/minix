@@ -219,6 +219,16 @@ static void ap_finish_booting(void)
 	int lapic_ready = 0;
 
 	/*
+	 * The BSP may already have timed out this CPU. Do not let a late AP join
+	 * the online set after SCHED has received the boot-time CPU mask.
+	 */
+	if (cpu_test_flag(cpu, CPU_IS_FAILED)) {
+		intr_disable();
+		for (;;)
+			__asm__ volatile("hlt" ::: "memory");
+	}
+
+	/*
 	 * Tell the BSP that this AP reached its C entry point. This is not the
 	 * online notification: the AP must finish all CPU-local initialization
 	 * before it can be selected by the scheduler.
@@ -238,6 +248,10 @@ static void ap_finish_booting(void)
 	 */
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
+
+	/* A timeout may have marked this AP failed while it waited for the BKL. */
+	if (cpu_test_flag(cpu, CPU_IS_FAILED))
+		goto failed;
 
 	printf("CPU %d is up\n", cpu);
 
