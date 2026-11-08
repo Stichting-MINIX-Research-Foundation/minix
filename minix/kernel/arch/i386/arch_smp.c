@@ -39,6 +39,8 @@ extern int panicking;
 
 static int volatile cpu_down;
 
+#define SMP_SHUTDOWN_TIMEOUT_US 5000000U
+
 /* there can be at most 255 local APIC ids, each fits in 8 bits */
 static unsigned char apicid2cpuid[255];
 unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
@@ -181,7 +183,7 @@ void smp_halt_cpu (void)
 	NOT_IMPLEMENTED;
 }
 
-void smp_shutdown_aps(void)
+int smp_shutdown_aps(void)
 {
 	unsigned cpu;
 
@@ -196,15 +198,33 @@ void smp_shutdown_aps(void)
 			continue;
 		if (!cpu_transition(cpu, CPU_STATE_ONLINE,
 		    CPU_STATE_STOPPING)) {
-			printf("CPU %d didn't boot\n", cpu);
+			printf("CPU %u didn't boot\n", cpu);
 			continue;
 		}
 		cpu_down = -1;
 		barrier();
-		apic_send_ipi(APIC_SMP_CPU_HALT_VECTOR, cpu, APIC_IPI_DEST);
-		/* wait for the cpu to be down */
-		while (cpu_down != cpu);
-		printf("CPU %d is down\n", cpu);
+		/*
+		 * The APIC ICR wait and the CPU acknowledgement share one deadline.
+		 * The helper starts the BSP's one-shot timer before waiting for a
+		 * previous IPI to finish and leaves it running after sending HALT.
+		 */
+		if (apic_send_smp_halt_ipi(cpu,
+		    SMP_SHUTDOWN_TIMEOUT_US) != 0) {
+			printf("WARNING CPU %u: unable to send halt IPI before timeout\n",
+			    cpu);
+			return -1;
+		}
+
+		while (cpu_down != (int)cpu &&
+		    lapic_read(LAPIC_TIMER_CCR) != 0)
+			arch_pause();
+
+		if (cpu_down != (int)cpu) {
+			printf("WARNING CPU %u did not acknowledge halt IPI within %u seconds\n",
+			    cpu, SMP_SHUTDOWN_TIMEOUT_US / 1000000);
+			return -1;
+		}
+		printf("CPU %u is down\n", cpu);
 		if (!cpu_transition(cpu, CPU_STATE_STOPPING,
 		    CPU_STATE_OFFLINE))
 			panic("CPU %u has invalid shutdown state", cpu);
@@ -217,7 +237,7 @@ exit_shutdown_aps:
 
 	ncpus = bsp_cpu_id + 1; /* retain the BSP's logical CPU ID */
 	lapic_addr = lapic_eoi_addr = 0;
-	return;
+	return 0;
 }
 
 static void ap_finish_booting(void)
