@@ -75,7 +75,7 @@ fi
 # Create pkgsrc.tgz before build_workdir() bundles all release sets on the ISO.
 # The installer extracts every release-set archive into /usr, including this
 # additional set rooted at usr/pkgsrc.
-: ${PKGSRC_COMMIT:=387404eaba93e1e171d9e7ae2b86a25ca0514599}
+: ${PKGSRC_COMMIT:=422cf6ffb0f716aaf72f91ada73b63240d9ce820}
 : ${PKGSRC_ARCHIVE:=}
 if [ -n "${PKGSRC_ARCHIVE}" ]; then
 	python3 releasetools/pkgsrc_set.py \
