@@ -9,7 +9,7 @@
 #include "arch_smp.h"
 #include "spinlock.h"
 
-/* number of CPUs (execution strands in the system */
+/* Upper bound of discovered logical CPU IDs; not the online CPU count. */
 EXTERN unsigned ncpus;
 /* Number of virtual strands per physical core */
 EXTERN unsigned ht_per_core;
