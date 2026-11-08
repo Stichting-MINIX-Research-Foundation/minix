@@ -168,6 +168,8 @@ void ioapic_eoi(int irq);
 void dump_apic_irq_state(void);
 
 void apic_send_ipi(unsigned vector, unsigned cpu, int type);
+/* Send the CPU halt IPI with a bounded wait for the local APIC ICR. */
+int apic_send_smp_halt_ipi(unsigned cpu, u32_t timeout_us);
 
 void apic_ipi_sched_intr(void);
 void apic_ipi_halt_intr(void);
