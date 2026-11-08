@@ -125,7 +125,8 @@ void bsp_finish_booting(void)
 #endif
 
 #ifdef CONFIG_SMP
-  cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
+  if (!cpu_transition(bsp_cpu_id, CPU_STATE_OFFLINE, CPU_STATE_ONLINE))
+	  panic("BSP CPU %u has invalid startup state", bsp_cpu_id);
   machine.bsp_id = bsp_cpu_id;
 #else
   machine.processors_count = 1;
