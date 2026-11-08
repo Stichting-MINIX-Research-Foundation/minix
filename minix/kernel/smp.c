@@ -41,35 +41,82 @@ int smp_sched_ipi_pending(void)
 #define SCHED_IPI_VM_INHIBIT	2
 #define SCHED_IPI_SAVE_CTX	4
 
-static volatile unsigned ap_cpus_booted;
-
 SPINLOCK_DEFINE(big_kernel_lock)
 SPINLOCK_DEFINE(boot_lock)
 
 void wait_for_APs_to_finish_booting(void)
 {
-	unsigned n = 0;
-	int i;
+	unsigned cpu;
+	int booting;
 
-	/* check how many cpus are actually alive */
-	for (i = 0 ; i < ncpus ; i++) {
-		if (cpu_test_flag(i, CPU_IS_READY))
-			n++;
-	}
-	if (n != ncpus)
-		printf("WARNING only %d out of %d cpus booted\n", n, ncpus);
-
-	/* we must let the other CPUs to run in kernel mode first */
+	/*
+	 * APs set CPU_IS_BOOTING as soon as they reach their C entry point.
+	 * Let them complete CPU-local initialization while the BSP drops the BKL.
+	 * A CPU is not visible to user-space scheduling until CPU_IS_READY is set.
+	 */
 	BKL_UNLOCK();
-	while (ap_cpus_booted != (n - 1))
-		arch_pause();
-	/* now we have to take the lock again as we continue execution */
+	do {
+		booting = 0;
+		for (cpu = 0; cpu < ncpus; cpu++) {
+			if (cpu_test_flag(cpu, CPU_IS_BOOTING)) {
+				booting = 1;
+				break;
+			}
+		}
+		if (booting)
+			arch_pause();
+	} while (booting);
+
+	barrier();
 	BKL_LOCK();
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_test_flag(cpu, CPU_IS_FAILED))
+			printf("WARNING CPU %u failed to initialize\n", cpu);
+	}
 }
 
 void ap_boot_finished(unsigned cpu)
 {
-	ap_cpus_booted++;
+	assert(cpu < ncpus);
+
+	/* Publish the AP's initialized per-CPU state before making it online. */
+	barrier();
+	cpu_set_flag(cpu, CPU_IS_READY);
+	cpu_clear_flag(cpu, CPU_IS_BOOTING);
+	barrier();
+}
+
+void ap_boot_failed(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	cpu_set_flag(cpu, CPU_IS_FAILED);
+	cpu_clear_flag(cpu, CPU_IS_BOOTING);
+	barrier();
+}
+
+unsigned smp_online_count(void)
+{
+	unsigned cpu, count = 0;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_test_flag(cpu, CPU_IS_READY))
+			count++;
+	}
+	return count;
+}
+
+u32_t smp_online_mask(void)
+{
+	unsigned cpu;
+	u32_t mask = 0;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_test_flag(cpu, CPU_IS_READY))
+			mask |= (1U << cpu);
+	}
+	return mask;
 }
 
 void smp_ipi_halt_handler(void)
