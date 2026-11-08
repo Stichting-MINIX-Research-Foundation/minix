@@ -28,11 +28,13 @@ EXTERN unsigned bsp_cpu_id;
  */
 void smp_init(void);
 
-#define CPU_IS_BSP	1
-#define CPU_IS_READY	2
+#define CPU_IS_BSP		1
+#define CPU_IS_READY		2
+#define CPU_IS_BOOTING		4
+#define CPU_IS_FAILED		8
 
 struct cpu {
-	u32_t flags;
+	volatile u32_t flags;
 };
 
 EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
@@ -53,6 +55,9 @@ SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
 void ap_boot_finished(unsigned cpu);
+void ap_boot_failed(unsigned cpu);
+unsigned smp_online_count(void);
+u32_t smp_online_mask(void);
 void smp_shutdown_aps(void );
 
 /* IPI handlers */
