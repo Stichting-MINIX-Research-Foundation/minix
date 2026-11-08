@@ -37,7 +37,6 @@ extern void * __trampoline_end;
 extern u32_t busclock[CONFIG_MAX_CPUS];
 extern int panicking;
 
-static int volatile ap_cpu_ready;
 static int volatile cpu_down;
 
 /* there can be at most 255 local APIC ids, each fits in 8 bits */
@@ -131,10 +130,14 @@ static void smp_start_aps(void)
 	 * using the processor's apic id values.
 	 */
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		ap_cpu_ready = -1;
-		/* Don't send INIT/SIPI to boot cpu.  */
-		if((apicid() == cpuid2apicid[cpu]) && 
-				(apicid() == bsp_lapic_id)) {
+		/* Don't send INIT/SIPI to the bootstrap processor. */
+		if (cpu == bsp_cpu_id)
+			continue;
+
+		/* Publish STARTING before an AP can receive its startup IPI. */
+		if (!cpu_transition(cpu, CPU_STATE_OFFLINE, CPU_STATE_STARTING)) {
+			printf("WARNING CPU %u has invalid initial state %u\n",
+					cpu, cpu_state(cpu));
 			continue;
 		}
 
@@ -143,30 +146,44 @@ static void smp_start_aps(void)
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
-			cpu_set_flag(cpu, CPU_IS_FAILED);
-			cpu_clear_flag(cpu, CPU_IS_BOOTING);
-			printf("WARNING cannot boot cpu %d\n", cpu);
-			continue;
-		}
-
-		/* wait for 5 secs for the processors to boot */
-		lapic_set_timer_one_shot(5000000); 
-
-		while (lapic_read(LAPIC_TIMER_CCR)) {
-			if (ap_cpu_ready == cpu) {
-				/* The BSP observed the AP's entry acknowledgement. */
-				cpu_set_flag(cpu, CPU_IS_BOOTING);
+			/*
+			 * Do not overwrite a state already claimed by the AP. If it
+			 * entered C concurrently with an IPI error, it owns the next
+			 * transition and will either reach ONLINE or report FAILED.
+			 */
+			if (cpu_transition(cpu, CPU_STATE_STARTING,
+			    CPU_STATE_FAILED)) {
+				printf("WARNING cannot boot cpu %u\n", cpu);
+				/*
+				 * The low-memory trampoline has one shared CPU-ID
+				 * slot. Do not overwrite it while a timed-out AP
+				 * could still be executing the trampoline.
+				 */
 				break;
 			}
 		}
-		if (ap_cpu_ready != cpu) {
-			cpu_set_flag(cpu, CPU_IS_FAILED);
-			cpu_clear_flag(cpu, CPU_IS_BOOTING);
-			printf("WARNING : CPU %d didn't reach its startup entry\n",
+
+		/* Wait up to five seconds for STARTING -> INITIALIZING. */
+		lapic_set_timer_one_shot(5000000);
+		while (lapic_read(LAPIC_TIMER_CCR) &&
+		    cpu_state(cpu) == CPU_STATE_STARTING)
+			arch_pause();
+
+		/*
+		 * The timeout is conditional: if the AP won STARTING ->
+		 * INITIALIZING, the failed transition below cannot affect it.
+		 */
+		if (cpu_transition(cpu, CPU_STATE_STARTING, CPU_STATE_FAILED)) {
+			printf("WARNING CPU %u did not reach its startup entry\n",
 					cpu);
+			/*
+			 * Keep the trampoline's CPU ID stable for a late AP. The
+			 * remaining processors stay OFFLINE rather than risking
+			 * that they boot with the wrong logical ID.
+			 */
+			break;
 		}
 	}
-
 	phys_copy((phys_bytes) &biosresetvector, 0x467, sizeof(u32_t));
 
 	outb(RTC_INDEX, 0xF);
@@ -194,18 +211,20 @@ void smp_shutdown_aps(void)
 	for (cpu = 0; cpu < ncpus; cpu++) {
 		if (cpu == cpuid)
 			continue;
-		if (!cpu_test_flag(cpu, CPU_IS_READY)) {
+		if (!cpu_transition(cpu, CPU_STATE_ONLINE,
+		    CPU_STATE_STOPPING)) {
 			printf("CPU %d didn't boot\n", cpu);
 			continue;
 		}
-
 		cpu_down = -1;
 		barrier();
 		apic_send_ipi(APIC_SMP_CPU_HALT_VECTOR, cpu, APIC_IPI_DEST);
 		/* wait for the cpu to be down */
 		while (cpu_down != cpu);
 		printf("CPU %d is down\n", cpu);
-		cpu_clear_flag(cpu, CPU_IS_READY);
+		if (!cpu_transition(cpu, CPU_STATE_STOPPING,
+		    CPU_STATE_OFFLINE))
+			panic("CPU %u has invalid shutdown state", cpu);
 	}
 
 exit_shutdown_aps:
@@ -224,21 +243,15 @@ static void ap_finish_booting(void)
 	int lapic_ready = 0;
 
 	/*
-	 * The BSP may already have timed out this CPU. Do not let a late AP join
-	 * the online set after SCHED has received the boot-time CPU mask.
+	 * Claim the startup state before touching per-CPU initialization. If
+	 * the BSP already timed out this CPU, this CAS fails and the late AP
+	 * cannot join the system.
 	 */
-	if (cpu_test_flag(cpu, CPU_IS_FAILED)) {
+	if (!cpu_transition(cpu, CPU_STATE_STARTING, CPU_STATE_INITIALIZING)) {
 		intr_disable();
 		for (;;)
 			__asm__ volatile("hlt" ::: "memory");
 	}
-
-	/*
-	 * Tell the BSP that this AP reached its C entry point. The BSP sets
-	 * CPU_IS_BOOTING only after observing this acknowledgement; this is not
-	 * the online notification.
-	 */
-	ap_cpu_ready = cpu;
 
 	/* Set up sysenter/syscall. */
 	setup_sysenter_syscall();
@@ -252,8 +265,8 @@ static void ap_finish_booting(void)
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
 
-	/* A timeout may have marked this AP failed while it waited for the BKL. */
-	if (cpu_test_flag(cpu, CPU_IS_FAILED))
+	/* The BSP may have timed out initialization while this AP waited. */
+	if (cpu_state(cpu) != CPU_STATE_INITIALIZING)
 		goto failed;
 
 	printf("CPU %d is up\n", cpu);
@@ -278,7 +291,12 @@ static void ap_finish_booting(void)
 	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
 	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
 
-	ap_boot_finished(cpu);
+	/*
+	 * ONLINE is a terminal state. If the BSP's initialization deadline won
+	 * the CAS, discard this partially initialized AP instead of reviving it.
+	 */
+	if (!ap_boot_finished(cpu))
+		goto failed;
 	spinlock_unlock(&boot_lock);
 
 	switch_to_user();
