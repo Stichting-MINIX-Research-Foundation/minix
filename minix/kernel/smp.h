@@ -39,8 +39,17 @@ struct cpu {
 
 EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 
-#define cpu_set_flag(cpu, flag)	do { cpus[cpu].flags |= (flag); } while(0)
-#define cpu_clear_flag(cpu, flag) do { cpus[cpu].flags &= ~(flag); } while(0)
+/*
+ * CPU state is updated by both the BSP and the AP during startup. Use atomic
+ * bit operations so a timeout racing with an AP entry cannot lose FAILED or
+ * BOOTING state.
+ */
+#define cpu_set_flag(cpu, flag) do { \
+	(void)__sync_fetch_and_or(&cpus[cpu].flags, (u32_t)(flag)); \
+} while (0)
+#define cpu_clear_flag(cpu, flag) do { \
+	(void)__sync_fetch_and_and(&cpus[cpu].flags, ~(u32_t)(flag)); \
+} while (0)
 #define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
 #define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
 
