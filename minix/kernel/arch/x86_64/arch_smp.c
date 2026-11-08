@@ -163,7 +163,7 @@ static void smp_start_aps(void)
 			}
 		}
 
-		/* Wait up to five seconds for STARTING -> INITIALIZING. */
+		/* Wait up to five seconds for STARTING -> WAITING_FOR_LOCK. */
 		lapic_set_timer_one_shot(5000000);
 		while (lapic_read(LAPIC_TIMER_CCR) &&
 		    cpu_state(cpu) == CPU_STATE_STARTING)
@@ -243,11 +243,11 @@ static void ap_finish_booting(void)
 	int lapic_ready = 0;
 
 	/*
-	 * Claim the startup state before touching per-CPU initialization. If
-	 * the BSP already timed out this CPU, this CAS fails and the late AP
-	 * cannot join the system.
+	 * Publish that this AP reached its C entry point. The BSP gives the AP
+	 * a separate deadline to acquire the boot locks; CPU-local initialization
+	 * does not start timing until both locks have been acquired.
 	 */
-	if (!ap_boot_initializing(cpu)) {
+	if (!ap_boot_waiting(cpu)) {
 		intr_disable();
 		for (;;)
 			__asm__ volatile("hlt" ::: "memory");
@@ -257,16 +257,18 @@ static void ap_finish_booting(void)
 	setup_sysenter_syscall();
 
 	/*
-	 * Finish processor initialisation.  CPUs must be excluded from running.
-	 * lapic timer calibration locks and unlocks the BKL because of the
-	 * nested interrupts used for calibration. Therefore BKL is not good
-	 * enough, the boot_lock must be held.
+	 * Finish processor initialisation. CPUs must be excluded from running.
+	 * Timer calibration temporarily releases the BKL, so boot_lock also
+	 * serializes AP initialization.
 	 */
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
 
-	/* The BSP may have timed out initialization while this AP waited. */
-	if (cpu_state(cpu) != CPU_STATE_INITIALIZING)
+	/*
+	 * A timeout may have won while this AP was waiting for the locks.
+	 * Start a fresh initialization deadline only after acquiring both.
+	 */
+	if (!ap_boot_initializing(cpu))
 		goto failed;
 
 	printf("CPU %d is up\n", cpu);

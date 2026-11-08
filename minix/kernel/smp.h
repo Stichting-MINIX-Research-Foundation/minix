@@ -35,10 +35,11 @@ void smp_init(void);
  */
 #define CPU_STATE_OFFLINE		0
 #define CPU_STATE_STARTING		1
-#define CPU_STATE_INITIALIZING		2
-#define CPU_STATE_ONLINE		3
-#define CPU_STATE_FAILED		4
-#define CPU_STATE_STOPPING		5
+#define CPU_STATE_WAITING_FOR_LOCK	2
+#define CPU_STATE_INITIALIZING		3
+#define CPU_STATE_ONLINE		4
+#define CPU_STATE_FAILED		5
+#define CPU_STATE_STOPPING		6
 
 struct cpu {
 	volatile u32_t state;
@@ -69,6 +70,7 @@ SPINLOCK_DECLARE(big_kernel_lock)
 SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
+int ap_boot_waiting(unsigned cpu);
 int ap_boot_initializing(unsigned cpu);
 int ap_boot_finished(unsigned cpu);
 void ap_boot_failed(unsigned cpu);

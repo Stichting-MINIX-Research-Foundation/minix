@@ -154,7 +154,7 @@ static void smp_start_aps(void)
 			}
 		}
 
-		/* Wait up to five seconds for STARTING -> INITIALIZING. */
+		/* Wait up to five seconds for STARTING -> WAITING_FOR_LOCK. */
 		lapic_set_timer_one_shot(5000000);
 		while (lapic_read(LAPIC_TIMER_CCR) &&
 		    cpu_state(cpu) == CPU_STATE_STARTING)
@@ -225,8 +225,12 @@ static void ap_finish_booting(void)
 	unsigned cpu = cpuid;
 	int lapic_ready = 0;
 
-	/* A timed-out or otherwise failed AP must never join the system. */
-	if (!ap_boot_initializing(cpu)) {
+	/*
+	 * Publish that this AP reached its C entry point. The BSP gives the AP
+	 * a separate deadline to acquire the boot locks; CPU-local initialization
+	 * does not start timing until both locks have been acquired.
+	 */
+	if (!ap_boot_waiting(cpu)) {
 		intr_disable();
 		for (;;)
 			__asm__ volatile("hlt" ::: "memory");
@@ -243,7 +247,7 @@ static void ap_finish_booting(void)
 	spinlock_lock(&boot_lock);
 	BKL_LOCK();
 
-	if (cpu_state(cpu) != CPU_STATE_INITIALIZING)
+	if (!ap_boot_initializing(cpu))
 		goto failed;
 
 	printf("CPU %d is up\n", cpu);
