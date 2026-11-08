@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <minix/u64.h>
 
 #include "smp.h"
 #include "interrupt.h"
@@ -47,54 +48,71 @@ SPINLOCK_DEFINE(boot_lock)
 void wait_for_APs_to_finish_booting(void)
 {
 	unsigned cpu;
-	int booting;
+	int initializing;
+	u64_t start, now, timeout;
 
 	/*
-	 * The BSP marks APs whose C-entry acknowledgement it observed as
-	 * CPU_IS_BOOTING. Let those APs complete CPU-local initialization while
-	 * the BSP drops the BKL. A CPU is not visible to user-space scheduling
-	 * until CPU_IS_READY is set.
+	 * An AP owns INITIALIZING once it has entered C code. Bound this phase
+	 * as well as the earlier INIT/SIPI handshake. The BSP may declare an AP
+	 * failed only by winning INITIALIZING -> FAILED; the AP may declare it
+	 * online only by winning INITIALIZING -> ONLINE. Exactly one can win.
+	 *
+	 * The BSP timer has been calibrated by boot_cpu_init_timer() before this
+	 * function is called, so the TSC-based deadline works even while the
+	 * kernel is still in its boot-time interrupt state.
 	 */
+	read_tsc_64(&start);
+	timeout = ms_2_cpu_time(5000);
+
 	BKL_UNLOCK();
 	do {
-		booting = 0;
+		initializing = 0;
 		for (cpu = 0; cpu < ncpus; cpu++) {
-			if (cpu_test_flag(cpu, CPU_IS_BOOTING)) {
-				booting = 1;
+			if (cpu_state(cpu) == CPU_STATE_INITIALIZING) {
+				initializing = 1;
 				break;
 			}
 		}
-		if (booting)
+
+		if (initializing) {
+			read_tsc_64(&now);
+			if (now - start >= timeout) {
+				for (cpu = 0; cpu < ncpus; cpu++) {
+					if (cpu_transition(cpu,
+					    CPU_STATE_INITIALIZING,
+					    CPU_STATE_FAILED))
+						printf("WARNING CPU %u timed out during initialization\n",
+						    cpu);
+				}
+				break;
+			}
 			arch_pause();
-	} while (booting);
+		}
+	} while (initializing);
 
 	barrier();
 	BKL_LOCK();
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		if (cpu_test_flag(cpu, CPU_IS_FAILED))
+		if (cpu_state(cpu) == CPU_STATE_FAILED)
 			printf("WARNING CPU %u failed to initialize\n", cpu);
 	}
 }
 
-void ap_boot_finished(unsigned cpu)
+int ap_boot_finished(unsigned cpu)
 {
 	assert(cpu < ncpus);
 
-	/* Publish the AP's initialized per-CPU state before making it online. */
-	barrier();
-	cpu_set_flag(cpu, CPU_IS_READY);
-	cpu_clear_flag(cpu, CPU_IS_BOOTING);
-	barrier();
+	/* Publish initialized CPU-local state with one terminal transition. */
+	return cpu_transition(cpu, CPU_STATE_INITIALIZING, CPU_STATE_ONLINE);
 }
 
 void ap_boot_failed(unsigned cpu)
 {
 	assert(cpu < ncpus);
 
-	cpu_set_flag(cpu, CPU_IS_FAILED);
-	cpu_clear_flag(cpu, CPU_IS_BOOTING);
-	barrier();
+	/* A BSP timeout may already have won this transition. */
+	(void)cpu_transition(cpu, CPU_STATE_INITIALIZING, CPU_STATE_FAILED);
 }
 
 unsigned smp_online_count(void)
@@ -102,7 +120,7 @@ unsigned smp_online_count(void)
 	unsigned cpu, count = 0;
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		if (cpu_test_flag(cpu, CPU_IS_READY))
+		if (cpu_state(cpu) == CPU_STATE_ONLINE)
 			count++;
 	}
 	return count;
@@ -114,7 +132,7 @@ u32_t smp_online_mask(void)
 	u32_t mask = 0;
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		if (cpu_test_flag(cpu, CPU_IS_READY))
+		if (cpu_state(cpu) == CPU_STATE_ONLINE)
 			mask |= (1U << cpu);
 	}
 	return mask;
