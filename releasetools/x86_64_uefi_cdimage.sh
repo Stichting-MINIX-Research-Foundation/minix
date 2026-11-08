@@ -75,16 +75,26 @@ fi
 # Create pkgsrc.tgz before build_workdir() bundles all release sets on the ISO.
 # The installer extracts every release-set archive into /usr, including this
 # additional set rooted at usr/pkgsrc.
-: ${PKGSRC_COMMIT:=450278648e4ec2e3880fcfe0bd202f2a75487bc8}
+: ${PKGSRC_COMMIT:=}
+: ${PKGSRC_BRANCH:=}
 : ${PKGSRC_ARCHIVE:=}
 if [ -n "${PKGSRC_ARCHIVE}" ]; then
 	python3 releasetools/pkgsrc_set.py \
 		--sets-dir "${SETS_DIR}" --work-dir "${WORK_DIR}" \
 		--archive "${PKGSRC_ARCHIVE}"
-else
+elif [ -n "${PKGSRC_COMMIT}" ]; then
 	python3 releasetools/pkgsrc_set.py \
 		--sets-dir "${SETS_DIR}" --work-dir "${WORK_DIR}" \
 		--commit "${PKGSRC_COMMIT}"
+elif [ -n "${PKGSRC_BRANCH}" ]; then
+	python3 releasetools/pkgsrc_set.py \
+		--sets-dir "${SETS_DIR}" --work-dir "${WORK_DIR}" \
+		--branch "${PKGSRC_BRANCH}"
+else
+	# Resolve the repository's current default branch and pin the download
+	# to the resulting commit so the release set is internally consistent.
+	python3 releasetools/pkgsrc_set.py \
+		--sets-dir "${SETS_DIR}" --work-dir "${WORK_DIR}"
 fi
 
 echo "Preparing amd64 UEFI installation media..."
