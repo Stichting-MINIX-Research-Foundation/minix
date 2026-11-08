@@ -74,7 +74,7 @@ void wait_for_APs_to_finish_booting(void)
 			if (now - ap_init_started[cpu] >= 5 * system_hz) {
 				if (cpu_transition(cpu, CPU_STATE_INITIALIZING,
 				    CPU_STATE_FAILED))
-					printf("WARNING CPU %u timed out during initialization\\n",
+					printf("WARNING CPU %u timed out during initialization\n",
 					    cpu);
 				continue;
 			}
@@ -90,7 +90,7 @@ void wait_for_APs_to_finish_booting(void)
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
 		if (cpu_state(cpu) == CPU_STATE_FAILED)
-			printf("WARNING CPU %u failed to initialize\\n", cpu);
+			printf("WARNING CPU %u failed to initialize\n", cpu);
 	}
 }
 
