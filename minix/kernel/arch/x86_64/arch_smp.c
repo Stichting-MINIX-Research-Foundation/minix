@@ -143,6 +143,7 @@ static void smp_start_aps(void)
 		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
+			cpu_set_flag(cpu, CPU_IS_FAILED);
 			printf("WARNING cannot boot cpu %d\n", cpu);
 			continue;
 		}
@@ -151,13 +152,13 @@ static void smp_start_aps(void)
 		lapic_set_timer_one_shot(5000000); 
 
 		while (lapic_read(LAPIC_TIMER_CCR)) {
-			if (ap_cpu_ready == cpu) {
-				cpu_set_flag(cpu, CPU_IS_READY);
+			if (ap_cpu_ready == cpu)
 				break;
-			}
 		}
-		if (ap_cpu_ready == -1) {
-			printf("WARNING : CPU %d didn't boot\n", cpu);
+		if (ap_cpu_ready != cpu) {
+			cpu_set_flag(cpu, CPU_IS_FAILED);
+			printf("WARNING : CPU %d didn't reach its startup entry\n",
+					cpu);
 		}
 	}
 
@@ -215,8 +216,15 @@ exit_shutdown_aps:
 static void ap_finish_booting(void)
 {
 	unsigned cpu = cpuid;
+	int lapic_ready = 0;
 
-	/* inform the world of our presence. */
+	/*
+	 * Tell the BSP that this AP reached its C entry point. This is not the
+	 * online notification: the AP must finish all CPU-local initialization
+	 * before it can be selected by the scheduler.
+	 */
+	cpu_set_flag(cpu, CPU_IS_BOOTING);
+	barrier();
 	ap_cpu_ready = cpu;
 
 	/* Set up sysenter/syscall. */
@@ -235,12 +243,18 @@ static void ap_finish_booting(void)
 
 	cpu_identify();
 
-	lapic_enable(cpu);
+	if (!lapic_enable(cpu)) {
+		printf("WARNING : CPU %u failed to initialize its Local APIC\n",
+				cpu);
+		goto failed;
+	}
+	lapic_ready = 1;
 	fpu_init();
 
 	if (app_cpu_init_timer(system_hz)) {
-		panic("FATAL : failed to initialize timer interrupts CPU %d, "
-				"cannot continue without any clock source!", cpu);
+		printf("WARNING : CPU %u failed to initialize its local timer\n",
+				cpu);
+		goto failed;
 	}
 
 	/* FIXME assign CPU local idle structure */
@@ -252,6 +266,16 @@ static void ap_finish_booting(void)
 
 	switch_to_user();
 	NOT_REACHABLE;
+
+failed:
+	if (lapic_ready)
+		stop_local_timer();
+	intr_disable();
+	ap_boot_failed(cpu);
+	spinlock_unlock(&boot_lock);
+	BKL_UNLOCK();
+	for (;;)
+		__asm__ volatile("hlt" ::: "memory");
 }
 
 void smp_ap_boot(void)
