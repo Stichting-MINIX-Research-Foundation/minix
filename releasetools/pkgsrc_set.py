@@ -1,21 +1,62 @@
 #!/usr/bin/env python3
-"""Build a MINIX release set containing a pinned pkgsrc source snapshot."""
+"""Build a MINIX release set containing a current pkgsrc source snapshot."""
 
 from __future__ import annotations
 
 import argparse
 import copy
 import hashlib
+import json
 import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import tarfile
+import urllib.parse
 import urllib.request
 
 
 DEFAULT_REPOSITORY = "eclairdosesleekman/pkgsrc"
-DEFAULT_COMMIT = "450278648e4ec2e3880fcfe0bd202f2a75487bc8"
+GITHUB_API = "https://api.github.com"
+
+
+def github_json(url: str) -> dict[str, object]:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "MINIX-pkgsrc-ISO-builder",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        result = json.load(response)
+    if not isinstance(result, dict):
+        raise ValueError(f"unexpected GitHub API response from {url}")
+    return result
+
+
+def resolve_pkgsrc_commit(branch: str | None = None) -> tuple[str, str]:
+    """Resolve a branch name (or the repository default) to an immutable SHA."""
+    repository_url = f"{GITHUB_API}/repos/{DEFAULT_REPOSITORY}"
+    if branch is None:
+        repository = github_json(repository_url)
+        branch = repository.get("default_branch")
+        if not isinstance(branch, str) or not branch:
+            raise ValueError("GitHub did not report a pkgsrc default branch")
+
+    if not branch:
+        raise ValueError("--branch must not be empty")
+
+    encoded_branch = urllib.parse.quote(branch, safe="")
+    commit_url = (
+        f"{GITHUB_API}/repos/{DEFAULT_REPOSITORY}/commits/{encoded_branch}"
+    )
+    commit_data = github_json(commit_url)
+    commit = commit_data.get("sha")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError(f"GitHub returned an invalid pkgsrc commit for {branch!r}")
+    return branch, commit
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,7 +66,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sets-dir", required=True, type=Path)
     parser.add_argument("--work-dir", required=True, type=Path)
     source = parser.add_mutually_exclusive_group()
-    source.add_argument("--commit", default=DEFAULT_COMMIT)
+    source.add_argument("--commit")
+    source.add_argument("--branch")
     source.add_argument("--archive", type=Path)
     return parser.parse_args()
 
@@ -201,7 +243,14 @@ def main() -> int:
         if not source_path.is_file():
             raise FileNotFoundError(f"pkgsrc archive not found: {source_path}")
     else:
-        source_path = cached_source_archive(work_dir, args.commit)
+        if args.commit is not None:
+            commit = args.commit
+            if not re.fullmatch(r"[0-9a-f]{40}", commit):
+                raise ValueError("--commit must be a 40-character lowercase hexadecimal SHA")
+        else:
+            branch, commit = resolve_pkgsrc_commit(args.branch)
+            print(f"Resolved pkgsrc branch {branch!r} to commit {commit}")
+        source_path = cached_source_archive(work_dir, commit)
 
     output_path = sets_dir / "pkgsrc.tgz"
     print(f"Creating {output_path}...")
