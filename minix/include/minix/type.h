@@ -124,7 +124,7 @@ struct kclockinfo {
 };
 
 struct machine {
-  unsigned processors_count;	/* how many cpus are available */
+  unsigned processors_count;	/* number of online CPUs */
   unsigned bsp_id;		/* id of the bootstrap cpu */
   uint32_t processors_online;	/* bit N is set when logical CPU N is online */
   int apic_enabled; /* does the kernel use APIC or not? */
