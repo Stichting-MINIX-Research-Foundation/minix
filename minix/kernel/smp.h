@@ -69,6 +69,7 @@ SPINLOCK_DECLARE(big_kernel_lock)
 SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
+int ap_boot_initializing(unsigned cpu);
 int ap_boot_finished(unsigned cpu);
 void ap_boot_failed(unsigned cpu);
 unsigned smp_online_count(void);
