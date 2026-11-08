@@ -245,7 +245,6 @@ def main() -> int:
     else:
         if args.commit is not None:
             commit = args.commit
-            branch = None
             if not re.fullmatch(r"[0-9a-f]{40}", commit):
                 raise ValueError("--commit must be a 40-character lowercase hexadecimal SHA")
         else:
