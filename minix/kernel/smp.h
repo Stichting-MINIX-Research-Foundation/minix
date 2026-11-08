@@ -76,7 +76,7 @@ int ap_boot_finished(unsigned cpu);
 void ap_boot_failed(unsigned cpu);
 unsigned smp_online_count(void);
 u32_t smp_online_mask(void);
-void smp_shutdown_aps(void );
+int smp_shutdown_aps(void);
 
 /* IPI handlers */
 void smp_ipi_halt_handler(void);
