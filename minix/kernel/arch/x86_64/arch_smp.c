@@ -247,7 +247,7 @@ static void ap_finish_booting(void)
 	 * the BSP already timed out this CPU, this CAS fails and the late AP
 	 * cannot join the system.
 	 */
-	if (!cpu_transition(cpu, CPU_STATE_STARTING, CPU_STATE_INITIALIZING)) {
+	if (!ap_boot_initializing(cpu)) {
 		intr_disable();
 		for (;;)
 			__asm__ volatile("hlt" ::: "memory");
