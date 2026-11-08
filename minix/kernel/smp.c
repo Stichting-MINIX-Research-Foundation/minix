@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <minix/u64.h>
 
 #include "smp.h"
 #include "interrupt.h"
@@ -10,6 +9,9 @@ unsigned ht_per_core;
 unsigned bsp_cpu_id;
 
 struct cpu cpus[CONFIG_MAX_CPUS];
+
+/* BSP clock tick at which each AP entered its initialization state. */
+static clock_t ap_init_started[CONFIG_MAX_CPUS];
 
 /* info passed to another cpu along with a sched ipi */
 struct sched_ipi_data {
@@ -49,45 +51,38 @@ void wait_for_APs_to_finish_booting(void)
 {
 	unsigned cpu;
 	int initializing;
-	u64_t start, now, timeout;
+	clock_t now;
 
 	/*
-	 * An AP owns INITIALIZING once it has entered C code. Bound this phase
-	 * as well as the earlier INIT/SIPI handshake. The BSP may declare an AP
-	 * failed only by winning INITIALIZING -> FAILED; the AP may declare it
-	 * online only by winning INITIALIZING -> ONLINE. Exactly one can win.
+	 * Bound each AP's initialization independently. The timestamp is
+	 * recorded before the AP publishes INITIALIZING, so observing that
+	 * state also guarantees that its deadline is initialized.
 	 *
-	 * The BSP timer has been calibrated by boot_cpu_init_timer() before this
-	 * function is called, so the TSC-based deadline works even while the
-	 * kernel is still in its boot-time interrupt state.
+	 * The BSP owns INITIALIZING -> FAILED on timeout; the AP owns
+	 * INITIALIZING -> ONLINE after all CPU-local setup. These CAS
+	 * transitions are mutually exclusive.
 	 */
-	read_tsc_64(&start);
-	timeout = ms_2_cpu_time(5000);
-
 	BKL_UNLOCK();
 	do {
 		initializing = 0;
+		now = get_monotonic();
+
 		for (cpu = 0; cpu < ncpus; cpu++) {
-			if (cpu_state(cpu) == CPU_STATE_INITIALIZING) {
-				initializing = 1;
-				break;
+			if (cpu_state(cpu) != CPU_STATE_INITIALIZING)
+				continue;
+
+			if (now - ap_init_started[cpu] >= 5 * system_hz) {
+				if (cpu_transition(cpu, CPU_STATE_INITIALIZING,
+				    CPU_STATE_FAILED))
+					printf("WARNING CPU %u timed out during initialization\\n",
+					    cpu);
+				continue;
 			}
+			initializing = 1;
 		}
 
-		if (initializing) {
-			read_tsc_64(&now);
-			if (now - start >= timeout) {
-				for (cpu = 0; cpu < ncpus; cpu++) {
-					if (cpu_transition(cpu,
-					    CPU_STATE_INITIALIZING,
-					    CPU_STATE_FAILED))
-						printf("WARNING CPU %u timed out during initialization\n",
-						    cpu);
-				}
-				break;
-			}
+		if (initializing)
 			arch_pause();
-		}
 	} while (initializing);
 
 	barrier();
@@ -95,8 +90,17 @@ void wait_for_APs_to_finish_booting(void)
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
 		if (cpu_state(cpu) == CPU_STATE_FAILED)
-			printf("WARNING CPU %u failed to initialize\n", cpu);
+			printf("WARNING CPU %u failed to initialize\\n", cpu);
 	}
+}
+
+int ap_boot_initializing(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	/* Publish the per-AP deadline before publishing INITIALIZING. */
+	ap_init_started[cpu] = get_monotonic();
+	return cpu_transition(cpu, CPU_STATE_STARTING, CPU_STATE_INITIALIZING);
 }
 
 int ap_boot_finished(unsigned cpu)
