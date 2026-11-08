@@ -10,7 +10,12 @@ unsigned bsp_cpu_id;
 
 struct cpu cpus[CONFIG_MAX_CPUS];
 
-/* BSP clock tick at which each AP entered its initialization state. */
+/*
+ * BSP clock ticks for the two AP boot phases. Waiting for the boot locks is
+ * accounted separately from CPU-local initialization, which starts only
+ * after an AP owns both boot_lock and the BKL.
+ */
+static clock_t ap_lock_wait_started[CONFIG_MAX_CPUS];
 static clock_t ap_init_started[CONFIG_MAX_CPUS];
 
 /* info passed to another cpu along with a sched ipi */
@@ -50,40 +55,68 @@ SPINLOCK_DEFINE(boot_lock)
 void wait_for_APs_to_finish_booting(void)
 {
 	unsigned cpu;
-	int initializing;
+	int pending;
 	clock_t now;
 
 	/*
-	 * Bound each AP's initialization independently. The timestamp is
-	 * recorded before the AP publishes INITIALIZING, so observing that
-	 * state also guarantees that its deadline is initialized.
+	 * AP initialization is serialized by boot_lock. Give an AP a separate
+	 * lock-acquisition budget that scales with the number of discovered CPUs,
+	 * so earlier APs can use their full initialization budget without causing
+	 * later APs to time out while queued for the locks.
 	 *
-	 * The BSP owns INITIALIZING -> FAILED on timeout; the AP owns
-	 * INITIALIZING -> ONLINE after all CPU-local setup. These CAS
-	 * transitions are mutually exclusive.
+	 * Once an AP owns both boot_lock and the BKL, it publishes INITIALIZING
+	 * with a fresh timestamp. The BSP then applies the independent
+	 * initialization deadline. Publishing each timestamp before its state
+	 * transition ensures the BSP never observes an uninitialized deadline.
+	 *
+	 * The BSP owns WAITING_FOR_LOCK/INITIALIZING -> FAILED on timeout; the AP
+	 * owns WAITING_FOR_LOCK -> INITIALIZING -> ONLINE. These CAS transitions
+	 * ensure a timed-out AP cannot later join the online set.
 	 */
 	BKL_UNLOCK();
 	do {
-		initializing = 0;
+		pending = 0;
 		now = get_monotonic();
 
 		for (cpu = 0; cpu < ncpus; cpu++) {
-			if (cpu_state(cpu) != CPU_STATE_INITIALIZING)
-				continue;
+			switch (cpu_state(cpu)) {
+			case CPU_STATE_WAITING_FOR_LOCK:
+				if (now - ap_lock_wait_started[cpu] >=
+				    5 * system_hz * ncpus) {
+					if (cpu_transition(cpu,
+					    CPU_STATE_WAITING_FOR_LOCK,
+					    CPU_STATE_FAILED)) {
+						printf("WARNING CPU %u timed out waiting for boot locks\n",
+						    cpu);
+					} else if (cpu_state(cpu) ==
+					    CPU_STATE_INITIALIZING) {
+						/* Recheck the new phase on the next pass. */
+						pending = 1;
+					}
+					continue;
+				}
+				pending = 1;
+				break;
 
-			if (now - ap_init_started[cpu] >= 5 * system_hz) {
-				if (cpu_transition(cpu, CPU_STATE_INITIALIZING,
-				    CPU_STATE_FAILED))
-					printf("WARNING CPU %u timed out during initialization\n",
-					    cpu);
-				continue;
+			case CPU_STATE_INITIALIZING:
+				if (now - ap_init_started[cpu] >= 5 * system_hz) {
+					if (cpu_transition(cpu, CPU_STATE_INITIALIZING,
+					    CPU_STATE_FAILED))
+						printf("WARNING CPU %u timed out during initialization\n",
+						    cpu);
+					continue;
+				}
+				pending = 1;
+				break;
+
+			default:
+				break;
 			}
-			initializing = 1;
 		}
 
-		if (initializing)
+		if (pending)
 			arch_pause();
-	} while (initializing);
+	} while (pending);
 
 	barrier();
 	BKL_LOCK();
@@ -94,13 +127,24 @@ void wait_for_APs_to_finish_booting(void)
 	}
 }
 
+int ap_boot_waiting(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	/* Publish the lock-wait deadline before publishing WAITING_FOR_LOCK. */
+	ap_lock_wait_started[cpu] = get_monotonic();
+	return cpu_transition(cpu, CPU_STATE_STARTING,
+	    CPU_STATE_WAITING_FOR_LOCK);
+}
+
 int ap_boot_initializing(unsigned cpu)
 {
 	assert(cpu < ncpus);
 
-	/* Publish the per-AP deadline before publishing INITIALIZING. */
+	/* Start the initialization deadline only after both boot locks are held. */
 	ap_init_started[cpu] = get_monotonic();
-	return cpu_transition(cpu, CPU_STATE_STARTING, CPU_STATE_INITIALIZING);
+	return cpu_transition(cpu, CPU_STATE_WAITING_FOR_LOCK,
+	    CPU_STATE_INITIALIZING);
 }
 
 int ap_boot_finished(unsigned cpu)
