@@ -180,7 +180,7 @@ void smp_shutdown_aps(void)
 {
 	unsigned cpu;
 
-	if (ncpus == 1)
+	if (smp_online_count() <= 1)
 		goto exit_shutdown_aps;
 
 	/* we must let the other cpus enter the kernel mode */
@@ -208,7 +208,7 @@ exit_shutdown_aps:
 
 	lapic_disable();
 
-	ncpus = 1; /* hopefully !!! */
+	ncpus = bsp_cpu_id + 1; /* retain the BSP's logical CPU ID */
 	lapic_addr = lapic_eoi_addr = 0;
 	return;
 }
