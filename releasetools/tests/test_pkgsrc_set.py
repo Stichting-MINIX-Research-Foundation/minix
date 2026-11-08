@@ -24,30 +24,38 @@ class PkgsrcSetTest(unittest.TestCase):
             io.BytesIO(json.dumps({"sha": commit}).encode("utf-8")),
         ]
 
-        with mock.patch("pkgsrc_set.urllib.request.urlopen", side_effect=responses) as urlopen:
+        with mock.patch(
+            "pkgsrc_set.urllib.request.urlopen", side_effect=responses
+        ) as urlopen:
             resolved_branch, resolved_commit = resolve_pkgsrc_commit()
 
         self.assertEqual(resolved_branch, branch)
         self.assertEqual(resolved_commit, commit)
         self.assertEqual(urlopen.call_count, 2)
-        self.assertIn("/repos/eclairdosesleekman/pkgsrc/commits/pkgsrc-2026Q3",
-                      urlopen.call_args_list[1].args[0].full_url)
+        request = urlopen.call_args_list[1].args[0]
+        self.assertIn(
+            "/repos/eclairdosesleekman/pkgsrc/commits/pkgsrc-2026Q3",
+            request.full_url,
+        )
 
     def test_explicit_branch_skips_default_branch_lookup(self) -> None:
         branch = "pkgsrc-2026Q3"
         commit = "5c2d0e756db85b49bcfa5e507298f8f93be85fe8"
         response = io.BytesIO(json.dumps({"sha": commit}).encode("utf-8"))
 
-        with mock.patch("pkgsrc_set.urllib.request.urlopen", return_value=response) as urlopen:
+        with mock.patch(
+            "pkgsrc_set.urllib.request.urlopen", return_value=response
+        ) as urlopen:
             resolved_branch, resolved_commit = resolve_pkgsrc_commit(branch)
 
         self.assertEqual((resolved_branch, resolved_commit), (branch, commit))
         self.assertEqual(urlopen.call_count, 1)
 
     def test_cli_does_not_pin_a_stale_default_commit(self) -> None:
-        with mock.patch("sys.argv", [
-            "pkgsrc_set.py", "--sets-dir", "sets", "--work-dir", "work"
-        ]):
+        with mock.patch(
+            "sys.argv",
+            ["pkgsrc_set.py", "--sets-dir", "sets", "--work-dir", "work"],
+        ):
             args = parse_args()
 
         self.assertIsNone(args.commit)
@@ -61,9 +69,9 @@ class PkgsrcSetTest(unittest.TestCase):
             output_path = directory / "pkgsrc.tgz"
 
             source_files = (
-                ("bootstrap/bootstrap", b"#!/bin/sh\\nexit 0\\n", 0o644),
-                ("bootstrap/cleanup", b"#!/bin/sh\\nexit 0\\n", 0o755),
-                ("README", b"pkgsrc test fixture\\n", 0o644),
+                ("bootstrap/bootstrap", b"bootstrap test entrypoint", 0o644),
+                ("bootstrap/cleanup", b"bootstrap cleanup", 0o755),
+                ("README", b"pkgsrc test fixture", 0o644),
             )
             with tarfile.open(source_path, mode="w:gz") as source:
                 for relative_path, contents, mode in source_files:
