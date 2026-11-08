@@ -28,30 +28,36 @@ EXTERN unsigned bsp_cpu_id;
  */
 void smp_init(void);
 
-#define CPU_IS_BSP		1
-#define CPU_IS_READY		2
-#define CPU_IS_BOOTING		4
-#define CPU_IS_FAILED		8
+/*
+ * CPU startup is a linear state machine. OFFLINE is the zero-initialized
+ * state; only the listed forward transitions are permitted. In particular,
+ * ONLINE and FAILED are mutually exclusive terminal states for boot.
+ */
+#define CPU_STATE_OFFLINE		0
+#define CPU_STATE_STARTING		1
+#define CPU_STATE_INITIALIZING		2
+#define CPU_STATE_ONLINE		3
+#define CPU_STATE_FAILED		4
+#define CPU_STATE_STOPPING		5
 
 struct cpu {
-	volatile u32_t flags;
+	volatile u32_t state;
 };
 
 EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 
 /*
- * CPU state is updated by both the BSP and the AP during startup. Use atomic
- * bit operations so a timeout racing with an AP entry cannot lose FAILED or
- * BOOTING state.
+ * State changes race between the BSP and an AP. Compare-and-swap makes each
+ * transition conditional on its exact predecessor, so a late AP cannot
+ * overwrite a BSP timeout and an AP cannot become ONLINE after FAILED.
  */
-#define cpu_set_flag(cpu, flag) do { \
-	(void)__sync_fetch_and_or(&cpus[cpu].flags, (u32_t)(flag)); \
-} while (0)
-#define cpu_clear_flag(cpu, flag) do { \
-	(void)__sync_fetch_and_and(&cpus[cpu].flags, ~(u32_t)(flag)); \
-} while (0)
-#define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
-#define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
+#define cpu_state(cpu) \
+	__sync_val_compare_and_swap(&cpus[cpu].state, \
+		(u32_t)CPU_STATE_OFFLINE, (u32_t)CPU_STATE_OFFLINE)
+#define cpu_transition(cpu, from, to) \
+	__sync_bool_compare_and_swap(&cpus[cpu].state, \
+		(u32_t)(from), (u32_t)(to))
+#define cpu_is_ready(cpu) (cpu_state(cpu) == CPU_STATE_ONLINE)
 
 /*
  * Big Kernel Lock prevents more then one cpu executing the kernel code
@@ -63,7 +69,8 @@ SPINLOCK_DECLARE(big_kernel_lock)
 SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
-void ap_boot_finished(unsigned cpu);
+int ap_boot_initializing(unsigned cpu);
+int ap_boot_finished(unsigned cpu);
 void ap_boot_failed(unsigned cpu);
 unsigned smp_online_count(void);
 u32_t smp_online_mask(void);
