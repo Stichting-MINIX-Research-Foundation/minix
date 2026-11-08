@@ -1020,7 +1020,10 @@ void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 
 	switch (type) {
 		case APIC_IPI_DEST:
-			if (!cpu_is_ready(cpu))
+			/* Shutdown sends the halt IPI after marking its target STOPPING. */
+			if (!cpu_is_ready(cpu) &&
+			    (vector != APIC_SMP_CPU_HALT_VECTOR ||
+			     cpu_state(cpu) != CPU_STATE_STOPPING))
 				return;
 			lapic_write_icr2(icr2 |	(cpuid2apicid[cpu] << 24));
 			lapic_write_icr1(icr1 |	APIC_ICR_DEST_FIELD | vector);
