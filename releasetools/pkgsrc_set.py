@@ -45,6 +45,9 @@ def resolve_pkgsrc_commit(branch: str | None = None) -> tuple[str, str]:
         if not isinstance(branch, str) or not branch:
             raise ValueError("GitHub did not report a pkgsrc default branch")
 
+    if not branch:
+        raise ValueError("--branch must not be empty")
+
     encoded_branch = urllib.parse.quote(branch, safe="")
     commit_url = (
         f"{GITHUB_API}/repos/{DEFAULT_REPOSITORY}/commits/{encoded_branch}"
