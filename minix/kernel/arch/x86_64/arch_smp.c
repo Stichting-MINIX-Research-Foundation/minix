@@ -144,6 +144,7 @@ static void smp_start_aps(void)
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
 			cpu_set_flag(cpu, CPU_IS_FAILED);
+			cpu_clear_flag(cpu, CPU_IS_BOOTING);
 			printf("WARNING cannot boot cpu %d\n", cpu);
 			continue;
 		}
@@ -152,11 +153,15 @@ static void smp_start_aps(void)
 		lapic_set_timer_one_shot(5000000); 
 
 		while (lapic_read(LAPIC_TIMER_CCR)) {
-			if (ap_cpu_ready == cpu)
+			if (ap_cpu_ready == cpu) {
+				/* The BSP observed the AP's entry acknowledgement. */
+				cpu_set_flag(cpu, CPU_IS_BOOTING);
 				break;
+			}
 		}
 		if (ap_cpu_ready != cpu) {
 			cpu_set_flag(cpu, CPU_IS_FAILED);
+			cpu_clear_flag(cpu, CPU_IS_BOOTING);
 			printf("WARNING : CPU %d didn't reach its startup entry\n",
 					cpu);
 		}
@@ -229,12 +234,10 @@ static void ap_finish_booting(void)
 	}
 
 	/*
-	 * Tell the BSP that this AP reached its C entry point. This is not the
-	 * online notification: the AP must finish all CPU-local initialization
-	 * before it can be selected by the scheduler.
+	 * Tell the BSP that this AP reached its C entry point. The BSP sets
+	 * CPU_IS_BOOTING only after observing this acknowledgement; this is not
+	 * the online notification.
 	 */
-	cpu_set_flag(cpu, CPU_IS_BOOTING);
-	barrier();
 	ap_cpu_ready = cpu;
 
 	/* Set up sysenter/syscall. */
