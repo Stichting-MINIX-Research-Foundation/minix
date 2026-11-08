@@ -31,14 +31,14 @@ static int schedule_process(struct schedproc * rmp, unsigned flags);
 
 #define CPU_DEAD	-1
 
-#define cpu_is_available(c)	(cpu_proc[c] >= 0)
+#define cpu_is_available(c)	(cpu_proc[c] != CPU_DEAD)
 
 #define DEFAULT_USER_TIME_SLICE 200
 
 /* processes created by RS are sysytem processes */
 #define is_system_proc(p)	((p)->parent == RS_PROC_NR || (p)->endpoint <= LAST_SPECIAL_PROC_NR)
 
-static unsigned cpu_proc[CONFIG_MAX_CPUS];
+static int cpu_proc[CONFIG_MAX_CPUS];
 
 static void allow_all_cpus(struct schedproc *proc)
 {
@@ -48,7 +48,25 @@ static void allow_all_cpus(struct schedproc *proc)
 	}
 }
 
-static int next_cpu = 0;
+static void init_cpu_availability(void)
+{
+	unsigned cpu, online = 0;
+
+	for (cpu = 0; cpu < CONFIG_MAX_CPUS; cpu++) {
+		if (machine.processors_online & (1U << cpu)) {
+			cpu_proc[cpu] = 0;
+			online++;
+		} else {
+			cpu_proc[cpu] = CPU_DEAD;
+		}
+	}
+
+	if (machine.bsp_id >= CONFIG_MAX_CPUS ||
+	    !cpu_is_available(machine.bsp_id) ||
+	    online != machine.processors_count)
+		panic("SCHED: inconsistent online CPU information");
+}
+
 static int pick_cpu(struct schedproc * proc)
 {
 #ifdef CONFIG_SMP
@@ -61,8 +79,10 @@ static int pick_cpu(struct schedproc * proc)
 
 	/* if no other cpu available, try BSP */
 	cpu = machine.bsp_id;
+	assert(cpu_is_available(machine.bsp_id));
 	unsigned cpu_load = 1 + cpu_proc[machine.bsp_id];
-	for (c = 0; c < machine.processors_count; c++) {
+	/* Logical CPU IDs may have gaps when an AP failed to start. */
+	for (c = 0; c < CONFIG_MAX_CPUS; c++) {
 		/* skip dead cpus */
 		if (!cpu_is_available(c))
 			continue;
@@ -336,6 +356,7 @@ void init_scheduling(void)
 {
 	int r;
 
+	init_cpu_availability();
 	balance_timeout = BALANCE_TIMEOUT * sys_hz();
 
 	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
