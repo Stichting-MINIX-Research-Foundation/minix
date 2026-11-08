@@ -50,9 +50,10 @@ void wait_for_APs_to_finish_booting(void)
 	int booting;
 
 	/*
-	 * APs set CPU_IS_BOOTING as soon as they reach their C entry point.
-	 * Let them complete CPU-local initialization while the BSP drops the BKL.
-	 * A CPU is not visible to user-space scheduling until CPU_IS_READY is set.
+	 * The BSP marks APs whose C-entry acknowledgement it observed as
+	 * CPU_IS_BOOTING. Let those APs complete CPU-local initialization while
+	 * the BSP drops the BKL. A CPU is not visible to user-space scheduling
+	 * until CPU_IS_READY is set.
 	 */
 	BKL_UNLOCK();
 	do {
