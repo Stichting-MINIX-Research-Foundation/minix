@@ -1036,6 +1036,40 @@ void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 
 }
 
+
+/*
+ * Send a halt IPI without allowing a busy local APIC command register to
+ * stall system shutdown forever. The one-shot timer also bounds the caller's
+ * subsequent wait for the target CPU to acknowledge the halt IPI.
+ */
+int apic_send_smp_halt_ipi(unsigned cpu, u32_t timeout_us)
+{
+	u32_t icr1, icr2;
+
+	assert(cpu < ncpus);
+	if (ncpus == 1)
+		return 0;
+
+	lapic_set_timer_one_shot(timeout_us);
+	while (lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) {
+		if (lapic_read(LAPIC_TIMER_CCR) == 0)
+			return -1;
+		arch_pause();
+	}
+
+	if (lapic_read(LAPIC_TIMER_CCR) == 0 ||
+	    cpu_state(cpu) != CPU_STATE_STOPPING)
+		return -1;
+
+	icr1 = lapic_read(LAPIC_ICR1) & 0xFFF0F800;
+	icr2 = lapic_read(LAPIC_ICR2) & 0xFFFFFF;
+	lapic_write(LAPIC_ICR2, icr2 | (cpuid2apicid[cpu] << 24));
+	lapic_write(LAPIC_ICR1, icr1 | APIC_ICR_DEST_FIELD |
+	    APIC_SMP_CPU_HALT_VECTOR);
+
+	return 0;
+}
+
 int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 {
 	int timeout;
