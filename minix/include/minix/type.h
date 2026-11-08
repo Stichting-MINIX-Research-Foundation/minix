@@ -15,6 +15,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#if defined(CONFIG_MAX_CPUS) && CONFIG_MAX_CPUS > 32
+#error "MINIX machine CPU online mask supports at most 32 CPUs"
+#endif
+
 /* Type definitions. */
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
@@ -122,7 +126,7 @@ struct kclockinfo {
 struct machine {
   unsigned processors_count;	/* how many cpus are available */
   unsigned bsp_id;		/* id of the bootstrap cpu */
-  int padding;			/* used to be protected */
+  uint32_t processors_online;	/* bit N is set when logical CPU N is online */
   int apic_enabled; /* does the kernel use APIC or not? */
   phys_bytes	acpi_rsdp; /* where is the acpi RSDP */
   unsigned int board_id;   /* Identifier for the board see   */
