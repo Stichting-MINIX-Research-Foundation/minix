@@ -41,6 +41,13 @@ To select a branch other than the repository default, set
 under the build work directory using its resolved commit SHA. The first ISO
 build needs network access on the Ubuntu build host.
 
+The pkgsrc default branch carries the MINIX-specific bootstrap fixes used by
+this port: libnbcompat avoids Autoconf finalization; bmake handles spurious
+MINIX token-pipe readiness notifications that return EAGAIN; and libarchive
+uses a conservative Libtool command-line limit and the NetBSD ELF linker path.
+Its configure logic also skips unsupported crypto-provider probes and optional
+confcache serialization on MINIX.
+
 For direct invocation after a release build, run
 `OBJ=../build bash releasetools/x86_64_uefi_cdimage.sh`. Set
 `CREATE_IMAGE_ONLY=0` to have the helper run the release build before
