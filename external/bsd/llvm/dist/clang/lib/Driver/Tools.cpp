@@ -6317,6 +6317,12 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                        "/4.2.1"));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
+
+  // Add the default library search paths.
+  const ToolChain::path_list &Paths = getToolChain().getFilePaths();
+  for (const auto &Path : Paths)
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
   Args.AddAllArgs(CmdArgs, options::OPT_s);
