@@ -1253,8 +1253,16 @@ next_head(ARCHD *arcn)
 		 * us that this block cannot contain a valid header either, so
 		 * we then throw out the entire block and start over.
 		 */
-		if ((*frmt->rd)(arcn, hdbuf) == 0)
+		if ((*frmt->rd)(arcn, hdbuf) == 0) {
+			if (arcn->type == PAX_XHDR || arcn->type == PAX_GHDR) {
+				if (ustar_pax_ext(arcn) < 0)
+					return -1;
+				res = hsz;
+				hdend = hdbuf;
+				continue;
+			}
 			break;
+		}
 
 		if (!frmt->inhead) {
 			/*
