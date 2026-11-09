@@ -5,4 +5,7 @@
 TESTSDIR=	${TESTSBASE}/bin/pax
 TESTS_SH=	t_pax
 
+FILES=		pax-extended.tar.gz.uu
+FILESDIR=	${TESTSDIR}
+
 .include <bsd.test.mk>

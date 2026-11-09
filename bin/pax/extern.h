@@ -306,6 +306,7 @@ int tar_rd(ARCHD *, char *);
 int tar_wr(ARCHD *);
 int ustar_strd(void);
 int ustar_stwr(void);
+int ustar_pax_ext(ARCHD *);
 int ustar_id(char *, int);
 int ustar_rd(ARCHD *, char *);
 int ustar_wr(ARCHD *);

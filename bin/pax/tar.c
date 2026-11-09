@@ -54,6 +54,7 @@ __RCSID("$NetBSD: tar.c,v 1.75 2019/03/20 03:13:39 gutteridge Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -740,6 +741,320 @@ tar_wr(ARCHD *arcn)
  * Routines for POSIX ustar
  */
 
+
+/*
+ * POSIX.1-2001 PAX extended header support.
+ *
+ * Local attributes apply to the next archive member; global attributes
+ * remain in effect until replaced or removed by an empty value.
+ */
+#define PAX_MAX_EXTLEN (1024 * 1024)
+
+struct pax_attrs {
+	char *path;
+	char *linkpath;
+	char *size;
+	char *uid;
+	char *gid;
+	char *mtime;
+	char *atime;
+	char *ctime;
+	char *mode;
+	char *devmajor;
+	char *devminor;
+};
+
+static struct pax_attrs pax_global_attrs;
+static struct pax_attrs pax_local_attrs;
+
+static void
+pax_attrs_clear(struct pax_attrs *attrs)
+{
+#define PAX_FREE(field) do { free(attrs->field); attrs->field = NULL; } while (0)
+	PAX_FREE(path);
+	PAX_FREE(linkpath);
+	PAX_FREE(size);
+	PAX_FREE(uid);
+	PAX_FREE(gid);
+	PAX_FREE(mtime);
+	PAX_FREE(atime);
+	PAX_FREE(ctime);
+	PAX_FREE(mode);
+	PAX_FREE(devmajor);
+	PAX_FREE(devminor);
+#undef PAX_FREE
+}
+
+static char **
+pax_attr_slot(struct pax_attrs *attrs, const char *key, size_t keylen)
+{
+#define PAX_KEY(name, field) \
+	if (keylen == sizeof(name) - 1 && \
+	    memcmp(key, name, sizeof(name) - 1) == 0) \
+		return &attrs->field
+	PAX_KEY("path", path);
+	PAX_KEY("linkpath", linkpath);
+	PAX_KEY("size", size);
+	PAX_KEY("uid", uid);
+	PAX_KEY("gid", gid);
+	PAX_KEY("mtime", mtime);
+	PAX_KEY("atime", atime);
+	PAX_KEY("ctime", ctime);
+	PAX_KEY("mode", mode);
+	PAX_KEY("devmajor", devmajor);
+	PAX_KEY("devminor", devminor);
+#undef PAX_KEY
+	return NULL;
+}
+
+static int
+pax_attr_set(struct pax_attrs *attrs, const char *key, size_t keylen,
+    const char *value, size_t valuelen, int global)
+{
+	char **slot, *copy;
+
+	slot = pax_attr_slot(attrs, key, keylen);
+	if (slot == NULL)
+		return 0;		/* An extension we do not interpret. */
+	if (global && valuelen == 0) {
+		free(*slot);
+		*slot = NULL;
+		return 0;
+	}
+	if ((copy = malloc(valuelen + 1)) == NULL)
+		return -1;
+	memcpy(copy, value, valuelen);
+	copy[valuelen] = '\0';
+	free(*slot);
+	*slot = copy;
+	return 0;
+}
+
+/*
+ * Parse the length-prefixed records specified by the PAX format.  The
+ * record length includes the decimal length, separating space, key, '='
+ * and trailing newline.
+ */
+static int
+pax_parse(char *buf, size_t buflen, int global)
+{
+	struct pax_attrs *attrs;
+	size_t off, rec_len, digit;
+	char *record, *space, *end, *eq, *p;
+	int malformed;
+
+	attrs = global ? &pax_global_attrs : &pax_local_attrs;
+	off = 0;
+	while (off < buflen) {
+		record = buf + off;
+		space = memchr(record, ' ', buflen - off);
+		if (space == NULL || space == record) {
+			tty_warn(0, "Malformed PAX extended header record");
+			break;
+		}
+		rec_len = 0;
+		malformed = 0;
+		for (p = record; p < space; p++) {
+			if (*p < '0' || *p > '9') {
+				malformed = 1;
+				break;
+			}
+			digit = (size_t)(*p - '0');
+			if (rec_len > ((size_t)-1 - digit) / 10) {
+				malformed = 1;
+				break;
+			}
+			rec_len = rec_len * 10 + digit;
+		}
+		if (malformed || rec_len > buflen - off ||
+		    rec_len <= (size_t)(space - record) + 2) {
+			tty_warn(0, "Malformed PAX extended header record");
+			break;
+		}
+		end = record + rec_len;
+		if (end[-1] != '\n') {
+			tty_warn(0, "Malformed PAX extended header record");
+			break;
+		}
+		eq = memchr(space + 1, '=', (size_t)(end - space - 2));
+		if (eq == NULL || eq == space + 1 ||
+		    memchr(eq + 1, '\0', (size_t)(end - eq - 2)) != NULL) {
+			tty_warn(0, "Malformed PAX extended header record");
+			break;
+		}
+		if (pax_attr_set(attrs, space + 1,
+		    (size_t)(eq - (space + 1)), eq + 1,
+		    (size_t)(end - eq - 2), global) < 0) {
+			syswarn(1, errno, "Cannot store PAX extended header");
+			return -1;
+		}
+		off += rec_len;
+	}
+	return 0;
+}
+
+static int
+pax_uint(const char *str, uintmax_t *value)
+{
+	char *end;
+
+	if (*str == '-')
+		return -1;
+	errno = 0;
+	*value = strtoumax(str, &end, 10);
+	if (errno != 0 || end == str || *end != '\0')
+		return -1;
+	return 0;
+}
+
+static int
+pax_time(const char *str, time_t *value)
+{
+	char *end, *p;
+	intmax_t n;
+	time_t t;
+
+	errno = 0;
+	n = strtoimax(str, &end, 10);
+	if (errno != 0 || end == str)
+		return -1;
+	if (*end == '.') {
+		p = end + 1;
+		if (*p == '\0')
+			return -1;
+		for (; *p != '\0'; p++) {
+			if (*p < '0' || *p > '9')
+				return -1;
+		}
+	} else if (*end != '\0')
+		return -1;
+	t = (time_t)n;
+	if ((intmax_t)t != n)
+		return -1;
+	*value = t;
+	return 0;
+}
+
+static void
+pax_apply_attrs(ARCHD *arcn)
+{
+	struct pax_attrs *attrs[2];
+	uintmax_t n;
+	off_t osize;
+	uid_t uid;
+	gid_t gid;
+	time_t t;
+	size_t len;
+	int i;
+
+	attrs[0] = &pax_global_attrs;
+	attrs[1] = &pax_local_attrs;
+	for (i = 0; i < 2; i++) {
+		if (attrs[i]->path != NULL && attrs[i]->path[0] != '\0') {
+			len = strlen(attrs[i]->path);
+			if (len >= sizeof(arcn->name))
+				tty_warn(0, "PAX pathname is too long; ignoring");
+			else {
+				memcpy(arcn->name, attrs[i]->path, len + 1);
+				arcn->nlen = (int)len;
+			}
+		}
+		if (attrs[i]->linkpath != NULL) {
+			len = strlen(attrs[i]->linkpath);
+			if (len >= sizeof(arcn->ln_name))
+				tty_warn(0, "PAX link pathname is too long; ignoring");
+			else {
+				memcpy(arcn->ln_name, attrs[i]->linkpath, len + 1);
+				arcn->ln_nlen = (int)len;
+			}
+		}
+		if (attrs[i]->size != NULL) {
+			if (pax_uint(attrs[i]->size, &n) < 0 ||
+			    (osize = (off_t)n) < 0 || (uintmax_t)osize != n)
+				tty_warn(0, "Invalid PAX size attribute; ignoring");
+			else
+				arcn->sb.st_size = osize;
+		}
+		if (attrs[i]->uid != NULL) {
+			if (pax_uint(attrs[i]->uid, &n) < 0 ||
+			    (uid = (uid_t)n, (uintmax_t)uid != n))
+				tty_warn(0, "Invalid PAX uid attribute; ignoring");
+			else
+				arcn->sb.st_uid = uid;
+		}
+		if (attrs[i]->gid != NULL) {
+			if (pax_uint(attrs[i]->gid, &n) < 0 ||
+			    (gid = (gid_t)n, (uintmax_t)gid != n))
+				tty_warn(0, "Invalid PAX gid attribute; ignoring");
+			else
+				arcn->sb.st_gid = gid;
+		}
+		if (attrs[i]->mtime != NULL) {
+			if (pax_time(attrs[i]->mtime, &t) < 0)
+				tty_warn(0, "Invalid PAX mtime attribute; ignoring");
+			else
+				arcn->sb.st_mtime = t;
+		}
+		if (attrs[i]->atime != NULL) {
+			if (pax_time(attrs[i]->atime, &t) < 0)
+				tty_warn(0, "Invalid PAX atime attribute; ignoring");
+			else
+				arcn->sb.st_atime = t;
+		}
+		if (attrs[i]->ctime != NULL) {
+			if (pax_time(attrs[i]->ctime, &t) < 0)
+				tty_warn(0, "Invalid PAX ctime attribute; ignoring");
+			else
+				arcn->sb.st_ctime = t;
+		}
+		if (attrs[i]->mode != NULL) {
+			char *end;
+			errno = 0;
+			n = strtoumax(attrs[i]->mode, &end, 8);
+			if (errno != 0 || end == attrs[i]->mode || *end != '\0' ||
+			    n > 07777)
+				tty_warn(0, "Invalid PAX mode attribute; ignoring");
+			else
+				arcn->sb.st_mode = (mode_t)n;
+		}
+	}
+}
+
+static void
+pax_apply_device_attrs(ARCHD *arcn)
+{
+	struct pax_attrs *attrs[2];
+	uintmax_t maj, min, n;
+	int changed, i;
+
+	attrs[0] = &pax_global_attrs;
+	attrs[1] = &pax_local_attrs;
+	maj = (uintmax_t)MAJOR(arcn->sb.st_rdev);
+	min = (uintmax_t)MINOR(arcn->sb.st_rdev);
+	changed = 0;
+	for (i = 0; i < 2; i++) {
+		if (attrs[i]->devmajor != NULL) {
+			if (pax_uint(attrs[i]->devmajor, &n) < 0)
+				tty_warn(0, "Invalid PAX devmajor attribute; ignoring");
+			else {
+				maj = n;
+				changed = 1;
+			}
+		}
+		if (attrs[i]->devminor != NULL) {
+			if (pax_uint(attrs[i]->devminor, &n) < 0)
+				tty_warn(0, "Invalid PAX devminor attribute; ignoring");
+			else {
+				min = n;
+				changed = 1;
+			}
+		}
+	}
+	if (changed)
+		arcn->sb.st_rdev = TODEV((dev_t)maj, (dev_t)min);
+}
+
+
 /*
  * ustar_strd()
  *	initialization for ustar read
@@ -750,8 +1065,51 @@ tar_wr(ARCHD *arcn)
 int
 ustar_strd(void)
 {
+	pax_attrs_clear(&pax_global_attrs);
+	pax_attrs_clear(&pax_local_attrs);
 	return 0;
 }
+
+/*
+ * ustar_pax_ext()
+ *	Read and parse the data belonging to a POSIX PAX extended header.
+ *	The enclosing archive loop consumes these pseudo-members and then
+ *	continues with the following real member.
+ */
+int
+ustar_pax_ext(ARCHD *arcn)
+{
+	char *buf;
+	size_t len;
+	int global, ret;
+
+	if (arcn->skip < 0 || arcn->skip > PAX_MAX_EXTLEN) {
+		tty_warn(0, "PAX extended header is too large; ignoring attributes");
+		return rd_skip(arcn->skip + arcn->pad) == 0 ? 0 : -1;
+	}
+	len = (size_t)arcn->skip;
+	if ((buf = malloc(len + 1)) == NULL) {
+		syswarn(1, errno, "Cannot allocate PAX extended header");
+		(void)rd_skip(arcn->skip + arcn->pad);
+		return -1;
+	}
+	if (len != 0 && rd_wrbuf(buf, (int)len) != (int)len) {
+		free(buf);
+		tty_warn(1, "Truncated PAX extended header");
+		return -1;
+	}
+	if (arcn->pad != 0 && rd_skip(arcn->pad) != 0) {
+		free(buf);
+		return -1;
+	}
+	buf[len] = '\0';
+	global = arcn->type == PAX_GHDR;
+	ret = pax_parse(buf, len, global);
+	free(buf);
+	return ret;
+}
+
+
 
 /*
  * ustar_stwr()
@@ -867,6 +1225,15 @@ ustar_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
+	if (hd->typeflag == FILEXTYPE || hd->typeflag == GLOBXTYPE) {
+		if (arcn->sb.st_size < 0)
+			return -1;
+		arcn->type = hd->typeflag == FILEXTYPE ? PAX_XHDR : PAX_GHDR;
+		arcn->skip = arcn->sb.st_size;
+		arcn->pad = TAR_PAD(arcn->skip);
+		return 0;
+	}
+
 	/*
 	 * If we can find the ascii names for gname and uname in the password
 	 * and group files we will use the uid's and gid they bind. Otherwise
@@ -879,6 +1246,9 @@ ustar_rd(ARCHD *arcn, char *buf)
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
 	if (uid_from_user(hd->uname, &(arcn->sb.st_uid)) < 0)
 		arcn->sb.st_uid = (uid_t)asc_u32(hd->uid, sizeof(hd->uid), OCT);
+
+	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE)
+		pax_apply_attrs(arcn);
 
 	/*
 	 * set the defaults, these may be changed depending on the file type
@@ -956,13 +1326,6 @@ ustar_rd(ARCHD *arcn, char *buf)
 			    hd->typeflag == LONGLINKTYPE ? "Link" : "File");
 		}
 		break;
-	case FILEXTYPE:
-	case GLOBXTYPE:
-		    tty_warn(0, "%s extended headers posix ustar archive."
-		    " Extracting as plain files. Following files might be"
-		    " in the wrong directory or have wrong attributes.",
-			hd->typeflag == FILEXTYPE ? "File" : "Global");
-		    /*FALLTHROUGH*/
 	case CONTTYPE:
 	case AREGTYPE:
 	case REGTYPE:
@@ -976,6 +1339,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 		arcn->skip = arcn->sb.st_size;
 		arcn->sb.st_mode |= S_IFREG;
 		break;
+	}
+	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
+		pax_apply_device_attrs(arcn);
+		pax_attrs_clear(&pax_local_attrs);
 	}
 	return 0;
 }
