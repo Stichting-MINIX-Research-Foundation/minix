@@ -272,6 +272,29 @@ cat $f $f $f | sort | uniq >x
 sort <$f >y
 if cmp -s x y; then : ; else bomb "Error in pipeline test 2"; fi
 
+# Test command substitution with output larger than the old pipe capacity.
+cat >pipewrite.c <<END
+#include <string.h>
+#include <unistd.h>
+
+int
+main(void)
+{
+	char buf[8192];
+
+	memset(buf, 'x', sizeof(buf));
+	return write(STDOUT_FILENO, buf, sizeof(buf)) != (ssize_t)sizeof(buf);
+}
+END
+$CC -o pipewrite pipewrite.c >/dev/null 2>&1 ||
+    bomb "Error compiling large pipe write test"
+pipe_output=`./pipewrite`
+if test $? -ne 0; then bomb "Error on large command substitution"; fi
+printf '%s' "$pipe_output" >pipe-output
+if test "`wc -c <pipe-output`" -ne 8192; then
+    bomb "Error on large command substitution output size"
+fi
+
 cd ..
 rm -rf $TESTDIR
 
