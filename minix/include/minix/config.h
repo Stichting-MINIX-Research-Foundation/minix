@@ -83,7 +83,7 @@
  * PIPE_BUF so that "is there room for an atomic write" is a question with
  * more than one answer.  PFS allocates this much per open pipe.
  */
-#define PIPE_SIZE	  4096	/* pipe capacity in bytes (n * PIPE_BUF) */
+#define PIPE_SIZE	 32768	/* pipe capacity in bytes (n * PIPE_BUF) */
 
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *
