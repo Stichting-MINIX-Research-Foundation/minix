@@ -132,13 +132,13 @@ read confirmation || fail "Could not read confirmation."
 
 # Validate the selected release archives before changing the target disk.
 # Either LLVM or GCC builds may provide the compiler/toolchain set name.
-set_list="minix-base minix-comp minix-comp-gcc minix-games minix-man minix-tests tests minix-kernel"
+set_list="minix-base minix-comp minix-comp-gcc minix-games minix-man minix-tests tests minix-kernel pkgsrc"
 for set_name in $set_list; do
 	case "$set_name" in
-		minix-base|minix-kernel)
-			[ -s "$SETS_DIR/$set_name.tgz" ] || fail "Required release set $set_name.tgz is missing."
-			;;
-	esac
+    minix-base|minix-kernel|pkgsrc)
+        [ -s "$SETS_DIR/$set_name.tgz" ] || fail "Required release set $set_name.tgz is missing."
+        ;;
+esac
 done
 
 command -v gpt >/dev/null 2>&1 || fail "The gpt utility is not available."
