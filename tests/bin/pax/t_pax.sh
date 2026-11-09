@@ -54,10 +54,9 @@ pax_extended_header_head() {
 }
 pax_extended_header_body() {
 	atf_check -s eq:0 -o empty -e empty \
-	    sh -c 'gzip -dc "$1" > archive.tar' sh \
-	    "$(atf_get_srcdir)/pax-extended.tar.gz"
+	    uudecode "$(atf_get_srcdir)/pax-extended.tar.gz.uu"
 
-	atf_check -s eq:0 -o empty -e empty pax -r -f archive.tar
+	atf_check -s eq:0 -o empty -e empty pax -r -f pax-extended.tar.gz
 	atf_check -s eq:0 -o inline:"pax-header-ok\n" -e empty \
 	    cat pax-test/path-overridden.txt
 	atf_check -s eq:0 -o inline:"global-header-ok\n" -e empty \
