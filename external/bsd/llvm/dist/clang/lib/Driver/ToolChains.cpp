@@ -2640,14 +2640,12 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
   : Generic_ELF(D, Triple, Args) {
 
   if (getDriver().UseStdLib) {
-    // When targeting a 32-bit platform, try the special directory used on
-    // 64-bit hosts, and only fall back to the main library directory if that
-    // doesn't work.
-    // FIXME: It'd be nicer to test if this directory exists, but I'm not sure
-    // what all logic is needed to emulate the '=' prefix here.
+    // On 64-bit hosts, search the 32-bit library directory first.
+    // Build paths from the driver's sysroot explicitly instead of relying
+    // on ld's "=/..." syntax, which depends on the linker's configured sysroot.
     switch (Triple.getArch()) {
     case llvm::Triple::x86:
-      getFilePaths().push_back("=/usr/lib/i386");
+      getFilePaths().push_back(getDriver().SysRoot + "/usr/lib/i386");
       break;
 #if 0 // LSC: Not yet useful for MINIX, but kept to simplify comparison with NetBSD 
     case llvm::Triple::arm:
@@ -2686,7 +2684,7 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
       break;
     }
 
-    getFilePaths().push_back("=/usr/lib");
+    getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
   }
 }
 
