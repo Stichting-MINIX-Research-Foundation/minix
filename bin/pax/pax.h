@@ -136,6 +136,8 @@ typedef struct {
 #define PAX_CTG		10		/* high performance file */
 #define PAX_GLL		11		/* GNU long symlink */
 #define PAX_GLF		12		/* GNU long file */
+#define PAX_XHDR	13		/* POSIX PAX file extended header */
+#define PAX_GHDR	14		/* POSIX PAX global extended header */
 } ARCHD;
 
 /*
