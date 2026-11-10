@@ -98,7 +98,7 @@ modes in a VM before installing on physical hardware.
 
 ```sh
 cd /usr/pkgsrc/bootstrap
-./bootstrap
+./bootstrap --prefer-pkgsrc openssl
 ```
 
 ## Existing amd64 live image
