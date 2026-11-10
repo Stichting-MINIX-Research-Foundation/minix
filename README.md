@@ -98,7 +98,7 @@ modes in a VM before installing on physical hardware.
 
 ```sh
 cd /usr/pkgsrc/bootstrap
-env CC=clang LDFLAGS="-L/usr/lib" ./bootstrap --machine-arch x86_64 --prefix /usr/pkg --pkgdbdir /usr/pkg/pkgdb --sysconfdir /usr/pkg/etc --varbase /var
+./bootstrap
 ```
 
 ## Existing amd64 live image
