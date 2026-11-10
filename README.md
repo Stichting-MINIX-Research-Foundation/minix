@@ -117,7 +117,7 @@ The live disk image is produced under
 - Improvement of SMP and stable SMP operation (check up to 4 cores).
 - Made amd64 version guided installer.
 - Installation successful and boot from installed virtual disk.
-- Bootstrap successful pkgsrc 2026Q3.
+- Bootstrap successful of pkgsrc 2026Q3.
 - POSIX test status recorded by the port author: 94/97 passed.
 
 The amd64 port and installation media are experimental; test the ISO in
