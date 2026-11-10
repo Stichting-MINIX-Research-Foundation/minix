@@ -112,12 +112,8 @@ cp minix/commands/MAKEDEV/MAKEDEV.sh "${MAKEDEV_TMP}"
 chmod 0755 "${MAKEDEV_TMP}"
 mv -f "${MAKEDEV_TMP}" "${ROOT_DIR}/dev/MAKEDEV"
 
-# The MINIX-specific release set manifest must include the bmake executable.
-# Refuse to produce an ISO that would boot without the build tool.
-if [ ! -x "${ROOT_DIR}/usr/bin/bmake" ]; then
-	echo "Missing /usr/bin/bmake in the staged ${SETS} release set; rebuild minix-base.tgz." >&2
-	exit 1
-fi
+# pkgsrc bootstraps its own bmake under /usr/pkg, so the MINIX base set
+# deliberately omits /usr/bin/bmake and its /usr/bin/make symlink.
 
 # The installer root is extracted from release-set archives.  On an
 # incremental build those archives can lag behind the checked-out source,

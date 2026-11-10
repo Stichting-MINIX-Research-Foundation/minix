@@ -334,7 +334,7 @@
 ./usr/bin/banner                                        minix-base
 ./usr/bin/basename                                      minix-base
 ./usr/bin/bdes                                          minix-base      crypto
-./usr/bin/bmake                                         minix-base
+./usr/bin/bmake                                         minix-base	obsolete
 ./usr/bin/bsdtar                                        minix-base
 ./usr/bin/bsfilt                                        minix-base
 ./usr/bin/btrace                                        minix-base      obsolete
@@ -478,7 +478,7 @@
 ./usr/bin/m4                                            minix-base
 ./usr/bin/machine                                       minix-base
 ./usr/bin/mail                                          minix-base
-./usr/bin/make                                          minix-base
+./usr/bin/make                                          minix-base	obsolete
 ./usr/bin/makeinfo                                      minix-base
 ./usr/bin/man                                           minix-base
 ./usr/bin/mandoc                                        minix-base
