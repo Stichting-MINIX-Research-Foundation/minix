@@ -102,6 +102,51 @@ mthread_rwlock_t *rwlock; /* The rwlock to be write locked */
 }
 
 /*===========================================================================*
+ *				mthread_rwlock_tryrdlock		     *
+ *===========================================================================*/
+int mthread_rwlock_tryrdlock(rwlock)
+mthread_rwlock_t *rwlock; /* The rwlock to be read locked */
+{
+  /* Acquire a reader lock if that does not have to wait: no writer holds the
+   * lock or waits for it (rdlock would queue behind a waiting writer).
+   * Threads only switch in mthread calls, so the check cannot race.
+   */
+  if (!rwlock)
+	return EINVAL;
+
+  if (rwlock->writer != NO_THREAD)
+	return EBUSY;
+
+  rwlock->readers++;
+
+  return 0;
+}
+
+/*===========================================================================*
+ *				mthread_rwlock_trywrlock		     *
+ *===========================================================================*/
+int mthread_rwlock_trywrlock(rwlock)
+mthread_rwlock_t *rwlock; /* The rwlock to be write locked */
+{
+  /* Acquire a writer lock if it is free: no writer and no readers. */
+  int r;
+
+  if (!rwlock)
+	return EINVAL;
+
+  if (rwlock->writer != NO_THREAD || rwlock->readers > 0)
+	return EBUSY;
+
+  r = mthread_mutex_trylock(&rwlock->queue);
+  if (r != 0)
+	return r;
+
+  rwlock->writer = current_thread;
+
+  return 0;
+}
+
+/*===========================================================================*
  *				mthread_rwlock_unlock				*
  *===========================================================================*/
 int mthread_rwlock_unlock(rwlock)
@@ -133,5 +178,7 @@ mthread_rwlock_t *rwlock; /* The rwlock to be unlocked */
 __weak_alias(pthread_rwlock_destroy, mthread_rwlock_destroy)
 __weak_alias(pthread_rwlock_rdlock, mthread_rwlock_rdlock)
 __weak_alias(pthread_rwlock_wrlock, mthread_rwlock_wrlock)
+__weak_alias(pthread_rwlock_tryrdlock, mthread_rwlock_tryrdlock)
+__weak_alias(pthread_rwlock_trywrlock, mthread_rwlock_trywrlock)
 __weak_alias(pthread_rwlock_unlock, mthread_rwlock_unlock)
 

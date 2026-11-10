@@ -30,9 +30,15 @@
 /*===========================================================================*
  *				pthread_mutex_init			     *
  *===========================================================================*/
-int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mattr)
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mattr)
 {
-	return mthread_mutex_init(mutex, mattr);
+	mthread_mutexattr_t a;
+
+	/* The attribute is a pointer-sized value: pass a copy (no cast-qual). */
+	if (mattr == NULL)
+		return mthread_mutex_init(mutex, NULL);
+	a = *mattr;
+	return mthread_mutex_init(mutex, &a);
 }
 
 /*===========================================================================*
@@ -87,9 +93,14 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
 /*===========================================================================*
  *				pthread_cond_init			     *
  *===========================================================================*/
-int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *cattr)
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cattr)
 {
-	return mthread_cond_init(cond, cattr);
+	mthread_condattr_t a;
+
+	if (cattr == NULL)
+		return mthread_cond_init(cond, NULL);
+	a = *cattr;
+	return mthread_cond_init(cond, &a);
 }
 
 /*===========================================================================*
@@ -182,7 +193,8 @@ int pthread_condattr_getclock(const pthread_condattr_t *attr,
 /*===========================================================================*
  *				pthread_rwlock_init			     *
  *===========================================================================*/
-int pthread_rwlock_init(pthread_rwlock_t *rwlock, pthread_rwlockattr_t *UNUSED(attr))
+int pthread_rwlock_init(pthread_rwlock_t *rwlock,
+	const pthread_rwlockattr_t *UNUSED(attr))
 {
 	return mthread_rwlock_init(rwlock);
 }
@@ -222,4 +234,67 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t *mattr, int *type)
 		return EINVAL;
 	*type = (int) (intptr_t) *mattr;
 	return 0;
+}
+
+/*===========================================================================*
+ *			Thread IDs: pthread_t vs. mthread_thread_t	     *
+ *===========================================================================*/
+/* mthread numbers the main thread MAIN_THREAD (-1) and created threads from
+ * 0 up.  Portable code - libstdc++'s std::thread above all - takes a
+ * pthread_t of 0 to mean "no thread", so the first thread created would
+ * look non-joinable.  The pthread API therefore hands out mthread IDs offset
+ * by PTHREAD_ID_BIAS: the main thread is 1, created threads are 2 and up, and
+ * 0 is never a valid pthread_t.
+ */
+#define PTHREAD_ID_BIAS	2
+#define TO_PTHREAD(t)	((pthread_t) ((t) + PTHREAD_ID_BIAS))
+#define TO_MTHREAD(t)	((mthread_thread_t) ((t) - PTHREAD_ID_BIAS))
+
+int pthread_create(pthread_t *thread, const pthread_attr_t *tattr,
+	void *(*proc)(void *), void *arg)
+{
+	mthread_thread_t t;
+	mthread_attr_t a;
+	int r;
+
+	if (tattr != NULL)
+		a = *tattr;
+	if ((r = mthread_create(&t, tattr != NULL ? &a : NULL, proc, arg)) == 0 &&
+	    thread != NULL)
+		*thread = TO_PTHREAD(t);
+	return r;
+}
+
+int pthread_detach(pthread_t thread)
+{
+	return mthread_detach(TO_MTHREAD(thread));
+}
+
+int pthread_equal(pthread_t l, pthread_t r)
+{
+	return l == r;
+}
+
+int pthread_join(pthread_t thread, void **value)
+{
+	return mthread_join(TO_MTHREAD(thread), value);
+}
+
+pthread_t pthread_self(void)
+{
+	return TO_PTHREAD(mthread_self());
+}
+
+/*===========================================================================*
+ *				__libc_thr_yield			     *
+ *===========================================================================*/
+/* <sched.h> renames sched_yield() to __libc_thr_yield() (NetBSD).  libc has
+ * a weak stub for programs without threads; this strong definition makes
+ * sched_yield() - and so std::this_thread::yield() - switch threads.
+ */
+int __libc_thr_yield(void);
+
+int __libc_thr_yield(void)
+{
+	return mthread_yield();
 }

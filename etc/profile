@@ -3,8 +3,9 @@
 # System-wide .profile file for sh(1).
 
 # MINIX specifics
-# Set library path
-export LD_LIBRARY_PATH="/lib:/usr/lib:/usr/X11R7/lib:/usr/pkg/lib:/usr/local/lib"
+# No LD_LIBRARY_PATH (as on NetBSD): the dynamic linker searches it before a
+# library's RPATH, so it made base libraries shadow same-named pkgsrc ones.
+# Base libraries are in /usr/lib, which ld.elf_so always searches.
 
 # Set the timezone
 export TZ=GMT0

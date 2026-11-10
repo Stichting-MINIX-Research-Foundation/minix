@@ -254,8 +254,11 @@ mode_t	umask(mode_t);
 int	lstat(const char *, struct stat *) __RENAME(__lstat50);
 #endif
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+int	fchmod(int, mode_t);		/* base POSIX since 2008 */
+#endif
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	fchmod(int, mode_t);
 #ifndef __LIBC12_SOURCE__
 int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif

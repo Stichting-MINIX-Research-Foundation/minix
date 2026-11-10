@@ -3,10 +3,13 @@
  * mutex types and attributes (recursive, errorcheck), zero-filled and
  * statically initialized mutexes and condition variables, trylock, and
  * pthread_cond_wait() with a recursive mutex held more than once,
- * pthread_cond_timedwait() (timeouts, wakeups, CLOCK_MONOTONIC conditions).
+ * pthread_cond_timedwait() (timeouts, wakeups, CLOCK_MONOTONIC conditions),
+ * thread IDs (never 0) and sched_yield().
  */
 #include <errno.h>
 #include <pthread.h>
+#include <sched.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -248,6 +251,64 @@ test_timedwait(void)
 	pthread_condattr_destroy(&ca);
 }
 
+/*
+ * Subtest 5: thread IDs and sched_yield().  pthread_t 0 must never name a
+ * thread (libstdc++'s std::thread treats it as "no thread"; libmthread's
+ * first thread used to get ID 0), IDs round-trip through pthread_self(),
+ * pthread_join() and pthread_equal(), and sched_yield() switches threads.
+ */
+static volatile int yield_turns;
+static pthread_t self_seen[2];
+
+static void *
+yield_thread(void *arg)
+{
+	int idx = (int) (intptr_t) arg;
+	int i;
+
+	self_seen[idx] = pthread_self();
+	for (i = 0; i < 5; i++) {
+		yield_turns++;
+		sched_yield();
+	}
+	return (void *) (intptr_t) (idx + 10);
+}
+
+static void
+test_ids_yield(void)
+{
+	pthread_t t[2], me;
+	void *rv;
+	int i, before;
+
+	subtest = 5;
+
+	me = pthread_self();
+	if (me == 0) e(1);
+	if (!pthread_equal(me, pthread_self())) e(2);
+	for (i = 0; i < 2; i++) {
+		if (pthread_create(&t[i], NULL, yield_thread,
+		    (void *) (intptr_t) i) != 0) e(3);
+		if (t[i] == 0) e(4);
+		if (pthread_equal(t[i], me)) e(5);
+	}
+	if (pthread_equal(t[0], t[1])) e(6);
+
+	/* Neither thread has run yet: they only run when this one yields. */
+	before = yield_turns;
+	if (sched_yield() != 0) e(7);
+	if (yield_turns == before) e(8);
+
+	for (i = 0; i < 2; i++) {
+		if (pthread_join(t[i], &rv) != 0) e(9);
+		if ((intptr_t) rv != i + 10) e(10);
+		if (!pthread_equal(self_seen[i], t[i])) e(11);
+	}
+	if (yield_turns != 10) e(12);
+	if (pthread_join(me, NULL) != EDEADLK) e(13);
+	if (pthread_join(0, NULL) == 0) e(14);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -258,6 +319,7 @@ main(int argc, char **argv)
 	test_lazy();
 	test_cond_recursive();
 	test_timedwait();
+	test_ids_yield();
 
 	quit();
 	return 0;

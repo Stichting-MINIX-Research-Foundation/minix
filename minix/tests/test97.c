@@ -6,7 +6,8 @@
  * Part 2 (only if /dev/drm0 can be opened, i.e. the bochs driver runs on a
  * QEMU "-vga std" machine and we are root/operator): dumb buffers, mmap of
  * video memory, mode setting, page flips with completion events, and
- * isolation between clients.  "test97 -hold N" keeps a test card (four
+ * isolation between clients, PRIME (dma-buf fds, import between clients,
+ * buffer lifetime).  "test97 -hold N" keeps a test card (four
  * colored quadrants) on the screen for N seconds after the flip, so that a
  * screendump can verify the pixels (see releasetools/x86_qemu.py).
  */
@@ -326,6 +327,131 @@ test_drm(void)
 	close(fd);
 }
 
+/* PRIME: dma-buf fds and buffer import between clients (MDRM_VERSION 2). */
+static void
+test_prime(void)
+{
+	struct mdrm_prime pr;
+	struct mdrm_info info;
+	struct mdrm_create_dumb c;
+	struct mdrm_setcrtc sc;
+	struct mdrm_destroy_dumb d;
+	uint32_t h, h2, pitch, token;
+	uint64_t size, off;
+	uint32_t *p, *pd, *p2;
+	int fd, fd2, df, df2;
+
+	subtest = 10;
+
+	if ((fd = drm_open()) < 0)
+		return;		/* no device: test_drm() said so already */
+	h = create(fd, &pitch, &size);
+	off = map_offset(fd, h);
+	p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off);
+	if (p == MAP_FAILED) { e(1); close(fd); return; }
+	p[0] = 0x11223344;
+
+	/* Export: a stable token for the buffer. */
+	memset(&pr, 0, sizeof(pr));
+	pr.handle = h;
+	if (ioctl(fd, MDRM_PRIME_EXPORT, &pr) != 0) e(2);
+	token = pr.token;
+	if (token == 0 || pr.size != size) e(3);
+	if (ioctl(fd, MDRM_PRIME_EXPORT, &pr) != 0 || pr.token != token) e(4);
+	pr.handle = 0xdead;
+	if (ioctl(fd, MDRM_PRIME_EXPORT, &pr) == 0 || errno != ENOENT) e(5);
+
+	/* A DRM client cannot become a dma-buf fd. */
+	memset(&pr, 0, sizeof(pr));
+	pr.token = token;
+	if (ioctl(fd, MDRM_PRIME_BIND, &pr) == 0 || errno != EBUSY) e(6);
+
+	/* Bind a fresh open: the dma-buf fd maps the buffer at offset 0. */
+	if ((df = drm_open()) < 0) { e(7); return; }
+	memset(&pr, 0, sizeof(pr));
+	pr.token = 0x7fffffff;
+	if (ioctl(df, MDRM_PRIME_BIND, &pr) == 0 || errno != ENOENT) e(8);
+	pr.token = token;
+	if (ioctl(df, MDRM_PRIME_BIND, &pr) != 0 || pr.size != size) e(9);
+	memset(&pr, 0, sizeof(pr));
+	if (ioctl(df, MDRM_PRIME_INFO, &pr) != 0) e(10);
+	if (pr.token != token || pr.size != size) e(11);
+	if (ioctl(fd, MDRM_PRIME_INFO, &pr) == 0 || errno != EINVAL) e(12);
+	/* ... and does nothing else. */
+	if (ioctl(df, MDRM_PRIME_BIND, &pr) == 0 || errno != EINVAL) e(13);
+	if (ioctl(df, MDRM_GETINFO, &info) == 0 || errno != EINVAL) e(14);
+	memset(&c, 0, sizeof(c));
+	c.width = W; c.height = H; c.bpp = 32;
+	if (ioctl(df, MDRM_CREATE_DUMB, &c) == 0 || errno != EINVAL) e(15);
+	pd = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, df, 0);
+	if (pd == MAP_FAILED) { e(16); return; }
+	if (pd[0] != 0x11223344) e(17);
+	pd[1] = 0x55667788;
+	if (p[1] != 0x55667788) e(18);
+	if (mmap(NULL, 4096, PROT_READ, MAP_SHARED, df, size) != MAP_FAILED)
+		e(19);
+
+	/* Import: another client gets its own handle, the same one each
+	 * time; the exporter gets its own handle back. */
+	if ((fd2 = drm_open()) < 0) { e(20); return; }
+	memset(&pr, 0, sizeof(pr));
+	pr.token = token;
+	if (ioctl(fd2, MDRM_PRIME_IMPORT, &pr) != 0) e(21);
+	h2 = pr.handle;
+	if (h2 == 0 || pr.size != size) e(22);
+	if (ioctl(fd2, MDRM_PRIME_IMPORT, &pr) != 0 || pr.handle != h2) e(23);
+	if (ioctl(fd, MDRM_PRIME_IMPORT, &pr) != 0 || pr.handle != h) e(24);
+	if (map_offset(fd2, h2) != off) e(25);
+	p2 = mmap(NULL, size, PROT_READ, MAP_SHARED, fd2, off);
+	if (p2 == MAP_FAILED || p2[1] != 0x55667788) e(26);
+
+	/* A duplicated handle keeps the buffer when the original goes, and
+	 * import still finds a handle of this client for it. */
+	memset(&pr, 0, sizeof(pr));
+	pr.handle = h2;
+	if (ioctl(fd2, MDRM_DUP_HANDLE, &pr) != 0) e(41);
+	if (pr.handle == 0 || pr.handle == h2) e(42);
+	d.handle = h2;
+	if (ioctl(fd2, MDRM_DESTROY_DUMB, &d) != 0) e(43);
+	h2 = pr.handle;
+	if (map_offset(fd2, h2) != off) e(44);
+	pr.handle = 0xdead;
+	if (ioctl(fd2, MDRM_DUP_HANDLE, &pr) == 0 || errno != ENOENT) e(45);
+	memset(&pr, 0, sizeof(pr));
+	pr.token = token;
+	if (ioctl(fd2, MDRM_PRIME_IMPORT, &pr) != 0 || pr.handle != h2) e(46);
+
+	/* The importer can scan the buffer out. */
+	memset(&sc, 0, sizeof(sc));
+	sc.fb = h2; sc.width = W; sc.height = H;
+	if (ioctl(fd2, MDRM_SETCRTC, &sc) != 0) e(27);
+	if (ioctl(fd2, MDRM_GETINFO, &info) != 0 || info.cur_fb != h2) e(28);
+	if (ioctl(fd, MDRM_GETINFO, &info) != 0 || info.cur_fb != h) e(29);
+	memset(&sc, 0, sizeof(sc));
+	if (ioctl(fd2, MDRM_SETCRTC, &sc) != 0) e(30);
+
+	/* Lifetime: the buffer lives while any handle or dma-buf fd does. */
+	d.handle = h;
+	if (ioctl(fd, MDRM_DESTROY_DUMB, &d) != 0) e(31);
+	if (close(fd) != 0) e(32);
+	if (close(fd2) != 0) e(33);
+	if (pd[0] != 0x11223344) e(34);
+	if ((df2 = drm_open()) < 0) { e(35); return; }
+	memset(&pr, 0, sizeof(pr));
+	pr.token = token;
+	if (ioctl(df2, MDRM_PRIME_BIND, &pr) != 0) e(36);	/* still exported */
+	if (close(df) != 0) e(37);
+	if (close(df2) != 0) e(38);
+	if ((fd = drm_open()) < 0) { e(39); return; }
+	memset(&pr, 0, sizeof(pr));
+	pr.token = token;
+	if (ioctl(fd, MDRM_PRIME_IMPORT, &pr) == 0 || errno != ENOENT) e(40);
+	close(fd);
+	munmap(p, size);
+	munmap(pd, size);
+	if (p2 != MAP_FAILED) munmap(p2, size);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -336,6 +462,7 @@ main(int argc, char **argv)
 
 	test_nommap();
 	test_drm();
+	test_prime();
 
 	quit();
 	return 0;

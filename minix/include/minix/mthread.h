@@ -146,6 +146,8 @@ int mthread_event_fire_all(mthread_event_t *event);
 int mthread_rwlock_destroy(mthread_rwlock_t *rwlock);
 int mthread_rwlock_init(mthread_rwlock_t *rwlock);
 int mthread_rwlock_rdlock(mthread_rwlock_t *rwlock);
+int mthread_rwlock_tryrdlock(mthread_rwlock_t *rwlock);
+int mthread_rwlock_trywrlock(mthread_rwlock_t *rwlock);
 int mthread_rwlock_wrlock(mthread_rwlock_t *rwlock);
 int mthread_rwlock_unlock(mthread_rwlock_t *rwlock);
 
@@ -174,8 +176,12 @@ typedef void *pthread_rwlockattr_t;
 #define PTHREAD_COND_INITIALIZER ((pthread_cond_t) -1)
 
 __BEGIN_DECLS
+/* POSIX prototypes (const attribute arguments etc.): C++ code such as
+ * libstdc++'s gthreads passes const pointers.  The pthread_* names that are
+ * weak aliases of mthread_* functions differ from them only in qualifiers.
+ */
 /* allocate.c */
-int pthread_create(pthread_t *thread, pthread_attr_t *tattr, void
+int pthread_create(pthread_t *thread, const pthread_attr_t *tattr, void
 	*(*proc)(void *), void *arg);
 int pthread_detach(pthread_t thread);
 int pthread_equal(pthread_t l, pthread_t r);
@@ -186,11 +192,12 @@ pthread_t pthread_self(void);
 
 /* attribute.c */
 int pthread_attr_destroy(pthread_attr_t *tattr);
-int pthread_attr_getdetachstate(pthread_attr_t *tattr, int
+int pthread_attr_getdetachstate(const pthread_attr_t *tattr, int
 	*detachstate);
-int pthread_attr_getstack(pthread_attr_t *tattr, void **stackaddr,
+int pthread_attr_getstack(const pthread_attr_t *tattr, void **stackaddr,
 	size_t *stacksize);
-int pthread_attr_getstacksize(pthread_attr_t *tattr, size_t *stacksize);
+int pthread_attr_getstacksize(const pthread_attr_t *tattr,
+	size_t *stacksize);
 int pthread_attr_init(pthread_attr_t *tattr);
 int pthread_attr_setdetachstate(pthread_attr_t *tattr, int detachstate);
 int pthread_attr_setstack(pthread_attr_t *tattr, void *stackaddr, size_t
@@ -200,7 +207,7 @@ int pthread_attr_setstacksize(pthread_attr_t *tattr, size_t stacksize);
 /* condition.c */
 int pthread_cond_broadcast(pthread_cond_t *cond);
 int pthread_cond_destroy(pthread_cond_t *cond);
-int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *cattr);
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cattr);
 int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
@@ -213,11 +220,11 @@ int pthread_condattr_getclock(const pthread_condattr_t *attr,
 int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
 int pthread_key_delete(pthread_key_t key);
 void *pthread_getspecific(pthread_key_t key);
-int pthread_setspecific(pthread_key_t key, void *value);
+int pthread_setspecific(pthread_key_t key, const void *value);
 
 /* mutex.c */
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
-int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t
 	*mattr);
 int pthread_mutex_lock(pthread_mutex_t *mutex);
 int pthread_mutex_trylock(pthread_mutex_t *mutex);
@@ -233,8 +240,10 @@ int pthread_event_fire_all(pthread_event_t *event);
 /* rwlock.c */
 int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
 int pthread_rwlock_init(pthread_rwlock_t *rwlock,
-	pthread_rwlockattr_t *attr);
+	const pthread_rwlockattr_t *attr);
 int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
 

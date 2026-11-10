@@ -30,7 +30,8 @@ SRCS+= kernel_utils.c sprofile.c stack_utils.c _mcontext.c
 
 # Linux-compatible convenience APIs for ported userland (implemented over
 # pipe/FIFO + setitimer/signal plumbing; not kernel calls on MINIX).
-SRCS+= eventfd.c timerfd.c signalfd.c shm.c epoll.c msync.c posix_fadvise.c
+SRCS+= eventfd.c timerfd.c signalfd.c shm.c epoll.c msync.c posix_fadvise.c \
+	thr_yield.c
 
 # Emulation for missing lchown/lchmod/lchflags
 OBJS+= lchflags.o lchmod.o lchown.o

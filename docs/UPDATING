@@ -1,3 +1,47 @@
+20261110:
+	/etc/profile no longer exports LD_LIBRARY_PATH (NetBSD does not
+	either).  The dynamic linker searches LD_LIBRARY_PATH before a
+	library's RPATH, so the old setting (/usr/lib ahead of /usr/pkg/lib)
+	made base libraries shadow same-named packaged ones in login shells
+	- e.g. the base libgcc_s.so.1 stub replaced the real one in
+	/usr/pkg/lib.  Base libraries live in /usr/lib, which is always
+	searched.  Software installed elsewhere without an RPATH (built
+	with -Wl,-R<libdir>) now needs LD_LIBRARY_PATH set by the user.
+	/etc/profile is not replaced on update: remove the export line by
+	hand to pick this up.
+
+	The bochs display driver (/dev/drm0) implements DRM-lite interface
+	version 2: buffer sharing (PRIME, see <sys/ioc_mdrm.h>).  Buffers
+	are reference counted and named by per-client handles;
+	MDRM_DESTROY_DUMB now only drops the caller's handle;
+	MDRM_DUP_HANDLE gives a buffer a second handle.  Up to 64 opens
+	(dma-buf fds count).
+
+	<sys/fcntl.h> declares F_DUPFD_CLOEXEC, <string.h> strdup() and
+	strndup(), and <sys/stat.h> fchmod() for POSIX.1-2008 compilations
+	(_POSIX_C_SOURCE >= 200809L; F_DUPFD_CLOEXEC also _XOPEN_SOURCE >=
+	700), not only with _NETBSD_SOURCE/_XOPEN_SOURCE.  Rebuild and install the driver with
+	make hdboot.
+
+	<pthread.h> (libmthread): pthread_t values are now the mthread
+	thread number plus 2, so 0 never names a thread (the main thread is
+	1); libstdc++'s std::thread treats 0 as "no thread".  Programs that
+	mix pthread_* and mthread_* thread IDs must not compare them.  New:
+	pthread_rwlock_tryrdlock()/trywrlock(), and sched_yield() works for
+	programs using <sched.h> (libc has a no-op __libc_thr_yield(), which
+	libmthread overrides with a thread switch).  The pthread prototypes
+	now have POSIX const qualifiers (pthread_setspecific,
+	pthread_*_init, pthread_create, pthread_attr_get*).  Rebuild
+	programs linked statically against libmthread.
+
+	__cxa_finalize() in libc now also runs and removes the plain
+	atexit() handlers that belong to a shared object being unloaded,
+	as FreeBSD does.  A dlopen()ed object that called atexit() and was
+	then dlclose()d (Mesa's DRI drivers, via eglTerminate()) used to
+	leave a handler pointing into unmapped memory, and the program
+	crashed in exit().  Dynamically linked programs pick this up;
+	static ones must be relinked.
+
 20261108:
 	<minix/mthread.h>, and so <pthread.h>, no longer includes
 	<minix/config.h> and <minix/const.h>; programs that used their

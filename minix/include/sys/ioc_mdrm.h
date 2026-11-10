@@ -18,6 +18,25 @@
  *     poll(2) report the fd readable while events are pending.
  *
  * The struct layouts of the dumb buffer calls match Linux's drm_mode_*_dumb.
+ *
+ * Buffer sharing ("PRIME", Linux dma-buf), version 2:
+ *   - Buffers are reference counted.  A client refers to a buffer by a
+ *     handle; MDRM_DESTROY_DUMB drops the client's handle (= Linux GEM_CLOSE)
+ *     and the memory goes when no handle, dma-buf fd or scanout uses it.
+ *   - MDRM_PRIME_EXPORT gives a client's buffer a token.  MDRM_PRIME_BIND on
+ *     a freshly opened /dev/drm0 turns that open into the buffer's dma-buf
+ *     fd: it keeps the buffer alive, mmap(2) at offset 0 maps the buffer, and
+ *     MDRM_PRIME_INFO on it returns the token and size.  It takes no other
+ *     calls.
+ *   - MDRM_PRIME_IMPORT gives a client a handle for a token; a client that
+ *     already has a handle for that buffer gets the same one back, as with
+ *     Linux.  Tokens are not secrets: like the device, they are for
+ *     root/operator only.
+ *   - MDRM_DUP_HANDLE gives a client a second handle for one of its
+ *     buffers (handle in, new handle out).  libdrm's framebuffers hold one,
+ *     so that a framebuffer outlives the handle it was created from (Linux
+ *     KMS framebuffers keep their buffer; wlroots closes the handle right
+ *     after ADDFB2).
  */
 
 #ifndef _SYS_IOC_MDRM_H
@@ -26,7 +45,7 @@
 #include <minix/ioctl.h>
 #include <stdint.h>
 
-#define MDRM_VERSION		1
+#define MDRM_VERSION		2	/* 2: PRIME */
 
 #define MDRM_MAX_MODES		16
 
@@ -105,11 +124,22 @@ struct mdrm_event_vblank {	/* = struct drm_event_vblank */
 };
 #define MDRM_EVENT_FLIP_COMPLETE 0x02	/* = DRM_EVENT_FLIP_COMPLETE */
 
+struct mdrm_prime {
+	uint32_t	handle;		/* EXPORT: in; IMPORT: out */
+	uint32_t	token;		/* EXPORT, INFO: out; BIND, IMPORT: in */
+	uint64_t	size;		/* BIND, INFO, IMPORT: out (bytes) */
+};
+
 #define MDRM_GETINFO		_IOR('g', 1, struct mdrm_info)
 #define MDRM_CREATE_DUMB	_IOWR('g', 2, struct mdrm_create_dumb)
 #define MDRM_MAP_DUMB		_IOWR('g', 3, struct mdrm_map_dumb)
 #define MDRM_DESTROY_DUMB	_IOW('g', 4, struct mdrm_destroy_dumb)
 #define MDRM_SETCRTC		_IOW('g', 5, struct mdrm_setcrtc)
 #define MDRM_PAGE_FLIP		_IOW('g', 6, struct mdrm_page_flip)
+#define MDRM_PRIME_EXPORT	_IOWR('g', 7, struct mdrm_prime)
+#define MDRM_PRIME_BIND		_IOWR('g', 8, struct mdrm_prime)
+#define MDRM_PRIME_INFO		_IOWR('g', 9, struct mdrm_prime)
+#define MDRM_PRIME_IMPORT	_IOWR('g', 10, struct mdrm_prime)
+#define MDRM_DUP_HANDLE		_IOWR('g', 11, struct mdrm_prime)
 
 #endif /* _SYS_IOC_MDRM_H */

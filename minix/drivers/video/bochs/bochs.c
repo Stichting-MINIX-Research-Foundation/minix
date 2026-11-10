@@ -7,7 +7,10 @@
  * at 60 Hz from the clock.
  *
  * Every open of minor 0 creates a client (cloned minor 1..NR_CLIENTS).
- * Clients own their buffers.  The client that sets a mode is the master
+ * Buffers are reference counted: clients refer to them through handles, and
+ * a client bound to a buffer with MDRM_PRIME_BIND is that buffer's dma-buf
+ * fd (PRIME); a buffer's memory is reused once no handle, dma-buf client or
+ * the scanout refers to it any more.  The client that sets a mode is the master
  * until it closes the device, which turns the display off again.  The
  * first BOCHS_RESERVED bytes of video memory are never handed out: they hold
  * the VGA text console (and its font), which therefore survives a session in
@@ -76,22 +79,31 @@ static const u8_t seq_saved_regs[] = { 0x01, 0x02, 0x04 };
 
 #define BOCHS_RESERVED	(256 * 1024)	/* VGA planes: text console + font */
 
-#define NR_CLIENTS	16		/* minors 1..NR_CLIENTS */
+#define NR_CLIENTS	64		/* minors 1..NR_CLIENTS (dma-buf fds too) */
 #define NR_BUFS		64
+#define NR_HANDLES	256
 #define NR_EVENTS	8		/* queued events per client */
 #define BPP		32
 
 struct buf {
-	int		b_owner;	/* client minor, 0 = free slot */
-	int		b_zombie;	/* destroyed while scanned out */
-	u32_t		b_handle;
+	int		b_used;		/* slot in use (memory allocated) */
+	u32_t		b_refs;		/* handles + dma-buf clients */
+	u32_t		b_token;	/* PRIME export token, 0: none */
 	u32_t		b_width, b_height, b_pitch;
 	u32_t		b_offset;	/* in video memory */
 	u32_t		b_size;		/* page multiple */
 };
 
+/* A client's name for a buffer. */
+struct hnd {
+	int		h_client;	/* client minor, 0 = free slot */
+	u32_t		h_handle;
+	struct buf	*h_buf;
+};
+
 struct client {
 	int		c_open;
+	struct buf	*c_dmabuf;	/* non-NULL: a dma-buf fd of this buffer */
 	/* Completion events waiting to be read. */
 	struct mdrm_event_vblank c_ev[NR_EVENTS];
 	int		c_nev;
@@ -107,7 +119,9 @@ struct client {
 
 static struct client clients[NR_CLIENTS + 1];	/* [0] unused */
 static struct buf bufs[NR_BUFS];
+static struct hnd hnds[NR_HANDLES];
 static u32_t next_handle = 1;
+static u32_t next_token = 1;
 
 static phys_bytes vram_phys;
 static u32_t vram_size;
@@ -288,13 +302,88 @@ static void hw_off(void)
 /*===========================================================================*
  *				Buffers					     *
  *===========================================================================*/
-static struct buf *buf_lookup(int minor, u32_t handle)
+static struct hnd *hnd_lookup(int minor, u32_t handle)
 {
 	int i;
 
+	for (i = 0; i < NR_HANDLES; i++)
+		if (hnds[i].h_client == minor && hnds[i].h_handle == handle)
+			return &hnds[i];
+	return NULL;
+}
+
+static struct buf *buf_lookup(int minor, u32_t handle)
+{
+	struct hnd *h = hnd_lookup(minor, handle);
+
+	return h != NULL ? h->h_buf : NULL;
+}
+
+/* The handle 'minor' has for 'b', 0 if none. */
+static u32_t handle_of(int minor, struct buf *b)
+{
+	int i;
+
+	for (i = 0; i < NR_HANDLES; i++)
+		if (hnds[i].h_client == minor && hnds[i].h_buf == b)
+			return hnds[i].h_handle;
+	return 0;
+}
+
+/* Release the memory of a buffer nothing refers to any more.  The buffer
+ * being scanned out keeps its memory until the scanout moves on.
+ */
+static void buf_check_free(struct buf *b)
+{
+	if (b->b_used && b->b_refs == 0 && b != cur_fb)
+		memset(b, 0, sizeof(*b));
+}
+
+static void buf_put(struct buf *b)
+{
+	assert(b->b_refs > 0);
+	b->b_refs--;
+	buf_check_free(b);
+}
+
+/* Give client 'minor' a new handle for 'b'. */
+static int hnd_new(int minor, struct buf *b, u32_t *handlep)
+{
+	int i;
+
+	for (i = 0; i < NR_HANDLES; i++) {
+		struct hnd *h = &hnds[i];
+		if (h->h_client != 0)
+			continue;
+		h->h_client = minor;
+		h->h_buf = b;
+		do {
+			h->h_handle = next_handle++;
+		} while (h->h_handle == 0);
+		b->b_refs++;
+		*handlep = h->h_handle;
+		return OK;
+	}
+	return ENOSPC;
+}
+
+static void hnd_free(struct hnd *h)
+{
+	struct buf *b = h->h_buf;
+
+	memset(h, 0, sizeof(*h));
+	buf_put(b);
+}
+
+static struct buf *buf_by_token(u32_t token)
+{
+	int i;
+
+	if (token == 0)
+		return NULL;
 	for (i = 0; i < NR_BUFS; i++)
-		if (bufs[i].b_owner == minor && !bufs[i].b_zombie &&
-		    bufs[i].b_handle == handle)
+		if (bufs[i].b_used && bufs[i].b_refs > 0 &&
+		    bufs[i].b_token == token)
 			return &bufs[i];
 	return NULL;
 }
@@ -321,7 +410,7 @@ static int vram_alloc(u32_t size, u32_t align, u32_t *offp)
 			return ENOSPC;
 		for (i = 0; i < NR_BUFS; i++) {
 			struct buf *b = &bufs[i];
-			if (b->b_owner == 0) continue;
+			if (!b->b_used) continue;
 			if (off < b->b_offset + b->b_size &&
 			    b->b_offset < off + size) {
 				off = roundup(b->b_offset + b->b_size, align);
@@ -334,20 +423,10 @@ static int vram_alloc(u32_t size, u32_t align, u32_t *offp)
 	return OK;
 }
 
-static void buf_free(struct buf *b)
-{
-	if (b == cur_fb) {
-		/* Keep scanning it out until the mode changes. */
-		b->b_zombie = TRUE;
-		return;
-	}
-	memset(b, 0, sizeof(*b));
-}
-
 static int do_create_dumb(int minor, struct mdrm_create_dumb *req)
 {
 	struct buf *b = NULL;
-	u32_t pitch, size, align, off;
+	u32_t pitch, size, align, off, handle;
 	int i, r;
 
 	if (req->bpp != BPP || req->flags != 0 || req->width == 0 ||
@@ -360,29 +439,85 @@ static int do_create_dumb(int minor, struct mdrm_create_dumb *req)
 	align = PAGE_SIZE / gcd(PAGE_SIZE, pitch) * pitch;
 
 	for (i = 0; i < NR_BUFS; i++)
-		if (bufs[i].b_owner == 0) { b = &bufs[i]; break; }
+		if (!bufs[i].b_used) { b = &bufs[i]; break; }
 	if (b == NULL)
 		return ENOSPC;
 
 	if ((r = vram_alloc(size, align, &off)) != OK)
 		return ENOMEM;
 
-	b->b_owner = minor;
-	b->b_zombie = FALSE;
-	b->b_handle = next_handle++;
-	if (next_handle == 0) next_handle = 1;
+	memset(b, 0, sizeof(*b));
+	b->b_used = TRUE;
 	b->b_width = req->width;
 	b->b_height = req->height;
 	b->b_pitch = pitch;
 	b->b_offset = off;
 	b->b_size = size;
+	if ((r = hnd_new(minor, b, &handle)) != OK) {
+		memset(b, 0, sizeof(*b));
+		return r;
+	}
 
 	/* Do not leak the previous contents of this memory. */
 	memset(vram + off, 0, size);
 
-	req->handle = b->b_handle;
+	req->handle = handle;
 	req->pitch = pitch;
 	req->size = size;
+	return OK;
+}
+
+/*===========================================================================*
+ *				PRIME (dma-buf)				     *
+ *===========================================================================*/
+static int do_prime_export(int minor, struct mdrm_prime *req)
+{
+	struct buf *b;
+
+	if ((b = buf_lookup(minor, req->handle)) == NULL)
+		return ENOENT;
+	if (b->b_token == 0) {
+		do {
+			b->b_token = next_token++;
+		} while (b->b_token == 0 || buf_by_token(b->b_token) != b);
+	}
+	req->token = b->b_token;
+	req->size = b->b_size;
+	return OK;
+}
+
+/* Turn a fresh client into the dma-buf fd of an exported buffer. */
+static int do_prime_bind(int minor, struct mdrm_prime *req)
+{
+	struct buf *b;
+	int i;
+
+	if (master == minor)
+		return EBUSY;
+	for (i = 0; i < NR_HANDLES; i++)
+		if (hnds[i].h_client == minor)
+			return EBUSY;	/* already a DRM client */
+	if ((b = buf_by_token(req->token)) == NULL)
+		return ENOENT;
+	b->b_refs++;
+	clients[minor].c_dmabuf = b;
+	req->size = b->b_size;
+	return OK;
+}
+
+static int do_prime_import(int minor, struct mdrm_prime *req)
+{
+	struct buf *b;
+	u32_t handle;
+	int r;
+
+	if ((b = buf_by_token(req->token)) == NULL)
+		return ENOENT;
+	if ((handle = handle_of(minor, b)) == 0 &&
+	    (r = hnd_new(minor, b, &handle)) != OK)
+		return r;
+	req->handle = handle;
+	req->size = b->b_size;
 	return OK;
 }
 
@@ -480,16 +615,15 @@ static void bochs_alarm(clock_t UNUSED(stamp))
  *===========================================================================*/
 static void release_master(void)
 {
-	int i;
+	struct buf *old = cur_fb;
 
 	hw_off();
 	cur_fb = NULL;
 	master = 0;
 	flip_pending = FALSE;
-	/* Scanout no longer holds any destroyed buffers. */
-	for (i = 0; i < NR_BUFS; i++)
-		if (bufs[i].b_owner != 0 && bufs[i].b_zombie)
-			memset(&bufs[i], 0, sizeof(bufs[i]));
+	/* The scanout no longer holds the buffer it showed. */
+	if (old != NULL)
+		buf_check_free(old);
 }
 
 static void set_scanout(struct buf *b)
@@ -497,8 +631,8 @@ static void set_scanout(struct buf *b)
 	struct buf *old = cur_fb;
 
 	cur_fb = b;
-	if (old != NULL && old != b && old->b_zombie)
-		memset(old, 0, sizeof(*old));
+	if (old != NULL && old != b)
+		buf_check_free(old);
 }
 
 static int do_setcrtc(int minor, struct mdrm_setcrtc *req)
@@ -589,21 +723,33 @@ static void do_getinfo(int minor, struct mdrm_info *info)
 
 	info->cur_width = cur_w;
 	info->cur_height = cur_h;
-	info->cur_fb = (cur_fb != NULL && cur_fb->b_owner == minor &&
-	    !cur_fb->b_zombie) ? cur_fb->b_handle : 0;
+	info->cur_fb = cur_fb != NULL ? handle_of(minor, cur_fb) : 0;
 	info->vblank_seq = vblank_seq;
 	info->is_master = (master == minor);
 }
 
-/* FIOMMAP from VFS: a client mmap()s [offset, offset+len) of its fd. */
+/* FIOMMAP from VFS: a client mmap()s [offset, offset+len) of its fd.  On a
+ * DRM client the offset is MDRM_MAP_DUMB's (the buffer's place in video
+ * memory) of a buffer it has a handle for; on a dma-buf fd it is relative
+ * to the buffer.
+ */
 static int do_mmap(int minor, struct devmmap *req)
 {
+	struct buf *b;
 	int i;
 
-	for (i = 0; i < NR_BUFS; i++) {
-		struct buf *b = &bufs[i];
-		if (b->b_owner != minor || b->b_zombie)
+	if ((b = clients[minor].c_dmabuf) != NULL) {
+		if (req->dm_offset > b->b_size ||
+		    req->dm_len > b->b_size - req->dm_offset)
+			return EINVAL;
+		req->dm_phys = vram_phys + b->b_offset + req->dm_offset;
+		return OK;
+	}
+
+	for (i = 0; i < NR_HANDLES; i++) {
+		if (hnds[i].h_client != minor)
 			continue;
+		b = hnds[i].h_buf;
 		if (req->dm_offset >= b->b_offset &&
 		    req->dm_offset + req->dm_len <= b->b_offset + b->b_size) {
 			req->dm_phys = vram_phys + req->dm_offset;
@@ -644,9 +790,13 @@ static int bochs_close(devminor_t minor)
 
 	if (master == minor)
 		release_master();
-	for (i = 0; i < NR_BUFS; i++)
-		if (bufs[i].b_owner == minor)
-			buf_free(&bufs[i]);
+	for (i = 0; i < NR_HANDLES; i++)
+		if (hnds[i].h_client == minor)
+			hnd_free(&hnds[i]);
+	if (clients[minor].c_dmabuf != NULL) {
+		buf_put(clients[minor].c_dmabuf);
+		clients[minor].c_dmabuf = NULL;
+	}
 	if (flip_client == minor)
 		flip_pending = FALSE;
 	clients[minor].c_open = FALSE;
@@ -665,7 +815,7 @@ static ssize_t bochs_read(devminor_t minor, u64_t UNUSED(position),
 		return ENXIO;
 	c = &clients[minor];
 
-	if (size < sizeof(struct mdrm_event_vblank))
+	if (c->c_dmabuf != NULL || size < sizeof(struct mdrm_event_vblank))
 		return EINVAL;
 	if (c->c_rd_endpt != NONE)
 		return EIO;	/* one reader at a time */
@@ -703,8 +853,10 @@ static int bochs_ioctl(devminor_t minor, unsigned long request,
 		struct mdrm_destroy_dumb destroy;
 		struct mdrm_setcrtc setcrtc;
 		struct mdrm_page_flip flip;
+		struct mdrm_prime prime;
 		struct devmmap mmap;
 	} u;
+	struct hnd *h;
 	struct buf *b;
 	size_t size;
 	int r;
@@ -719,10 +871,20 @@ static int bochs_ioctl(devminor_t minor, unsigned long request,
 	case MDRM_DESTROY_DUMB:	size = sizeof(u.destroy);	break;
 	case MDRM_SETCRTC:	size = sizeof(u.setcrtc);	break;
 	case MDRM_PAGE_FLIP:	size = sizeof(u.flip);		break;
+	case MDRM_PRIME_EXPORT:
+	case MDRM_PRIME_BIND:
+	case MDRM_PRIME_INFO:
+	case MDRM_PRIME_IMPORT:
+	case MDRM_DUP_HANDLE:	size = sizeof(u.prime);		break;
 	case FIOMMAP:		size = sizeof(u.mmap);		break;
 	default:
 		return ENOTTY;
 	}
+
+	/* A dma-buf fd only supports mmap and PRIME_INFO. */
+	if ((clients[minor].c_dmabuf != NULL) !=
+	    (request == MDRM_PRIME_INFO) && request != FIOMMAP)
+		return EINVAL;
 
 	if (request != MDRM_GETINFO &&
 	    (r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&u, size)) != OK)
@@ -744,18 +906,39 @@ static int bochs_ioctl(devminor_t minor, unsigned long request,
 			r = OK;
 		}
 		break;
-	case MDRM_DESTROY_DUMB:
-		if ((b = buf_lookup(minor, u.destroy.handle)) == NULL) {
-			r = ENOENT;
-		} else {
-			buf_free(b);
-			r = OK;
-		}
-		return r;
+	case MDRM_DESTROY_DUMB:		/* = GEM_CLOSE: drop the handle */
+		if ((h = hnd_lookup(minor, u.destroy.handle)) == NULL)
+			return ENOENT;
+		hnd_free(h);
+		return OK;
 	case MDRM_SETCRTC:
 		return do_setcrtc(minor, &u.setcrtc);
 	case MDRM_PAGE_FLIP:
 		return do_page_flip(minor, &u.flip);
+	case MDRM_PRIME_EXPORT:
+		r = do_prime_export(minor, &u.prime);
+		break;
+	case MDRM_PRIME_BIND:
+		r = do_prime_bind(minor, &u.prime);
+		break;
+	case MDRM_PRIME_INFO:
+		b = clients[minor].c_dmabuf;
+		u.prime.handle = 0;
+		u.prime.token = b->b_token;
+		u.prime.size = b->b_size;
+		r = OK;
+		break;
+	case MDRM_PRIME_IMPORT:
+		r = do_prime_import(minor, &u.prime);
+		break;
+	case MDRM_DUP_HANDLE:		/* a second name for one buffer */
+		if ((b = buf_lookup(minor, u.prime.handle)) == NULL) {
+			r = ENOENT;
+			break;
+		}
+		r = hnd_new(minor, b, &u.prime.handle);
+		u.prime.size = b->b_size;
+		break;
 	case FIOMMAP:
 		r = do_mmap(minor, &u.mmap);
 		break;
