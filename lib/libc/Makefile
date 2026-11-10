@@ -169,13 +169,15 @@ FILES=		tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
 .endif
-
+.endif # defined(__MINIX)
 
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
+# MINIX: this used to be NetBSD-only, so libc.so could not load the citrus
+# encoding modules (/usr/lib/i18n) and no multibyte LC_CTYPE (UTF-8)
+# worked; libc.so's dlopen() calls bind to the dynamic linker's.
 CSHLIBFLAGS+=	-D_I18N_DYNAMIC
-.endif # defined(__MINIX)
 
 .include <bsd.lib.mk>
 

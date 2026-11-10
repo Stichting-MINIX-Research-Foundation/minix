@@ -33,6 +33,9 @@ SRCS+= kernel_utils.c sprofile.c stack_utils.c _mcontext.c
 SRCS+= eventfd.c timerfd.c signalfd.c shm.c epoll.c msync.c posix_fadvise.c \
 	thr_yield.c
 
+# C11 <uchar.h> char32_t conversions (wchar_t is Unicode in C/UTF-8).
+SRCS+= uchar.c
+
 # Emulation for missing lchown/lchmod/lchflags
 OBJS+= lchflags.o lchmod.o lchown.o
 lchflags.go lchflags.o lchflags.pico lchflags.bc: ${NETBSDSRCDIR}/tools/compat/lchflags.c

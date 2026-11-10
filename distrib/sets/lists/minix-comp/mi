@@ -1808,9 +1808,11 @@
 ./usr/include/term.h                                    minix-comp
 ./usr/include/termcap.h                                 minix-comp
 ./usr/include/termios.h                                 minix-comp
+./usr/include/threads.h                                 minix-comp
 ./usr/include/time.h                                    minix-comp
 ./usr/include/ttyent.h                                  minix-comp
 ./usr/include/tzfile.h                                  minix-comp
+./usr/include/uchar.h                                   minix-comp
 ./usr/include/ucontext.h                                minix-comp
 ./usr/include/ucontextoffsets.h                         minix-comp
 ./usr/include/ufs                                       minix-comp
