@@ -26,7 +26,9 @@ int main (int argc, char *argv[])
 {
   void *dlhandle;
   long (*modf) (long, long *, long);
+  int (*modatexit) (long *);
   long v, *cookie = NULL, cookie2 = 0;
+  static long exitflag = 0;
   
   start(63);
 
@@ -49,7 +51,17 @@ int main (int argc, char *argv[])
   if(*cookie != MAGIC2) { fprintf(stderr, "cookie set wrongly\n"); e(6); }
   if(cookie2 != MAGIC3) { fprintf(stderr, "cookie2 set wrongly\n"); e(7); }
 
+  /* An atexit() handler registered by the module must run at dlclose(). */
+  if(!(modatexit = dlsym(dlhandle, "modatexit"))) e(10);
+  if(modatexit(&exitflag) != 0) e(11);
+  if(exitflag != 0) { fprintf(stderr, "atexit handler ran early\n"); e(12); }
+
   dlclose(dlhandle);
+
+  if(exitflag != MAGIC6) {
+	fprintf(stderr, "module atexit handler did not run at dlclose\n");
+	e(13);
+  }
 
   if(v != MAGIC1) { fprintf(stderr, "wrong return value.\n"); e(8); }
 

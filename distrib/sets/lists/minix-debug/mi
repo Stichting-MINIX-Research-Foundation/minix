@@ -1114,6 +1114,7 @@
 ./usr/libdata/debug/usr/tests/minix-posix/test98.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test99.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test100.debug minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test101.debug minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/testvm.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/tvnd.debug    minix-debug     debug
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug     minix-debug     debug

@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <minix/mthread.h>
 #include "global.h"
 #include "proto.h"
@@ -13,6 +14,25 @@ static int mthread_cond_valid(mthread_cond_t *c);
 # define mthread_cond_valid(c)		((*c)->mc_magic == MTHREAD_INIT_MAGIC)
 #endif
 #define MAIN_COND mainthread.m_cond
+
+/* Is 'tcb' waiting on condition 'c' and not signaled yet?  A thread in
+ * mthread_cond_wait() is suspended (MS_CONDITION); one in
+ * mthread_cond_timedwait() stays runnable and polls m_signaled. */
+static int mthread_cond_waiting(mthread_tcb_t *tcb, struct __mthread_cond *c)
+{
+  if (tcb->m_cond != c) return(0);
+  if (tcb->m_state == MS_CONDITION) return(1);
+  return(tcb->m_timedwait && !tcb->m_signaled);
+}
+
+/* Wake a waiter found by mthread_cond_waiting(). */
+static void mthread_cond_wake(mthread_thread_t t, mthread_tcb_t *tcb)
+{
+  if (tcb->m_state == MS_CONDITION)
+	mthread_unsuspend(t);
+  else
+	tcb->m_signaled = 1;
+}
 
 /*===========================================================================*
  *				mthread_init_valid_conditions		     *
@@ -64,13 +84,13 @@ mthread_cond_t *cond;
   	return(EINVAL);
 
   tcb = mthread_find_tcb(MAIN_THREAD);
-  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
-  	mthread_unsuspend(MAIN_THREAD);
+  if (mthread_cond_waiting(tcb, *cond))
+  	mthread_cond_wake(MAIN_THREAD, tcb);
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond) 
-		mthread_unsuspend(t);
+	if (mthread_cond_waiting(tcb, *cond))
+		mthread_cond_wake(t, tcb);
   }
 
   return(0);
@@ -94,12 +114,14 @@ mthread_cond_t *cond;
 
   /* Is another thread currently using this condition variable? */
   tcb = mthread_find_tcb(MAIN_THREAD);
-  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+  if ((tcb->m_state == MS_CONDITION || tcb->m_timedwait) &&
+      tcb->m_cond == *cond)
   	return(EBUSY);
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+	if ((tcb->m_state == MS_CONDITION || tcb->m_timedwait) &&
+	    tcb->m_cond == *cond)
 		return(EBUSY);
   }
 
@@ -134,6 +156,12 @@ mthread_condattr_t *cattr;
   	return(ENOMEM);
 
   c->mc_mutex = NULL;
+  /* The attribute is NULL (default clock) or the clock id + 1, see
+   * pthread_condattr_setclock(). */
+  if (cattr != NULL && *cattr != NULL)
+	c->mc_clock = (clockid_t) ((uintptr_t) *cattr - 1);
+  else
+	c->mc_clock = CLOCK_REALTIME;
   *cond = (mthread_cond_t) c;
   mthread_cond_add(cond);
 
@@ -179,13 +207,15 @@ mthread_cond_t *cond;
 	return(EINVAL);
 
   tcb = mthread_find_tcb(MAIN_THREAD);
-  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
-  	mthread_unsuspend(MAIN_THREAD);
+  if (mthread_cond_waiting(tcb, *cond)) {
+  	mthread_cond_wake(MAIN_THREAD, tcb);
+	return(0);
+  }
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
-		mthread_unsuspend(t);
+	if (mthread_cond_waiting(tcb, *cond)) {
+		mthread_cond_wake(t, tcb);
 		break;
 	}
   }
@@ -276,4 +306,5 @@ mthread_mutex_t *mutex;
 
 /* pthread compatibility layer. */
 __weak_alias(pthread_cond_init, mthread_cond_init)
+
 

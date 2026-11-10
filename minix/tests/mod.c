@@ -24,3 +24,18 @@ long modfunction(long v1, long *argcookie, long v2) {
 void exithandler(void) {
 	/* OK */
 }
+
+/* atexit() from a dlopen()ed object: the handler must run when the
+ * object is dlclose()d (it must not be left for exit(), which would call
+ * into unmapped memory).
+ */
+static long *exitflag;
+
+static void modexit(void) {
+	if(exitflag != NULL) *exitflag = MAGIC6;
+}
+
+int modatexit(long *flag) {
+	exitflag = flag;
+	return atexit(modexit);
+}

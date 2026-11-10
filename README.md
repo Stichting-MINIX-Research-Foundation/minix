@@ -88,7 +88,7 @@ roadmap, ❌ missing or open problem.
 | Input (evdev/libinput) | ✅ | ✅ evdev devices `/dev/input/event0` (keyboards) and `event1` (mice) in the input server; libevdev and libinput ported. No mouse wheel yet |
 | Seat/session (logind, libseat) | ✅ | 🟡 libseat with its no-op backend: opens devices directly, no VT switching |
 | Device discovery (udev) | ✅ | 🟡 `libudev-minix`: the libudev API over a fixed view of the input and display devices; no hotplug |
-| OpenGL / EGL / GBM | Mesa + GPU | 🚧 Phase 7: Mesa softpipe (software), mini-GBM over dumb buffers |
+| OpenGL / EGL / GBM | Mesa + GPU | 🚧 Phase 7: Mesa 24 softpipe (software) builds; EGL/GBM over DRM-lite dumb buffers (kms_swrast) being brought up |
 | Threads | 1:1 kernel threads | ❌ libmthread only: cooperative user-level threads behind `<pthread.h>` (now with recursive mutexes and zero-initialized locks), so one blocking system call stalls the whole process. This is the main open problem |
 | GPU acceleration, real hardware display | ✅ | ❌ out of scope for now (QEMU first) |
 | Audio, USB HID, power management | ✅ | ❌ not started |
@@ -110,7 +110,7 @@ before the phase counts as done. Details, notes and known problems are in
 | 4 | Wayland library stack, epoll, pthread compatibility | ✅ done |
 | 5 | Input: evdev devices, libinput, libseat, libudev replacement | ✅ done |
 | 6 | **Weston** with software rendering: first usable desktop | ✅ done |
-| 7 | OpenGL: Mesa softpipe, EGL, GBM | 🚧 next |
+| 7 | OpenGL: Mesa softpipe, EGL, GBM | 🚧 in progress |
 | 8 | **Hyprland**: PRIME, wlroots, Hyprland port | planned |
 | 9 | Session integration: foot terminal, fonts, config, image packaging | planned |
 

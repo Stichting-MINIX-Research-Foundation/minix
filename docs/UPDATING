@@ -1,3 +1,18 @@
+20261108:
+	<minix/mthread.h>, and so <pthread.h>, no longer includes
+	<minix/config.h> and <minix/const.h>; programs that used their
+	macros (EXTERN, TRUE, FALSE, ...) through <pthread.h> must include
+	them themselves.  libmthread gained pthread_cond_timedwait() and
+	pthread_condattr_setclock()/getclock() (CLOCK_REALTIME and
+	CLOCK_MONOTONIC); the condition variable structure changed, so
+	recompile programs linked statically against libmthread.
+
+	calloc() in libc no longer clears memory that is fresh from the
+	kernel (pages above the highest break ever reached); large, mostly
+	unused calloc()s no longer force all their pages into memory.
+	Dynamically linked programs pick this up; static ones must be
+	relinked.
+
 20261107:
 	The input server now also offers Linux evdev compatible devices:
 	/dev/input/event0 (all keyboards) and /dev/input/event1 (all mice),

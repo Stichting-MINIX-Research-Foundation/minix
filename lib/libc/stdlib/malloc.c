@@ -303,6 +303,27 @@ struct ut { void *p; size_t s; void *r; };
 /* my last break. */
 static void *malloc_brk;
 
+/*
+ * User processes only: system services link this file into libminc
+ * (_LIBSYS), and their heap (VM's own above all) does not come from VM_BRK.
+ */
+#if defined(__minix) && !defined(_LIBSYS)
+#define MALLOC_FRESH_PAGES
+#endif
+
+#if defined(MALLOC_FRESH_PAGES)
+/*
+ * calloc() support: pages above the highest break ever reached are untouched
+ * and read as zero (VM fills anonymous pages on first touch).  Below it they
+ * may hold old data: VM keeps the pages when the break is lowered.  map_pages()
+ * records in malloc_fresh the pages it got entirely above that mark, and
+ * calloc() then skips its memset() - which would otherwise force every page
+ * of a large, mostly unused calloc() into memory.
+ */
+static char *malloc_brk_max;
+static void *malloc_fresh;
+#endif /* defined(__minix) */
+
 /* one location cache for free-list holders */
 static struct pgfree *px;
 
@@ -392,6 +413,10 @@ map_pages(size_t pages)
     }
     tail = rresult + (size_t)bytes;
 
+#if defined(MALLOC_FRESH_PAGES)
+    malloc_fresh = (rresult >= malloc_brk_max) ? rresult : NULL;
+#endif /* defined(__minix) */
+
     last_idx = ptr2idx(tail) - 1;
     malloc_brk = tail;
 
@@ -401,9 +426,16 @@ map_pages(size_t pages)
 	/* Put back break point since we failed. */
 	if (brk(malloc_brk))
 	    wrterror("brk(2) failed [internal error]\n");
+#if defined(MALLOC_FRESH_PAGES)
+	malloc_fresh = NULL;
+#endif /* defined(__minix) */
 	return 0;
     }
 
+#if defined(MALLOC_FRESH_PAGES)
+    if (tail > malloc_brk_max)
+	malloc_brk_max = tail;
+#endif /* defined(__minix) */
     return rresult;
 }
 
@@ -1287,8 +1319,16 @@ calloc(size_t num, size_t size)
 	return (NULL);
     }
 
+#if defined(MALLOC_FRESH_PAGES)
+    malloc_fresh = NULL;
+#endif /* defined(__minix) */
     ret = pubrealloc(NULL, num * size, " in calloc():");
 
+#if defined(MALLOC_FRESH_PAGES)
+    /* Fresh pages from map_pages() are zero already (see malloc_fresh). */
+    if (ret != NULL && ret == malloc_fresh && !malloc_junk)
+	return ret;
+#endif /* defined(__minix) */
     if (ret != NULL)
 	memset(ret, 0, num * size);
 

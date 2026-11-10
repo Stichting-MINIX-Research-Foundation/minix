@@ -1,3 +1,6 @@
+#include <minix/config.h>
+#include <minix/const.h>
+
 /* EXTERN should be extern, except for the allocate file */
 #ifdef ALLOCATE
 #undef EXTERN
@@ -28,6 +31,9 @@ struct __mthread_tcb {
   struct __mthread_attr m_attr;		/* Thread attributes */
   struct __mthread_cond *m_cond;	/* Condition variable that this thread
   					 * might be blocking on */
+  int m_timedwait;			/* In a timed wait on m_cond (stays
+					 * runnable, polls m_signaled) */
+  int m_signaled;			/* Timed wait was signaled */
   void *(*m_proc)(void *);		/* Procedure to run */
   void *m_arg;				/* Argument passed to procedure */
   void *m_result;			/* Result after procedure returns */

@@ -1,8 +1,6 @@
 #ifndef _MTHREAD_H
 #define _MTHREAD_H
 
-#include <minix/config.h>	/* MUST be first */
-#include <minix/const.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <ucontext.h>
@@ -10,6 +8,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <sys/signal.h>
+#include <time.h>
 
 typedef int mthread_thread_t;
 typedef int mthread_once_t;
@@ -45,6 +44,7 @@ typedef struct __mthread_mutex *mthread_mutex_t;
 
 struct __mthread_cond {
   struct __mthread_mutex *mc_mutex;	/* Associate mutex with condition */
+  clockid_t mc_clock;			/* Clock of timed waits */
 #ifdef MTHREAD_STRICT
   struct __mthread_cond *mc_prev;
   struct __mthread_cond *mc_next;
@@ -109,6 +109,8 @@ int mthread_attr_setstacksize(mthread_attr_t *tattr, size_t stacksize);
 int mthread_cond_broadcast(mthread_cond_t *cond);
 int mthread_cond_destroy(mthread_cond_t *cond);
 int mthread_cond_init(mthread_cond_t *cond, mthread_condattr_t *cattr);
+int mthread_cond_timedwait(mthread_cond_t *cond, mthread_mutex_t *mutex,
+	const struct timespec *abstime);
 int mthread_cond_signal(mthread_cond_t *cond);
 int mthread_cond_wait(mthread_cond_t *cond, mthread_mutex_t *mutex);
 
@@ -201,6 +203,11 @@ int pthread_cond_destroy(pthread_cond_t *cond);
 int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *cattr);
 int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+	const struct timespec *abstime);
+int pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clock_id);
+int pthread_condattr_getclock(const pthread_condattr_t *attr,
+	clockid_t *clock_id);
 
 /* key.c */
 int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
@@ -226,7 +233,7 @@ int pthread_event_fire_all(pthread_event_t *event);
 /* rwlock.c */
 int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
 int pthread_rwlock_init(pthread_rwlock_t *rwlock,
-	pthread_rwlockattr_t *UNUSED(attr));
+	pthread_rwlockattr_t *attr);
 int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);

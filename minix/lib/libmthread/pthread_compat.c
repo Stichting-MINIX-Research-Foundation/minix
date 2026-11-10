@@ -146,6 +146,40 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 }
 
 /*===========================================================================*
+ *				pthread_condattr_setclock		     *
+ *===========================================================================*/
+int pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clock_id)
+{
+	/* The attribute is a pointer-sized value: NULL for the default clock
+	 * (CLOCK_REALTIME), otherwise the clock id + 1. */
+	if (attr == NULL)
+		return EINVAL;
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		*attr = NULL;
+		return 0;
+	case CLOCK_MONOTONIC:
+		*attr = (pthread_condattr_t) ((uintptr_t) clock_id + 1);
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
+/*===========================================================================*
+ *				pthread_condattr_getclock		     *
+ *===========================================================================*/
+int pthread_condattr_getclock(const pthread_condattr_t *attr,
+	clockid_t *clock_id)
+{
+	if (attr == NULL || clock_id == NULL)
+		return EINVAL;
+	*clock_id = (*attr == NULL) ? CLOCK_REALTIME :
+	    (clockid_t) ((uintptr_t) *attr - 1);
+	return 0;
+}
+
+/*===========================================================================*
  *				pthread_rwlock_init			     *
  *===========================================================================*/
 int pthread_rwlock_init(pthread_rwlock_t *rwlock, pthread_rwlockattr_t *UNUSED(attr))

@@ -77,6 +77,35 @@ static struct atexit_handler *atexit_handler_stack;
 mutex_t __atexit_mutex;
 #endif /* _REENTRANT */
 
+#if defined(__minix) && !defined(_LIBMINC)
+#include <dlfcn.h>
+
+/*
+ * MINIX: atexit() handlers carry no home DSO, so a shared object that
+ * calls atexit() and is later dlclose()d (e.g. Mesa's DRI drivers) would
+ * leave a handler pointing into unmapped memory, which exit() then calls.
+ * When __cxa_finalize() runs for an unloading object (its crtbeginS calls
+ * it with the object's __dso_handle), also run and drop the atexit()
+ * handlers whose function lies in that object, as FreeBSD does.
+ */
+static void *
+dso_base(const void *addr)
+{
+	Dl_info dli;
+
+	if (addr == NULL || dladdr(addr, &dli) == 0)
+		return NULL;
+	return dli.dli_fbase;
+}
+
+#define	ATEXIT_IN_DSO(ah, base)						\
+	((base) != NULL && (ah)->ah_dso == NULL &&			\
+	 (ah)->ah_atexit != NULL &&					\
+	 dso_base((const void *)(ah)->ah_atexit) == (base))
+#else
+#define	ATEXIT_IN_DSO(ah, base)	0
+#endif /* __minix && !_LIBMINC */
+
 void	__libc_atexit_init(void) __attribute__ ((visibility("hidden")));
 
 /*
@@ -187,6 +216,9 @@ __cxa_finalize(void *dso)
 	struct atexit_handler *ah, *dead_handlers = NULL, **prevp;
 	void (*cxa_func)(void *);
 	void (*atexit_func)(void);
+#if defined(__minix) && !defined(_LIBMINC)
+	void *dso_fbase = dso != NULL ? dso_base(dso) : NULL;
+#endif
 
 	mutex_lock(&__atexit_mutex);
 	call_depth++;
@@ -202,7 +234,8 @@ __cxa_finalize(void *dso)
 	 */
 again:
 	for (prevp = &atexit_handler_stack; (ah = (*prevp)) != NULL;) {
-		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL) {
+		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL ||
+		    ATEXIT_IN_DSO(ah, dso_fbase)) {
 			if (ah->ah_atexit != NULL) {
 				void *p = atexit_handler_stack;
 				if (ah->ah_dso != NULL) {

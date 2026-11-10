@@ -16,6 +16,7 @@ SRCS=	\
 	queue.c \
 	rwlock.c \
 	scheduler.c \
+	timedwait.c \
 
 WARNS?=	4
 

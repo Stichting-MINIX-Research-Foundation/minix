@@ -25,6 +25,10 @@
 #   --timeout SEC     overall timeout        (default: 240)
 #   --screendump PPM  take a VGA screendump after the gate, before poweroff
 #   --log FILE        serial log destination (default: x86_qemu.log)
+#   --persist         write guest changes to the image itself; by default
+#                     the image is attached with snapshot=on, so every run
+#                     starts from the image as built (core dumps, /tmp
+#                     files and installed payloads do not accumulate)
 #   --keep            leave qemu running after the commands (implies exit 0
 #                     once commands are sent; for interactive debugging)
 #   --input NAME=CMDS inject input: whenever the guest prints a line
@@ -157,7 +161,8 @@ class QemuMinix:
             "-kernel", kernel,
             "-initrd", initrd,
             "-append", append,
-            "-drive", f"file={a.image},format=raw,if=ide,index=0,media=disk",
+            "-drive", f"file={a.image},format=raw,if=ide,index=0,media=disk"
+                      + ("" if a.persist else ",snapshot=on"),
         ] + extra
         accel = "kvm" if os.access("/dev/kvm", os.R_OK | os.W_OK) else "tcg"
         cmd += ["-accel", accel]
@@ -254,7 +259,7 @@ class QemuMinix:
                 time.sleep(0.2)
                 if self.qemu.poll() is not None:
                     self.qemu_died()
-        fail(f"timeout waiting for {what or pattern!r}")
+        self.timeout_fail(f"timeout waiting for {what or pattern!r}")
 
     def wait_re(self, regex, timeout, what=""):
         r"""Like wait_for but takes a regex. Always prefer this for guest
@@ -269,7 +274,7 @@ class QemuMinix:
                 time.sleep(0.2)
                 if self.qemu.poll() is not None:
                     self.qemu_died()
-        fail(f"timeout waiting for {what or regex!r}")
+        self.timeout_fail(f"timeout waiting for {what or regex!r}")
 
     def send(self, text):
         self.serial.sendall(text.encode())
@@ -292,6 +297,58 @@ class QemuMinix:
             # no prompt - nudge with a bare CR (fresh prompt / retry)
             self.send("\r")
         fail("could not log in as root over serial")
+
+    def monitor_cmd(self, cmd, wait=1.0):
+        """Run one QEMU monitor command and return its output."""
+        s = self._connect(self.monsock, tries=10)
+        s.settimeout(0.3)
+        s.sendall((cmd + "\n").encode())
+        out, end = b"", time.time() + wait
+        while time.time() < end:
+            try:
+                d = s.recv(65536)
+                if not d:
+                    break
+                out += d
+            except (socket.timeout, BlockingIOError):
+                pass
+        s.close()
+        return out.decode(errors="replace")
+
+    def vga_text(self):
+        """The 80x25 VGA text screen (where kernel panics and other direct
+        console output go, not to the serial line), as text lines."""
+        out = self.monitor_cmd("xp /2000xh 0xb8000", wait=2.0)
+        cells = []
+        for line in out.splitlines():
+            if ":" not in line or not line.strip().startswith("00000000000b8"):
+                continue
+            for w in line.split(":", 1)[1].split():
+                try:
+                    cells.append(int(w, 16) & 0xff)
+                except ValueError:
+                    pass
+        chars = "".join(chr(c) if 32 <= c < 127 else " " for c in cells)
+        rows = [chars[i:i + 80].rstrip() for i in range(0, len(chars), 80)]
+        while rows and not rows[-1]:
+            rows.pop()
+        return rows
+
+    def timeout_fail(self, msg):
+        """On a timeout, show what the guest console says (a panic, a hung
+        boot) and keep a screendump next to the log, then fail."""
+        try:
+            rows = self.vga_text()
+            text = "\n".join(rows)
+            self.log(("\n[x86_qemu] VGA text at timeout:\n" + text +
+                      "\n").encode())
+            print("x86_qemu: VGA text at timeout:\n" + text, file=sys.stderr)
+            if self.args.log:
+                self.screendump(os.path.abspath(self.args.log) +
+                                ".timeout.ppm")
+        except Exception as e:  # diagnostics must not mask the timeout
+            print(f"x86_qemu: (no VGA diagnostics: {e})", file=sys.stderr)
+        fail(msg)
 
     def screendump(self, path):
         s = self._connect(self.monsock, tries=10)
@@ -335,12 +392,20 @@ class QemuMinix:
             # 4K blocks (it rejects block sizes below PAGE_SIZE),
             # 128-byte inodes, minimal feature set. The image must
             # live OUTSIDE the staging dir (mke2fs -d populates from it).
+            # Size: 64 MB, or the payload (in 4K blocks) plus a quarter
+            # and 16 MB for metadata if that is more.
+            used = 0
+            for root, dirs, files in os.walk(staging):
+                for n in files + dirs:
+                    st = os.lstat(os.path.join(root, n))
+                    used += (st.st_size + 4095) // 4096 * 4096 + 4096
+            size_mb = max(64, (used * 5 // 4) // (1 << 20) + 16)
             fd, testdisk = tempfile.mkstemp(prefix="x86_qemu-disk-", suffix=".img")
             os.close(fd)
             os.unlink(testdisk)
             mk = ["mke2fs", "-F", "-q", "-t", "ext2", "-b", "4096",
                   "-I", "128", "-O", "filetype,sparse_super", "-m", "0",
-                  "-d", staging, testdisk, "64M"]
+                  "-d", staging, testdisk, f"{size_mb}M"]
             r = subprocess.run(mk, capture_output=True, text=True)
             if r.returncode != 0:
                 fail(f"mke2fs failed: {r.stderr.strip()}")
@@ -444,7 +509,14 @@ def main():
                          "guest prints HARNESS:INPUT:NAME")
     ap.add_argument("--raw", action="store_true",
                     help="run --cmd directly on the login shell; no test disk")
+    ap.add_argument("--persist", action="store_true",
+                    help="write guest changes to the image (default: snapshot)")
     args = ap.parse_args()
+    # qemu runs with cwd=bootdir, so paths it opens itself (the image,
+    # monitor screendumps) must not stay relative to the caller's cwd.
+    for attr in ("image", "bootdir", "payload", "screendump", "log"):
+        if getattr(args, attr):
+            setattr(args, attr, os.path.abspath(getattr(args, attr)))
 
     for tool in ("qemu-system-i386", "mke2fs"):
         if shutil.which(tool) is None:

@@ -68,7 +68,7 @@ mthread_mutex_t *mutex;
   /* Check if this mutex is not associated with a condition */
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if (tcb->m_state == MS_CONDITION) {
+	if (tcb->m_state == MS_CONDITION || tcb->m_timedwait) {
 		if (tcb->m_cond != NULL && tcb->m_cond->mc_mutex == *mutex) 
 			return(EBUSY);
 	}

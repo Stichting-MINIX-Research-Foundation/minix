@@ -2,13 +2,15 @@
  * test100: <pthread.h> over libmthread, as ported software uses it:
  * mutex types and attributes (recursive, errorcheck), zero-filled and
  * statically initialized mutexes and condition variables, trylock, and
- * pthread_cond_wait() with a recursive mutex held more than once.
+ * pthread_cond_wait() with a recursive mutex held more than once,
+ * pthread_cond_timedwait() (timeouts, wakeups, CLOCK_MONOTONIC conditions).
  */
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 int max_error = 5;
 #include "common.h"
@@ -136,6 +138,116 @@ test_cond_recursive(void)
 	pthread_mutexattr_destroy(&attr);
 }
 
+static pthread_mutex_t tm = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t tc;
+static int tflag;
+
+static void *
+timed_signaller(void *arg)
+{
+
+	(void)arg;
+	pthread_mutex_lock(&tm);
+	tflag = 1;
+	pthread_cond_signal(&tc);
+	pthread_mutex_unlock(&tm);
+	return NULL;
+}
+
+static long
+ms_since(clockid_t clk, const struct timespec *t0)
+{
+	struct timespec t1;
+
+	clock_gettime(clk, &t1);
+	return (t1.tv_sec - t0->tv_sec) * 1000L +
+	    (t1.tv_nsec - t0->tv_nsec) / 1000000L;
+}
+
+static void
+deadline(clockid_t clk, struct timespec *ts, long ms)
+{
+
+	clock_gettime(clk, ts);
+	ts->tv_sec += ms / 1000;
+	ts->tv_nsec += (ms % 1000) * 1000000L;
+	if (ts->tv_nsec >= 1000000000L) {
+		ts->tv_sec++;
+		ts->tv_nsec -= 1000000000L;
+	}
+}
+
+static void
+test_timedwait(void)
+{
+	pthread_condattr_t ca;
+	struct timespec ts, t0;
+	clockid_t clk;
+	pthread_t t;
+	long ms;
+	int r;
+
+	subtest = 4;
+
+	if (pthread_cond_init(&tc, NULL) != 0) e(1);
+
+	/* No other thread: times out after (about) the given time. */
+	clock_gettime(CLOCK_REALTIME, &t0);
+	deadline(CLOCK_REALTIME, &ts, 300);
+	pthread_mutex_lock(&tm);
+	if ((r = pthread_cond_timedwait(&tc, &tm, &ts)) != ETIMEDOUT) e(2);
+	/* The mutex is held again on return. */
+	if (pthread_mutex_trylock(&tm) != EDEADLK) e(3);
+	pthread_mutex_unlock(&tm);
+	ms = ms_since(CLOCK_REALTIME, &t0);
+	if (ms < 250 || ms > 3000) e(4);
+
+	/* A deadline in the past times out at once. */
+	ts.tv_sec -= 10;
+	pthread_mutex_lock(&tm);
+	if (pthread_cond_timedwait(&tc, &tm, &ts) != ETIMEDOUT) e(5);
+	/* Invalid timespec. */
+	ts.tv_nsec = 1000000000L;
+	if (pthread_cond_timedwait(&tc, &tm, &ts) != EINVAL) e(6);
+	pthread_mutex_unlock(&tm);
+
+	/* Signaled by another thread long before the deadline. */
+	tflag = 0;
+	clock_gettime(CLOCK_REALTIME, &t0);
+	deadline(CLOCK_REALTIME, &ts, 10000);
+	pthread_mutex_lock(&tm);
+	if (pthread_create(&t, NULL, timed_signaller, NULL) != 0) e(7);
+	while (!tflag) {
+		if ((r = pthread_cond_timedwait(&tc, &tm, &ts)) != 0) {
+			e(8);
+			break;
+		}
+	}
+	pthread_mutex_unlock(&tm);
+	if (pthread_join(t, NULL) != 0) e(9);
+	if (ms_since(CLOCK_REALTIME, &t0) > 5000) e(10);
+	if (pthread_cond_destroy(&tc) != 0) e(11);
+
+	/* Condition variables on CLOCK_MONOTONIC. */
+	if (pthread_condattr_init(&ca) != 0) e(12);
+	if (pthread_condattr_getclock(&ca, &clk) != 0 ||
+	    clk != CLOCK_REALTIME) e(13);
+	if (pthread_condattr_setclock(&ca, 12345) != EINVAL) e(14);
+	if (pthread_condattr_setclock(&ca, CLOCK_MONOTONIC) != 0) e(15);
+	if (pthread_condattr_getclock(&ca, &clk) != 0 ||
+	    clk != CLOCK_MONOTONIC) e(16);
+	if (pthread_cond_init(&tc, &ca) != 0) e(17);
+	clock_gettime(CLOCK_MONOTONIC, &t0);
+	deadline(CLOCK_MONOTONIC, &ts, 200);
+	pthread_mutex_lock(&tm);
+	if (pthread_cond_timedwait(&tc, &tm, &ts) != ETIMEDOUT) e(18);
+	pthread_mutex_unlock(&tm);
+	ms = ms_since(CLOCK_MONOTONIC, &t0);
+	if (ms < 150 || ms > 3000) e(19);
+	if (pthread_cond_destroy(&tc) != 0) e(20);
+	pthread_condattr_destroy(&ca);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -145,6 +257,7 @@ main(int argc, char **argv)
 	test_types();
 	test_lazy();
 	test_cond_recursive();
+	test_timedwait();
 
 	quit();
 	return 0;
