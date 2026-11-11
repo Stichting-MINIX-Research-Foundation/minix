@@ -109,6 +109,14 @@ cd /usr/pkgsrc/bootstrap
 The live disk image is produced under
 `../build/distrib/amd64/liveimage/emuimage/`.
 
+## MXV(MINIX eXtended Virtualizarion)
+
+MXV is MINIX 3 native hypervisor.
+Taking advantage of the microkernel design of MINIX3, MXV is designed to make many functions as possible work on the userland side.
+Unlike Linux's KVM and NetBSD's NVMM, MXV does not use QEMU and acts as a hypervisor on its own, like FreeBSD's bhyve.
+The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so MXV was decided to develop a native hypervisor.
+The development of the MXV is now in phase 1.
+
 ## Current port status
 
 - i386 and amd64 source/build support.
@@ -119,7 +127,7 @@ The live disk image is produced under
 - Implement amd64 version guided installer.
 - Installation successful and boot from installed virtual disk.
 - Bootstrap successful of pkgsrc 2026Q3.MINIX 3ネイティブのハイパーバイザーであるMXV
-- Under development MXV(MINIX eXtended Virtualization) MINIX 3 native hypervisor (Still phase 1).
+- Under development MXV now in phase 1 (Work in progress).
 - POSIX test status recorded by the port author: 94/97 passed.
 
 The amd64 port and installation media are experimental; test the ISO in
