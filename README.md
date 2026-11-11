@@ -131,7 +131,7 @@ The development of the MXV is now in phase 1.
 - Implement POSIX PAX extended header extraction.
 - Implement amd64 version guided installer.
 - Installation successful and boot from installed virtual disk.
-- Bootstrap successful of pkgsrc 2026Q3.MINIX 3ネイティブのハイパーバイザーであるMXV
+- Bootstrap successful of pkgsrc 2026Q3.
 - Under development MXV now in phase 1 (Work in progress).
 - POSIX test status recorded by the port author: 94/97 passed.
 
