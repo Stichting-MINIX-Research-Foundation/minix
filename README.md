@@ -111,7 +111,11 @@ The live disk image is produced under
 
 ## MXV (MINIX eXtended Virtualizarion)
 
-MXV is MINIX 3 native hypervisor.
+MXV is a userland-based x86_64 virtualization platform dedicated to MINIX 3, which operates 64bit MINIX3 as the host OS.
+Virtual PC, vCPU control, firmware, device model, storage, network, GUI, and VM management are in principle in userland, and the MINIX kernel adds only the minimum code required for CPU privilege virtualization instructions, VM execution status protection, and guest RAM EPT mapping.
+MXV treats the guest OS as a violation.
+Guest may manipulate arbitrary I/O ports, MMIO, MSR, CPU ID leaf, interrupts, DMA descriptor, disk block, network packet, and UEFI variable with invalid values.
+The protection goal is to prevent the host kernel, other VMs, MXV management processes, and other users' data from cross-border.
 Taking advantage of the microkernel design of MINIX3, MXV is designed to make many functions as possible work on the userland side.
 Unlike Linux's KVM and NetBSD's NVMM, MXV does not use QEMU and acts as a hypervisor on its own, like FreeBSD's bhyve.
 The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so MXV was decided to develop a native hypervisor.
