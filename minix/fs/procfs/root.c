@@ -74,11 +74,17 @@ root_loadavg(void)
 static void
 root_uptime(void)
 {
-	ldiv_t division;
+	clock_t ticks;
+	u32_t hz;
+	unsigned long seconds, fraction;
 
-	division = ldiv(100L * getticks() / sys_hz(), 100L);
+	ticks = getticks();
+	hz = sys_hz();
 
-	buf_printf("%ld.%0.2ld\n", division.quot, division.rem);
+	seconds = ticks / hz;
+	fraction = ((unsigned long long)(ticks % hz) * 100) / hz;
+
+	buf_printf("%lu.%02lu\n", seconds, fraction);
 }
 
 /*
