@@ -126,3 +126,4 @@ a VM before writing it to physical media.
 
 ## Mascot
 
+<img width="1024" height="1536" alt="MINIX 64 Raccoon Mascot Cheerfully Posing" src="https://github.com/user-attachments/assets/25e03eb7-0100-4e04-b605-e3d5a9f4aee3" />
