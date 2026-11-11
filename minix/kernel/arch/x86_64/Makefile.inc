@@ -179,3 +179,6 @@ procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 sconst.h: procoffsets.h
 apic_asm.o head.o klib.o mpx.o: sconst.h
 
+
+# MXV Phase-1 Intel VMX lifecycle and controlled VMLAUNCH probe.
+SRCS+= mxv_vmx.c mxv_entry.S

@@ -106,6 +106,10 @@ SRCS+=  \
 	vm_set_priv.c \
 	vm_update.c
 
+.if ${MACHINE_ARCH} == "x86_64"
+SRCS+= sys_mxvctl.c
+.endif
+
 .if ${MKPCI} != "no"
 SRCS+=	pci_attr_r16.c \
 	pci_attr_r32.c \
