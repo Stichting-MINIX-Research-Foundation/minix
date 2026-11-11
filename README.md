@@ -123,3 +123,6 @@ The live disk image is produced under
 
 The amd64 port and installation media are experimental; test the ISO in
 a VM before writing it to physical media.
+
+## Mascot
+
