@@ -109,7 +109,7 @@ cd /usr/pkgsrc/bootstrap
 The live disk image is produced under
 `../build/distrib/amd64/liveimage/emuimage/`.
 
-## MXV(MINIX eXtended Virtualizarion)
+## MXV (MINIX eXtended Virtualizarion)
 
 MXV is MINIX 3 native hypervisor.
 Taking advantage of the microkernel design of MINIX3, MXV is designed to make many functions as possible work on the userland side.
