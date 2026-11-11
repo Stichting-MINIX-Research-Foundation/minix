@@ -45,3 +45,7 @@ SRCS+=  \
 	do_vdevio.c
 .endif
 
+
+.if ${MACHINE_ARCH} == "x86_64"
+SRCS+= do_mxvctl.c
+.endif

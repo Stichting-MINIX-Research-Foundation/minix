@@ -276,6 +276,18 @@ int breakpoint_set(phys_bytes linaddr, int bp, const int flags);
 #define BREAKPOINT_FLAG_MODE_LOCAL	(1 << 4)
 #define BREAKPOINT_FLAG_MODE_GLOBAL	(2 << 4)
 
+/* MXV Phase-1 Intel VMX backend. */
+struct mxv_vcpu;
+u64_t mxv_vmx_capabilities(void);
+int mxv_vmx_cpu_enable(void);
+int mxv_vmx_cpu_disable(void);
+int mxv_vcpu_create(endpoint_t owner, u64_t *handle);
+int mxv_vcpu_destroy(endpoint_t owner, u64_t handle);
+int mxv_vcpu_run_probe(endpoint_t owner, u64_t handle, u64_t *exit_reason);
+int mxv_vmx_prepare_entry(struct mxv_vcpu *vcpu, u64_t host_rsp, u64_t host_rip);
+int mxv_vmx_exit_complete(struct mxv_vcpu *vcpu);
+int mxv_vmx_entry_failed(struct mxv_vcpu *vcpu);
+
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"
 

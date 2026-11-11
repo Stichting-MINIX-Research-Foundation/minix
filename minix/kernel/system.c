@@ -218,6 +218,9 @@ void system_init(void)
   /* Memory management. */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
   map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
+#if defined(__x86_64__)
+  map(SYS_MXVCTL, do_mxvctl);		/* MXV Intel VMX control */
+#endif
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
