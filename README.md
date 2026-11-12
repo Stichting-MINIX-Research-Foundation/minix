@@ -109,18 +109,78 @@ cd /usr/pkgsrc/bootstrap
 The live disk image is produced under
 `../build/distrib/amd64/liveimage/emuimage/`.
 
-## MXV (MINIX eXtended Virtualizarion)
+## MXV (MINIX eXteneded Virtualization)
 
-MXV is a userland-based x86_64 virtualization platform dedicated to MINIX 3, which operates 64bit MINIX3 as the host OS.
-Virtual PC, vCPU control, firmware, device model, storage, network, GUI, and VM management are in principle in userland, and the MINIX kernel adds only the minimum code required for CPU privilege virtualization instructions, VM execution status protection, and guest RAM EPT mapping.
-MXV treats the guest OS as a violation.
-Guest may manipulate arbitrary I/O ports, MMIO, MSR, CPU ID leaf, interrupts, DMA descriptor, disk block, network packet, and UEFI variable with invalid values.
-The protection goal is to prevent the host kernel, other VMs, MXV management processes, and other users' data from cross-border.
+MXV is a MINIX 3-native, userland-oriented x86_64 virtualization platform being developed specifically for 64-bit MINIX 3. Its goal is to bring hardware-assisted virtualization capabilities to MINIX 3 while preserving its microkernel architecture and design philosophy.
+
+Unlike conventional hypervisor implementations that rely on an external virtualization framework, MXV is designed as an independent hypervisor native to MINIX 3. It takes advantage of MINIX's microkernel architecture to keep the kernel small and move as much virtualization functionality as possible into isolated userland processes.
 
 Taking advantage of the microkernel design of MINIX3, MXV is designed to make many functions as possible work on the userland side.
 Unlike Linux's KVM and NetBSD's NVMM, MXV does not use QEMU and acts as a hypervisor on its own, like FreeBSD's bhyve.
-The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so MXV was decided to develop a native hypervisor.
-The development of the MXV is now in phase 1.
+The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so I decided to develop a MXV.
+
+#### Architecture and Design
+
+MXV follows a hosted hypervisor architecture, with most virtualization components implemented in userland. The MINIX 3 kernel is extended only with the minimal functionality required for privileged CPU virtualization operations, VM execution state management, and guest memory mapping through Intel Extended Page Tables (EPT).
+
+The initial virtualization backend uses Intel VT-x and EPT, allowing guest x86_64 instructions to execute directly on the physical CPU. Privileged operations, I/O accesses, and memory-mapped I/O events are intercepted through VM exits and handled by the userland Virtual Machine Monitor (VMM).
+
+MXV treats the guest OS as a violation. Guest may manipulate arbitrary I/O ports, MMIO, MSR, CPU ID leaf, interrupts, DMA descriptor, disk block, network packet, and UEFI variable with invalid values. The protection goal is to prevent the host kernel, other VMs, MXV management processes, and other users' data from cross-border.
+
+The architecture separates virtualization responsibilities into independent components:
+
+- **Kernel VMX Support:** Handles Intel VMX operations, VMCS management, VM entry/exit, and EPT memory mapping.
+- **Virtual Machine Monitor (VMM):** Manages virtual CPUs, VM execution, VM exits, interrupts, timers, and virtual machine state.
+- **Virtual Device Models:** Provides emulated hardware devices independently of the host kernel.
+- **Storage and Networking:** Handles virtual disks, CD-ROM images, virtual network interfaces, and userland NAT.
+- **Display and Input:** Provides VGA/VBE framebuffer output, keyboard and mouse input, and remote graphical access through RFB/VNC.
+- **VM Management:** Handles virtual machine creation, configuration, resource allocation, lifecycle management, and monitoring.
+
+By keeping device emulation and VM management in userland, MXV aims to improve fault isolation, maintainability, and security while minimizing modifications to the MINIX 3 kernel.
+
+#### Virtual Hardware and Guest OS Support
+
+MXV is designed around its own virtual machine specification, **MXV-PC1**, providing a standardized x86_64 virtual PC environment.
+
+The planned virtual hardware includes:
+
+- Intel VT-x/EPT-based CPU virtualization.
+- UEFI x64 firmware based on EDK II/OVMF.
+- Virtual PCI chipset based on the i440FX/PIIX3 architecture.
+- PIIX3-compatible IDE storage with raw disk images and ISO CD-ROM support.
+- Intel 82540EM (e1000) compatible virtual network adapter.
+- VGA-compatible display with VBE framebuffer support.
+- PS/2 keyboard and mouse.
+- 16550A-compatible serial console.
+- Userland NAT networking.
+- RFB 3.8 / VNC-based graphical console.
+
+The initial target guest operating systems are:
+
+- 64-bit MINIX 3
+- NetBSD 10.x (amd64)
+- Linux 6.18.x LTS (x86_64)
+
+The initial implementation targets a single vCPU per virtual machine. SMP virtualization, AMD SVM support, virtio devices, USB, audio, and other advanced virtualization features are planned for future development.
+
+These specifications describe the intended MXV architecture and feature set; they do not imply that all components or guest operating systems are currently supported.
+
+#### Development Status
+
+MXV is currently under active development, and **Phase 1 has been implemented**.
+
+The first milestone focuses on establishing the kernel-side hardware virtualization foundation, including:
+
+- Intel VMX initialization and management.
+- VMCS lifecycle management.
+- Basic VM entry and VM exit handling.
+- A minimal single-vCPU guest execution path.
+
+This foundation provides the basis for subsequent development of guest memory virtualization, the userland VMM, virtual firmware, device emulation, and complete guest operating system support.
+
+MXV is being developed incrementally, with the long-term objective of providing a fully functional, native virtualization platform on MINIX 3 without relying on QEMU as its runtime virtualization engine.
+
+**MXV aims to make MINIX 3 not only a guest operating system, but also a native virtualization host.**
 
 ## Current port status
 
