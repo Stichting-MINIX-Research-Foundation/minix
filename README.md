@@ -116,7 +116,7 @@ MXV is a MINIX 3-native, userland-oriented x86_64 virtualization platform being 
 Unlike conventional hypervisor implementations that rely on an external virtualization framework, MXV is designed as an independent hypervisor native to MINIX 3. It takes advantage of MINIX's microkernel architecture to keep the kernel small and move as much virtualization functionality as possible into isolated userland processes.
 
 Unlike Linux's KVM and NetBSD's NVMM, MXV does not use QEMU and acts as a hypervisor on its own, like FreeBSD's bhyve.
-The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so I decided to develop a MXV.
+The design of the microkernel MINIX 3 does not suit the hypervisor that uses QEMU like NVMM, and bhyve developed on the premise of monolithic kernel is not suitable for MINIX 3, so I decided to develop MXV.
 
 #### Architecture and Design
 
