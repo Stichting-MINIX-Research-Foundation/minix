@@ -39,9 +39,13 @@ SRCS+= 	\
 	do_schedctl.c \
 	do_statectl.c
 
-.if ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=  \
 	do_devio.c \
 	do_vdevio.c
 .endif
 
+
+.if ${MACHINE_ARCH} == "x86_64"
+SRCS+= do_mxvctl.c
+.endif

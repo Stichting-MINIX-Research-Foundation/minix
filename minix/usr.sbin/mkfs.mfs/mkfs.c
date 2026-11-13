@@ -129,8 +129,7 @@ static ssize_t mkfs_write(void * buf, size_t count);
 /*================================================================
  *                    mkfs  -  make filesystem
  *===============================================================*/
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int nread, mode, usrid, grpid, ch, extra_space_percent, Tflag = 0;
   block_t blocks, maxblocks, bblocks;
@@ -437,8 +436,7 @@ main(int argc, char *argv[])
 /*================================================================
  *        detect_fs_size  -  determine image size dynamically
  *===============================================================*/
-void
-detect_fs_size(struct fs_size * fssize)
+void detect_fs_size(struct fs_size * fssize)
 {
   int prev_lct = lct;
   off_t point = ftell(proto);
@@ -462,8 +460,7 @@ detect_fs_size(struct fs_size * fssize)
   fseek(proto, point, SEEK_SET);
 }
 
-void
-sizeup_dir(struct fs_size * fssize)
+void sizeup_dir(struct fs_size * fssize)
 {
   char *token[MAX_TOKENS], *p;
   char line[LINE_LEN]; 
@@ -536,8 +533,7 @@ sizeup_dir(struct fs_size * fssize)
 /*================================================================
  *                    sizeup  -  determine device size
  *===============================================================*/
-block_t
-sizeup(char * device)
+block_t sizeup(char * device)
 {
   block_t d;
 #if defined(__minix)
@@ -587,8 +583,7 @@ sizeup(char * device)
 /*
  * copied from fslib
  */
-static int
-bitmapsize(bit_t nr_bits, size_t blk_size)
+static int bitmapsize(bit_t nr_bits, size_t blk_size)
 {
   block_t nr_blocks;
 
@@ -602,8 +597,7 @@ bitmapsize(bit_t nr_bits, size_t blk_size)
  *                 super  -  construct a superblock
  *===============================================================*/
 
-void
-super(zone_t zones, ino_t inodes)
+void super(zone_t zones, ino_t inodes)
 {
   block_t inodeblks, initblks, i;
   unsigned long nb;
@@ -722,8 +716,7 @@ super(zone_t zones, ino_t inodes)
 /*================================================================
  *              rootdir  -  install the root directory
  *===============================================================*/
-void
-rootdir(ino_t inode)
+void rootdir(ino_t inode)
 {
   zone_t z;
 
@@ -735,8 +728,7 @@ rootdir(ino_t inode)
   incr_link(inode);
 }
 
-void
-enter_symlink(ino_t inode, char *lnk)
+void enter_symlink(ino_t inode, char *lnk)
 {
   zone_t z;
   size_t len;
@@ -759,8 +751,7 @@ enter_symlink(ino_t inode, char *lnk)
 /*================================================================
  *	    eat_dir  -  recursively install directory
  *===============================================================*/
-void
-eat_dir(ino_t parent)
+void eat_dir(ino_t parent)
 {
   /* Read prototype lines and set up directory. Recurse if need be. */
   char *token[MAX_TOKENS], *p;
@@ -829,8 +820,7 @@ eat_dir(ino_t parent)
  * 		eat_file  -  copy file to MINIX
  *===============================================================*/
 /* Zonesize >= blocksize */
-void
-eat_file(ino_t inode, int f)
+void eat_file(ino_t inode, int f)
 {
   int ct = 0, i, j;
   zone_t z = 0;
@@ -854,8 +844,7 @@ eat_file(ino_t inode, int f)
   free(buf);
 }
 
-int
-dir_try_enter(zone_t z, ino_t child, char const *name)
+int dir_try_enter(zone_t z, ino_t child, char const *name)
 {
   struct direct *dir_entry = alloc_block();
   int r = 0;
@@ -890,8 +879,7 @@ dir_try_enter(zone_t z, ino_t child, char const *name)
 /*================================================================
  *	    directory & inode management assist group
  *===============================================================*/
-void
-enter_dir(ino_t parent, char const *name, ino_t child)
+void enter_dir(ino_t parent, char const *name, ino_t child)
 {
   /* Enter child in parent directory */
   /* Works for dir > 1 block and zone > block */
@@ -953,8 +941,7 @@ enter_dir(ino_t parent, char const *name, ino_t child)
 }
 
 
-void
-add_zone(ino_t n, zone_t z, size_t bytes, time_t mtime)
+void add_zone(ino_t n, zone_t z, size_t bytes, time_t mtime)
 {
   /* Add zone z to inode n. The file has grown by 'bytes' bytes. */
 
@@ -1044,8 +1031,7 @@ add_zone(ino_t n, zone_t z, size_t bytes, time_t mtime)
 
 
 /* Increment the link count to inode n */
-void
-incr_link(ino_t n)
+void incr_link(ino_t n)
 {
   int off;
   static int enter = 0;
@@ -1073,8 +1059,7 @@ incr_link(ino_t n)
 
 
 /* Increment the file-size in inode n */
-void
-incr_size(ino_t n, size_t count)
+void incr_size(ino_t n, size_t count)
 {
   block_t b;
   int off;
@@ -1103,8 +1088,7 @@ incr_size(ino_t n, size_t count)
 /*================================================================
  * 	 	     allocation assist group
  *===============================================================*/
-static ino_t
-alloc_inode(int mode, int usrid, int grpid)
+static ino_t alloc_inode(int mode, int usrid, int grpid)
 {
   ino_t num;
   int off;
@@ -1143,8 +1127,7 @@ alloc_inode(int mode, int usrid, int grpid)
 
 
 /* Allocate a new zone */
-static zone_t
-alloc_zone(void)
+static zone_t alloc_zone(void)
 {
   /* Works for zone > block */
   block_t b;
@@ -1164,8 +1147,7 @@ alloc_zone(void)
 
 
 /* Insert one bit into the bitmap */
-void
-insert_bit(block_t map, bit_t bit)
+void insert_bit(block_t map, bit_t bit)
 {
   int boff, w, s;
   unsigned int bits_per_block;
@@ -1221,8 +1203,7 @@ int mode_con(char *p)
   return(mode);
 }
 
-void
-get_line(char line[LINE_LEN], char *parse[MAX_TOKENS])
+void get_line(char line[LINE_LEN], char *parse[MAX_TOKENS])
 {
   /* Read a line and break it up in tokens */
   int k;
@@ -1269,8 +1250,7 @@ get_line(char line[LINE_LEN], char *parse[MAX_TOKENS])
 /*
  * Check to see if the special file named 'device' is mounted.
  */
-void
-check_mtab(const char *device)		/* /dev/hd1 or whatever */
+void check_mtab(const char *device)		/* /dev/hd1 or whatever */
 {
 #if defined(__minix)
   int n, r;
@@ -1346,8 +1326,7 @@ alloc_block(void)
 	return buf;
 }
 
-void
-print_fs(void)
+void print_fs(void)
 {
   int i, j;
   ino_t k;
@@ -1428,8 +1407,7 @@ print_fs(void)
  * The first time a block is read, it returns all 0s, unless there has
  * been a write.  This routine checks to see if a block has been accessed.
  */
-int
-read_and_set(block_t n)
+int read_and_set(block_t n)
 {
   int w, s, mask, r;
 
@@ -1455,8 +1433,7 @@ usage(void)
   exit(4);
 }
 
-void
-special(char * string, int insertmode)
+void special(char * string, int insertmode)
 {
   int openmode = O_RDWR;
   if(!insertmode) openmode |= O_TRUNC;
@@ -1468,8 +1445,7 @@ special(char * string, int insertmode)
 
 
 /* Read a block. */
-void
-get_block(block_t n, void *buf)
+void get_block(block_t n, void *buf)
 {
   ssize_t k;
 
@@ -1485,8 +1461,7 @@ get_block(block_t n, void *buf)
 }
 
 /* Read the super block. */
-void
-get_super_block(void *buf)
+void get_super_block(void *buf)
 {
   ssize_t k;
 
@@ -1497,8 +1472,7 @@ get_super_block(void *buf)
 }
 
 /* Write a block. */
-void
-put_block(block_t n, void *buf)
+void put_block(block_t n, void *buf)
 {
 
   (void) read_and_set(n);
@@ -1507,8 +1481,7 @@ put_block(block_t n, void *buf)
   mkfs_write(buf, block_size);
 }
 
-static ssize_t
-mkfs_write(void * buf, size_t count)
+static ssize_t mkfs_write(void * buf, size_t count)
 {
 	uint64_t fssize;
 	ssize_t w;
@@ -1533,8 +1506,7 @@ mkfs_write(void * buf, size_t count)
 }
 
 /* Seek to position in FS we're creating. */
-static uint64_t
-mkfs_seek(uint64_t pos, int whence)
+static uint64_t mkfs_seek(uint64_t pos, int whence)
 {
 	if(whence == SEEK_SET) pos += fs_offset_bytes;
 	off_t newpos;

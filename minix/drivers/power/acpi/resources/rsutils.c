@@ -146,8 +146,7 @@ AcpiRsEncodeBitmask (
  *
  ******************************************************************************/
 
-void
-AcpiRsMoveData (
+void AcpiRsMoveData (
     void                    *Destination,
     void                    *Source,
     UINT16                  ItemCount,
@@ -226,8 +225,7 @@ AcpiRsMoveData (
  *
  ******************************************************************************/
 
-void
-AcpiRsSetResourceLength (
+void AcpiRsSetResourceLength (
     ACPI_RSDESC_SIZE        TotalLength,
     AML_RESOURCE            *Aml)
 {
@@ -282,8 +280,7 @@ AcpiRsSetResourceLength (
  *
  ******************************************************************************/
 
-void
-AcpiRsSetResourceHeader (
+void AcpiRsSetResourceHeader (
     UINT8                   DescriptorType,
     ACPI_RSDESC_SIZE        TotalLength,
     AML_RESOURCE            *Aml)

@@ -27,8 +27,7 @@ void test_open_socket_fork(void);
 void start_socket_server(int port);
 int start_socket_client(int port, int flag);
 
-void
-copy_subtests()
+void copy_subtests()
 {
 	char *subtests[] = { "t67a", "t67b" };
 	char copy_cmd[8 + PATH_MAX + 1];
@@ -42,8 +41,7 @@ copy_subtests()
 	}
 }
 
-void
-test_open_file_cloexec()
+void test_open_file_cloexec()
 {
 	int flags;
 	pid_t pid;
@@ -85,8 +83,7 @@ test_open_file_cloexec()
 	close(fd);
 }
 
-void
-test_open_file_fork()
+void test_open_file_fork()
 {
 	int flags;
 	pid_t pid;
@@ -128,8 +125,7 @@ test_open_file_fork()
 	close(fd);
 }
 
-int
-start_socket_client(int port, int flag)
+int start_socket_client(int port, int flag)
 {
 	int fd_sock;
 	struct hostent *he;
@@ -165,8 +161,7 @@ start_socket_client(int port, int flag)
 }
 
 
-void
-start_socket_server(int port)
+void start_socket_server(int port)
 {
 #if !defined(__minix)
 	int yes = 1;
@@ -224,8 +219,7 @@ start_socket_server(int port)
 	exit(0);
 }
 
-void
-test_open_socket_cloexec()
+void test_open_socket_cloexec()
 {
 /* This subtest will start a server and client using TCP. The client will
  * open the socket with SOCK_CLOEXEC turned on, so that after a fork+exec, the
@@ -310,8 +304,7 @@ test_open_socket_cloexec()
 	if (WEXITSTATUS(result) != 0) e(5);
 }
 
-void
-test_open_socket_fork(void)
+void test_open_socket_fork(void)
 {
 /* This subtest will start a server and client using TCP. The client will
  * open the socket with SOCK_CLOEXEC turned off, so that after a fork+exec, the
@@ -396,8 +389,7 @@ test_open_socket_fork(void)
 	if (WEXITSTATUS(result) != 0) e(5);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	start(67);
 	copy_subtests();

@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.mbr,v 1.19 2014/01/12 15:26:29 tsutsui Exp $
+#	$NetBSD: Makefile.mbr,v 1.21 2018/07/25 23:45:32 kamil Exp $
 
 S=		${.CURDIR}/../../../../..
 
+NOLIBCSANITIZER=# defined
+NOSANITIZER=	# defined
 NOMAN=		# defined
 
 LIBCRT0=	# nothing
@@ -34,7 +36,8 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
-AFLAGS+=	-m32
+# MINIX's clang ignores -m32 and warns that it is unused.
+AFLAGS+=	${${ACTIVE_CC} == "clang":?:-m32}
 .endif
 
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \

@@ -173,8 +173,7 @@ AcpiUtDwordByteSwap (
  *
  ******************************************************************************/
 
-void
-AcpiUtSetIntegerWidth (
+void AcpiUtSetIntegerWidth (
     UINT8                   Revision)
 {
 
@@ -392,8 +391,7 @@ AcpiUtWalkPackageTree (
  *
  ******************************************************************************/
 
-void
-AcpiUtDisplayInitPathname (
+void AcpiUtDisplayInitPathname (
     UINT8                   Type,
     ACPI_NAMESPACE_NODE     *ObjHandle,
     char                    *Path)

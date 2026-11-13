@@ -29,11 +29,17 @@ SUBDIR+=	libvtreefs
 SUBDIR+=	libgcc_s_empty
 .endif
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 SUBDIR+=	libacpi
+.endif
+
+.if (${MACHINE_ARCH} == "i386")
 SUBDIR+=	libhgfs
 SUBDIR+=	libvassert
 SUBDIR+=	libvboxfs
+.endif
+
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 SUBDIR+=	libvirtio
 .endif
 

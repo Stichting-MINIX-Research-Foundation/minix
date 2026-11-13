@@ -71,8 +71,7 @@ xrealloc(void *ptr, size_t nmemb, size_t size)
 	return new_ptr;
 }
 
-void
-xfree(void *ptr)
+void xfree(void *ptr)
 {
 	if (ptr == NULL)
 		errx(2, NULL);
@@ -92,8 +91,7 @@ xstrdup(const char *str)
 }
 
 #if 0
-int
-xasprintf(char **ret, const char *fmt, ...)
+int xasprintf(char **ret, const char *fmt, ...)
 {
 	va_list ap;
 	int i;

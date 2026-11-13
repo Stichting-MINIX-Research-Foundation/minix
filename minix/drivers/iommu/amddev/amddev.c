@@ -198,9 +198,7 @@ static void sef_cb_signal_handler(int signo)
 #endif
 
 /* Returns 0 if no device found, or 1 if a device is found. */
-static int find_dev(devindp, capaddrp)
-int *devindp;
-u8_t *capaddrp;
+static int find_dev(int *devindp, u8_t *capaddrp)
 {
 	int r, devind, first;
 	u8_t capptr, type, next, subtype;
@@ -293,7 +291,7 @@ static void init_domain(int index)
 	{
 		memset(table, 0, size);
 		memsize= 0x37000 / 8;
-		printf("memsize = 0x%x / 8\n", memsize*8);
+		printf("memsize = 0x%zx / 8\n", memsize*8);
 		memset(table, 0xff, memsize);
 	}
 	else
@@ -387,7 +385,7 @@ static int do_add4pci(const message *m)
 	pci_func= m->m1_i3;
 
 	printf(
-"amddev`do_add4pci: got request for 0x%x@0x%lx from %d for pci dev %u.%u.%u\n",
+"amddev`do_add4pci: got request for 0x%zx@0x%lx from %d for pci dev %u.%u.%u\n",
 		size, start, proc, pci_bus, pci_dev, pci_func);
 
 	if (start % PAGE_SIZE)
@@ -398,7 +396,7 @@ static int do_add4pci(const message *m)
 	}
 	if (size % PAGE_SIZE)
 	{
-		printf("amddev`do_add4pci: bad size 0x%x from proc %d\n",
+		printf("amddev`do_add4pci: bad size 0x%zx from proc %d\n",
 			size, proc);
 		return EINVAL;
 	}
@@ -409,7 +407,7 @@ static int do_add4pci(const message *m)
 	if (r != OK)
 	{
 		printf(
-		"amddev`do_add4pci: umap failed for 0x%x@0x%lx, proc %d: %d\n",
+		"amddev`do_add4pci: umap failed for 0x%zx@0x%lx, proc %d: %d\n",
 			size, start, proc, r);
 		return r;
 	}

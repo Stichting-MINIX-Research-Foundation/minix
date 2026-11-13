@@ -119,6 +119,10 @@
 
 #include "ahci.h"
 
+#ifndef PCI_CR_INT_DIS
+#define PCI_CR_INT_DIS	0x0400	/* PCI command: Interrupt Disable (INTx) */
+#endif
+
 /* Host Bus Adapter (HBA) state. */
 static struct {
 	volatile u32_t *base;	/* base address of memory-mapped registers */
@@ -128,6 +132,7 @@ static struct {
 	int nr_cmds;		/* maximum number of commands per port */
 	int has_ncq;		/* NCQ support flag */
 	int has_clo;		/* CLO support flag */
+	int has_s64a;		/* 64-bit addressing support flag */
 
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
@@ -185,6 +190,25 @@ static struct port_state {
 
 #define port_read(ps, r)	((ps)->reg[r])
 #define port_write(ps, r, v)	((ps)->reg[r] = (v))
+
+/* AHCI command tables, command-list entries, and several port registers carry
+ * a 64-bit DMA address split into separate low and high 32-bit fields. These
+ * extract the two halves; on i386 phys_bytes is 32-bit, so the high half is
+ * always zero (and the corresponding *U registers are hardwired to zero unless
+ * the HBA reports CAP.S64A).
+ */
+#define ADDR_LO32(a)	((u32_t) (phys_bytes) (a))
+#define ADDR_HI32(a)	((u32_t) ((u64_t) (phys_bytes) (a) >> 32))
+
+/* Write a 64-bit DMA address into a port register pair: the base register 'r'
+ * (low 32 bits) and its upper-32-bits counterpart at 'r + 1' (the AHCI layout
+ * for CLB/CLBU and FB/FBU).
+ */
+#define port_write64(ps, r, a)						\
+	do {								\
+		port_write((ps), (r), ADDR_LO32(a));			\
+		port_write((ps), (r) + 1, ADDR_HI32(a));		\
+	} while (0)
 
 static int ahci_instance;			/* driver instance number */
 
@@ -391,7 +415,7 @@ static int atapi_read_capacity(struct port_state *ps, int cmd)
 	dprintf(V_INFO,
 		("%s: medium detected (%u byte sectors, %llu MB size)\n",
 		ahci_portname(ps), ps->sector_size,
-		ps->lba_count * ps->sector_size / (1024*1024)));
+		(unsigned long long)(ps->lba_count * ps->sector_size / (1024*1024))));
 
 	return OK;
 }
@@ -832,8 +856,8 @@ static void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
 	p = (u32_t *) &ct[AHCI_CT_PRDT_OFF];
 
 	for (i = 0; i < nr_prds; i++, prdt++) {
-		*p++ = prdt->vp_addr;
-		*p++ = 0;
+		*p++ = ADDR_LO32(prdt->vp_addr);	/* DBA:  bits 31:0 */
+		*p++ = ADDR_HI32(prdt->vp_addr);	/* DBAU: bits 63:32 */
 		*p++ = 0;
 		*p++ = prdt->vp_size - 1;
 	}
@@ -891,7 +915,8 @@ static void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 		(write ? AHCI_CL_WRITE : 0) |
 		((packet != NULL) ? AHCI_CL_ATAPI : 0) |
 		((size / sizeof(u32_t)) << AHCI_CL_CFL_SHIFT);
-	cl[2] = ps->ct_phys[cmd];
+	cl[2] = ADDR_LO32(ps->ct_phys[cmd]);		/* CTBA:  bits 31:0 */
+	cl[3] = ADDR_HI32(ps->ct_phys[cmd]);		/* CTBAU: bits 63:32 */
 }
 
 /*===========================================================================*
@@ -1017,7 +1042,7 @@ static int port_get_padbuf(struct port_state *ps, size_t size)
  *				sum_iovec				     *
  *===========================================================================*/
 static int sum_iovec(struct port_state *ps, endpoint_t endpt,
-	iovec_s_t *iovec, int nr_req, vir_bytes *total)
+	iovec_t *iovec, int nr_req, vir_bytes *total)
 {
 	/* Retrieve the total size of the given I/O vector. Check for alignment
 	 * requirements along the way. Return OK (and the total request size)
@@ -1054,7 +1079,7 @@ static int sum_iovec(struct port_state *ps, endpoint_t endpt,
  *				setup_prdt				     *
  *===========================================================================*/
 static int setup_prdt(struct port_state *ps, endpoint_t endpt,
-	iovec_s_t *iovec, int nr_req, vir_bytes size, vir_bytes lead,
+	iovec_t *iovec, int nr_req, vir_bytes size, vir_bytes lead,
 	int write, prd_t *prdt)
 {
 	/* Convert (the first part of) an I/O vector to a Physical Region
@@ -1085,10 +1110,15 @@ static int setup_prdt(struct port_state *ps, endpoint_t endpt,
 	for (i = 0; i < nr_req && size > 0; i++) {
 		bytes = MIN(iovec[i].iov_size, size);
 
+		/* libblockdriver passes iovec_t, where iov_addr holds either a
+		 * local virtual address (endpt == SELF) or a grant ID. Reading
+		 * it as iovec_s_t's 32-bit iov_grant truncated/sign-extended a
+		 * 64-bit SELF address on LP64 (bit-31 user addresses).
+		 */
 		if (endpt == SELF)
-			vvec[i].vv_addr = (vir_bytes) iovec[i].iov_grant;
+			vvec[i].vv_addr = iovec[i].iov_addr;
 		else
-			vvec[i].vv_grant = iovec[i].iov_grant;
+			vvec[i].vv_grant = (cp_grant_id_t) iovec[i].iov_addr;
 
 		vvec[i].vv_size = bytes;
 
@@ -1137,7 +1167,7 @@ static int setup_prdt(struct port_state *ps, endpoint_t endpt,
  *				port_transfer				     *
  *===========================================================================*/
 static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
-	endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write, int flags)
+	endpoint_t endpt, iovec_t *iovec, int nr_req, int write, int flags)
 {
 	/* Perform an I/O transfer on a port.
 	 */
@@ -1152,7 +1182,7 @@ static ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 		return r;
 
 	dprintf(V_REQ, ("%s: %s for %lu bytes at pos %llx\n",
-		ahci_portname(ps), write ? "write" : "read", size, pos));
+		ahci_portname(ps), write ? "write" : "read", size, (unsigned long long)pos));
 
 	assert(ps->state == STATE_GOOD_DEV);
 	assert(ps->flags & FLAG_HAS_MEDIUM);
@@ -1425,7 +1455,7 @@ static void port_id_check(struct port_state *ps, int success)
 		if (ps->flags & FLAG_HAS_MEDIUM)
 			printf(", %u byte sectors, %llu MB size",
 				ps->sector_size,
-				ps->lba_count * ps->sector_size / (1024*1024));
+				(unsigned long long)(ps->lba_count * ps->sector_size / (1024*1024)));
 
 		printf("\n");
 	}
@@ -1739,13 +1769,20 @@ static void port_timeout(int arg)
 	 * detection and only look for hot plug events from now on.
 	 */
 	if (ps->state == STATE_SPIN_UP) {
-		/* One exception: if the PCS interrupt bit is set here, then we
-		 * are probably running on VirtualBox, which is currently not
-		 * always raising interrupts when setting interrupt bits (!).
+		/* Two cases where we proceed to device detection despite not
+		 * having received a connect interrupt:
+		 *  - the PCS interrupt bit is set but no interrupt was raised
+		 *    (e.g. VirtualBox), or
+		 *  - SSTS.DET already shows an established device, but the
+		 *    connect-change was never latched as a PCS event because the
+		 *    device was present from the start (e.g. QEMU's ich9 AHCI).
+		 * In both cases the device is there; poll it instead of giving up.
 		 */
-		if (port_read(ps, AHCI_PORT_IS) & AHCI_PORT_IS_PCS) {
-			dprintf(V_INFO, ("%s: bad controller, no interrupt\n",
-				ahci_portname(ps)));
+		if ((port_read(ps, AHCI_PORT_IS) & AHCI_PORT_IS_PCS) ||
+			(port_read(ps, AHCI_PORT_SSTS) & AHCI_PORT_SSTS_DET_MASK)
+				== AHCI_PORT_SSTS_DET_PHY) {
+			dprintf(V_INFO, ("%s: device present without connect "
+				"interrupt\n", ahci_portname(ps)));
 
 			ps->state = STATE_WAIT_DEV;
 			ps->left = ahci_device_checks;
@@ -1927,11 +1964,8 @@ static void port_alloc(struct port_state *ps)
 	}
 
 	/* Tell the controller about some of the physical addresses. */
-	port_write(ps, AHCI_PORT_FBU, 0);
-	port_write(ps, AHCI_PORT_FB, ps->fis_phys);
-
-	port_write(ps, AHCI_PORT_CLBU, 0);
-	port_write(ps, AHCI_PORT_CLB, ps->cl_phys);
+	port_write64(ps, AHCI_PORT_FB, ps->fis_phys);
+	port_write64(ps, AHCI_PORT_CLB, ps->cl_phys);
 
 	/* Enable FIS receive. */
 	cmd = port_read(ps, AHCI_PORT_CMD);
@@ -2064,7 +2098,8 @@ static void ahci_init(int devind)
 {
 	/* Initialize the device.
 	 */
-	u32_t base, size, cap, ghc, mask;
+	u64_t base;
+	u32_t size, cap, ghc, mask;
 	int r, port, ioflag;
 
 	if ((r = pci_get_bar(devind, PCI_BAR_6, &base, &size, &ioflag)) != OK)
@@ -2084,10 +2119,21 @@ static void ahci_init(int devind)
 	hba_state.nr_ports = (size - AHCI_MEM_BASE_SIZE) / AHCI_MEM_PORT_SIZE;
 
 	/* Map the register area into local memory. */
-	hba_state.base = (u32_t *) vm_map_phys(SELF, (void *) base, size);
+	hba_state.base = (u32_t *) vm_map_phys(SELF, (void *)(uintptr_t) base, size);
 	hba_state.size = size;
 	if (hba_state.base == MAP_FAILED)
 		panic("unable to map HBA memory");
+
+	/* Enable memory access and bus mastering (for DMA), and clear the
+	 * Interrupt Disable bit so the HBA can assert its INTx line. Firmware
+	 * (e.g. OVMF) does not necessarily leave these in the state we need.
+	 */
+	{
+		u16_t cr = pci_attr_r16(devind, PCI_CR);
+		cr |= PCI_CR_MEM_EN | PCI_CR_MAST_EN;	/* mem space + busmaster */
+		cr &= ~PCI_CR_INT_DIS;			/* enable INTx */
+		pci_attr_w16(devind, PCI_CR, cr);
+	}
 
 	/* Retrieve, allocate and enable the controller's IRQ. */
 	hba_state.irq = pci_attr_r8(devind, PCI_ILR);
@@ -2111,6 +2157,7 @@ static void ahci_init(int devind)
 	cap = hba_read(AHCI_HBA_CAP);
 	hba_state.has_ncq = !!(cap & AHCI_HBA_CAP_SNCQ);
 	hba_state.has_clo = !!(cap & AHCI_HBA_CAP_SCLO);
+	hba_state.has_s64a = !!(cap & AHCI_HBA_CAP_S64A);
 	hba_state.nr_cmds = MIN(NR_CMDS,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1);
 
@@ -2127,6 +2174,15 @@ static void ahci_init(int devind)
 	dprintf(V_INFO, ("AHCI%u: CAP %08x, CAP2 %08x, PI %08x\n",
 		ahci_instance, cap, hba_read(AHCI_HBA_CAP2),
 		hba_read(AHCI_HBA_PI)));
+
+	/* On a 64-bit host the DMA buffers (and user data pages) may be placed
+	 * above 4 GB. We always program the upper-32-bit address registers, but
+	 * an HBA without CAP.S64A ignores them and there is no bounce-buffer
+	 * path, so such a controller can only be used safely below 4 GB.
+	 */
+	if (sizeof(phys_bytes) > sizeof(u32_t) && !hba_state.has_s64a)
+		printf("AHCI%u: warning: HBA lacks 64-bit addressing (CAP.S64A);"
+			" DMA above 4 GB is unsupported\n", ahci_instance);
 
 	/* Initialize each of the implemented ports. We ignore CAP.NP. */
 	mask = hba_read(AHCI_HBA_PI);
@@ -2620,7 +2676,7 @@ static ssize_t ahci_transfer(devminor_t minor, int do_write, u64_t position,
 	pos = dv->dv_base + position;
 	eof = dv->dv_base + dv->dv_size;
 
-	return port_transfer(ps, pos, eof, endpt, (iovec_s_t *) iovec, count,
+	return port_transfer(ps, pos, eof, endpt, iovec, count,
 		do_write, flags);
 }
 

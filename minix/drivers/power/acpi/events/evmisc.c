@@ -258,8 +258,7 @@ AcpiEvNotifyDispatch (
  *
  ******************************************************************************/
 
-void
-AcpiEvTerminate (
+void AcpiEvTerminate (
     void)
 {
     UINT32                  i;

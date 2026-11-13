@@ -12,13 +12,11 @@
 
 /* Setups/teardown functions */
 
-static void
-mem_setup(void)
+static void mem_setup(void)
 {
 }
 
-static void
-mem_teardown(void)
+static void mem_teardown(void)
 {
 }
 

@@ -4,25 +4,39 @@
 #include <minix/vm.h>
 #include <sys/mman.h>
 #include <sys/exec_elf.h>
+#include <sys/ptrace.h>
 
 /* Include ELF headers */
-#include <sys/elf_core.h>
 #include <machine/elf.h>
+#include <machine/reg.h>
+#include <machine/stackframe.h>
 
-static void fill_elf_header(Elf32_Ehdr *elf_header, int phnum);
-static void fill_prog_header(Elf32_Phdr *prog_header, Elf32_Word
-	p_type, Elf32_Off p_offset, Elf32_Addr p_vaddr, Elf32_Word p_flags,
-	Elf32_Word p_filesz, Elf32_Word p_memsz);
-static int get_memory_regions(Elf32_Phdr phdrs[]);
-static void fill_note_segment_and_entries_hdrs(Elf32_Phdr phdrs[],
-	Elf32_Nhdr nhdrs[]);
-static void adjust_offsets(Elf32_Phdr phdrs[], int phnum);
-static void dump_elf_header(struct filp *f, Elf32_Ehdr elf_header);
-static void dump_notes(struct filp *f, Elf32_Nhdr nhdrs[], int csig,
+/*
+ * We write NetBSD-style core file notes: a "NetBSD-CORE" procinfo note,
+ * plus a per-LWP "NetBSD-CORE@<lwpid>" register note whose contents are
+ * in PT_GETREGS (struct reg) format, so that the native NetBSD toolchain
+ * (gdb, objdump) can interpret the core file.  MINIX processes have a
+ * single thread of control, presented as LWP 1.
+ */
+#define CORE_LWPID	1
+
+static char core_name[] = ELF_NOTE_NETBSD_CORE_NAME;
+static char core_lwp_name[] = ELF_NOTE_NETBSD_CORE_NAME "@1";
+
+static void fill_elf_header(Elf_Ehdr *elf_header, int phnum);
+static void fill_prog_header(Elf_Phdr *prog_header, Elf_Word
+	p_type, Elf_Off p_offset, Elf_Addr p_vaddr, Elf_Word p_flags,
+	Elf_Word p_filesz, Elf_Word p_memsz);
+static int get_memory_regions(Elf_Phdr phdrs[]);
+static void fill_note_segment_and_entries_hdrs(Elf_Phdr phdrs[],
+	Elf_Nhdr nhdrs[]);
+static void adjust_offsets(Elf_Phdr phdrs[], int phnum);
+static void dump_elf_header(struct filp *f, Elf_Ehdr elf_header);
+static void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
 	char *proc_name);
 static void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int
 	phnum);
-static void dump_segments(struct filp *f, Elf32_Phdr phdrs[], int
+static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int
 	phnum);
 static void write_buf(struct filp *f, char *buf, size_t size);
 
@@ -88,7 +102,7 @@ static void fill_elf_header (Elf_Ehdr *elf_header, int phnum)
   elf_header->e_ident[EI_CLASS] = ELF_TARG_CLASS;
   elf_header->e_ident[EI_DATA] = ELF_TARG_DATA;
   elf_header->e_ident[EI_VERSION] = EV_CURRENT;
-  elf_header->e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
+  elf_header->e_ident[EI_OSABI] = ELFOSABI_SYSV;
   elf_header->e_type = ET_CORE;
   elf_header->e_machine = ELF_TARG_MACH;
   elf_header->e_version = EV_CURRENT;
@@ -127,33 +141,24 @@ static void fill_note_segment_and_entries_hdrs(Elf_Phdr phdrs[],
 				Elf_Nhdr nhdrs[])
 {
   int filesize;
-  const char *note_name = ELF_NOTE_MINIX_ELFCORE_NAME "\0";
-  int name_len, mei_len, gregs_len;
 
-  /* Size of notes in the core file is rather fixed:
-   * sizeof(minix_elfcore_info_t) +
-   * 2 * sizeof(Elf_Nhdr) + the size of the padded name of the note
-   * - i.e. "MINIX-CORE\0" padded to 4-byte alignment => 2 * 8 bytes
+  /* First note entry header: process info, "NetBSD-CORE" */
+  nhdrs[0].n_namesz = sizeof(core_name);
+  nhdrs[0].n_descsz = sizeof(struct netbsd_elfcore_procinfo);
+  nhdrs[0].n_type = ELF_NOTE_NETBSD_CORE_PROCINFO;
+
+  /* Second note entry header: registers of the (only) LWP, in ptrace(2)
+   * PT_GETREGS format, "NetBSD-CORE@<lwpid>"
    */
+  nhdrs[1].n_namesz = sizeof(core_lwp_name);
+  nhdrs[1].n_descsz = sizeof(struct reg);
+  nhdrs[1].n_type = PT_GETREGS;
 
-  name_len = strlen(note_name) + 1;
-  mei_len = sizeof(minix_elfcore_info_t);
-  gregs_len = sizeof(gregset_t);
-
-  /* Make sure to also count the padding bytes */
-  filesize = PAD_LEN(mei_len) + PAD_LEN(gregs_len) +
-	2 * sizeof(Elf_Nhdr) + 2 * PAD_LEN(name_len);
+  /* Note names and descriptors are written 4-byte aligned */
+  filesize = 2 * sizeof(Elf_Nhdr) +
+	PAD_LEN(nhdrs[0].n_namesz) + PAD_LEN(nhdrs[0].n_descsz) +
+	PAD_LEN(nhdrs[1].n_namesz) + PAD_LEN(nhdrs[1].n_descsz);
   fill_prog_header(&phdrs[0], PT_NOTE, 0, 0, PF_R, filesize, 0);
-
-  /* First note entry header */
-  nhdrs[0].n_namesz = name_len;
-  nhdrs[0].n_descsz = sizeof(minix_elfcore_info_t);
-  nhdrs[0].n_type = NT_MINIX_ELFCORE_INFO;
-
-  /* Second note entry header */
-  nhdrs[1].n_namesz = name_len;
-  nhdrs[1].n_descsz = sizeof(gregset_t);
-  nhdrs[1].n_type = NT_MINIX_ELFCORE_GREGS;
 }
 
 /*===========================================================================*
@@ -233,40 +238,101 @@ static int get_memory_regions(Elf_Phdr phdrs[])
 static void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
 			 char *proc_name)
 {
-  char *note_name = ELF_NOTE_MINIX_ELFCORE_NAME "\0";
   char pad[4];
-  minix_elfcore_info_t mei;
-  int mei_len = sizeof(minix_elfcore_info_t);
-  int gregs_len = sizeof(gregset_t);
-  struct stackframe_s regs;
+  struct netbsd_elfcore_procinfo cpi;
+  struct stackframe_s frame;
+  struct reg regs;
 
-  /* Dump first note entry */
-  mei.mei_version = MINIX_ELFCORE_VERSION;
-  mei.mei_meisize = mei_len;
-  mei.mei_signo = csig;
-  mei.mei_pid = fp->fp_pid;
-  memcpy(mei.mei_command, proc_name, sizeof(mei.mei_command));
+  memset(pad, 0, sizeof(pad));
+
+  /* Dump first note entry - process information */
+  memset(&cpi, 0, sizeof(cpi));
+  cpi.cpi_version = NETBSD_ELFCORE_PROCINFO_VERSION;
+  cpi.cpi_cpisize = sizeof(cpi);
+  cpi.cpi_signo = csig;
+  cpi.cpi_pid = fp->fp_pid;
+  /* Parent/group/session IDs are kept by PM, not VFS; leave them zero */
+  cpi.cpi_ruid = fp->fp_realuid;
+  cpi.cpi_euid = fp->fp_effuid;
+  cpi.cpi_svuid = fp->fp_effuid;
+  cpi.cpi_rgid = fp->fp_realgid;
+  cpi.cpi_egid = fp->fp_effgid;
+  cpi.cpi_svgid = fp->fp_effgid;
+  cpi.cpi_nlwps = 1;
+  cpi.cpi_siglwp = CORE_LWPID;
+  strncpy((char *) cpi.cpi_name, proc_name, sizeof(cpi.cpi_name) - 1);
 
   write_buf(f, (char *) &nhdrs[0], sizeof(Elf_Nhdr));
-  write_buf(f, note_name, nhdrs[0].n_namesz);
+  write_buf(f, core_name, nhdrs[0].n_namesz);
   write_buf(f, pad, PAD_LEN(nhdrs[0].n_namesz) - nhdrs[0].n_namesz);
-  write_buf(f, (char *) &mei, mei_len);
-  write_buf(f, pad, PAD_LEN(mei_len) - mei_len);
+  write_buf(f, (char *) &cpi, sizeof(cpi));
+  write_buf(f, pad, PAD_LEN(sizeof(cpi)) - sizeof(cpi));
 
-  /* Get registers */
-  if (sys_getregs(&regs, fp->fp_endpoint) != OK)
+  /* Get registers and convert to ptrace(2) PT_GETREGS layout */
+  memset(&frame, 0, sizeof(frame));
+  if (sys_getregs(&frame, fp->fp_endpoint) != OK)
 	printf("VFS: Could not read registers\n");
 
-  if (sizeof(regs) != gregs_len)
-	printf("VFS: Wrong core register structure size\n");
+  memset(&regs, 0, sizeof(regs));
+#if defined(__x86_64__)
+  regs.regs[_REG_RDI] = frame.di;
+  regs.regs[_REG_RSI] = frame.si;
+  regs.regs[_REG_RDX] = frame.dx;
+  regs.regs[_REG_RCX] = frame.cx;
+  regs.regs[_REG_R8] = frame.r8;
+  regs.regs[_REG_R9] = frame.r9;
+  regs.regs[_REG_R10] = frame.r10;
+  regs.regs[_REG_R11] = frame.r11;
+  regs.regs[_REG_R12] = frame.r12;
+  regs.regs[_REG_R13] = frame.r13;
+  regs.regs[_REG_R14] = frame.r14;
+  regs.regs[_REG_R15] = frame.r15;
+  regs.regs[_REG_RBP] = frame.fp;
+  regs.regs[_REG_RBX] = frame.bx;
+  regs.regs[_REG_RAX] = frame.retreg;
+  regs.regs[_REG_GS] = frame.gs;
+  regs.regs[_REG_FS] = frame.fs;
+  regs.regs[_REG_ES] = frame.es;
+  regs.regs[_REG_DS] = frame.ds;
+  regs.regs[_REG_RIP] = frame.pc;
+  regs.regs[_REG_CS] = frame.cs;
+  regs.regs[_REG_RFLAGS] = frame.psw;
+  regs.regs[_REG_RSP] = frame.sp;
+  regs.regs[_REG_SS] = frame.ss;
+#elif defined(__i386__)
+  /*
+   * i386's struct reg has named members rather than a regs[] array
+   * indexed by _REG_*, and its stackframe_s is a different shape: the
+   * segment registers are 16-bit and there is no r8..r15.  The two
+   * commented-out holes in the frame (st, retadr) have no counterpart
+   * here either.
+   */
+  regs.r_edi = frame.di;
+  regs.r_esi = frame.si;
+  regs.r_ebp = frame.fp;
+  regs.r_ebx = frame.bx;
+  regs.r_edx = frame.dx;
+  regs.r_ecx = frame.cx;
+  regs.r_eax = frame.retreg;
+  regs.r_eip = frame.pc;
+  regs.r_cs = frame.cs;
+  regs.r_eflags = frame.psw;
+  regs.r_esp = frame.sp;
+  regs.r_ss = frame.ss;
+  regs.r_ds = frame.ds;
+  regs.r_es = frame.es;
+  regs.r_fs = frame.fs;
+  regs.r_gs = frame.gs;
+#else
+#error "no register mapping for this architecture"
+#endif
 
   /* Dump second note entry - the general registers */
   write_buf(f, (char *) &nhdrs[1], sizeof(Elf_Nhdr));
-
-  write_buf(f, note_name, nhdrs[1].n_namesz);
+  write_buf(f, core_lwp_name, nhdrs[1].n_namesz);
   write_buf(f, pad, PAD_LEN(nhdrs[1].n_namesz) - nhdrs[1].n_namesz);
-  write_buf(f, (char *) &regs, gregs_len);
-  write_buf(f, pad, PAD_LEN(gregs_len) - gregs_len);
+  write_buf(f, (char *) &regs, sizeof(regs));
+  write_buf(f, pad, PAD_LEN(sizeof(regs)) - sizeof(regs));
 }
 
 /*===========================================================================*
@@ -317,7 +383,6 @@ static void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 		if(r != OK) {
 			/* memory didn't exist; write as zeroes */
 			memset(buf, 0, sizeof(buf));
-			continue;
 		}
 
 		write_buf(f, (char *) buf, (off + CLICK_SIZE <= (off_t) len) ?

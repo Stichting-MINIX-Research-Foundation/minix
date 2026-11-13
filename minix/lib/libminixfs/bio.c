@@ -45,8 +45,7 @@
  * This is a very thin wrapper right now, but eventually we will want to hide
  * all of libbdev from file systems that use this library, so it is a start.
  */
-void
-lmfs_driver(dev_t dev, char *label)
+void lmfs_driver(dev_t dev, char *label)
 {
 
 	bdev_driver(dev, label);
@@ -61,8 +60,7 @@ lmfs_driver(dev_t dev, char *label)
  * strictly best-effort operation, and may fail silently.
  * TODO: limit according to the number of available buffers.
  */
-static void
-block_prefetch(dev_t dev, block64_t block, unsigned int nblocks,
+static void block_prefetch(dev_t dev, block64_t block, unsigned int nblocks,
 	size_t block_size, size_t last_size)
 {
 	struct buf *bp;
@@ -113,8 +111,7 @@ block_prefetch(dev_t dev, block64_t block, unsigned int nblocks,
  * follwed later by silent failures.  End-of-file conditions are always
  * reported immediately, though.
  */
-ssize_t
-lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
+ssize_t lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 	int call)
 {
 	block64_t block;
@@ -135,7 +132,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
 	if (bytes == 0)
 		return 0; /* just in case */
 
-	if (pos < 0 || bytes > SSIZE_MAX || pos > INT64_MAX - bytes + 1)
+	if (pos < 0 || bytes > SSIZE_MAX || pos > (off_t)(INT64_MAX - bytes + 1))
 		return EINVAL;
 
 	/*
@@ -251,8 +248,7 @@ lmfs_bio(dev_t dev, struct fsdriver_data * data, size_t bytes, off_t pos,
  * This operation is called after a block device is closed and must prevent
  * that stale copies of blocks remain in any cache.
  */
-void
-lmfs_bflush(dev_t dev)
+void lmfs_bflush(dev_t dev)
 {
 
 	/* First flush any dirty blocks on this device to disk. */

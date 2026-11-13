@@ -1,9 +1,9 @@
-# $NetBSD: dotwait.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $NetBSD: dotwait.mk,v 1.3 2020/10/24 08:50:17 rillig Exp $
 
-THISMAKEFILE:= ${.PARSEDIR}/${.PARSEFILE}
+THISMAKEFILE:=	${.PARSEDIR}/${.PARSEFILE}
 
-TESTS= simple recursive shared cycle
-PAUSE= sleep 1
+TESTS=	simple recursive shared cycle
+PAUSE=	sleep 1
 
 # Use a .for loop rather than dependencies here, to ensure
 # that the tests are run one by one, with parallelism
@@ -11,7 +11,7 @@ PAUSE= sleep 1
 # Ignore "--- target ---" lines printed by parallel make.
 all:
 .for t in ${TESTS}
-	@${.MAKE} -f ${THISMAKEFILE} -j4 $t | grep -v "^--- "
+	@${.MAKE} -f ${THISMAKEFILE} -j4 $t 2>&1 | grep -v "^--- "
 .endfor
 
 #

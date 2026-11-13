@@ -24,6 +24,13 @@ _rc_conf_loaded=true
 
 : ${RC_LOG_FILE:="/var/run/rc.log"}
 
+# /dev/log is a TTY diagnostics device, not a regular log file.
+# The rc logger appends to RC_LOG_FILE, so do not use /dev/log even when
+# the device node exists on the installation media.
+if [ "$RC_LOG_FILE" = "/dev/log" ]; then
+	RC_LOG_FILE="/var/run/rc.log"
+fi
+
 # rc.subr redefines echo and printf.  Undo that here.
 unset echo ; unalias echo
 unset printf ; unalias printf

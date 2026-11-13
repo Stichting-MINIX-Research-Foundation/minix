@@ -44,8 +44,7 @@ static int tcpisn_set;
 /*
  * Initialize the TCP ISN module.
  */
-void
-tcpisn_init(void)
+void tcpisn_init(void)
 {
 	time_t boottime;
 
@@ -72,8 +71,7 @@ tcpisn_init(void)
  * Set and/or retrieve the ISN secret.  In order to allow the hash value to be
  * set from the command line, this sysctl(7) node is a hex-encoded string.
  */
-ssize_t
-tcpisn_secret(struct rmib_call * call __unused,
+ssize_t tcpisn_secret(struct rmib_call * call __unused,
 	struct rmib_node * node __unused, struct rmib_oldp * oldp,
 	struct rmib_newp * newp)
 {
@@ -132,8 +130,7 @@ tcpisn_secret(struct rmib_call * call __unused,
 /*
  * Hook to generate an Initial Sequence Number (ISN) for a new TCP connection.
  */
-uint32_t
-lwip_hook_tcp_isn(const ip_addr_t * local_ip, uint16_t local_port,
+uint32_t lwip_hook_tcp_isn(const ip_addr_t * local_ip, uint16_t local_port,
 	const ip_addr_t * remote_ip, uint16_t remote_port)
 {
 	uint8_t output[SHA256_DIGEST_LENGTH] __aligned(4);

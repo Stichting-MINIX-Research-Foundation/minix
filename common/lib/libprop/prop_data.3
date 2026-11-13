@@ -1,6 +1,6 @@
-.\"	$NetBSD: prop_data.3,v 1.7 2009/12/14 06:03:23 dholland Exp $
+.\"	$NetBSD: prop_data.3,v 1.9 2020/06/06 21:25:59 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,17 +27,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2006
+.Dd June 2, 2020
 .Dt PROP_DATA 3
 .Os
 .Sh NAME
 .Nm prop_data ,
-.Nm prop_data_create_data ,
-.Nm prop_data_create_data_nocopy ,
+.Nm prop_data_create_copy ,
+.Nm prop_data_create_nocopy ,
 .Nm prop_data_copy ,
 .Nm prop_data_size ,
-.Nm prop_data_data ,
-.Nm prop_data_data_nocopy ,
+.Nm prop_data_value ,
+.Nm prop_data_copy_value ,
 .Nm prop_data_equals ,
 .Nm prop_data_equals_data
 .Nd opaque data value property object
@@ -47,19 +47,20 @@
 .In prop/proplib.h
 .\"
 .Ft prop_data_t
-.Fn prop_data_create_data "const void *blob" "size_t len"
+.Fn prop_data_create_copy "const void *blob" "size_t len"
 .Ft prop_data_t
-.Fn prop_data_create_data_nocopy "const void *blob" "size_t len"
+.Fn prop_data_create_nocopy "const void *blob" "size_t len"
 .\"
 .Ft prop_data_t
 .Fn prop_data_copy "prop_data_t data"
 .\"
+.Ft const void *
+.Fn prop_data_value "prop_data_t data"
+.Ft bool
+.Fn prop_data_copy_value "prop_data_t data" "void *buf" "size_t buflen"
+.\"
 .Ft size_t
 .Fn prop_data_size "prop_data_t data"
-.Ft void *
-.Fn prop_data_data "prop_data_t data"
-.Ft const void *
-.Fn prop_data_data_nocopy "prop_data_t data"
 .\"
 .Ft bool
 .Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
@@ -67,10 +68,10 @@
 .Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
 .Sh DESCRIPTION
 The
-.Nm prop_data
+.Nm
 family of functions operate on an opaque data value property object type.
 .Bl -tag -width "xxxxx"
-.It Fn prop_data_create_data "const void *blob" "size_t len"
+.It Fn prop_data_create_copy "const void *blob" "size_t len"
 Create a data object that contains a copy of
 .Fa blob
 with size
@@ -78,11 +79,18 @@ with size
 Returns
 .Dv NULL
 on failure.
-.It Fn prop_data_create_data_nocopy "const void *blob" "size_t len"
-Create a data object that contains a reference to
-.Fa blob
-with size
-.Fa len .
+.It Fn prop_data_create_nocopy "const void *blob" "size_t len"
+Similar to
+.Fn prop_data_create_copy ,
+but is allowed to not create aan internal copy of the opaque data, instead
+referencing the buffer passed by the caller.
+Caution must be exercised because data objects can have an indefinite
+lifespan.
+The caller must therefore ensure that the provided buffer reference will
+also be valid indefinitely.
+This is provided as a memory optimization; it is not guaranteed that
+the returned data object will reference the provided buffer, and thus
+callers should not rely on this behavior.
 Returns
 .Dv NULL
 on failure.
@@ -96,25 +104,21 @@ on failure.
 .It Fn prop_data_size "prop_data_t data"
 Returns the size of the data object.
 If the supplied object isn't a data object, zero is returned.
-.It Fn prop_data_data "prop_data_t data"
-Returns a copy of the data object's contents.
-The caller is responsible for freeing the returned buffer.
+.It Fn prop_data_value "prop_data_t data"
+Returns a reference to the data object's buffer.
 If the supplied object isn't a data object or
 if the data container is empty,
 .Dv NULL
 is returned.
-.Pp
-In user space, the buffer is allocated using
-.Xr malloc 3 .
-In the kernel, the buffer is allocated using
-.Xr malloc 9
-using the malloc type
-.Dv M_TEMP .
-.It Fn prop_data_data_nocopy "prop_data_t data"
-Returns an immutable reference to the contents of the data object.
-If the supplied object isn't a data object,
-.Dv NULL
-is returned.
+.It Fn prop_data_copy_value "prop_data_t data" "void *buf" "size_t buflen"
+Copies the contents of the data object into the supplied buffer of the
+specified size.
+Returns
+.Dv true
+if the copy succeeds and
+.Dv false
+iff the supplied buffer is not large enough or if the object is not a
+data object.
 .It Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
 Returns
 .Dv true
@@ -143,6 +147,8 @@ is returned.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .
+Support for mutable data objects was deprecated in
+.Nx 10.0 .

@@ -20,8 +20,7 @@ static ssize_t _uds_recvmsg_dgram(int sock, struct msghdr *msg, int flags);
 /*
  * Receive a message from a socket using a message structure.
  */
-static ssize_t
-__recvmsg(int fd, struct msghdr * msg, int flags)
+static ssize_t __recvmsg(int fd, struct msghdr * msg, int flags)
 {
 	struct iovec iov;
 	struct msghdr msg2, *msgp;

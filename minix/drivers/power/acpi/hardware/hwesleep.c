@@ -63,8 +63,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiHwExecuteSleepMethod (
+void AcpiHwExecuteSleepMethod (
     char                    *MethodPathname,
     UINT32                  IntegerArgument)
 {

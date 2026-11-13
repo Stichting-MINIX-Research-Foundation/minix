@@ -27,8 +27,7 @@ static LIST_HEAD(index_head, inode) *parent_index_head;
 /*
  * Initialize the inode-related state.
  */
-int
-init_inodes(unsigned int inodes, struct inode_stat * istat,
+int init_inodes(unsigned int inodes, struct inode_stat * istat,
 	index_t nr_indexed_entries)
 {
 	struct inode *node;
@@ -101,8 +100,7 @@ init_inodes(unsigned int inodes, struct inode_stat * istat,
 /*
  * Clean up the inode-related state.
  */
-void
-cleanup_inodes(void)
+void cleanup_inodes(void)
 {
 
 	/* Free the inode and hash tables. */
@@ -114,8 +112,7 @@ cleanup_inodes(void)
 /*
  * Return the hash value of <parent,name> tuple.
  */
-static int
-parent_name_hash(const struct inode * parent, const char *name)
+static int parent_name_hash(const struct inode * parent, const char *name)
 {
 	unsigned int name_hash;
 
@@ -129,8 +126,7 @@ parent_name_hash(const struct inode * parent, const char *name)
 /*
  * Return the hash value of a <parent,index> tuple.
  */
-static int
-parent_index_hash(const struct inode * parent, index_t idx)
+static int parent_index_hash(const struct inode * parent, index_t idx)
 {
 
 	return (parent->i_num ^ idx) % nr_inodes;
@@ -139,8 +135,7 @@ parent_index_hash(const struct inode * parent, index_t idx)
 /*
  * Delete a deletable inode to make room for a new inode.
  */
-static void
-purge_inode(struct inode * parent)
+static void purge_inode(struct inode * parent)
 {
 	/*
 	 * An inode is deletable if:
@@ -365,8 +360,7 @@ get_next_inode(const struct inode * previous)
 /*
  * Return the inode number of the given inode.
  */
-int
-get_inode_number(const struct inode * node)
+int get_inode_number(const struct inode * node)
 {
 
 	CHECK_INODE(node);
@@ -377,8 +371,7 @@ get_inode_number(const struct inode * node)
 /*
  * Retrieve an inode's status.
  */
-void
-get_inode_stat(const struct inode * node, struct inode_stat * istat)
+void get_inode_stat(const struct inode * node, struct inode_stat * istat)
 {
 
 	CHECK_INODE(node);
@@ -389,8 +382,7 @@ get_inode_stat(const struct inode * node, struct inode_stat * istat)
 /*
  * Set an inode's status.
  */
-void
-set_inode_stat(struct inode * node, struct inode_stat * istat)
+void set_inode_stat(struct inode * node, struct inode_stat * istat)
 {
 
 	CHECK_INODE(node);
@@ -480,8 +472,7 @@ get_inode(ino_t num)
 /*
  * Decrease an inode's reference count.
  */
-void
-put_inode(struct inode * node)
+void put_inode(struct inode * node)
 {
 
 	CHECK_INODE(node);
@@ -500,8 +491,7 @@ put_inode(struct inode * node)
 /*
  * Increase an inode's reference count.
  */
-void
-ref_inode(struct inode * node)
+void ref_inode(struct inode * node)
 {
 
 	CHECK_INODE(node);
@@ -512,8 +502,7 @@ ref_inode(struct inode * node)
 /*
  * Unlink the given node from its parent, if it is still linked in.
  */
-static void
-unlink_inode(struct inode * node)
+static void unlink_inode(struct inode * node)
 {
 	struct inode *parent;
 
@@ -540,8 +529,7 @@ unlink_inode(struct inode * node)
  * that we can still do a "cd .." out of it.  For these reasons, this function
  * may be called on an inode more than once before it is actually deleted.
  */
-void
-delete_inode(struct inode * node)
+void delete_inode(struct inode * node)
 {
 	struct inode *cnode, *ctmp;
 
@@ -596,8 +584,7 @@ delete_inode(struct inode * node)
 /*
  * Return whether the given inode has been deleted.
  */
-int
-is_inode_deleted(const struct inode * node)
+int is_inode_deleted(const struct inode * node)
 {
 
 	return (node->i_flags & I_DELETED);
@@ -607,8 +594,7 @@ is_inode_deleted(const struct inode * node)
  * Find the inode specified by the request message, and decrease its reference
  * count.
  */
-int
-fs_putnode(ino_t ino_nr, unsigned int count)
+int fs_putnode(ino_t ino_nr, unsigned int count)
 {
 	struct inode *node;
 

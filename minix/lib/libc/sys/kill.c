@@ -9,9 +9,7 @@
 __weak_alias(kill, _kill)
 #endif
 
-int kill(proc, sig)
-pid_t proc;			/* which process is to be sent the signal */
-int sig;			/* signal number */
+int kill(pid_t proc, int sig)
 {
   message m;
 

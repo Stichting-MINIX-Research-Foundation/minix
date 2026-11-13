@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_ingest.3,v 1.6 2010/02/18 14:00:39 wiz Exp $
+.\"	$NetBSD: prop_ingest.3,v 1.8 2017/02/12 16:18:48 abhinav Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,6 +31,7 @@
 .Dt PROP_INGEST 3
 .Os
 .Sh NAME
+.Nm prop_ingest ,
 .Nm prop_ingest_context_alloc ,
 .Nm prop_ingest_context_free ,
 .Nm prop_ingest_context_error ,
@@ -62,13 +63,13 @@
 .Fn (*prop_ingest_handler_t) "prop_ingest_context_t" "prop_object_t"
 .Sh DESCRIPTION
 The
-.Nm prop_dictionary_ingest
+.Fn prop_dictionary_ingest
 function provides a convenient way to convert a property list into
 an arbitrary binary format or to extract values from dictionaries in a
 way that is convenient to an application
 .Pq for configuration files, for example .
 .Pp
-.Nm prop_dictionary_ingest
+.Fn prop_dictionary_ingest
 is driven by a table of rules provided by the application.
 Each rule consists of three items:
 .Bl -bullet
@@ -107,7 +108,7 @@ The
 macro marks the end of the rules table.
 .Pp
 In each case,
-.Nm prop_dictionary_ingest
+.Fn prop_dictionary_ingest
 looks up the rule's key in the dictionary.
 If an object is present in the dictionary at that key, its type is checked
 against the type specified in the rule.
@@ -158,7 +159,6 @@ An object in the dictionary was not the same type specified in the rules.
 An object's handler returned
 .Dv false .
 .El
-.Pp
 .It Fn prop_ingest_context_type "prop_ingest_context_t ctx"
 Returns the type of the last object visited during an ingest.
 When called by an ingest handler, it returns the type of the object
@@ -176,6 +176,6 @@ Returns the private data set when the context was allocated with
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

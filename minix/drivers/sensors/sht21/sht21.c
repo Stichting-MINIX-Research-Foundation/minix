@@ -128,8 +128,7 @@ static struct chardriver sht21_tab = {
  * Performs a soft reset and reads the contents of the user register to ensure
  * that the chip is in a good state and working properly.
  */
-static int
-sht21_init(void)
+static int sht21_init(void)
 {
 	int r;
 	uint8_t usr_reg_val;
@@ -172,8 +171,7 @@ sht21_init(void)
  * Read from the sensor, check the CRC, convert the ADC value into the final
  * representation, and store the result in measurement.
  */
-static int
-sensor_read(enum sht21_sensors sensor, int32_t * measurement)
+static int sensor_read(enum sht21_sensors sensor, int32_t * measurement)
 {
 	int r;
 	uint8_t cmd;
@@ -235,8 +233,7 @@ sensor_read(enum sht21_sensors sensor, int32_t * measurement)
 	return OK;
 }
 
-static int
-measure(void)
+static int measure(void)
 {
 	int r;
 	time_t sample_time;
@@ -273,8 +270,7 @@ measure(void)
 /*
  * Return an updated checksum for the given crc and byte.
  */
-static uint8_t
-crc8(uint8_t crc, uint8_t byte)
+static uint8_t crc8(uint8_t crc, uint8_t byte)
 {
 	int i;
 
@@ -296,8 +292,7 @@ crc8(uint8_t crc, uint8_t byte)
  * Compute the CRC of an array of bytes and compare it to expected_crc.
  * If the computed CRC matches expected_crc, then return OK, otherwise EINVAL.
  */
-static int
-checksum(uint8_t * bytes, int nbytes, uint8_t expected_crc)
+static int checksum(uint8_t * bytes, int nbytes, uint8_t expected_crc)
 {
 	int i;
 	uint8_t crc;
@@ -321,8 +316,7 @@ checksum(uint8_t * bytes, int nbytes, uint8_t expected_crc)
 	}
 }
 
-static ssize_t
-sht21_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
+static ssize_t sht21_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
     cp_grant_id_t grant, size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	u64_t dev_size;
@@ -351,8 +345,7 @@ sht21_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
 	return (r != OK) ? r : size;
 }
 
-static void
-sht21_other(message * m, int ipc_status)
+static void sht21_other(message * m, int ipc_status)
 {
 	int r;
 
@@ -369,16 +362,14 @@ sht21_other(message * m, int ipc_status)
 	log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -394,8 +385,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -441,8 +431,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -460,8 +449,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

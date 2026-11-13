@@ -29,8 +29,7 @@ static int eeprom_dump(int fd, i2c_addr_t addr, int flags,
  * the read.
  */
 
-static int
-__eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
+static int __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
     size_t buflen, int flags, enum device_types device_type)
 {
 	int r;
@@ -85,8 +84,7 @@ __eeprom_read128(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
 	return 0;
 }
 
-int
-eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
+int eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
     size_t buflen, int flags, enum device_types device_type)
 {
 	int r;
@@ -113,8 +111,7 @@ eeprom_read(int fd, i2c_addr_t addr, uint16_t memaddr, void *buf,
 /*
  * Read 256 bytes and print it to the screen in HEX and ASCII.
  */
-static int
-eeprom_dump(int fd, i2c_addr_t addr, int flags, enum device_types device_type)
+static int eeprom_dump(int fd, i2c_addr_t addr, int flags, enum device_types device_type)
 {
 	int i, j, r;
 	uint8_t buf[256];
@@ -166,8 +163,7 @@ eeprom_dump(int fd, i2c_addr_t addr, int flags, enum device_types device_type)
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r, fd;
 	int ch, iflag = 0, read_flags = 0;

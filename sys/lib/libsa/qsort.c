@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/libkern/qsort.c,v 1.12 2002/11/09 12:55:06 alfred Exp $
- * $NetBSD: qsort.c,v 1.4 2007/11/24 13:20:56 isaki Exp $
+ * $NetBSD: qsort.c,v 1.5 2019/03/31 20:08:45 christos Exp $
  */
 
 #include <sys/cdefs.h>
@@ -41,7 +41,7 @@ typedef int		 cmp_t(const void *, const void *);
 static inline char	*med3(char *, char *, char *, cmp_t *);
 static inline void	 swapfunc(char *, char *, int, int);
 
-#define min(a, b)	(a) < (b) ? (a) : (b)
+#define min(a, b)	(int)(a) < (int)(b) ? (int)(a) : (int)(b)
 
 void qsort(void *a, size_t n, size_t es, cmp_t *cmp);
 
@@ -158,9 +158,9 @@ loop:
 	vecswap(a, pb - r, r);
 	r = min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
+	if ((size_t)(r = pb - pa) > es)
 		qsort(a, r / es, es, cmp);
-	if ((r = pd - pc) > es) {
+	if ((size_t)(r = pd - pc) > es) {
 		/* Iterate rather than recurse to save stack space */
 		a = pn - r;
 		n = r / es;

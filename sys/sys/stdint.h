@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.7 2013/04/22 21:26:48 joerg Exp $	*/
+/*	$NetBSD: stdint.h,v 1.8 2018/11/06 16:26:44 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -35,54 +35,54 @@
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
 
-#ifndef	int8_t
+#ifndef	_BSD_INT8_T_
 typedef	__int8_t	int8_t;
-#define	int8_t		__int8_t
+#define	_BSD_INT8_T_
 #endif
 
-#ifndef	uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef	__uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef	int16_t
+#ifndef	_BSD_INT16_T_
 typedef	__int16_t	int16_t;
-#define	int16_t		__int16_t
+#define	_BSD_INT16_T_
 #endif
 
-#ifndef	uint16_t
+#ifndef	_BSD_UINT16_T_
 typedef	__uint16_t	uint16_t;
-#define	uint16_t	__uint16_t
+#define	_BSD_UINT16_T_
 #endif
 
-#ifndef	int32_t
+#ifndef	_BSD_INT32_T_
 typedef	__int32_t	int32_t;
-#define	int32_t		__int32_t
+#define	_BSD_INT32_T_
 #endif
 
-#ifndef	uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef	__uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
-#ifndef	int64_t
+#ifndef	_BSD_INT64_T_
 typedef	__int64_t	int64_t;
-#define	int64_t		__int64_t
+#define	_BSD_INT64_T_
 #endif
 
-#ifndef	uint64_t
+#ifndef	_BSD_UINT64_T_
 typedef	__uint64_t	uint64_t;
-#define	uint64_t	__uint64_t
+#define	_BSD_UINT64_T_
 #endif
 
-#ifndef	intptr_t
+#ifndef	_BSD_INTPTR_T_
 typedef	__intptr_t	intptr_t;
-#define	intptr_t	__intptr_t
+#define	_BSD_INTPTR_T_
 #endif
 
-#ifndef	uintptr_t
+#ifndef	_BSD_UINTPTR_T_
 typedef	__uintptr_t	uintptr_t;
-#define	uintptr_t	__uintptr_t
+#define	_BSD_UINTPTR_T_
 #endif
 
 #include <machine/int_mwgwtypes.h>

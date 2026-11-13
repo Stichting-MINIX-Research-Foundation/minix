@@ -10,6 +10,10 @@ _BSD_OWN_MK_=1
 
 .if defined(__MINIX)
 
+# 2026/06/26 N.Nonaka default to enable SMP
+CONFIG_SMP?= yes
+CONFIG_MAX_CPUS?= 4
+
 # Some Minix deviations from NetBSD
 LDSTATIC?=	-static
 MKDYNAMICROOT?=	no
@@ -216,9 +220,9 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # If some future port is not supported by the in-tree toolchain, this should
 # be set to "yes" for that port only.
 #
-.if ${MACHINE} == "playstation2"
-TOOLCHAIN_MISSING?=	yes
-.endif
+# .if ${MACHINE} == "playstation2"
+# TOOLCHAIN_MISSING?=	yes
+# .endif
 
 TOOLCHAIN_MISSING?=	no
 
@@ -508,6 +512,7 @@ TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
 TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
+TOOL_GPT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gpt
 TOOL_GREP=		${TOOLDIR}/bin/${_TOOL_PREFIX}grep
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
@@ -634,6 +639,7 @@ TOOL_FGEN=		fgen
 TOOL_GENASSYM=		genassym
 TOOL_GENCAT=		gencat
 TOOL_GMAKE=		gmake
+TOOL_GPT=		gpt
 TOOL_GREP=		grep
 TOOL_GROFF=		groff
 TOOL_HEXDUMP=		hexdump
@@ -924,6 +930,9 @@ DEBUGGRP?=	wheel
 DEBUGOWN?=	root
 DEBUGMODE?=	${NONBINMODE}
 
+MKDIRMODE?=	0755
+MKDIRPERM?=	-m ${MKDIRMODE}
+
 #
 # Data-driven table using make variables to control how
 # toolchain-dependent targets and shared libraries are built
@@ -1077,7 +1086,11 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 
 .if defined(__MINIX)
 # We have a simpler toolchain naming scheme
+.if ${MACHINE_ARCH} == "x86_64"
+MACHINE_GNU_PLATFORM:=${MACHINE_GNU_ARCH}-elf64-minix
+.else
 MACHINE_GNU_PLATFORM:=${MACHINE_GNU_ARCH}-elf32-minix
+.endif
 
 # We need to check for HAVE_GOLD after LD has been set
 .  if ${_HAVE_GOLD:U} == ""
@@ -1195,17 +1208,19 @@ MKCOMPATMODULES:=	no
 .endif
 
 #
-# Default mips64 to softfloat now.
-# arm is always softfloat unless it isn't
-# emips is always softfloat.
-# coldfire is always softfloat
-# or1k is always softfloat
+# These platforms use softfloat by default.
 #
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
-    (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
-    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
-    ${MACHINE} == "emips"
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKSOFTFLOAT?=	yes
+.endif
+
+#
+# These platforms always use softfloat.
+#
+.if (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
+    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3"
+MKSOFTFLOAT=	yes
 .endif
 
 .if ${MACHINE} == "emips"
@@ -1229,8 +1244,9 @@ MKBINUTILS?=	${MKBFD}
 
 #
 # We want to build zfs only for amd64 by default for now.
+# MINIX does not support ZFS, so keep it off there.
 #
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" && !defined(__MINIX)
 MKZFS?=		yes
 .endif
 
@@ -1264,9 +1280,13 @@ _MKVARS.yes= \
 #MINIX-specific vars
 _MKVARS.yes+= \
 	MKSYSDEBUG MKLIVEUPDATE MKLLVMCMDS
+.if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64")
+_MKVARS.yes+= \
+	MKACPI MKAPIC MKDEBUGREG MKPCI
+.endif
 .if (${MACHINE_ARCH} == "i386")
 _MKVARS.yes+= \
-	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI
+	MKWATCHDOG MKINSTALLBOOT
 .endif
 
 .for var in ${_MKVARS.yes}
@@ -1278,6 +1298,18 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uyes}
 #
 _MKVARS.yes += MKGCCCMDS
 MKGCCCMDS?=	${MKGCC}
+
+#
+# Sanitizers, only "address" and "undefined" are supported by gcc
+#
+MKSANITIZER?=	no
+USE_SANITIZER?=	address
+
+#
+# Sanitizers implemented in libc, only "undefined" is supported
+#
+MKLIBCSANITIZER?=	no
+USE_LIBCSANITIZER?=	undefined
 
 #
 # Exceptions to the above:
@@ -1304,7 +1336,8 @@ _MKVARS.no= \
 
 #MINIX-specific vars
 _MKVARS.no+= \
-	MKIMAGEONLY MKSMALL MKBITCODE MKMAGIC MKPAE MKASR MKSRC
+	MKIMAGEONLY MKSMALL MKBITCODE MKMAGIC MKPAE MKASR MKSRC MKBIOS \
+	MKWATCHDOG MKACPI MKAPIC MKDEBUGREG MKPCI
 .if !empty(MACHINE_ARCH:Mearm*)
 _MKVARS.no+= \
 	MKWATCHDOG MKPAE MKACPI MKAPIC MKDEBUGREG MKINSTALLBOOT MKPCI

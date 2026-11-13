@@ -125,8 +125,7 @@ pchain_end(struct pbuf * pbuf)
  * of the memory used by the chain, rounded up to pool buffer sizes.  This
  * function is packet queue friendly.
  */
-size_t
-pchain_size(struct pbuf * pbuf)
+size_t pchain_size(struct pbuf * pbuf)
 {
 	size_t size;
 

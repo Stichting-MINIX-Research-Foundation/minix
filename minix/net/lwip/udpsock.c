@@ -79,8 +79,7 @@ static struct rmib_node net_inet6_udp6_node =
 /*
  * Initialize the UDP sockets module.
  */
-void
-udpsock_init(void)
+void udpsock_init(void)
 {
 	unsigned int slot;
 
@@ -99,8 +98,7 @@ udpsock_init(void)
  * A packet has arrived on a UDP socket.  We own the given packet buffer, and
  * so we must free it if we do not want to keep it.
  */
-static void
-udpsock_input(void * arg, struct udp_pcb * pcb __unused, struct pbuf * pbuf,
+static void udpsock_input(void * arg, struct udp_pcb * pcb __unused, struct pbuf * pbuf,
 	const ip_addr_t * ipaddr, uint16_t port)
 {
 	struct udpsock *udp = (struct udpsock *)arg;
@@ -158,8 +156,7 @@ udpsock_socket(int domain, int protocol, struct sock ** sockp,
 /*
  * Bind a UDP socket to a local address.
  */
-static int
-udpsock_bind(struct sock * sock, const struct sockaddr * addr,
+static int udpsock_bind(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -181,8 +178,7 @@ udpsock_bind(struct sock * sock, const struct sockaddr * addr,
 /*
  * Connect a UDP socket to a remote address.
  */
-static int
-udpsock_connect(struct sock * sock, const struct sockaddr * addr,
+static int udpsock_connect(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt __unused)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -259,8 +255,7 @@ udpsock_connect(struct sock * sock, const struct sockaddr * addr,
 /*
  * Perform preliminary checks on a send request.
  */
-static int
-udpsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
+static int udpsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
 	const struct sockaddr * addr, socklen_t addr_len __unused,
 	endpoint_t user_endpt __unused, int flags)
 {
@@ -288,8 +283,7 @@ udpsock_pre_send(struct sock * sock, size_t len, socklen_t ctl_len __unused,
  * This function is called twice when sending a packet.  The result is that the
  * flagged options are overridden for only the packet being sent.
  */
-static void
-udpsock_swap_opt(struct udpsock * udp, struct pktopt * pkto)
+static void udpsock_swap_opt(struct udpsock * udp, struct pktopt * pkto)
 {
 	uint8_t tos, ttl, mcast_ttl;
 
@@ -312,8 +306,7 @@ udpsock_swap_opt(struct udpsock * udp, struct pktopt * pkto)
 /*
  * Send a packet on a UDP socket.
  */
-static int
-udpsock_send(struct sock * sock, const struct sockdriver_data * data,
+static int udpsock_send(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * off, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, socklen_t * ctl_off __unused,
 	const struct sockaddr * addr, socklen_t addr_len,
@@ -540,8 +533,7 @@ udpsock_send(struct sock * sock, const struct sockdriver_data * data,
 /*
  * Update the set of flag-type socket options on a UDP socket.
  */
-static void
-udpsock_setsockmask(struct sock * sock, unsigned int mask)
+static void udpsock_setsockmask(struct sock * sock, unsigned int mask)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
 
@@ -559,8 +551,7 @@ udpsock_setsockmask(struct sock * sock, unsigned int mask)
 /*
  * Prepare a helper structure for IP-level option processing.
  */
-static void
-udpsock_get_ipopts(struct udpsock * udp, struct ipopts * ipopts)
+static void udpsock_get_ipopts(struct udpsock * udp, struct ipopts * ipopts)
 {
 
 	ipopts->local_ip = &udp->udp_pcb->local_ip;
@@ -576,8 +567,7 @@ udpsock_get_ipopts(struct udpsock * udp, struct ipopts * ipopts)
 /*
  * Set socket options on a UDP socket.
  */
-static int
-udpsock_setsockopt(struct sock * sock, int level, int name,
+static int udpsock_setsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -735,8 +725,7 @@ udpsock_setsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve socket options on a UDP socket.
  */
-static int
-udpsock_getsockopt(struct sock * sock, int level, int name,
+static int udpsock_getsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -833,8 +822,7 @@ udpsock_getsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve the local socket address of a UDP socket.
  */
-static int
-udpsock_getsockname(struct sock * sock, struct sockaddr * addr,
+static int udpsock_getsockname(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -848,8 +836,7 @@ udpsock_getsockname(struct sock * sock, struct sockaddr * addr,
 /*
  * Retrieve the remote socket address of a UDP socket.
  */
-static int
-udpsock_getpeername(struct sock * sock, struct sockaddr * addr,
+static int udpsock_getpeername(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
@@ -866,8 +853,7 @@ udpsock_getpeername(struct sock * sock, struct sockaddr * addr,
 /*
  * Shut down a UDP socket for reading and/or writing.
  */
-static int
-udpsock_shutdown(struct sock * sock, unsigned int mask)
+static int udpsock_shutdown(struct sock * sock, unsigned int mask)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
 
@@ -882,8 +868,7 @@ udpsock_shutdown(struct sock * sock, unsigned int mask)
 /*
  * Close a UDP socket.
  */
-static int
-udpsock_close(struct sock * sock, int force __unused)
+static int udpsock_close(struct sock * sock, int force __unused)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
 
@@ -900,8 +885,7 @@ udpsock_close(struct sock * sock, int force __unused)
 /*
  * Free up a closed UDP socket.
  */
-static void
-udpsock_free(struct sock * sock)
+static void udpsock_free(struct sock * sock)
 {
 	struct udpsock *udp = (struct udpsock *)sock;
 
@@ -914,8 +898,7 @@ udpsock_free(struct sock * sock)
  * Fill the given kinfo_pcb sysctl(7) structure with information about the UDP
  * PCB identified by the given pointer.
  */
-static void
-udpsock_get_info(struct kinfo_pcb * ki, const void * ptr)
+static void udpsock_get_info(struct kinfo_pcb * ki, const void * ptr)
 {
 	const struct udp_pcb *pcb = (const struct udp_pcb *)ptr;
 	struct udpsock *udp;
@@ -969,8 +952,7 @@ udpsock_enum(const void * last)
 /*
  * Obtain the list of UDP protocol control blocks, for sysctl(7).
  */
-static ssize_t
-udpsock_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t udpsock_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 

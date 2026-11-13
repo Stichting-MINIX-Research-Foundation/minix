@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.25 2016/09/05 10:44:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.25 2016/09/05 10:44:36 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,24 +495,27 @@ mke2fs(const char *fsys, int fi, int fo)
 			     EXT2F_COMPAT_RESIZE) != 0)
 				boffset += sblock.e2fs.e2fs_reserved_ngdb;
 		}
-		gd[cylno].ext2bgd_b_bitmap = boffset;
+		gd[cylno].ext2bgd_b_bitmap = h2fs32(boffset);
 		boffset += NBLOCK_BLOCK_BITMAP;
-		gd[cylno].ext2bgd_i_bitmap = boffset;
+		gd[cylno].ext2bgd_i_bitmap = h2fs32(boffset);
 		boffset += NBLOCK_INODE_BITMAP;
-		gd[cylno].ext2bgd_i_tables = boffset;
+		gd[cylno].ext2bgd_i_tables = h2fs32(boffset);
 		if (cylno == (ncg - 1))
-			gd[cylno].ext2bgd_nbfree =
-			    blocks_lastcg - cgoverhead(cylno);
+			gd[cylno].ext2bgd_nbfree = h2fs16(
+			    blocks_lastcg - cgoverhead(cylno));
 		else
-			gd[cylno].ext2bgd_nbfree =
-			    sblock.e2fs.e2fs_bpg - cgoverhead(cylno);
-		fbcount += gd[cylno].ext2bgd_nbfree;
-		gd[cylno].ext2bgd_nifree = sblock.e2fs.e2fs_ipg;
+			gd[cylno].ext2bgd_nbfree = h2fs16(
+			    sblock.e2fs.e2fs_bpg - cgoverhead(cylno));
+		fbcount += fs2h16(gd[cylno].ext2bgd_nbfree);
 		if (cylno == 0) {
 			/* take reserved inodes off nifree */
-			gd[cylno].ext2bgd_nifree -= EXT2_RESERVED_INODES;
+			gd[cylno].ext2bgd_nifree = h2fs16(
+			    sblock.e2fs.e2fs_ipg-EXT2_RESERVED_INODES);
+		} else {
+			gd[cylno].ext2bgd_nifree = 
+			    h2fs16(sblock.e2fs.e2fs_ipg);
 		}
-		ficount += gd[cylno].ext2bgd_nifree;
+		ficount += fs2h16(gd[cylno].ext2bgd_nifree);
 		gd[cylno].ext2bgd_ndirs = 0;
 	}
 	sblock.e2fs.e2fs_fbcount = fbcount;
@@ -729,7 +732,7 @@ initcg(uint cylno)
 	i = i * NBBY;
 	for (; i < cgoverhead(cylno); i++)
 		setbit(buf, i);
-	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_b_bitmap),
+	wtfs(EXT2_FSBTODB(&sblock, fs2h32(gd[cylno].ext2bgd_b_bitmap)),
 	    sblock.e2fs_bsize, buf);
 
 	/*
@@ -747,7 +750,7 @@ initcg(uint cylno)
 		for (i = 1; i < EXT2_FIRSTINO; i++)
 			setbit(buf, EXT2_INO_INDEX(i));
 	}
-	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_bitmap),
+	wtfs(EXT2_FSBTODB(&sblock, fs2h32(gd[cylno].ext2bgd_i_bitmap)),
 	    sblock.e2fs_bsize, buf);
 
 	/*
@@ -764,7 +767,7 @@ initcg(uint cylno)
 			/* h2fs32() just for consistency */
 			dp->e2di_gen = h2fs32(arc4random());
 		}
-		wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_tables + i),
+		wtfs(EXT2_FSBTODB(&sblock, fs2h32(gd[cylno].ext2bgd_i_tables) + i),
 		    sblock.e2fs_bsize, buf);
 	}
 }
@@ -1133,9 +1136,9 @@ init_resizeino(const struct timeval *tv)
 		    "required to enable resize feature for this filesystem",
 		    __func__);
 	}
-	/* upper 32bit is stored into e2di_dacl on REV1 feature */
-	node.e2di_size = isize & UINT32_MAX;
-	node.e2di_dacl = isize >> 32;
+	/* upper 32bit is stored into e2di_size_high on REV1 feature */
+	node.e2di_size 	    = isize & UINT32_MAX;
+	node.e2di_size_high = isize >> 32;
 
 #define SINGLE	0	/* index of single indirect block */
 #define DOUBLE	1	/* index of double indirect block */
@@ -1264,7 +1267,7 @@ alloc(uint32_t size, uint16_t mode)
 	bbp = malloc(sblock.e2fs_bsize);
 	if (bbp == NULL)
 		return 0;
-	rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	rdfs(EXT2_FSBTODB(&sblock, fs2h32(gd[0].ext2bgd_b_bitmap)),
 	    sblock.e2fs_bsize, bbp);
 
 	/* XXX: kernel uses e2fs_fpg here */
@@ -1299,13 +1302,13 @@ alloc(uint32_t size, uint16_t mode)
 		errx(EXIT_FAILURE, "%s: inconsistent bitmap", __func__);
 
 	setbit(bbp, bno);
-	wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	wtfs(EXT2_FSBTODB(&sblock, fs2h32(gd[0].ext2bgd_b_bitmap)),
 	    sblock.e2fs_bsize, bbp);
 	free(bbp);
 	/* XXX: modified group descriptors won't be written into backups */
-	gd[0].ext2bgd_nbfree--;
+	gd[0].ext2bgd_nbfree = h2fs16(fs2h16(gd[0].ext2bgd_nbfree)-1);
 	if ((mode & EXT2_IFDIR) != 0)
-		gd[0].ext2bgd_ndirs++;
+		gd[0].ext2bgd_ndirs = h2fs16(fs2h16(gd[0].ext2bgd_ndirs)+1);
 	sblock.e2fs.e2fs_fbcount--;
 
 	return sblock.e2fs.e2fs_first_dblock + bno;
@@ -1343,7 +1346,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 			    __func__, (uint64_t)ino, c);
 
 		/* update inode bitmap */
-		rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_i_bitmap),
+		rdfs(EXT2_FSBTODB(&sblock, fs2h32(gd[0].ext2bgd_i_bitmap)),
 		    sblock.e2fs_bsize, bp);
 
 		/* more sanity */
@@ -1351,9 +1354,9 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 			errx(EXIT_FAILURE, "%s: inode %" PRIu64
 			    " already in use", __func__, (uint64_t)ino);
 		setbit(bp, EXT2_INO_INDEX(ino));
-		wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_i_bitmap),
+		wtfs(EXT2_FSBTODB(&sblock, fs2h32(gd[0].ext2bgd_i_bitmap)),
 		    sblock.e2fs_bsize, bp);
-		gd[c].ext2bgd_nifree--;
+		gd[c].ext2bgd_nifree = h2fs16(fs2h16(gd[c].ext2bgd_nifree)-1);
 		sblock.e2fs.e2fs_ficount--;
 	}
 
@@ -1367,7 +1370,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	dp = (struct ext2fs_dinode *)(bp +
 	    inodesize * ino_to_fsbo(&sblock, ino));
-	e2fs_isave(ip, dp);
+	e2fs_isave(ip, dp, EXT2_DINODE_SIZE(&sblock));
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {
 		for (i = 0; i < EXT2FS_NDADDR + EXT2FS_NIADDR; i++)

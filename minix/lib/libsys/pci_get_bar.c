@@ -9,12 +9,7 @@ pci_get_bar.c
 /*===========================================================================*
  *				pci_get_bar				     *
  *===========================================================================*/
-int pci_get_bar(devind, port, base, size, ioflag)
-int devind;
-int port;
-u32_t *base;
-u32_t *size;
-int *ioflag;
+int pci_get_bar(int devind, int port, u64_t *base, u32_t *size, int *ioflag)
 {
 	int r;
 	message m;

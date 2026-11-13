@@ -114,8 +114,11 @@ int do_select(void)
   nfds = job_m_in.m_lc_vfs_select.nfds;
   vtimeout = job_m_in.m_lc_vfs_select.timeout;
 
-  /* Sane amount of file descriptors? */
-  if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
+  /* Sane amount of file descriptors?  An fd_set is FD_SETSIZE wide, and a
+   * program is entitled to hand us the whole of one, even though a process
+   * can have only OPEN_MAX descriptors; the excess is dealt with below.
+   */
+  if (nfds < 0 || nfds > FD_SETSIZE) return(EINVAL);
 
   /* Find a slot to store this select request */
   for (s = 0; s < MAXSELECTS; s++)
@@ -171,6 +174,19 @@ int do_select(void)
    * the incoming results must not cause the select call to finish prematurely.
    */
   se->starting = TRUE;
+
+  /* No bit above OPEN_MAX can name an open file.  If the caller set one,
+   * the call fails with EBADF, exactly as it does for any other descriptor
+   * that is not open; if it set none, the excess is simply ignored.  (This
+   * is what a program that passes FD_SETSIZE as nfds relies on.)
+   */
+  for (fd = OPEN_MAX; fd < nfds; fd++) {
+	if (tab2ops(fd, se)) {
+		se->requestor = NULL;
+		return(EBADF);
+	}
+  }
+  if (nfds > OPEN_MAX) nfds = OPEN_MAX;
 
   /* Verify that file descriptors are okay to select on */
   for (fd = 0; fd < nfds; fd++) {
@@ -596,8 +612,15 @@ static int select_request_pipe(struct filp *f, int *ops, int block,
   }
 
   if ((*ops & (SEL_WR|SEL_ERR))) {
-	/* Check if we can write 1 byte */
-	err = pipe_check(f, WRITING, f->filp_flags & ~O_NONBLOCK, 1,
+	/* Check whether an atomic write would go through without blocking.
+	 * That, and not room for a single byte, is what makes a pipe
+	 * writable: a caller told otherwise may write PIPE_BUF bytes in one
+	 * piece, and would block on the very call select(2) promised would
+	 * not.  A pipe holds several times PIPE_BUF, so there is room
+	 * between "empty" and "cannot take a whole write" for this to be a
+	 * useful answer.
+	 */
+	err = pipe_check(f, WRITING, f->filp_flags & ~O_NONBLOCK, PIPE_BUF,
 			 1 /* Check only */);
 
 	if (err != SUSPEND)
@@ -667,7 +690,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   endpoint_t src_e, dst_e;
   fd_set *src_fds, *dst_fds;
 
-  if (nfds < 0 || nfds > OPEN_MAX)
+  if (nfds < 0 || nfds > FD_SETSIZE)
 	panic("select copy_fdsets: nfds wrong: %d", nfds);
 
   /* Only copy back as many bits as the user expects. */
@@ -1036,8 +1059,8 @@ void select_cdev_reply1(endpoint_t driver_e, devminor_t minor, int status)
 		/* This should never happen. The driver may be misbehaving.
 		 * For now we assume that the reply we want will arrive later..
 		 */
-		printf("VFS (%s:%d): expected reply from dev %llx not %llx\n",
-			__FILE__, __LINE__, f->filp_select_dev, dev);
+		printf("VFS (%s:%d): expected reply from dev %lx not %lx\n",
+			__FILE__, __LINE__, (unsigned long)f->filp_select_dev, (unsigned long)dev);
 		return;
 	}
   }
@@ -1087,8 +1110,8 @@ void select_sdev_reply1(dev_t dev, int status)
 		/* This should never happen. The driver may be misbehaving.
 		 * For now we assume that the reply we want will arrive later..
 		 */
-		printf("VFS: expected reply from sock dev %llx, not %llx\n",
-		    f->filp_select_dev, dev);
+		printf("VFS: expected reply from sock dev %lx, not %lx\n",
+		    (unsigned long)f->filp_select_dev, (unsigned long)dev);
 		return;
 	}
   }
@@ -1271,8 +1294,7 @@ static void select_restart_filps(void)
 /*===========================================================================*
  *				filp_status				     *
  *===========================================================================*/
-static void
-filp_status(struct filp *f, int status)
+static void filp_status(struct filp *f, int status)
 {
 /* Tell processes that need to know about the status of this filp. This
  * function MUST NOT block its calling thread.
@@ -1301,8 +1323,7 @@ filp_status(struct filp *f, int status)
 /*===========================================================================*
  *				restart_proc				     *
  *===========================================================================*/
-static void
-restart_proc(struct selectentry *se)
+static void restart_proc(struct selectentry *se)
 {
 /* Tell process about select results (if any) unless there are still results
  * pending. This function MUST NOT block its calling thread.
@@ -1353,8 +1374,7 @@ static void select_lock_filp(struct filp *f, int ops)
 /*
  * Dump the state of the entire select table, for debugging purposes.
  */
-void
-select_dump(void)
+void select_dump(void)
 {
 	struct selectentry *se;
 	struct filp *f;

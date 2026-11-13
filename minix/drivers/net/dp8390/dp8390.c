@@ -922,7 +922,7 @@ static void map_hw_buffer(dpeth_t *dep)
 		printf(
 		"map_hw_buffer: programmed I/O, no need to map buffer\n");
 #endif
-		dep->de_locmem = (char *)-dep->de_ramsize; /* trap errors */
+		dep->de_locmem = (char *)(uintptr_t)-(uintptr_t)dep->de_ramsize; /* trap errors */
 		return;
 	}
 

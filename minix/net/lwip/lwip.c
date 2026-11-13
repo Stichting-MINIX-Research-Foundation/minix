@@ -23,8 +23,7 @@ static void expire_lwip_timer(int);
  * the system uptime during this call, so that we know to check for timer
  * updates at the end of the current iteration of the message loop.
  */
-uint32_t
-sys_now(void)
+uint32_t sys_now(void)
 {
 
 	recheck_timer = TRUE;
@@ -37,8 +36,7 @@ sys_now(void)
  * Check if and when lwIP has its next timeout, and set or cancel our timer
  * accordingly.
  */
-static void
-set_lwip_timer(void)
+static void set_lwip_timer(void)
 {
 	uint32_t next_timeout;
 	clock_t ticks;
@@ -76,8 +74,7 @@ set_lwip_timer(void)
  * The timer for lwIP timeouts has gone off.  Check timeouts, and possibly set
  * a new timer.
  */
-static void
-expire_lwip_timer(int arg __unused)
+static void expire_lwip_timer(int arg __unused)
 {
 
 	/* Let lwIP do its work. */
@@ -96,8 +93,7 @@ expire_lwip_timer(int arg __unused)
  * Check whether we should adjust our local timer based on a change in the next
  * lwIP timeout.
  */
-static void
-check_lwip_timer(void)
+static void check_lwip_timer(void)
 {
 
 	/*
@@ -123,8 +119,7 @@ check_lwip_timer(void)
 /*
  * Return a random number, for use by lwIP.
  */
-uint32_t
-lwip_hook_rand(void)
+uint32_t lwip_hook_rand(void)
 {
 
 	/*
@@ -192,8 +187,7 @@ alloc_socket(int domain, int type, int protocol, endpoint_t user_endpt,
 /*
  * Initialize the service.
  */
-static int
-init(int type __unused, sef_init_info_t * init __unused)
+static int init(int type __unused, sef_init_info_t * init __unused)
 {
 
 	/*
@@ -266,8 +260,7 @@ init(int type __unused, sef_init_info_t * init __unused)
 /*
  * Perform initialization using the System Event Framework (SEF).
  */
-static void
-startup(void)
+static void startup(void)
 {
 
 	sef_setcb_init_fresh(init);
@@ -290,8 +283,7 @@ startup(void)
 /*
  * The lwIP-based TCP/IP sockets driver.
  */
-int
-main(void)
+int main(void)
 {
 	message m;
 	int r, ipc_status;

@@ -1,0 +1,36 @@
+#	$NetBSD: Makefile,v 1.19 2020/05/06 09:18:10 bouyer Exp $
+
+.include <bsd.own.mk>
+
+INSTIMGBASE=	Minix-${DISTRIBVER}-x86_64-install	# gives ${IMGBASE}.img
+
+INSTIMAGEMB?=	1900			# for all installation binaries
+
+# This installer is UEFI-only; do not request legacy BIOS boot blocks.
+EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
+
+USE_MBR=		no
+USE_GPT=        yes
+FSTAB_IN=       ${.CURDIR}/fstab.in
+EFIMB=          64
+USE_GPTMBR=		no
+
+CLEANFILES+=	boot.cfg
+
+prepare_md_post:
+	${TOOL_SED}							\
+	    -e "s/@@MACHINE@@/${MACHINE}/"				\
+	    -e "s/@@VERSION@@/${DISTRIBVER}/"				\
+	    < ${.CURDIR}/boot.cfg.in > boot.cfg
+
+DISTRIBDIR!= cd ${.CURDIR}/../.. ; pwd
+
+SPEC_EXTRA=		${.CURDIR}/spec.inst
+IMGFILE_EXTRA=								\
+	${.CURDIR}/etc.ttys		etc/ttys			\
+	${.CURDIR}/etc.rc		etc/rc				\
+	${.CURDIR}/install.sh		.				\
+	${.CURDIR}/setup-amd64.sh	.				\
+	${.OBJDIR}/boot.cfg		.
+
+.include "${DISTRIBDIR}/common/bootimage/Makefile.installimage"

@@ -14,7 +14,11 @@ static int init_mem_priv(void)
 	struct minix_mem_range mr;
 
 	mr.mr_base = 0;
+#ifdef __x86_64__
+	mr.mr_limit = ACPI_UINT64_MAX;
+#else
 	mr.mr_limit = 0xffffffff;
+#endif
 
 	return sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr);
 }

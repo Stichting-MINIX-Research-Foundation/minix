@@ -20,9 +20,7 @@ int main(int argc, char **argv);
 void Print(char *comment, char *name);
 void Error(char *message, char *arg);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char **argv)
 
   {
   char *term;
@@ -154,9 +152,7 @@ void Print( comment, name )
 /****************************************************************/
 
 
-void Error( message, arg )
-  char *message;
-  char *arg;
+void Error( char *message, char *arg )
 
   {
   fprintf( stderr, message, arg );

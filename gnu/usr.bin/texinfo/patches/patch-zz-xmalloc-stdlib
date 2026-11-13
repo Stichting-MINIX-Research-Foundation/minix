@@ -1,0 +1,6 @@
+--- a/lib/xmalloc.c
++++ b/lib/xmalloc.c
+@@ -25,2 +25,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ 

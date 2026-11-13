@@ -556,7 +556,7 @@ static int pty_slave_write(tty_t *tp, int try)
 	/* Copy from user space to the PTY output buffer. */
 	if (tp->tty_outcaller == KERNEL) {
 		/* We're trying to print on kernel's behalf */
-		memcpy(pp->ohead, (void *) tp->tty_outgrant + tp->tty_outcum,
+		memcpy(pp->ohead, (void *)(uintptr_t) tp->tty_outgrant + tp->tty_outcum,
 			count);
 	} else {
 		if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
@@ -623,6 +623,9 @@ static void pty_start(pty_t *pp)
 /* Transfer bytes written to the output buffer to the PTY reader. */
   int count;
   char c;
+  int saved_ocount;
+
+  saved_ocount = pp->ocount;
 
   /* While there are things to do. */
   for (;;) {
@@ -659,6 +662,15 @@ static void pty_start(pty_t *pp)
 	pp->rdcum += count;
 	pp->rdleft -= count;
   }
+
+  /* Space opened in obuf: signal any stalled slave write to retry.
+   * pty_master_read() calls handle_events() after pty_start(), but when
+   * pty_start() is called from within pty_slave_write() the tty_events flag
+   * must be set explicitly so the do-while loop in handle_events() iterates
+   * again and the slave write can fill the newly freed space.
+   */
+  if (pp->ocount < saved_ocount)
+	pp->tty->tty_events = 1;
 }
 
 /*===========================================================================*

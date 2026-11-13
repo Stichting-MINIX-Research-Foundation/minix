@@ -9,8 +9,7 @@ pci_slot_name.c
 /*===========================================================================*
  *				pci_slot_name				     *
  *===========================================================================*/
-char *pci_slot_name(devind)
-int devind;
+char *pci_slot_name(int devind)
 {
 	static char name[80];	/* We need a better interface for this */
 

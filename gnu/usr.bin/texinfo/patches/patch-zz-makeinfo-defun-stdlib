@@ -1,0 +1,6 @@
+--- a/makeinfo/defun.c
++++ b/makeinfo/defun.c
+@@ -22,2 +22,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ #include "defun.h"

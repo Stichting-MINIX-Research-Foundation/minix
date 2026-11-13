@@ -82,8 +82,7 @@ lwip_if_indextoname(unsigned int ifindex, char *ifname)
  * @return The corresponding index if ifname is the name of an interface;
  * otherwise, zero.
  */
-unsigned int
-lwip_if_nametoindex(const char *ifname)
+unsigned int lwip_if_nametoindex(const char *ifname)
 {
 #if LWIP_NETIF_API
   err_t err;

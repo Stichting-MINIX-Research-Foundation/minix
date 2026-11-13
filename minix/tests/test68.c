@@ -24,22 +24,19 @@ void pipe_handler(int sig);
 static int seen_pipe_signal = 0;
 static int seen_alarm_signal = 0;
 
-void
-alarm_handler(int sig)
+void alarm_handler(int sig)
 {
 	if (seen_pipe_signal == 0)
 		seen_pipe_signal = -1;
 	seen_alarm_signal = 1;
 }
 
-void
-pipe_handler(int sig)
+void pipe_handler(int sig)
 {
 	seen_pipe_signal = 1;
 }
 
-void
-copy_subtests()
+void copy_subtests()
 {
 	char *subtests[] = { "t68a", "t68b" };
 	char copy_cmd[8 + PATH_MAX + 1];
@@ -53,8 +50,7 @@ copy_subtests()
 	}
 }
 
-void
-test_pipe_normal()
+void test_pipe_normal()
 {
 /* Verify pipe2 creates pipes that behave like a normal pipe */
 
@@ -123,8 +119,7 @@ test_pipe_normal()
 	if (close(pipes[1]) != 0) e(18);
 }
 
-void
-test_pipe_cloexec()
+void test_pipe_cloexec()
 {
 /* Open a pipe with O_CLOEXEC */
 	int flags;
@@ -184,8 +179,7 @@ test_pipe_cloexec()
 	if (close(pipes[1]) != 0) e(16);
 }
 
-void
-test_pipe_nonblock()
+void test_pipe_nonblock()
 {
 /* Open a pipe with O_NONBLOCK */
 	char *buf_in, *buf_out;
@@ -227,8 +221,7 @@ test_pipe_nonblock()
 	free(buf_out);
 }
 
-void
-test_pipe_nosigpipe(void)
+void test_pipe_nosigpipe(void)
 {
 /* Let's retry the writing to pipe without readers experiment. This time we set
  * the O_NOSIGPIPE flag to prevent getting a signal. */
@@ -254,8 +247,7 @@ test_pipe_nosigpipe(void)
 	if (close(pipes[1]) != 0) e(12);
 }
 
-void
-test_pipe_flag_setting()
+void test_pipe_flag_setting()
 {
 	int pipes[2];
 
@@ -293,8 +285,7 @@ test_pipe_flag_setting()
  * before the reader end is closed.  The write call is expected to return EPIPE
  * and generate a SIGPIPE signal, and otherwise leave the system in good order.
  */
-static void
-test_pipe_partial_write(void)
+static void test_pipe_partial_write(void)
 {
 	char buf[PIPE_BUF + 2];
 	int pfd[2], status;
@@ -356,8 +347,7 @@ test_pipe_partial_write(void)
 	errct += WEXITSTATUS(status);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	start(68);
 	copy_subtests();

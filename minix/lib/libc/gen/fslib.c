@@ -34,9 +34,7 @@
  * unlikely, but negative bit counts are now possible (though unlikely)
  * and give silly results.
  */ 
-int bitmapsize(nr_bits, block_size)
-bit_t nr_bits;
-int block_size;
+int bitmapsize(bit_t nr_bits, int block_size)
 {
   int nr_blocks;
 

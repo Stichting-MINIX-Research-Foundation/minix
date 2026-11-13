@@ -596,7 +596,7 @@ int wctxpn(char *name)
 	if (Modem2) {
 		if ((in!=stdin) && *name && fstat(fileno(in), &f)!= -1) {
 			fprintf(stderr, "Sending %s, %lld blocks: ",
-			  name, f.st_size>>7);
+			  name, (long long)(f.st_size>>7));
 		}
 		fprintf(stderr, "Give your local XMODEM receive command now.\r\n");
 		return OK;
@@ -630,7 +630,8 @@ int wctxpn(char *name)
 	while (q < (txbuf + 1024))
 		*q++ = 0;
 	if (!Ascii && (in!=stdin) && *name && fstat(fileno(in), &f)!= -1)
-		sprintf(p, "%llu %llo %o 0 %d %ld", f.st_size, f.st_mtime,
+		sprintf(p, "%lld %llo %o 0 %d %ld", (long long)f.st_size,
+		  (unsigned long long)f.st_mtime,
 		  f.st_mode, Filesleft, Totalleft);
 	Totalleft -= f.st_size;
 	if (--Filesleft <= 0)
@@ -652,7 +653,7 @@ int wctxpn(char *name)
 	return OK;
 }
 
-int getnak()
+int getnak(void)
 {
 	register int firstch;
 
@@ -850,7 +851,7 @@ int filbuf(char *buf, int count)
 }
 
 /* Fill buffer with blklen chars */
-int zfilbuf()
+int zfilbuf(void)
 {
 	int n;
 
@@ -984,13 +985,13 @@ int readline(int timeout)
 	return (byt[0]&0377);
 }
 
-void flushmo()
+void flushmo(void)
 {
 	fflush(stdout);
 }
 
 
-void purgeline()
+void purgeline(void)
 {
 #ifdef USG
 	ioctl(iofd, TCFLSH, 0);
@@ -1001,7 +1002,7 @@ void purgeline()
 #endif
 
 /* send cancel string to get the other end to shut up */
-void canit()
+void canit(void)
 {
 	static char canistr[] = {
 	 24,24,24,24,24,24,24,24,24,24,8,8,8,8,8,8,8,8,8,8,0
@@ -1099,7 +1100,7 @@ char *babble[] = {
 	""
 };
 
-int usage()
+int usage(void)
 {
 	char **pp;
 
@@ -1115,7 +1116,7 @@ int usage()
 /*
  * Get the receiver's init parameters
  */
-int getzrxinit()
+int getzrxinit(void)
 {
 	register int n;
 	struct stat f;
@@ -1220,7 +1221,7 @@ int getzrxinit()
 }
 
 /* Send send-init information */
-int sendzsinit()
+int sendzsinit(void)
 {
 	register int c;
 
@@ -1308,7 +1309,7 @@ again:
 }
 
 /* Send the data in the file */
-int zsendfdata()
+int zsendfdata(void)
 {
 	register int c, e, n;
 	register int newcnt;
@@ -1564,7 +1565,7 @@ int getinsync(int flag)
 
 
 /* Say "bibi" to the receiver, try to do it cleanly */
-void saybibi()
+void saybibi(void)
 {
 	for (;;) {
 		stohdr(0L);		/* CAF Was zsbhdr - minor change */
@@ -1685,7 +1686,7 @@ void countem(int argc, char **argv)
 			}
 		}
 		if (Verbose>2)
-			fprintf(stderr, " %lld", f.st_size);
+			fprintf(stderr, " %lld", (long long)f.st_size);
 	}
 	if (Verbose>2)
 		fprintf(stderr, "\ncountem: Total %d %ld\n",

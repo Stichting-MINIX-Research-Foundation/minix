@@ -20,7 +20,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	char overflow = 0;	/* No overflow yet. */
 	char *frame;
 	struct ps_strings *psp;
-	int vsp = 0;	/* (virtual) Stack pointer in new address space. */
+	vir_bytes vsp = 0;	/* (virtual) Stack pointer in new address space. */
 
 	minix_stack_params(path, argv, envp, &frame_size, &overflow,
 		&argc, &envc);

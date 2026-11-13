@@ -14,8 +14,7 @@ static int fsdriver_running;
  * Multithreaded file systems should indicate that the reply is to be sent to
  * VFS asynchronously.
  */
-void
-fsdriver_process(const struct fsdriver * __restrict fdp,
+void fsdriver_process(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_ptr, int ipc_status, int asyn_reply)
 {
 	message m_out;
@@ -64,8 +63,7 @@ fsdriver_process(const struct fsdriver * __restrict fdp,
 /*
  * Terminate the file server as soon as the file system has been unmounted.
  */
-void
-fsdriver_terminate(void)
+void fsdriver_terminate(void)
 {
 
 	fsdriver_running = FALSE;
@@ -76,8 +74,7 @@ fsdriver_terminate(void)
 /*
  * Main program of any file server task.
  */
-void
-fsdriver_task(struct fsdriver * fdp)
+void fsdriver_task(struct fsdriver * fdp)
 {
 	message mess;
 	int r, ipc_status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.30 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.32 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else
+#include <ctype.h>
 #include <string.h>
 #endif
 #include <fs/cd9660/iso.h>
@@ -71,7 +72,9 @@ struct ptable_ent {
 #define	PTFIXSZ		8
 #define	PTSIZE(pp)	roundup(PTFIXSZ + isonum_711((pp)->namlen), 2)
 
+#ifndef	cdb2devb
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
+#endif
 
 static int	pnmatch(const char *, struct ptable_ent *);
 static int	dirmatch(const char *, struct iso_directory_record *);
@@ -84,7 +87,7 @@ pnmatch(const char *path, struct ptable_ent *pp)
 
 	cp = pp->name;
 	for (i = isonum_711(pp->namlen); --i >= 0; path++, cp++) {
-		if (toupper(*path) == *cp)
+		if (toupper((unsigned char)*path) == *cp)
 			continue;
 		return 0;
 	}
@@ -107,7 +110,7 @@ dirmatch(const char *path, struct iso_directory_record *dp)
 	for (i = isonum_711(dp->name_len); --i >= 0; path++, cp++) {
 		if (!*path)
 			break;
-		if (toupper(*path) == *cp)
+		if (toupper((unsigned char)*path) == *cp)
 			continue;
 		return 0;
 	}
@@ -193,7 +196,7 @@ cd9660_open(const char *path, struct open_file *f)
 	parent = 1;
 	pp = (struct ptable_ent *)buf;
 	ent = 1;
-	bno = isonum_732(pp->block) + isonum_711(pp->extlen);
+	bno = (daddr_t)isonum_732(pp->block) + isonum_711(pp->extlen);
 
 	rc = ENOENT;
 
@@ -215,7 +218,7 @@ cd9660_open(const char *path, struct open_file *f)
 		}
 		path += isonum_711(pp->namlen) + 1;
 		parent = ent;
-		bno = isonum_732(pp->block) + isonum_711(pp->extlen);
+		bno = (daddr_t)isonum_732(pp->block) + isonum_711(pp->extlen);
 		while ((char *)pp < (char *)buf + psize) {
 			if (isonum_722(pp->parent) == parent)
 				break;
@@ -259,7 +262,7 @@ cd9660_open(const char *path, struct open_file *f)
 			dsize = isonum_733(dp->size);
 		if (dirmatch(path, dp))
 			break;
-		psize += isonum_711(dp->length);
+		psize += (size_t)isonum_711(dp->length);
 		dp = (struct iso_directory_record *)
 			((char *)dp + isonum_711(dp->length));
 	}
@@ -333,15 +336,17 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 		if (nread != ISO_DEFAULT_BLOCK_SIZE)
 			return EIO;
 		if (dp == buf) {
+			size_t nr;
 			off = fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1);
 			if (nread > off + size)
 				nread = off + size;
 			nread -= off;
-			if (nread > fp->size - fp->off)
-				nread = fp->size - fp->off;
+			nr = (size_t)(fp->size - fp->off);
+			if (nread > nr)
+				nread = nr;
 			memcpy(start, buf + off, nread);
 			start = (char *)start + nread;
-			fp->off += nread;
+			fp->off += (off_t)nread;
 			size -= nread;
 		} else {
 			start = (char *)start + ISO_DEFAULT_BLOCK_SIZE;
@@ -350,7 +355,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 		}
 	}
 	if(fp->off > fp->size)
-		size += fp->off - fp->size;
+		size += (size_t)(fp->off - fp->size);
 	if (resid)
 		*resid = size;
 	return rc;

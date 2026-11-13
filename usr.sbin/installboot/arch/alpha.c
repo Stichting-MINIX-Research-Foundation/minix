@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.21 2011/08/14 17:50:17 christos Exp $	*/
+/*	$NetBSD: alpha.c,v 1.22 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.21 2011/08/14 17:50:17 christos Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.22 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -121,9 +121,14 @@ static void	check_sparc(const struct alpha_boot_block * const,
 static int alpha_clearboot(ib_params *);
 static int alpha_setboot(ib_params *);
 
-struct ib_mach ib_mach_alpha =
-	{ "alpha", alpha_setboot, alpha_clearboot, no_editboot,
-		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM };
+struct ib_mach ib_mach_alpha = {
+	.name		=	"alpha",
+	.setboot	=	alpha_setboot,
+	.clearboot	=	alpha_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_STAGE1START | IB_ALPHASUM | IB_APPEND |
+				    IB_SUNSUM,
+};
 
 static int
 alpha_clearboot(ib_params *params)

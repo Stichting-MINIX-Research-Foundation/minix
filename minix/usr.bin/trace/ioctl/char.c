@@ -109,8 +109,7 @@ char_ioctl_name(unsigned long req)
 	return NULL;
 }
 
-static void
-put_i2c_op(struct trace_proc * proc, const char *name, i2c_op_t op)
+static void put_i2c_op(struct trace_proc * proc, const char *name, i2c_op_t op)
 {
 	const char *text = NULL;
 
@@ -131,8 +130,7 @@ put_i2c_op(struct trace_proc * proc, const char *name, i2c_op_t op)
 		put_value(proc, name, "%d", op);
 }
 
-static void
-put_sound_device(struct trace_proc * proc, const char * name, int device)
+static void put_sound_device(struct trace_proc * proc, const char * name, int device)
 {
 	const char *text = NULL;
 
@@ -156,8 +154,7 @@ put_sound_device(struct trace_proc * proc, const char * name, int device)
 		put_value(proc, name, "%d", device);
 }
 
-static void
-put_sound_state(struct trace_proc * proc, const char * name, int state)
+static void put_sound_state(struct trace_proc * proc, const char * name, int state)
 {
 
 	if (!valuesonly && state == ON)
@@ -236,8 +233,7 @@ static const struct flags tc_lflags[] = {
 	FLAG(NOFLSH),
 };
 
-static void
-put_tty_disc(struct trace_proc * proc, const char * name, int disc)
+static void put_tty_disc(struct trace_proc * proc, const char * name, int disc)
 {
 	const char *text = NULL;
 
@@ -264,8 +260,7 @@ static const struct flags kbd_leds[] = {
 	FLAG(KBD_LEDS_SCROLL),
 };
 
-int
-char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
+int char_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr,
 	int dir)
 {
 	minix_i2c_ioctl_exec_t *iie;

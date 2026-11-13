@@ -15,8 +15,7 @@
 
 static u64_t Hz;
 
-int
-micro_delay(u32_t micros)
+int micro_delay(u32_t micros)
 {
 	struct minix_kerninfo *minix_kerninfo;
         u64_t start, delta, delta_end;
@@ -54,8 +53,7 @@ u32_t frclock_64_to_micros(u64_t tsc)
             (tsc / (get_minix_kerninfo()->arm_frclock->hz / MICROHZ));
 }
 
-void
-read_frclock(u32_t *frclk)
+void read_frclock(u32_t *frclk)
 {
 	struct minix_kerninfo *minix_kerninfo = get_minix_kerninfo();
 
@@ -66,8 +64,7 @@ read_frclock(u32_t *frclk)
 	    minix_kerninfo->arm_frclock->tcrr);
 }
 
-u32_t
-delta_frclock(u32_t base, u32_t cur)
+u32_t delta_frclock(u32_t base, u32_t cur)
 {
 	u32_t delta;
 
@@ -83,14 +80,12 @@ delta_frclock(u32_t base, u32_t cur)
 	return delta;
 }
 
-void
-read_frclock_64(u64_t *frclk)
+void read_frclock_64(u64_t *frclk)
 {
 	read_frclock((u32_t *) frclk);	
 }
 
-u64_t
-delta_frclock_64(u64_t base, u64_t cur)
+u64_t delta_frclock_64(u64_t base, u64_t cur)
 {
 	return (u64_t) delta_frclock((u32_t) base, (u32_t) cur);
 }

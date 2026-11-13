@@ -68,11 +68,18 @@ ENTRY(__setjmp14)
 	xorl	%edi,%edi
 	xorq	%rsi,%rsi
 
+	/*
+	 * On entry %rsp is 16-byte aligned minus 8 (the return address).
+	 * Realign to 16 before the call so the C __sigprocmask14 can use
+	 * aligned SSE stores (movaps); otherwise it #GPs (SIGSEGV) on amd64.
+	 */
+	subq	$8,%rsp
 #ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
 #else
 	call	_C_LABEL(__sigprocmask14)
 #endif
+	addq	$8,%rsp
 2:	xorl	%eax,%eax
 	ret
 END(__setjmp14)

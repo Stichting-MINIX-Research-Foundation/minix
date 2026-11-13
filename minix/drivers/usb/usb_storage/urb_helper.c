@@ -17,8 +17,7 @@
 /*===========================================================================*
  *    init_urb                                                               *
  *===========================================================================*/
-void
-init_urb(struct ddekit_usb_urb * urb, struct ddekit_usb_dev * dev,
+void init_urb(struct ddekit_usb_urb * urb, struct ddekit_usb_dev * dev,
 	urb_ep_config * conf)
 {
 	MASS_DEBUG_DUMP;
@@ -49,8 +48,7 @@ init_urb(struct ddekit_usb_urb * urb, struct ddekit_usb_dev * dev,
 /*===========================================================================*
  *    attach_urb_data                                                        *
  *===========================================================================*/
-void
-attach_urb_data(struct ddekit_usb_urb * urb, int buf_type,
+void attach_urb_data(struct ddekit_usb_urb * urb, int buf_type,
 		void * buf, ddekit_uint32_t buf_len)
 {
 	MASS_DEBUG_DUMP;
@@ -73,8 +71,7 @@ attach_urb_data(struct ddekit_usb_urb * urb, int buf_type,
 /*===========================================================================*
  *    blocking_urb_submit                                                    *
  *===========================================================================*/
-int
-blocking_urb_submit(struct ddekit_usb_urb * urb, ddekit_sem_t * sem,
+int blocking_urb_submit(struct ddekit_usb_urb * urb, ddekit_sem_t * sem,
 		int check_len)
 {
 	MASS_DEBUG_DUMP;

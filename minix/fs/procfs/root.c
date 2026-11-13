@@ -2,7 +2,7 @@
 
 #include "inc.h"
 
-#if defined (__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/pci.h>
 #endif
 #include <minix/dmap.h>
@@ -12,7 +12,7 @@ static void root_uptime(void);
 static void root_loadavg(void);
 static void root_kinfo(void);
 static void root_meminfo(void);
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 static void root_pci(void);
 #endif
 static void root_dmap(void);
@@ -25,11 +25,11 @@ struct file root_files[] = {
 	{ "loadavg",	REG_ALL_MODE,	(data_t) root_loadavg	},
 	{ "kinfo",	REG_ALL_MODE,	(data_t) root_kinfo	},
 	{ "meminfo",	REG_ALL_MODE,	(data_t) root_meminfo	},
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 	{ "pci",	REG_ALL_MODE,	(data_t) root_pci	},
 #endif
 	{ "dmap",	REG_ALL_MODE,	(data_t) root_dmap	},
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
 #endif
 	{ "ipcvecs",	REG_ALL_MODE,	(data_t) root_ipcvecs	},
@@ -40,8 +40,7 @@ struct file root_files[] = {
 /*
  * Print the system clock frequency.
  */
-static void
-root_hz(void)
+static void root_hz(void)
 {
 
 	buf_printf("%lu\n", (unsigned long)sys_hz());
@@ -50,8 +49,7 @@ root_hz(void)
 /*
  * Print load averages.
  */
-static void
-root_loadavg(void)
+static void root_loadavg(void)
 {
 	struct load loads[3];
 	ldiv_t avg[3];
@@ -71,8 +69,7 @@ root_loadavg(void)
 /*
  * Print the current uptime.
  */
-static void
-root_uptime(void)
+static void root_uptime(void)
 {
 	ldiv_t division;
 
@@ -84,8 +81,7 @@ root_uptime(void)
 /*
  * Print general kernel information.
  */
-static void
-root_kinfo(void)
+static void root_kinfo(void)
 {
 	struct kinfo kinfo;
 
@@ -98,8 +94,7 @@ root_kinfo(void)
 /*
  * Print general memory information.
  */
-static void
-root_meminfo(void)
+static void root_meminfo(void)
 {
 	struct vm_stats_info vsi;
 
@@ -110,12 +105,11 @@ root_meminfo(void)
 	    vsi.vsi_free, vsi.vsi_largest, vsi.vsi_cached);
 }
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 /*
  * Print information about PCI devices present in the system.
  */
-static void
-root_pci(void)
+static void root_pci(void)
 {
 	u16_t vid, did, subvid, subdid;
 	u8_t bcr, scr, pifr, rev;
@@ -151,13 +145,12 @@ root_pci(void)
 		r = pci_next_dev(&devind, &vid, &did);
 	}
 }
-#endif /* defined(__i386__) */
+#endif /* defined(__i386__) || defined(__x86_64__) */
 
 /*
  * Print a list of drivers that have been assigned major device numbers.
  */
-static void
-root_dmap(void)
+static void root_dmap(void)
 {
 	struct dmap dmap[NR_DEVICES];
 	int i;
@@ -177,8 +170,7 @@ root_dmap(void)
 /*
  * Print a list of IPC vectors with their addresses.
  */
-static void
-root_ipcvecs(void)
+static void root_ipcvecs(void)
 {
 	extern struct minix_ipcvecs _minix_ipcvecs;
 
@@ -194,9 +186,15 @@ root_ipcvecs(void)
 	 * Print the vectors with an descriptive name and the additional (k)
 	 * to distinguish them from regular symbols.
 	 */
+#if defined(__x86_64__)
+#define PRINT_ENTRYPOINT(name) \
+	buf_printf("%016lx T %s(k)\n", \
+	    (unsigned long)_minix_ipcvecs.name, #name)
+#else
 #define PRINT_ENTRYPOINT(name) \
 	buf_printf("%08lx T %s(k)\n", \
 	    (unsigned long)_minix_ipcvecs.name, #name)
+#endif
 
 	PRINT_ENTRYPOINT(sendrec);
 	PRINT_ENTRYPOINT(send);
@@ -210,8 +208,7 @@ root_ipcvecs(void)
 /*
  * Print the list of mounted file systems.
  */
-static void
-root_mounts(void)
+static void root_mounts(void)
 {
 	struct statvfs buf[NR_MNTS];
 	int i, count;

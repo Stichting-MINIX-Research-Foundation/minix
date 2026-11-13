@@ -1,12 +1,6 @@
 #include "syslib.h"
 
-int sys_physcopy(src_proc, src_vir, dst_proc, dst_vir, bytes, flags)
-endpoint_t src_proc;		/* source process */
-vir_bytes src_vir;		/* source virtual address */
-endpoint_t dst_proc;		/* destination process */
-vir_bytes dst_vir;		/* destination virtual address */
-phys_bytes bytes;		/* how many bytes */
-int flags;			/* copy flags */
+int sys_physcopy(endpoint_t src_proc, vir_bytes src_vir, endpoint_t dst_proc, vir_bytes dst_vir, phys_bytes bytes, int flags)
 {
 /* Transfer a block of data.  The source and destination can each either be a
  * process number or SELF (to indicate own process number). Virtual addresses 

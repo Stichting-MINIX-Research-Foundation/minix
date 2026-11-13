@@ -95,6 +95,9 @@ cat <<EOF
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "mi_vector_hash.h"
+#endif
 #include <term_private.h>
 #include <term.h>
 EOF

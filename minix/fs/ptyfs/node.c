@@ -17,8 +17,7 @@ static struct node_data node_data[NR_PTYS];
 /*
  * Initialize the node module.
  */
-void
-init_nodes(void)
+void init_nodes(void)
 {
 
 	memset(&node_map, 0, sizeof(node_map));
@@ -29,8 +28,7 @@ init_nodes(void)
  * It is possible that the node is in use already; in that case, only update
  * its associated data.  Return OK on success, or an error code on failure.
  */
-int
-set_node(node_t index, struct node_data * data)
+int set_node(node_t index, struct node_data * data)
 {
 
 	if (index >= NR_PTYS)
@@ -47,8 +45,7 @@ set_node(node_t index, struct node_data * data)
  * Deallocate a node using its node index number.  This function always
  * succeeds, intentionally ignoring the case that the node was not allocated.
  */
-void
-clear_node(node_t index)
+void clear_node(node_t index)
 {
 
 	UNSET_BIT(node_map, index);

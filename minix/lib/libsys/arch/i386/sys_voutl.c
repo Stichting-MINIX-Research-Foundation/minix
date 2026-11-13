@@ -3,9 +3,7 @@
 /*===========================================================================*
  *                                sys_voutl				     *
  *===========================================================================*/
-int sys_voutl(pvl_pairs, nr_ports)
-pvl_pair_t *pvl_pairs;			/* (port,long-value)-pairs */
-int nr_ports;				/* nr of pairs to be processed */
+int sys_voutl(pvl_pair_t *pvl_pairs, int nr_ports)
 {
     message m_io;
 

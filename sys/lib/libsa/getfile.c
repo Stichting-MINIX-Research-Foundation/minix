@@ -1,4 +1,4 @@
-/*	$NetBSD: getfile.c,v 1.9 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: getfile.c,v 1.10 2016/06/11 06:59:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ getfile(char *prompt, int mode)
 
 	do {
 		printf("%s: ", prompt);
-		gets(buf);
+		kgets(buf, sizeof(buf));
 		if (buf[0] == CTRL('d') && buf[1] == 0)
 			return -1;
 	} while ((fd = open(buf, mode)) < 0);

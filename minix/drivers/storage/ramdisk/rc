@@ -29,16 +29,26 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
         fi
 
 	minix-service -cn up /service/floppy -dev /dev/fd0
-	if [ X`sysenv ahci` = Xyes ]
+	# Do not start the AHCI driver unless the PCI bus actually has an
+	# AHCI controller. The ahci boot option may also be set on machines
+	# that expose only a legacy IDE controller (for example, QEMU's pc
+	# machine), in which case we must fall back to another disk driver.
+	if [ X`sysenv ahci` = Xyes ] &&
+	    grep ' 1/6/1/' /proc/pci >/dev/null
 	then
-		# this is here temporarily, for testing purposes
 		minix-service -c up /service/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
-	elif [ X"$virtio_blk" = Xyes ]
-	then
-		minix-service -c up /service/virtio_blk -dev /dev/c0d0 -label virtio_blk_0 -args instance=0
 	else
-		minix-service -c up /service/at_wini -dev /dev/c0d0 -label at_wini_0
-		minix-service -cr up /service/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1 2>/dev/null || :
+		if [ X`sysenv ahci` = Xyes ]
+		then
+			echo "AHCI requested but no AHCI controller found; falling back to another disk driver."
+		fi
+		if [ X"$virtio_blk" = Xyes ]
+		then
+			minix-service -c up /service/virtio_blk -dev /dev/c0d0 -label virtio_blk_0 -args instance=0
+		else
+			minix-service -c up /service/at_wini -dev /dev/c0d0 -label at_wini_0
+			minix-service -cr up /service/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1 2>/dev/null || :
+		fi
 	fi
 	umount /proc >/dev/null
 fi
@@ -84,7 +94,7 @@ fi
 
 if sysenv bootramdisk >/dev/null
 then
-	rootdevname=imgrd
+	rootdevname=/dev/imgrd
 fi
 
 echo "Root device name is $rootdevname"
@@ -100,10 +110,21 @@ fi
 if ! sysenv bootramdisk >/dev/null; then
 	mount -n $bin_img"$rootdevname" /
 
-	# Reopen standard file descriptors, so that we can unmount the ramdisk.
-	# That is essentially a VFS shortcoming that should be fixed, though..
-	exec >/dev/log
-	exec 2>/dev/log
+	# The installation CD is read-only.  /dev/console therefore has to
+	# be present in the ISO image; the NetBSD MAKEDEV -MM path is not usable
+	# on MINIX because mount_tmpfs and mount_mfs are not provided here.
+	if [ ! -c /dev/console ]; then
+		echo "Missing /dev/console on the root filesystem"
+		echo "Rebuild the UEFI installation ISO with the MINIX console device."
+		exit 1
+	fi
+
+	# Reopen standard file descriptors on the real root, so that we can
+	# unmount the ramdisk.  /dev/log is a TTY diagnostics device, not a
+	# general-purpose console handle.  Use /dev/console so console= redirection
+	# (including the serial console) is honored.
+	exec >/dev/console
+	exec 2>&1
 	exec </dev/console
 fi
 

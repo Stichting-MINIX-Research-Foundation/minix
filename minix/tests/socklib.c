@@ -130,8 +130,7 @@ static int socklib_sigpipe;
 /*
  * Signal handler for SIGPIPE signals.
  */
-static void
-socklib_signal(int sig)
+static void socklib_signal(int sig)
 {
 
 	if (sig != SIGPIPE) e(0);
@@ -147,8 +146,7 @@ socklib_signal(int sig)
  * Return the result of the call, using a positive value if the call succeeded,
  * or a negated errno code if the call failed.
  */
-int
-socklib_sweep_call(enum call call, int fd, struct sockaddr * local_addr,
+int socklib_sweep_call(enum call call, int fd, struct sockaddr * local_addr,
 	struct sockaddr * remote_addr, socklen_t addr_len)
 {
 	char data[1];
@@ -358,8 +356,7 @@ socklib_sweep_call(enum call call, int fd, struct sockaddr * local_addr,
  *
  * Standard e() error throwing is used for set-up and result mismatches.
  */
-void
-socklib_sweep(int domain, int type, int protocol, const enum state * states,
+void socklib_sweep(int domain, int type, int protocol, const enum state * states,
 	unsigned int nstates, const int * results, int (* proc)(int domain,
 	int type, int protocol, enum state, enum call))
 {
@@ -482,8 +479,7 @@ socklib_sweep(int domain, int type, int protocol, const enum state * states,
  * This is an interface-level test only: we do not (yet) test whether the
  * options have any effect.  The given 'type' must be SOCK_DGRAM or SOCK_RAW.
  */
-void
-socklib_multicast_tx_options(int type)
+void socklib_multicast_tx_options(int type)
 {
 	struct in_addr in_addr;
 	socklen_t len;
@@ -754,8 +750,7 @@ socklib_multicast_tx_options(int type)
 /*
  * Test for large sends and receives on stream sockets with MSG_WAITALL.
  */
-void
-socklib_large_transfers(int fd[2])
+void socklib_large_transfers(int fd[2])
 {
 	char *buf;
 	pid_t pid;
@@ -847,8 +842,7 @@ socklib_large_transfers(int fd[2])
  * we also perform very basic bulk functionality tests of FIONREAD, MSG_PEEK,
  * MSG_DONTWAIT, and MSG_WAITALL.
  */
-void
-socklib_producer_consumer(int fd[2])
+void socklib_producer_consumer(int fd[2])
 {
 	char *buf;
 	time_t t;
@@ -1021,8 +1015,7 @@ socklib_producer_consumer(int fd[2])
  * Signal handler which just needs to exist, so that invoking it will interrupt
  * an ongoing system call.
  */
-static void
-socklib_got_signal(int sig __unused)
+static void socklib_got_signal(int sig __unused)
 {
 
 	/* Nothing. */
@@ -1041,8 +1034,7 @@ socklib_got_signal(int sig __unused)
 #define MAX_BYTES	2	/* set to 3 for slightly better(?) testing */
 #define USLEEP_TIME	250000	/* increase on wimpy platforms if needed */
 
-static void
-socklib_stream_recv_sub(int (* socket_pair)(int, int, int, int *), int domain,
+static void socklib_stream_recv_sub(int (* socket_pair)(int, int, int, int *), int domain,
 	int type, int idata, int istate, int rlowat, int len, int bits,
 	int act, int (* break_recv)(int, const char *, size_t))
 {
@@ -1307,8 +1299,7 @@ cleanup:
  * Test for receiving on stream sockets.  In particular, test SO_RCVLOWAT,
  * MSG_PEEK, MSG_DONTWAIT, and MSG_WAITALL.
  */
-void
-socklib_stream_recv(int (* socket_pair)(int, int, int, int *), int domain,
+void socklib_stream_recv(int (* socket_pair)(int, int, int, int *), int domain,
 	int type, int (* break_recv)(int, const char *, size_t))
 {
 	int idata, istate, rlowat, len, bits, act;
@@ -1334,8 +1325,7 @@ socklib_stream_recv(int (* socket_pair)(int, int, int, int *), int domain,
  * match the other given parameters.  Return 1 if found with 'ki' filled with
  * the PCB information, or 0 if not.
  */
-int
-socklib_find_pcb(const char * path, int protocol, uint16_t local_port,
+int socklib_find_pcb(const char * path, int protocol, uint16_t local_port,
 	uint16_t remote_port, struct kinfo_pcb * ki)
 {
 	struct sockaddr_in sin;
@@ -1416,8 +1406,7 @@ socklib_find_pcb(const char * path, int protocol, uint16_t local_port,
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
 
-void
-inet6_getscopeid(struct sockaddr_in6 * sin6 __unused, int flags __unused)
+void inet6_getscopeid(struct sockaddr_in6 * sin6 __unused, int flags __unused)
 {
 
 	/*
@@ -1436,8 +1425,7 @@ inet6_getscopeid(struct sockaddr_in6 * sin6 __unused, int flags __unused)
 /*
  * Test local and remote IPv6 address handling on TCP or UDP sockets.
  */
-void
-socklib_test_addrs(int type, int protocol)
+void socklib_test_addrs(int type, int protocol)
 {
 	struct sockaddr_in6 sin6, sin6_any, sin6_any_scope, sin6_lo,
 	    sin6_lo_scope, sin6_ll_all, sin6_ll_lo, sin6_ll_rem, sin6_ll_kame,
@@ -2206,8 +2194,7 @@ socklib_test_addrs(int type, int protocol)
  * Test multicast support for the given socket type, which may be SOCK_DGRAM or
  * SOCK_RAW.
  */
-void
-socklib_test_multicast(int type, int protocol)
+void socklib_test_multicast(int type, int protocol)
 {
 	struct sockaddr_in sinA, sinB, sin_array[3];
 	struct sockaddr_in6 sin6A, sin6B, sin6_array[3];

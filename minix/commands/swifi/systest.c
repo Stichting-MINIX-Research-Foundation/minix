@@ -20,16 +20,14 @@
 #include "swifi.h"
 #include "extra.h"
 
-void
-usage(char *name)
+void usage(char *name)
 {
   printf("Usage: %s -f module_name pid fault-type fault-count seed\n", name);
 
   exit(EXIT_FAILURE);
 }
 
-int
-main(int argc, char * argv[])
+int main(int argc, char * argv[])
 {
   char * module_name = NULL;
   int i;

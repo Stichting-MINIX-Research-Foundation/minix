@@ -11,6 +11,9 @@ struct acpi_rsdp {
 	u8_t	revision;
 	u32_t	rsdt_addr;
 	u32_t	length;
+	u64_t	xsdt_addr;
+	u8_t	extcsum;
+	u8_t	reserved[3];
 }; 
 
 #define ACPI_SDT_SIGNATURE_LEN	4

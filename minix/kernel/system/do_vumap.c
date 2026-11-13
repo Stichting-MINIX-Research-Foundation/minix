@@ -94,16 +94,22 @@ int do_vumap(struct proc *caller, message *m_ptr)
 		chunk = vm_lookup_range(procp, vir_addr, &phys_addr, size);
 
 		if (!chunk) {
-			/* Try to get the memory allocated, unless the memory
-			 * is supposed to be there to be read from.
+			/* No page here yet.  That does not make the address
+			 * invalid, in either direction: anonymous memory a
+			 * process has allocated but never touched is
+			 * perfectly readable -- a read would simply fault a
+			 * page in -- and DMA cannot fault.  newfs(8) writing
+			 * the tail of its I/O buffer to a raw disk device is
+			 * exactly that case, and answering EFAULT made the
+			 * write fail with "Bad address".  Ask VM to
+			 * materialize the range for reads as well, and let
+			 * the call be retried.
+			 *
+			 * This call may suspend the current call, or return
+			 * an error for a previous invocation.
 			 */
-			if (access & CPF_READ)
-				return EFAULT;
-
-			/* This call may suspend the current call, or return an
-			 * error for a previous invocation.
-			 */
-			return vm_check_range(caller, procp, vir_addr, size, 1);
+			return vm_check_range(caller, procp, vir_addr, size,
+				!!(access & CPF_WRITE));
 		}
 
 		pvec[pcount].vp_addr = phys_addr;

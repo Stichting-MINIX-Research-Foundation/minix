@@ -30,12 +30,7 @@
 
 #include "cawf.h"
 
-void
-Pass3(len, word, sarg, narg)
-	int len;			/* length (negative is special) */
-	unsigned char *word;		/* word */
-	unsigned char *sarg;		/* string argument */
-	int narg;			/* numeric argument */
+void Pass3(int len, unsigned char *word, unsigned char *sarg, int narg)
 {
 	int addto;			/* spaces to add to all words */
 	int i, j, k;			/* temporary index */

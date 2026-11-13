@@ -19,8 +19,7 @@ struct sysctl_tab {
 /*
  * Print CTL_KERN KERN_CLOCKRATE.
  */
-static int
-put_kern_clockrate(struct trace_proc * proc, const char * name,
+static int put_kern_clockrate(struct trace_proc * proc, const char * name,
 	int type __unused, const void * ptr, vir_bytes addr __unused,
 	size_t size __unused)
 {
@@ -42,8 +41,7 @@ put_kern_clockrate(struct trace_proc * proc, const char * name,
 /*
  * Print CTL_KERN KERN_PROC2.
  */
-static int
-put_kern_proc2(struct trace_proc * proc, const char * name, int type,
+static int put_kern_proc2(struct trace_proc * proc, const char * name, int type,
 	const void * ptr, vir_bytes addr, size_t size)
 {
 	const int *mib;
@@ -108,8 +106,7 @@ put_kern_proc2(struct trace_proc * proc, const char * name, int type,
 /*
  * Print CTL_KERN KERN_PROC_ARGS.
  */
-static int
-put_kern_proc_args(struct trace_proc * proc, const char * name, int type,
+static int put_kern_proc_args(struct trace_proc * proc, const char * name, int type,
 	const void * ptr, vir_bytes addr, size_t size)
 {
 	const int *mib;
@@ -161,8 +158,7 @@ put_kern_proc_args(struct trace_proc * proc, const char * name, int type,
 /*
  * Print CTL_KERN KERN_CP_TIME.
  */
-static int
-put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
+static int put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
 	int type, const void * ptr, vir_bytes addr __unused, size_t size)
 {
 	const uint64_t *p;
@@ -189,8 +185,7 @@ put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
 /*
  * Print CTL_KERN KERN_CONSDEV.
  */
-static int
-put_kern_consdev(struct trace_proc * proc, const char * name,
+static int put_kern_consdev(struct trace_proc * proc, const char * name,
 	int type __unused, const void * ptr, vir_bytes addr __unused,
 	size_t size __unused)
 {
@@ -203,8 +198,7 @@ put_kern_consdev(struct trace_proc * proc, const char * name,
 /*
  * Print CTL_KERN KERN_DRIVERS.
  */
-static int
-put_kern_drivers(struct trace_proc * proc, const char * name,
+static int put_kern_drivers(struct trace_proc * proc, const char * name,
 	int type __unused, const void * ptr __unused, vir_bytes addr __unused,
 	size_t size)
 {
@@ -221,8 +215,7 @@ put_kern_drivers(struct trace_proc * proc, const char * name,
 /*
  * Print CTL_KERN KERN_BOOTTIME.
  */
-static int
-put_kern_boottime(struct trace_proc * proc, const char * name,
+static int put_kern_boottime(struct trace_proc * proc, const char * name,
 	int type __unused, const void * ptr __unused, vir_bytes addr,
 	size_t size)
 {
@@ -238,8 +231,7 @@ put_kern_boottime(struct trace_proc * proc, const char * name,
 /*
  * Print CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.
  */
-static int
-put_kern_sysvipc_info(struct trace_proc * proc, const char * name,
+static int put_kern_sysvipc_info(struct trace_proc * proc, const char * name,
 	int type, const void * ptr, vir_bytes addr, size_t size)
 {
 	const int *mib;
@@ -298,8 +290,7 @@ static const struct sysctl_tab kern_tab[] = {
 /*
  * Print CTL_VM VM_LOADAVG.
  */
-static int
-put_vm_loadavg(struct trace_proc * proc, const char * name __unused,
+static int put_vm_loadavg(struct trace_proc * proc, const char * name __unused,
 	int type __unused, const void * ptr, vir_bytes addr __unused,
 	size_t size __unused)
 {
@@ -331,8 +322,7 @@ static const struct sysctl_tab vm_tab[] = {
 /*
  * Print CTL_NET PF_ROUTE 0.
  */
-static int
-put_net_route_rtable(struct trace_proc * proc, const char * name,
+static int put_net_route_rtable(struct trace_proc * proc, const char * name,
 	int type, const void * ptr, vir_bytes addr, size_t size)
 {
 	const int *mib;
@@ -440,8 +430,7 @@ static const struct flags sysctl_flags[] = {
 /*
  * Print the immediate value of a sysctl node.
  */
-static void
-put_sysctl_imm(struct trace_proc * proc, struct sysctlnode * scn, int use_name)
+static void put_sysctl_imm(struct trace_proc * proc, struct sysctlnode * scn, int use_name)
 {
 	const char *name;
 
@@ -477,8 +466,7 @@ put_sysctl_imm(struct trace_proc * proc, struct sysctlnode * scn, int use_name)
 /*
  * Printer for CTL_QUERY data.
  */
-static int
-put_sysctl_query(struct trace_proc * proc, const char * name, int type,
+static int put_sysctl_query(struct trace_proc * proc, const char * name, int type,
 	const void * data __unused, vir_bytes addr, size_t size)
 {
 	struct sysctlnode scn;
@@ -507,8 +495,7 @@ put_sysctl_query(struct trace_proc * proc, const char * name, int type,
 /*
  * Printer for CTL_CREATE data.
  */
-static int
-put_sysctl_create(struct trace_proc * proc, const char * name, int type,
+static int put_sysctl_create(struct trace_proc * proc, const char * name, int type,
 	const void * data __unused, vir_bytes addr, size_t size)
 {
 	struct sysctlnode scn;
@@ -569,8 +556,7 @@ put_sysctl_create(struct trace_proc * proc, const char * name, int type,
 /*
  * Printer for CTL_DESTROY data.
  */
-static int
-put_sysctl_destroy(struct trace_proc * proc, const char * name, int type,
+static int put_sysctl_destroy(struct trace_proc * proc, const char * name, int type,
 	const void * data __unused, vir_bytes addr, size_t size)
 {
 	struct sysctlnode scn;
@@ -596,8 +582,7 @@ put_sysctl_destroy(struct trace_proc * proc, const char * name, int type,
 /*
  * Printer for CTL_CREATE data.
  */
-static int
-put_sysctl_describe(struct trace_proc * proc, const char * name, int type,
+static int put_sysctl_describe(struct trace_proc * proc, const char * name, int type,
 	const void * data __unused, vir_bytes addr, size_t size)
 {
 	struct sysctlnode scn;
@@ -632,8 +617,7 @@ put_sysctl_describe(struct trace_proc * proc, const char * name, int type,
 /*
  * Printer for generic data, using the node flags stored in proc->sysctl_flags.
  */
-static int
-put_sysctl_generic(struct trace_proc * proc, const char * name, int type,
+static int put_sysctl_generic(struct trace_proc * proc, const char * name, int type,
 	const void * data __unused, vir_bytes addr, size_t size)
 {
 	struct sysctlnode scn;
@@ -686,8 +670,7 @@ put_sysctl_generic(struct trace_proc * proc, const char * name, int type,
  * node was found, in which case it is copied into 'scnp'.  Return FALSE if the
  * node was not found or another error occurred.
  */
-static int
-get_sysctl_node(const int * name, unsigned int namelen, int id,
+static int get_sysctl_node(const int * name, unsigned int namelen, int id,
 	struct sysctlnode * scnp)
 {
 	struct sysctlnode *scn, *escn, *fscn;
@@ -744,8 +727,7 @@ get_sysctl_node(const int * name, unsigned int namelen, int id,
  * as numbers, without interpretation.  Return -1 if printing the name is now
  * complete.
  */
-static int
-put_sysctl_namestr(struct trace_proc * proc, const int * name,
+static int put_sysctl_namestr(struct trace_proc * proc, const int * name,
 	unsigned int namelen, unsigned int n, int all,
 	const struct sysctl_tab ** sctp)
 {
@@ -898,8 +880,7 @@ put_sysctl_namestr(struct trace_proc * proc, const int * name,
  * Print the sysctl(2) name parameter, and gather information needed to print
  * the oldp and newp parameters later.
  */
-static void
-put_sysctl_name(struct trace_proc * proc, const char * name, int flags,
+static void put_sysctl_name(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, unsigned int namelen)
 {
 	const struct sysctl_tab *sct = NULL;
@@ -947,8 +928,7 @@ put_sysctl_name(struct trace_proc * proc, const char * name, int flags,
  * Print the sysctl(2) oldp or newp parameter.  PF_ALT means that the given
  * parameter is newp rather than oldp, in which case PF_FAILED will not be set.
  */
-static void
-put_sysctl_data(struct trace_proc * proc, const char * name, int flags,
+static void put_sysctl_data(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, size_t len)
 {
 	char *ptr;
@@ -988,8 +968,7 @@ put_sysctl_data(struct trace_proc * proc, const char * name, int flags,
 	}
 }
 
-static int
-mib_sysctl_out(struct trace_proc * proc, const message * m_out)
+static int mib_sysctl_out(struct trace_proc * proc, const message * m_out)
 {
 	unsigned int namelen;
 
@@ -1031,8 +1010,7 @@ mib_sysctl_out(struct trace_proc * proc, const message * m_out)
 		return CT_NOTDONE;
 }
 
-static void
-mib_sysctl_in(struct trace_proc * proc, const message * m_out,
+static void mib_sysctl_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 	int err;

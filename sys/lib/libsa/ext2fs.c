@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.20 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.28 2019/06/24 13:58:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -182,12 +182,12 @@ read_inode(ino32_t inumber, struct open_file *f)
 	    inode_sector, fs->e2fs_bsize, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != fs->e2fs_bsize)
+	if (rsize != (size_t)fs->e2fs_bsize)
 		return EIO;
 
 	dip = (struct ext2fs_dinode *)(buf +
 	    EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, inumber));
-	e2fs_iload(dip, &fp->f_di);
+	e2fs_iload(dip, &fp->f_di, EXT2_DINODE_SIZE(fs));
 
 	/*
 	 * Clear out the old buffers
@@ -288,7 +288,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->e2fs_bsize)
+		if (rsize != (size_t)fs->e2fs_bsize)
 			return EIO;
 		ind_block_num = fs2h32(buf[file_block >> level]);
 		if (level == 0)
@@ -318,7 +318,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	long off;
 	indp_t file_block;
 	indp_t disk_block = 0;	/* XXX: gcc */
-	size_t block_size;
+	size_t block_size, tsz;
 	int rc;
 
 	off = ext2_blkoff(fs, fp->f_seekp);
@@ -357,8 +357,9 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	 * But truncate buffer at end of file.
 	 */
 	/* XXX should handle LARGEFILE */
-	if (*size_p > fp->f_di.e2di_size - fp->f_seekp)
-		*size_p = fp->f_di.e2di_size - fp->f_seekp;
+	tsz = (size_t)(fp->f_di.e2di_size - fp->f_seekp);
+	if (*size_p > tsz)
+		*size_p = tsz;
 
 	return 0;
 }
@@ -416,7 +417,7 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	int rc;
 
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    SBOFF / DEV_BSIZE, SBSIZE, sbbuf, &buf_size);
+	    SBOFF / GETSECSIZE(f), SBSIZE, sbbuf, &buf_size);
 	if (rc)
 		return rc;
 
@@ -470,14 +471,14 @@ read_gdblock(struct open_file *f, struct m_ext2fs *fs)
 		    fs->e2fs_bsize, fp->f_buf, &rsize);
 		if (rc)
 			return rc;
-		if (rsize != fs->e2fs_bsize)
+		if (rsize != (size_t)fs->e2fs_bsize)
 			return EIO;
 
 		e2fs_cgload((struct ext2_gd *)fp->f_buf,
 		    &fs->e2fs_gd[i * gdpb],
 		    (i == (fs->e2fs_ngdb - 1)) ?
 		    (fs->e2fs_ncg - gdpb * i) * sizeof(struct ext2_gd):
-		    fs->e2fs_bsize);
+		    (size_t)fs->e2fs_bsize);
 	}
 
 	return 0;
@@ -543,7 +544,7 @@ ext2fs_open(const char *path, struct open_file *f)
 		/*
 		 * We note that the number of indirect blocks is always
 		 * a power of 2.  This lets us use shifts and masks instead
-		 * of divide and remainder and avoinds pulling in the
+		 * of divide and remainder and avoids pulling in the
 		 * 64bit division routine into the boot code.
 		 */
 		mult = EXT2_NINDIR(fs);
@@ -615,8 +616,8 @@ ext2fs_open(const char *path, struct open_file *f)
 		 */
 		if ((fp->f_di.e2di_mode & EXT2_IFMT) == EXT2_IFLNK) {
 			/* XXX should handle LARGEFILE */
-			int link_len = fp->f_di.e2di_size;
-			int len;
+			size_t link_len = fp->f_di.e2di_size;
+			size_t len;
 
 			len = strlen(cp);
 
@@ -691,7 +692,7 @@ out:
 	if (rc)
 		ext2fs_close(f);
 	else
-		fsmod = "ext2fs";
+		fsmod = "ufs/ext2fs";
 	return rc;
 }
 
@@ -865,7 +866,7 @@ ext2fs_ls(struct open_file *f, const char *pattern)
 				goto out;
 			}
 			lsadd(&names, pattern, dp->e2d_name,
-			    strlen(dp->e2d_name), fs2h32(dp->e2d_ino), t);
+			    dp->e2d_namlen, fs2h32(dp->e2d_ino), t);
 		}
 		fp->f_seekp += buf_size;
 	}
@@ -934,23 +935,13 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
 }
 
-void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
+void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new,
+    size_t isize)
 {
-	int i;
+	/* preserve non-swapped and unused fields */
+	memcpy(new, old, isize);
 
-	for (i = 0; i < (size / sizeof(struct ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
-	}
-}
-
-void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
-{
-
+	/* swap what needs to be swapped */
 	new->e2di_mode		=	bswap16(old->e2di_mode);
 	new->e2di_uid		=	bswap16(old->e2di_uid);
 	new->e2di_gid		=	bswap16(old->e2di_gid);
@@ -962,12 +953,41 @@ void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_dtime		=	bswap32(old->e2di_dtime);
 	new->e2di_nblock	=	bswap32(old->e2di_nblock);
 	new->e2di_flags		=	bswap32(old->e2di_flags);
+	new->e2di_version	=	bswap32(old->e2di_version);
 	new->e2di_gen		=	bswap32(old->e2di_gen);
 	new->e2di_facl		=	bswap32(old->e2di_facl);
-	new->e2di_dacl		=	bswap32(old->e2di_dacl);
-	new->e2di_faddr		=	bswap32(old->e2di_faddr);
-	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
-	    (EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t));
+	new->e2di_size_high	=	bswap32(old->e2di_size_high);
+	new->e2di_nblock_high	=	bswap16(old->e2di_nblock_high);
+	new->e2di_facl_high	=	bswap16(old->e2di_facl_high);
+	new->e2di_uid_high	=	bswap16(old->e2di_uid_high);
+	new->e2di_gid_high	=	bswap16(old->e2di_gid_high);
+	new->e2di_checksum_low  = 	bswap16(old->e2di_checksum_low);
+
+	/*
+	 * Following fields are only supported for inode sizes bigger
+	 * than the old ext2 one
+	 */
+	if (isize == EXT2_REV0_DINODE_SIZE)
+		return;
+
+	new->e2di_extra_isize   = bswap16(old->e2di_extra_isize);
+	new->e2di_checksum_high = bswap16(old->e2di_checksum_high);
+
+	/* Following fields are ext4, might not be actually present */
+	if (EXT2_DINODE_FITS(new, e2di_ctime_extra, isize))
+		new->e2di_ctime_extra   = bswap32(old->e2di_ctime_extra);
+	if (EXT2_DINODE_FITS(new, e2di_mtime_extra, isize))
+		new->e2di_mtime_extra	= bswap32(old->e2di_mtime_extra);
+	if (EXT2_DINODE_FITS(new, e2di_atime_extra, isize))
+		new->e2di_atime_extra	= bswap32(old->e2di_atime_extra);
+	if (EXT2_DINODE_FITS(new, e2di_crtime, isize))
+		new->e2di_crtime	= bswap32(old->e2di_crtime);
+	if (EXT2_DINODE_FITS(new, e2di_crtime_extra, isize))
+		new->e2di_crtime_extra	= bswap32(old->e2di_crtime_extra);
+	if (EXT2_DINODE_FITS(new, e2di_version_high, isize))
+		new->e2di_version_high	= bswap32(old->e2di_version_high);
+	if (EXT2_DINODE_FITS(new, e2di_projid, isize))
+		new->e2di_projid	= bswap32(old->e2di_projid);
 }
 #endif
 

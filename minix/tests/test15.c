@@ -35,9 +35,7 @@ void second(void);
 /*
  - check - complain if condition is not true
  */
-void check(thing, number)
-int thing;
-int number;			/* Test number for error message. */
+void check(int thing, int number)
 {
   if (!thing) {
 	printf("%s flunked test %d\n", it, number);
@@ -49,10 +47,7 @@ int number;			/* Test number for error message. */
 /*
  - equal - complain if first two args don't strcmp as equal
  */
-void equal(a, b, number)
-char *a;
-char *b;
-int number;			/* Test number for error message. */
+void equal(char *a, char *b, int number)
 {
   check(a != NULL && b != NULL && STREQ(a, b), number);
 }
@@ -73,9 +68,7 @@ extern int sys_nerr;
 #endif
 
 /* ARGSUSED */
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 
   start(15);

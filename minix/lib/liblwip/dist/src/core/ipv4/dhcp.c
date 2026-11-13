@@ -237,8 +237,7 @@ dhcp_inc_pcb_refcount(void)
 }
 
 /** Free DHCP PCB if the last netif stops using it */
-static void
-dhcp_dec_pcb_refcount(void)
+static void dhcp_dec_pcb_refcount(void)
 {
   LWIP_ASSERT("dhcp_pcb_refcount(): refcount error", (dhcp_pcb_refcount > 0));
   dhcp_pcb_refcount--;
@@ -261,8 +260,7 @@ dhcp_dec_pcb_refcount(void)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_handle_nak(struct netif *netif)
+static void dhcp_handle_nak(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -287,8 +285,7 @@ dhcp_handle_nak(struct netif *netif)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_check(struct netif *netif)
+static void dhcp_check(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
@@ -316,8 +313,7 @@ dhcp_check(struct netif *netif)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_handle_offer(struct netif *netif)
+static void dhcp_handle_offer(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -405,8 +401,7 @@ dhcp_select(struct netif *netif)
  * The DHCP timer that checks for lease renewal/rebind timeouts.
  * Must be called once a minute (see @ref DHCP_COARSE_TIMER_SECS).
  */
-void
-dhcp_coarse_tmr(void)
+void dhcp_coarse_tmr(void)
 {
   struct netif *netif;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_coarse_tmr()\n"));
@@ -443,8 +438,7 @@ dhcp_coarse_tmr(void)
  * A DHCP server is expected to respond within a short period of time.
  * This timer checks whether an outstanding DHCP request is timed out.
  */
-void
-dhcp_fine_tmr(void)
+void dhcp_fine_tmr(void)
 {
   struct netif *netif;
   /* loop through netif's */
@@ -475,8 +469,7 @@ dhcp_fine_tmr(void)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_timeout(struct netif *netif)
+static void dhcp_timeout(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -522,8 +515,7 @@ dhcp_timeout(struct netif *netif)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_t1_timeout(struct netif *netif)
+static void dhcp_t1_timeout(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -550,8 +542,7 @@ dhcp_t1_timeout(struct netif *netif)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_t2_timeout(struct netif *netif)
+static void dhcp_t2_timeout(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -577,8 +568,7 @@ dhcp_t2_timeout(struct netif *netif)
  *
  * @param netif the netif under DHCP control
  */
-static void
-dhcp_handle_ack(struct netif *netif)
+static void dhcp_handle_ack(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -668,8 +658,7 @@ dhcp_handle_ack(struct netif *netif)
  * @param netif the netif for which to set the struct dhcp
  * @param dhcp (uninitialised) dhcp struct allocated by the application
  */
-void
-dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
+void dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
 {
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("dhcp != NULL", dhcp != NULL);
@@ -794,8 +783,7 @@ dhcp_start(struct netif *netif)
  *
  * @param netif The lwIP network interface
  */
-void
-dhcp_inform(struct netif *netif)
+void dhcp_inform(struct netif *netif)
 {
   struct dhcp dhcp;
   err_t result = ERR_OK;
@@ -836,8 +824,7 @@ dhcp_inform(struct netif *netif)
  * This enters the REBOOTING state to verify that the currently bound
  * address is still valid.
  */
-void
-dhcp_network_changed(struct netif *netif)
+void dhcp_network_changed(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
@@ -881,8 +868,7 @@ dhcp_network_changed(struct netif *netif)
  * @param netif the network interface on which the reply was received
  * @param addr The IP address we received a reply from
  */
-void
-dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
+void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
 {
   struct dhcp *dhcp;
 
@@ -1011,8 +997,7 @@ dhcp_discover(struct netif *netif)
  *
  * @param netif network interface to bind to the offered address
  */
-static void
-dhcp_bind(struct netif *netif)
+static void dhcp_bind(struct netif *netif)
 {
   u32_t timeout;
   struct dhcp *dhcp;
@@ -1273,8 +1258,7 @@ dhcp_reboot(struct netif *netif)
  *
  * @param netif network interface
  */
-void
-dhcp_release_and_stop(struct netif *netif)
+void dhcp_release_and_stop(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
   ip_addr_t server_ip_addr;
@@ -1359,8 +1343,7 @@ dhcp_release(struct netif *netif)
  * @deprecated Use dhcp_release_and_stop() instead.
  * This function calls dhcp_release_and_stop() internally.
  */
-void
-dhcp_stop(struct netif *netif)
+void dhcp_stop(struct netif *netif)
 {
   dhcp_release_and_stop(netif);
 }
@@ -1370,8 +1353,7 @@ dhcp_stop(struct netif *netif)
  *
  * If the state changed, reset the number of tries.
  */
-static void
-dhcp_set_state(struct dhcp *dhcp, u8_t new_state)
+static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state)
 {
   if (new_state != dhcp->state) {
     dhcp->state = new_state;
@@ -1385,8 +1367,7 @@ dhcp_set_state(struct dhcp *dhcp, u8_t new_state)
  * DHCP message.
  *
  */
-static void
-dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
+static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
 {
   LWIP_ASSERT("dhcp_option: dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = option_type;
@@ -1396,23 +1377,20 @@ dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
  * Concatenate a single byte to the outgoing DHCP message.
  *
  */
-static void
-dhcp_option_byte(struct dhcp *dhcp, u8_t value)
+static void dhcp_option_byte(struct dhcp *dhcp, u8_t value)
 {
   LWIP_ASSERT("dhcp_option_byte: dhcp->options_out_len < DHCP_OPTIONS_LEN", dhcp->options_out_len < DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = value;
 }
 
-static void
-dhcp_option_short(struct dhcp *dhcp, u16_t value)
+static void dhcp_option_short(struct dhcp *dhcp, u16_t value)
 {
   LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U <= DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0xff00U) >> 8);
   dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t) (value & 0x00ffU);
 }
 
-static void
-dhcp_option_long(struct dhcp *dhcp, u32_t value)
+static void dhcp_option_long(struct dhcp *dhcp, u32_t value)
 {
   LWIP_ASSERT("dhcp_option_long: dhcp->options_out_len + 4 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 4U <= DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0xff000000UL) >> 24);
@@ -1422,8 +1400,7 @@ dhcp_option_long(struct dhcp *dhcp, u32_t value)
 }
 
 #if LWIP_NETIF_HOSTNAME
-static void
-dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
+static void dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
 {
   if (netif->hostname != NULL) {
     size_t namelen = strlen(netif->hostname);
@@ -1673,8 +1650,7 @@ decode_next:
 /**
  * If an incoming DHCP message is in response to us, then trigger the state machine
  */
-static void
-dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   struct netif *netif = ip_current_input_netif();
   struct dhcp *dhcp = netif_dhcp_data(netif);
@@ -1894,8 +1870,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
  *
  * @param dhcp the dhcp struct to free the request from
  */
-static void
-dhcp_delete_msg(struct dhcp *dhcp)
+static void dhcp_delete_msg(struct dhcp *dhcp)
 {
   LWIP_ERROR("dhcp_delete_msg: dhcp != NULL", (dhcp != NULL), return;);
   LWIP_ASSERT("dhcp_delete_msg: dhcp->p_out != NULL", dhcp->p_out != NULL);
@@ -1915,8 +1890,7 @@ dhcp_delete_msg(struct dhcp *dhcp)
  *
  * @param dhcp DHCP state structure
  */
-static void
-dhcp_option_trailer(struct dhcp *dhcp)
+static void dhcp_option_trailer(struct dhcp *dhcp)
 {
   LWIP_ERROR("dhcp_option_trailer: dhcp != NULL", (dhcp != NULL), return;);
   LWIP_ASSERT("dhcp_option_trailer: dhcp->msg_out != NULL\n", dhcp->msg_out != NULL);
@@ -1936,8 +1910,7 @@ dhcp_option_trailer(struct dhcp *dhcp)
  * @return 1 if DHCP supplied netif->ip_addr (states BOUND or RENEWING),
  *         0 otherwise
  */
-u8_t
-dhcp_supplied_address(const struct netif *netif)
+u8_t dhcp_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif_dhcp_data(netif) != NULL)) {
     struct dhcp* dhcp = netif_dhcp_data(netif);

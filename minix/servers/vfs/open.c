@@ -267,8 +267,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode, int for_exec)
 			r = EOPNOTSUPP;
 			break;
 		   default:
-			printf("VFS: attempt to open file <%llu,%llu> of "
-			    "type 0%o\n", vp->v_dev, vp->v_inode_nr,
+			printf("VFS: attempt to open file <%lu,%lu> of "
+			    "type 0%o\n", (unsigned long)vp->v_dev, (unsigned long)vp->v_inode_nr,
 			    vp->v_mode & S_IFMT);
 			r = EIO;
 		}
@@ -628,11 +628,14 @@ int actual_lseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
 
   newpos = pos + offset;
 
-  /* Check for overflow. */
+  /* Check for overflow or a negative result (POSIX: file offset must not
+   * be set to a value before the beginning of the file). */
   if ((offset > 0) && (newpos <= pos)) {
 	r = EOVERFLOW;
   } else if ((offset < 0) && (newpos >= pos)) {
 	r = EOVERFLOW;
+  } else if (newpos < 0) {
+	r = EINVAL;
   } else {
 	if (newposp != NULL) *newposp = newpos;
 
@@ -674,20 +677,21 @@ int do_lseek(void)
 int do_close(void)
 {
 /* Perform the close(fd) or closenb(fd) system call. */
-  int fd, nblock;
+  int fd;
+//  int nblock;
 
   fd = job_m_in.m_lc_vfs_close.fd;
-  nblock = job_m_in.m_lc_vfs_close.nblock;
+//  nblock = job_m_in.m_lc_vfs_close.nblock;
 
-  return close_fd(fp, fd, !nblock /*may_suspend*/);
+//  return close_fd(fp, fd, !nblock /*may_suspend*/);
+  return close_fd(fp, fd, 0);
 }
 
 
 /*===========================================================================*
  *				close_fd				     *
  *===========================================================================*/
-int
-close_fd(struct fproc * rfp, int fd_nr, int may_suspend)
+int close_fd(struct fproc * rfp, int fd_nr, int may_suspend)
 {
 /* Perform the close(fd) system call. */
   register struct filp *rfilp;

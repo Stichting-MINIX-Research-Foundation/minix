@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.9 2008/10/14 14:18:11 ad Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.10 2016/12/04 08:21:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -30,11 +30,13 @@
 
 	.text
 
-/* int getextmem2(int buffer[2])
-   return: 0=OK, -1=error
-   buffer[0]: extmem kBytes below 16M (max 15M/1024)
-   buffer[1]: extmem above 16M, in 64k units
-*/
+/*
+ * int getextmem2(int buffer[2])
+ *
+ * return: 0=OK, -1=error
+ * buffer[0]: extmem kBytes below 16M (max 15M/1024)
+ * buffer[1]: extmem above 16M, in 64k units
+ */
 ENTRY(getextmem2)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -47,16 +49,16 @@ ENTRY(getextmem2)
 	call	_C_LABEL(prot_to_real)
 	.code16
 
-	xorl	%ebx, %ebx
-	movl	$0xe801, %eax
+	xorl	%ebx,%ebx
+	movl	$0xe801,%eax
 	int	$0x15
 	pushf
 
-	movw	%si, %ax
-	orw	%si, %bx
+	movw	%si,%ax
+	orw	%si,%bx
 	jz	1f		/* if zero use configured values */
-	movw	%cx, %ax	/* k below 16M (max 0x3c00 = 15MB) */
-	movw	%dx, %bx	/* 64k above 16M */
+	movw	%cx,%ax		/* k below 16M (max 0x3c00 = 15MB) */
+	movw	%dx,%bx		/* 64k above 16M */
 1:
 	popf
 	setc	%bl
@@ -64,13 +66,13 @@ ENTRY(getextmem2)
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movl	8(%ebp), %edi
-	xorl	%eax, %eax
-	movw	%cx, %ax
+	movl	8(%ebp),%edi
+	xorl	%eax,%eax
+	movw	%cx,%ax
 	stosl
-	movw	%dx, %ax
+	movw	%dx,%ax
 	stosl
-	movb	%bl, %al
+	movb	%bl,%al
 	cbw
 
 	pop	%edi
@@ -81,12 +83,14 @@ ENTRY(getextmem2)
 	popl	%ebp
 	ret
 
-/* int getmementry(int *iterator, buffer[5])
-   return: 0=ok, else error
-   buffer[0]: start of memory chunk
-   buffer[2]: length (bytes)
-   buffer[4]: type
-*/
+/*
+ * int getmementry(int *iterator, int buffer[5])
+ *
+ * return: 0=ok, else error
+ * buffer[0]: start of memory chunk
+ * buffer[2]: length (bytes)
+ * buffer[4]: type
+ */
 ENTRY(getmementry)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -96,24 +100,24 @@ ENTRY(getmementry)
 	push	%esi
 	push	%edi
 
-	movl	8(%ebp), %eax
-	movl	0(%eax), %ebx		/* index */
-	movl	$20, %ecx		/* Buffer size */
-	movl	$0x534d4150, %edx	/* "SMAP" */
-	movl	12(%ebp), %edi		/* buffer address */
+	movl	8(%ebp),%eax
+	movl	0(%eax),%ebx		/* index */
+	movl	$20,%ecx		/* Buffer size */
+	movl	$0x534d4150,%edx	/* "SMAP" */
+	movl	12(%ebp),%edi		/* buffer address */
 
 	call	_C_LABEL(prot_to_real)
 	.code16
 
 	push	%di
-	shrl	$4, %edi
-	mov	%ds, %ax
-	add	%di, %ax
-	mov	%ax, %es
+	shrl	$4,%edi
+	mov	%ds,%ax
+	add	%di,%ax
+	mov	%ax,%es
 	pop	%di
-	and	$0xf, %di		/* buffer addres now in ES:DI */
+	and	$0xf,%di		/* buffer addres now in ES:DI */
 
-	movl	$0xe820, %eax		/* Some BIOS check EAX value */
+	movl	$0xe820,%eax		/* Some BIOS check EAX value */
 	int	$0x15
 
 	setc	%cl
@@ -121,10 +125,10 @@ ENTRY(getmementry)
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movl	8(%ebp), %eax
-	movl	%ebx, 0(%eax)		/* updated index */
-	xorl	%eax, %eax
-	movb	%cl, %al
+	movl	8(%ebp),%eax
+	movl	%ebx,0(%eax)		/* updated index */
+	xorl	%eax,%eax
+	movb	%cl,%al
 
 	pop	%edi
 	pop	%esi
@@ -134,9 +138,11 @@ ENTRY(getmementry)
 	popl	%ebp
 	ret
 
-/* int biosA20(void)
-   return: 0=ok, else error
-*/
+/*
+ * int biosA20(void)
+ *
+ * return: 0=ok, else error
+ */
 ENTRY(biosA20)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -149,14 +155,14 @@ ENTRY(biosA20)
 	call	_C_LABEL(prot_to_real)
 	.code16
 
-	movl	$0x2401, %eax
+	movl	$0x2401,%eax
 	int	$0x15
 	setc	%cl
 
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movzbl	%cl, %eax
+	movzbl	%cl,%eax
 
 	pop	%edi
 	pop	%esi

@@ -99,8 +99,7 @@ static const uint32_t ccpu_high[] = {
  * Initialize the per-process CPU average structure.  To be called when the
  * process is started, that is, as part of a fork call.
  */
-void
-cpuavg_init(struct cpuavg * ca)
+void cpuavg_init(struct cpuavg * ca)
 {
 
 	ca->ca_base = 0;
@@ -115,8 +114,7 @@ cpuavg_init(struct cpuavg * ca)
  * We use two-level lookup tables to limit the computational expense to two
  * multiplications while keeping the tables themselves relatively small.
  */
-static uint32_t
-cpuavg_decay(uint32_t avg, uint32_t secs)
+static uint32_t cpuavg_decay(uint32_t avg, uint32_t secs)
 {
 	unsigned int slot;
 
@@ -150,8 +148,7 @@ cpuavg_decay(uint32_t avg, uint32_t secs)
  * perform the decay in at most four computation steps (shown as "decay #n"),
  * and thus, this algorithm is O(1).
  */
-static void
-cpuavg_update(struct cpuavg * ca, clock_t now, clock_t hz)
+static void cpuavg_update(struct cpuavg * ca, clock_t now, clock_t hz)
 {
 	clock_t delta;
 	uint32_t secs;
@@ -220,8 +217,7 @@ cpuavg_update(struct cpuavg * ca, clock_t now, clock_t hz)
  * must be given as 'now', and the number of clock ticks per second must be
  * given as 'hz'.
  */
-void
-cpuavg_increment(struct cpuavg * ca, clock_t now, clock_t hz)
+void cpuavg_increment(struct cpuavg * ca, clock_t now, clock_t hz)
 {
 
 	if (ca->ca_base == 0)
@@ -246,8 +242,7 @@ cpuavg_increment(struct cpuavg * ca, clock_t now, clock_t hz)
  * as well as the current uptime in clock ticks ('now') and the number of clock
  * ticks per second ('hz').
  */
-uint32_t
-cpuavg_getstats(const struct cpuavg * ca_orig, uint32_t * cpticks,
+uint32_t cpuavg_getstats(const struct cpuavg * ca_orig, uint32_t * cpticks,
 	uint32_t * estcpu, clock_t now, clock_t hz)
 {
 	struct cpuavg ca;
@@ -278,8 +273,7 @@ cpuavg_getstats(const struct cpuavg * ca_orig, uint32_t * cpticks,
 /*
  * Return the ccpu decay value, in FSCALE units.
  */
-uint32_t
-cpuavg_getccpu(void)
+uint32_t cpuavg_getccpu(void)
 {
 
 	return ccpu;

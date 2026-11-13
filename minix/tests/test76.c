@@ -28,8 +28,7 @@ static void dummy_handler(int sig)
 /*
  * Interrupt a select(2) call.
  */
-static void
-test76a(void)
+static void test76a(void)
 {
 	struct sigaction act, oact;
 	struct itimerval it;
@@ -103,8 +102,7 @@ test76a(void)
  * was partially successful, the number of bytes written so far should be
  * returned; otherwise, the we should get the normal EINTR.
  */
-static void
-test76b(void)
+static void test76b(void)
 {
 	struct sigaction act, oact;
 	struct itimerval it;
@@ -177,8 +175,7 @@ test76b(void)
  * on a TCP socket - the accept procedure is (currently) implemented using
  * ioctl(2) calls.
  */
-static void
-test76c(void)
+static void test76c(void)
 {
 	struct sigaction act, oact;
 	struct itimerval it;
@@ -221,8 +218,7 @@ test76c(void)
  * Try to trigger semi-concurrent processing of normal system calls and
  * postponed PM requests for a single process within VFS.
  */
-static void
-test76d(void)
+static void test76d(void)
 {
 	struct utsname name;
 	struct sigaction act, oact;
@@ -358,8 +354,7 @@ test76d(void)
  * In the future, VFS should prevent this from happening at all; for now, we
  * just want to make sure it does not result in disaster when it does happen.
  */
-static void
-test76e(void)
+static void test76e(void)
 {
 	struct utsname name;
 	struct sigaction act, oact;
@@ -422,8 +417,7 @@ test76e(void)
 	if (sigaction(SIGUSR1, &oact, NULL) < 0) e(10);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, m;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,12 +42,16 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#if defined(__minix) && defined(__x86_64__)
+#include <stdint.h>
+#endif
 #include <sys/time.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
@@ -72,6 +76,67 @@ static int
 mk_link(char *,struct stat *,char *, int);
 
 static int warn_broken;
+
+#if defined(__minix) && defined(__x86_64__)
+static int
+pax_direct_extract_enabled(void)
+{
+	const char *value;
+
+	value = getenv("PAX_DIRECT_EXTRACT");
+	return value != NULL && strcmp(value, "1") == 0;
+}
+
+/*
+ * MINIX libc's mkstemp() uses GETTEMP(), which obtains its initial
+ * filename characters through arc4random_uniform().  That path seeds
+ * arc4random from /dev/urandom and can block during early amd64 startup.
+ *
+ * Use a process/time-derived sequence instead.  O_EXCL makes creation
+ * atomic, so the candidate does not need to be unpredictable for safety.
+ * Bound retries as well: a broken filesystem must not leave extraction
+ * cycling through the entire six-character namespace.
+ */
+static int
+pax_mkstemp(char *path)
+{
+	static uint32_t sequence;
+	static const char alphabet[] =
+	    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	struct timeval tv;
+	char *suffix;
+	uint64_t value;
+	int fd, i, j;
+	size_t len;
+
+	len = strlen(path);
+	if (len < 6 || memcmp(path + len - 6, "XXXXXX", 6) != 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	suffix = path + len - 6;
+
+	for (i = 0; i < 1024; i++) {
+		if (gettimeofday(&tv, NULL) == -1)
+			(void)memset(&tv, 0, sizeof(tv));
+		value = ((uint64_t)(uint32_t)getpid() << 32) ^
+		    ((uint64_t)(uint32_t)tv.tv_sec << 12) ^
+		    (uint64_t)(uint32_t)tv.tv_usec ^ sequence++;
+
+		for (j = 5; j >= 0; j--) {
+			suffix[j] = alphabet[value % (sizeof(alphabet) - 1)];
+			value /= sizeof(alphabet) - 1;
+		}
+
+		fd = open(path, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fd >= 0 || errno != EEXIST)
+			return fd;
+	}
+
+	errno = EEXIST;
+	return -1;
+}
+#endif
 
 /*
  * routines that deal with file operations such as: creating, removing;
@@ -143,7 +208,23 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 	 */
 	if (write_to_hardlink)
 		return (open(arcn->name, O_TRUNC | O_EXCL | O_RDWR, 0));
-	
+
+#if defined(__minix) && defined(__x86_64__)
+	/*
+	 * The amd64 installer extracts release sets onto a freshly formatted
+	 * MFS filesystem. In that case, there is no old file to protect, so
+	 * allow the installer to bypass the temporary-file/rename sequence.
+	 * Keep the normal atomic extraction path for all other pax callers.
+	 */
+	if (pax_direct_extract_enabled()) {
+		arcn->tmp_name = NULL;
+		fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+		if (fd < 0)
+			syswarn(1, errno, "Cannot create %s", arcn->name);
+		return fd;
+	}
+#endif
+
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
@@ -180,7 +261,11 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
 		    arcn->name);
 #endif /* defined(__minix) */
+#if defined(__minix) && defined(__x86_64__)
+		fd = pax_mkstemp(arcn->tmp_name);
+#else
 		fd = mkstemp(arcn->tmp_name);
+#endif
 		if (fd >= 0)
 			break;
 		oerrno = errno;
@@ -214,6 +299,65 @@ file_close(ARCHD *arcn, int fd)
 		return;
 
 	tmp_name = (arcn->tmp_name != NULL) ? arcn->tmp_name : arcn->name;
+
+#if defined(__minix) && defined(__x86_64__)
+	/*
+	 * During installation the file is already at its final name.  Apply
+	 * metadata through the open descriptor instead of resolving that path
+	 * again.  This avoids a second VFS/MFS pathname walk after the data has
+	 * been written, while retaining the ownership, mode, and timestamp
+	 * semantics of pax -p e.
+	 */
+	if (arcn->tmp_name == NULL && pax_direct_extract_enabled()) {
+		mode_t mode;
+		struct stat sb;
+		struct timespec times[2];
+		int chown_error = 0;
+
+		if (pids && geteuid() == 0 &&
+		    fchown(fd, arcn->sb.st_uid, arcn->sb.st_gid) < 0) {
+			syswarn(1, errno, "Cannot set file uid/gid of %s", tmp_name);
+			chown_error = 1;
+		}
+
+		mode = arcn->sb.st_mode;
+		if (!pmode || chown_error)
+			mode &= ~SETBITS(0);
+		if (pmode)
+			mode &= A_BITS;
+		else
+			mode = apply_umask(mode & FILEBITS(0));
+		if (fchmod(fd, mode) < 0)
+			syswarn(1, errno, "Cannot set permissions on %s", tmp_name);
+
+		if (patime || pmtime) {
+			times[0].tv_sec = arcn->sb.st_atime;
+			times[0].tv_nsec = 0;
+			times[1].tv_sec = arcn->sb.st_mtime;
+			times[1].tv_nsec = 0;
+			if (!patime || !pmtime) {
+				if (fstat(fd, &sb) == 0) {
+					if (!patime)
+						times[0].tv_sec = sb.st_atime;
+					if (!pmtime)
+						times[1].tv_sec = sb.st_mtime;
+				} else {
+					syswarn(0, errno,
+					    "Cannot obtain file stats %s", tmp_name);
+				}
+			}
+			if (futimens(fd, times) < 0)
+				syswarn(1, errno,
+				    "Access/modification time set failed on: %s",
+				    tmp_name);
+		}
+
+		if (close(fd) < 0)
+			syswarn(0, errno,
+			    "Cannot close file descriptor on %s", tmp_name);
+		return;
+	}
+#endif
 
 	if (close(fd) < 0)
 		syswarn(0, errno, "Cannot close file descriptor on %s",
@@ -913,7 +1057,7 @@ set_chflags(char *fnm, u_int32_t flags)
  *	actual storage is quite small (the files are sparse). The problem is
  *	the holes read as all zeros so are probably stored on the archive that
  *	way (there is no way to determine if the file block is really a hole,
- *	we only know that a file block of all zero's can be a hole).
+ *	we only know that a file block of all zeros can be a hole).
  *	At this writing, no major archive format knows how to archive files
  *	with holes. However, on extraction (or during copy, -rw) we have to
  *	deal with these files. Without detecting the holes, the files can
@@ -986,7 +1130,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		if (*isempt) {
 			/*
 			 * have not written to this block yet, so we keep
-			 * looking for zero's
+			 * looking for zeros
 			 */
 			pt = st;
 			end = st + wcnt;

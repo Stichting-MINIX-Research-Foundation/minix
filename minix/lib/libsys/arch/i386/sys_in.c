@@ -3,10 +3,7 @@
 /*===========================================================================*
  *                                sys_in				     *
  *===========================================================================*/
-int sys_in(port, value, type)
-int port; 				/* port address to read from */
-u32_t *value;				/* pointer where to store value */
-int type;				/* byte, word, long */
+int sys_in(int port, u32_t *value, int type)
 {
     message m_io;
     int result;

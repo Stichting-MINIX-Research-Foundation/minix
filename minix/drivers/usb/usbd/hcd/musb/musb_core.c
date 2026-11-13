@@ -34,8 +34,7 @@ static void musb_write_fifo(void *, void *, int, hcd_reg1);
 /*===========================================================================*
  *    musb_set_state                                                         *
  *===========================================================================*/
-static void
-musb_set_state(musb_core_config * cfg)
+static void musb_set_state(musb_core_config * cfg)
 {
 	void * r;
 
@@ -61,8 +60,7 @@ musb_set_state(musb_core_config * cfg)
 /*===========================================================================*
  *    musb_check_rxpktrdy                                                    *
  *===========================================================================*/
-static int
-musb_check_rxpktrdy(void * cfg, hcd_reg1 ep_num)
+static int musb_check_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 {
 	void * r;
 
@@ -93,8 +91,7 @@ musb_check_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 /*===========================================================================*
  *    musb_in_stage_cleanup                                                  *
  *===========================================================================*/
-static void
-musb_in_stage_cleanup(void * cfg, hcd_reg1 ep_num)
+static void musb_in_stage_cleanup(void * cfg, hcd_reg1 ep_num)
 {
 	DEBUG_DUMP;
 
@@ -109,8 +106,7 @@ musb_in_stage_cleanup(void * cfg, hcd_reg1 ep_num)
 /*===========================================================================*
  *    musb_clear_rxpktrdy                                                    *
  *===========================================================================*/
-static void
-musb_clear_rxpktrdy(void * cfg, hcd_reg1 ep_num)
+static void musb_clear_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 {
 	void * r;
 	hcd_reg2 host_csr;
@@ -144,8 +140,7 @@ musb_clear_rxpktrdy(void * cfg, hcd_reg1 ep_num)
 /*===========================================================================*
  *    musb_clear_statuspkt                                                   *
  *===========================================================================*/
-static void
-musb_clear_statuspkt(void * cfg)
+static void musb_clear_statuspkt(void * cfg)
 {
 	void * r;
 	hcd_reg2 host_csr0;
@@ -169,8 +164,7 @@ musb_clear_statuspkt(void * cfg)
 /*===========================================================================*
  *    musb_get_count                                                         *
  *===========================================================================*/
-static int
-musb_get_count(void * cfg)
+static int musb_get_count(void * cfg)
 {
 	void * r;
 
@@ -190,8 +184,7 @@ musb_get_count(void * cfg)
 /*===========================================================================*
  *    musb_read_fifo                                                         *
  *===========================================================================*/
-static void
-musb_read_fifo(void * cfg, void * output, int size, hcd_reg1 fifo_num)
+static void musb_read_fifo(void * cfg, void * output, int size, hcd_reg1 fifo_num)
 {
 	void * r;
 
@@ -237,8 +230,7 @@ musb_read_fifo(void * cfg, void * output, int size, hcd_reg1 fifo_num)
 /*===========================================================================*
  *    musb_write_fifo                                                        *
  *===========================================================================*/
-static void
-musb_write_fifo(void * cfg, void * input, int size, hcd_reg1 fifo_num)
+static void musb_write_fifo(void * cfg, void * input, int size, hcd_reg1 fifo_num)
 {
 	void * r;
 
@@ -284,8 +276,7 @@ musb_write_fifo(void * cfg, void * input, int size, hcd_reg1 fifo_num)
 /*===========================================================================*
  *    musb_core_start                                                        *
  *===========================================================================*/
-void
-musb_core_start(void * cfg)
+void musb_core_start(void * cfg)
 {
 	void * r;
 	hcd_reg1 devctl;
@@ -315,8 +306,7 @@ musb_core_start(void * cfg)
 /*===========================================================================*
  *    musb_core_stop                                                         *
  *===========================================================================*/
-void
-musb_core_stop(void * cfg)
+void musb_core_stop(void * cfg)
 {
 	void * r;
 	hcd_reg1 devctl;
@@ -344,8 +334,7 @@ musb_core_stop(void * cfg)
 /*===========================================================================*
  *    musb_setup_device                                                      *
  *===========================================================================*/
-void
-musb_setup_device(void * cfg, hcd_reg1 ep, hcd_reg1 addr,
+void musb_setup_device(void * cfg, hcd_reg1 ep, hcd_reg1 addr,
 		hcd_datatog * tx_tog, hcd_datatog * rx_tog)
 {
 	DEBUG_DUMP;
@@ -361,8 +350,7 @@ musb_setup_device(void * cfg, hcd_reg1 ep, hcd_reg1 addr,
 /*===========================================================================*
  *    musb_reset_device                                                      *
  *===========================================================================*/
-int
-musb_reset_device(void * cfg, hcd_speed * speed)
+int musb_reset_device(void * cfg, hcd_speed * speed)
 {
 	void * r;
 	musb_core_config * core;
@@ -428,8 +416,7 @@ musb_reset_device(void * cfg, hcd_speed * speed)
 /*===========================================================================*
  *    musb_setup_stage                                                       *
  *===========================================================================*/
-void
-musb_setup_stage(void * cfg, hcd_ctrlrequest * setup)
+void musb_setup_stage(void * cfg, hcd_ctrlrequest * setup)
 {
 	void * r;
 	char * setup_byte;
@@ -465,8 +452,7 @@ musb_setup_stage(void * cfg, hcd_ctrlrequest * setup)
 /*===========================================================================*
  *    musb_rx_stage                                                          *
  *===========================================================================*/
-void
-musb_rx_stage(void * cfg, hcd_datarequest * request)
+void musb_rx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
 	hcd_reg2 host_rxcsr;
@@ -555,8 +541,7 @@ musb_rx_stage(void * cfg, hcd_datarequest * request)
 /*===========================================================================*
  *    musb_tx_stage                                                          *
  *===========================================================================*/
-void
-musb_tx_stage(void * cfg, hcd_datarequest * request)
+void musb_tx_stage(void * cfg, hcd_datarequest * request)
 {
 	musb_core_config * core;
 	hcd_reg2 host_txcsr;
@@ -655,8 +640,7 @@ musb_tx_stage(void * cfg, hcd_datarequest * request)
 /*===========================================================================*
  *    musb_in_data_stage                                                     *
  *===========================================================================*/
-void
-musb_in_data_stage(void * cfg)
+void musb_in_data_stage(void * cfg)
 {
 	void * r;
 	hcd_reg2 host_csr0;
@@ -680,8 +664,7 @@ musb_in_data_stage(void * cfg)
 /*===========================================================================*
  *    musb_out_data_stage                                                    *
  *===========================================================================*/
-void
-musb_out_data_stage(void * cfg)
+void musb_out_data_stage(void * cfg)
 {
 	DEBUG_DUMP;
 
@@ -697,8 +680,7 @@ musb_out_data_stage(void * cfg)
 /*===========================================================================*
  *    musb_in_status_stage                                                   *
  *===========================================================================*/
-void
-musb_in_status_stage(void * cfg)
+void musb_in_status_stage(void * cfg)
 {
 	void * r;
 	hcd_reg2 host_csr0;
@@ -724,8 +706,7 @@ musb_in_status_stage(void * cfg)
 /*===========================================================================*
  *    musb_out_status_stage                                                  *
  *===========================================================================*/
-void
-musb_out_status_stage(void * cfg)
+void musb_out_status_stage(void * cfg)
 {
 	void * r;
 	hcd_reg2 host_csr0;
@@ -751,8 +732,7 @@ musb_out_status_stage(void * cfg)
 /*===========================================================================*
  *    musb_read_data                                                         *
  *===========================================================================*/
-int
-musb_read_data(void * cfg, hcd_reg1 * buffer, hcd_reg1 ep_num)
+int musb_read_data(void * cfg, hcd_reg1 * buffer, hcd_reg1 ep_num)
 {
 	int count;
 
@@ -781,8 +761,7 @@ musb_read_data(void * cfg, hcd_reg1 * buffer, hcd_reg1 ep_num)
 /*===========================================================================*
  *    musb_check_error                                                       *
  *===========================================================================*/
-int
-musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
+int musb_check_error(void * cfg, hcd_transfer xfer, hcd_reg1 ep, hcd_direction dir)
 {
 	/* Possible error handling schemes for MUSB */
 	typedef enum {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.15 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.16 2016/08/15 18:42:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -229,6 +229,17 @@ struct	ext2fs_dinode zino;
 #define	KEEPON	0x04
 #define	ALTERED	0x08
 #define	FOUND	0x10
+
+/*
+ * Kernel support for features doesn't imply fsck support
+ */
+#define EXT2F_COMPAT_SUPP_FSCK		0x00
+#define EXT2F_ROCOMPAT_SUPP_FSCK	(EXT2F_ROCOMPAT_SPARSESUPER \
+                                         | EXT2F_ROCOMPAT_LARGEFILE \
+                                         | EXT2F_ROCOMPAT_HUGE_FILE \
+					)
+#define EXT2F_INCOMPAT_SUPP_FSCK	(EXT2F_INCOMPAT_FTYPE \
+					)
 
 struct ext2fs_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);

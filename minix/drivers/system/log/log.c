@@ -120,8 +120,7 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				subwrite				     *
  *===========================================================================*/
-static int
-subwrite(struct logdevice *log, size_t size, endpoint_t endpt,
+static int subwrite(struct logdevice *log, size_t size, endpoint_t endpt,
 	cp_grant_id_t grant, char *localbuf)
 {
   size_t count, offset;
@@ -194,8 +193,7 @@ subwrite(struct logdevice *log, size_t size, endpoint_t endpt,
 /*===========================================================================*
  *				log_append				     *
  *===========================================================================*/
-void
-log_append(char *buf, int count)
+void log_append(char *buf, int count)
 {
   int skip = 0;
 
@@ -210,8 +208,7 @@ log_append(char *buf, int count)
 /*===========================================================================*
  *				subread					     *
  *===========================================================================*/
-static int
-subread(struct logdevice *log, size_t size, endpoint_t endpt,
+static int subread(struct logdevice *log, size_t size, endpoint_t endpt,
 	cp_grant_id_t grant)
 {
   size_t offset, count;

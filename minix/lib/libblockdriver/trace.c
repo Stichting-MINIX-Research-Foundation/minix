@@ -80,6 +80,7 @@ int trace_ctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 		if (trace_dev != minor) return EINVAL;
 
 		free(trace_buf);
+		trace_buf = NULL;
 
 		trace_dev = NO_TRACEDEV;
 	} else {

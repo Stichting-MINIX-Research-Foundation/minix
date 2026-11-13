@@ -12,8 +12,7 @@ pci_del_acl.c
 /*===========================================================================*
  *				pci_del_acl				     *
  *===========================================================================*/
-int pci_del_acl(proc_ep)
-endpoint_t proc_ep;
+int pci_del_acl(endpoint_t proc_ep)
 {
 	int r;
 	message m;

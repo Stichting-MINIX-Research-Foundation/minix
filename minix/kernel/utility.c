@@ -14,6 +14,12 @@
 
 #include <minix/sys_config.h>
 
+
+#ifdef __x86_64__
+/* direct_com_print_char() is available from the unpaged x86_64 bootstrap. */
+extern void direct_com_print_char(char);
+#endif
+
 #define ARE_PANICING 0xDEADC0FF
 
 /*===========================================================================*
@@ -35,7 +41,7 @@ void panic(const char *fmt, ...)
 	printf("\n");
   }
 
-  printf("kernel on CPU %d: ", cpuid);
+  printf("kernel on CPU %d: ", (int)cpuid);
   util_stacktrace();
 
 #if 0
@@ -66,6 +72,26 @@ void kputc(
 	if(c == '\n')
       		ser_putc('\r');
       	ser_putc(c);
+      }
+#endif
+#ifdef __x86_64__
+      /*
+       * Kernel printf() output is not normally mirrored to COM1 on the
+       * UEFI boot path.  Once panic() marks the kernel as panicking, mirror
+       * its message and stack trace to COM1 so failures after switch_to_user()
+       * remain visible even when DEBUG_SERIAL is disabled.
+       *
+       * If DEBUG_SERIAL already sends the panic output, do not duplicate it.
+       */
+      if (kinfo.minix_panicing == ARE_PANICING) {
+#if defined(DEBUG_SERIAL)
+	if (!kinfo.do_serial_debug)
+#endif
+	{
+		if (c == '\n')
+			direct_com_print_char('\r');
+		direct_com_print_char(c);
+	}
       }
 #endif
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */

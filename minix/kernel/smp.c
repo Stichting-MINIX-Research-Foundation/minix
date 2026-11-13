@@ -10,47 +10,180 @@ unsigned bsp_cpu_id;
 
 struct cpu cpus[CONFIG_MAX_CPUS];
 
+/*
+ * BSP clock ticks for the two AP boot phases. Waiting for the boot locks is
+ * accounted separately from CPU-local initialization, which starts only
+ * after an AP owns both boot_lock and the BKL.
+ */
+static clock_t ap_lock_wait_started[CONFIG_MAX_CPUS];
+static clock_t ap_init_started[CONFIG_MAX_CPUS];
+
 /* info passed to another cpu along with a sched ipi */
 struct sched_ipi_data {
-	volatile u32_t	flags;
-	volatile u32_t	data;
+	volatile u32_t		flags;
+	volatile vir_bytes	data;	/* holds a struct proc *; must be
+					 * pointer-wide (64-bit on x86_64) */
 };
 
 static struct sched_ipi_data  sched_ipi_data[CONFIG_MAX_CPUS];
 
+/*
+ * True while any cross-CPU scheduling request (STOP_PROC / VM_INHIBIT /
+ * SAVE_CTX / migrate) is in flight.  smp_schedule_sync() drops the BKL and
+ * spin-waits for the target CPU to ack, so during that window another CPU can
+ * enter the kernel and observe the run queues / proc table mid-transition.
+ * The DEBUG_SANITYCHECKS run-queue walk must not treat that transient as an
+ * error.
+ */
+int smp_sched_ipi_pending(void)
+{
+	unsigned c;
+
+	for (c = 0; c < ncpus; c++)
+		if (sched_ipi_data[c].flags != 0)
+			return 1;
+	return 0;
+}
+
 #define SCHED_IPI_STOP_PROC	1
 #define SCHED_IPI_VM_INHIBIT	2
 #define SCHED_IPI_SAVE_CTX	4
-
-static volatile unsigned ap_cpus_booted;
 
 SPINLOCK_DEFINE(big_kernel_lock)
 SPINLOCK_DEFINE(boot_lock)
 
 void wait_for_APs_to_finish_booting(void)
 {
-	unsigned n = 0;
-	int i;
+	unsigned cpu;
+	int pending;
+	clock_t now;
 
-	/* check how many cpus are actually alive */
-	for (i = 0 ; i < ncpus ; i++) {
-		if (cpu_test_flag(i, CPU_IS_READY))
-			n++;
-	}
-	if (n != ncpus)
-		printf("WARNING only %d out of %d cpus booted\n", n, ncpus);
-
-	/* we must let the other CPUs to run in kernel mode first */
+	/*
+	 * AP initialization is serialized by boot_lock. Give an AP a separate
+	 * lock-acquisition budget that scales with the number of discovered CPUs,
+	 * so earlier APs can use their full initialization budget without causing
+	 * later APs to time out while queued for the locks.
+	 *
+	 * Once an AP owns both boot_lock and the BKL, it publishes INITIALIZING
+	 * with a fresh timestamp. The BSP then applies the independent
+	 * initialization deadline. Publishing each timestamp before its state
+	 * transition ensures the BSP never observes an uninitialized deadline.
+	 *
+	 * The BSP owns WAITING_FOR_LOCK/INITIALIZING -> FAILED on timeout; the AP
+	 * owns WAITING_FOR_LOCK -> INITIALIZING -> ONLINE. These CAS transitions
+	 * ensure a timed-out AP cannot later join the online set.
+	 */
 	BKL_UNLOCK();
-	while (ap_cpus_booted != (n - 1))
-		arch_pause();
-	/* now we have to take the lock again as we continue execution */
+	do {
+		pending = 0;
+		now = get_monotonic();
+
+		for (cpu = 0; cpu < ncpus; cpu++) {
+			switch (cpu_state(cpu)) {
+			case CPU_STATE_WAITING_FOR_LOCK:
+				if (now - ap_lock_wait_started[cpu] >=
+				    5 * system_hz * ncpus) {
+					if (cpu_transition(cpu,
+					    CPU_STATE_WAITING_FOR_LOCK,
+					    CPU_STATE_FAILED)) {
+						printf("WARNING CPU %u timed out waiting for boot locks\n",
+						    cpu);
+					} else if (cpu_state(cpu) ==
+					    CPU_STATE_INITIALIZING) {
+						/* Recheck the new phase on the next pass. */
+						pending = 1;
+					}
+					continue;
+				}
+				pending = 1;
+				break;
+
+			case CPU_STATE_INITIALIZING:
+				if (now - ap_init_started[cpu] >= 5 * system_hz) {
+					if (cpu_transition(cpu, CPU_STATE_INITIALIZING,
+					    CPU_STATE_FAILED))
+						printf("WARNING CPU %u timed out during initialization\n",
+						    cpu);
+					continue;
+				}
+				pending = 1;
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		if (pending)
+			arch_pause();
+	} while (pending);
+
+	barrier();
 	BKL_LOCK();
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_state(cpu) == CPU_STATE_FAILED)
+			printf("WARNING CPU %u failed to initialize\n", cpu);
+	}
 }
 
-void ap_boot_finished(unsigned cpu)
+int ap_boot_waiting(unsigned cpu)
 {
-	ap_cpus_booted++;
+	assert(cpu < ncpus);
+
+	/* Publish the lock-wait deadline before publishing WAITING_FOR_LOCK. */
+	ap_lock_wait_started[cpu] = get_monotonic();
+	return cpu_transition(cpu, CPU_STATE_STARTING,
+	    CPU_STATE_WAITING_FOR_LOCK);
+}
+
+int ap_boot_initializing(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	/* Start the initialization deadline only after both boot locks are held. */
+	ap_init_started[cpu] = get_monotonic();
+	return cpu_transition(cpu, CPU_STATE_WAITING_FOR_LOCK,
+	    CPU_STATE_INITIALIZING);
+}
+
+int ap_boot_finished(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	/* Publish initialized CPU-local state with one terminal transition. */
+	return cpu_transition(cpu, CPU_STATE_INITIALIZING, CPU_STATE_ONLINE);
+}
+
+void ap_boot_failed(unsigned cpu)
+{
+	assert(cpu < ncpus);
+
+	/* A BSP timeout may already have won this transition. */
+	(void)cpu_transition(cpu, CPU_STATE_INITIALIZING, CPU_STATE_FAILED);
+}
+
+unsigned smp_online_count(void)
+{
+	unsigned cpu, count = 0;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_state(cpu) == CPU_STATE_ONLINE)
+			count++;
+	}
+	return count;
+}
+
+u32_t smp_online_mask(void)
+{
+	unsigned cpu;
+	u32_t mask = 0;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if (cpu_state(cpu) == CPU_STATE_ONLINE)
+			mask |= (1U << cpu);
+	}
+	return mask;
 }
 
 void smp_ipi_halt_handler(void)
@@ -94,7 +227,7 @@ static void smp_schedule_sync(struct proc * p, unsigned task)
 		BKL_LOCK();
 	}
 
-	sched_ipi_data[cpu].data = (u32_t) p;
+	sched_ipi_data[cpu].data = (vir_bytes) p;
 	sched_ipi_data[cpu].flags |= task;
 	__insn_barrier();
 	arch_send_smp_schedule_ipi(cpu);

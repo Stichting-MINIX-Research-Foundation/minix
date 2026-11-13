@@ -42,14 +42,14 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#ifndef uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef __uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef __uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
 #include <sys/ansi.h>
@@ -105,6 +105,8 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
 #define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
+#define	IPPROTO_L2TP		115		/* L2TPv3 */
+#define	IPPROTO_SCTP		132		/* SCTP */
 #define IPPROTO_PFSYNC      240     /* PFSYNC */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
@@ -155,7 +157,10 @@ typedef __sa_family_t	sa_family_t;
  */
 struct in_addr {
 	in_addr_t s_addr;
-} __packed;
+};
+#ifdef __CTASSERT
+__CTASSERT(sizeof(struct in_addr) == 4);
+#endif
 
 /*
  * Definitions of bits in internet address integers.
@@ -233,6 +238,8 @@ struct in_addr {
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
+#define	IN_RFC3021_MASK		__IPADDR(0xfffffffe)
+
 /*
  * Socket address, internet style.
  */
@@ -287,8 +294,10 @@ struct ip_opts {
 #define	IP_IPSEC_POLICY		22   /* struct; get/set security policy */
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
-#define	IP_PKTINFO		25   /* int; send interface and src addr */
-#define	IP_RECVPKTINFO		26   /* int; send interface and dst addr */
+#define	IP_PKTINFO		25   /* struct; set default src if/addr */
+#define	IP_RECVPKTINFO		26   /* int; receive dst if/addr w/dgram */
+#define	IP_BINDANY		27   /* bool: allow bind to any address */
+#define IP_SENDSRCADDR IP_RECVDSTADDR /* FreeBSD compatibility */
 
 /*
  * Information sent in the control message of a datagram socket for
@@ -298,6 +307,8 @@ struct in_pktinfo {
 	struct in_addr	ipi_addr;	/* src/dst address */
 	unsigned int ipi_ifindex;	/* interface index */
 };
+
+#define ipi_spec_dst ipi_addr	/* Solaris/Linux compatibility */
 
 /*
  * Defaults and limits for options
@@ -329,114 +340,6 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
-
-#define	CTL_IPPROTO_NAMES { \
-	{ "ip", CTLTYPE_NODE }, \
-	{ "icmp", CTLTYPE_NODE }, \
-	{ "igmp", CTLTYPE_NODE }, \
-	{ "ggp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "tcp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ "egp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pup", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "udp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "idp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ipsec", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pim", CTLTYPE_NODE }, \
-}
 
 /*
  * Names for IP sysctl objects
@@ -444,9 +347,7 @@ struct ip_mreq {
 #define	IPCTL_FORWARDING	1	/* act as router */
 #define	IPCTL_SENDREDIRECTS	2	/* may send redirects when forwarding */
 #define	IPCTL_DEFTTL		3	/* default TTL */
-#ifdef notyet
-#define	IPCTL_DEFMTU		4	/* default MTU */
-#endif
+/* IPCTL_DEFMTU=4, never implemented */
 #define	IPCTL_FORWSRCRT		5	/* forward source-routed packets */
 #define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
@@ -468,36 +369,7 @@ struct ip_mreq {
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
 #define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
-#define	IPCTL_MAXID	       26
 
-#define	IPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "forwarding", CTLTYPE_INT }, \
-	{ "redirect", CTLTYPE_INT }, \
-	{ "ttl", CTLTYPE_INT }, \
-	{ "mtu", CTLTYPE_INT }, \
-	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ "directed-broadcast", CTLTYPE_INT }, \
-	{ "allowsrcrt", CTLTYPE_INT }, \
-	{ "subnetsarelocal", CTLTYPE_INT }, \
-	{ "mtudisc", CTLTYPE_INT }, \
-	{ "anonportmin", CTLTYPE_INT }, \
-	{ "anonportmax", CTLTYPE_INT }, \
-	{ "mtudisctimeout", CTLTYPE_INT }, \
-	{ "maxflows", CTLTYPE_INT }, \
-	{ "hostzerobroadcast", CTLTYPE_INT }, \
-	{ "gifttl", CTLTYPE_INT }, \
-	{ "lowportmin", CTLTYPE_INT }, \
-	{ "lowportmax", CTLTYPE_INT }, \
-	{ "maxfragpackets", CTLTYPE_INT }, \
-	{ "grettl", CTLTYPE_INT }, \
-	{ "checkinterface", CTLTYPE_INT }, \
-	{ "ifq", CTLTYPE_NODE }, \
-	{ "random_id", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "dad_count", CTLTYPE_INT }, \
-}
 #endif /* _NETBSD_SOURCE */
 
 /* INET6 stuff */
@@ -506,6 +378,8 @@ struct ip_mreq {
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
+#include <sys/psref.h>
+
 /*
  * in_cksum_phdr:
  *
@@ -558,13 +432,15 @@ extern	u_char	ip_protox[];
 extern const struct sockaddr_in in_any;
 
 int	in_broadcast(struct in_addr, struct ifnet *);
+int	in_direct(struct in_addr, struct ifnet *);
 int	in_canforward(struct in_addr);
 int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);
 int	in4_cksum(struct mbuf *, u_int8_t, int, int);
-void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
+
+void	in_len2mask(struct in_addr *, u_int);
 
 void	in_if_link_up(struct ifnet *);
 void	in_if_link_down(struct ifnet *);
@@ -575,8 +451,11 @@ void	in_if_link_state_change(struct ifnet *, int);
 struct route;
 struct ip_moptions;
 
-struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
+struct in_ifaddr *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *, struct psref *);
+
+struct ip;
+int in_tunnel_validate(const struct ip *, struct in_addr, struct in_addr);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
@@ -591,7 +470,7 @@ int sockaddr_in_cmp(const struct sockaddr *, const struct sockaddr *);
 const void *sockaddr_in_const_addr(const struct sockaddr *, socklen_t *);
 void *sockaddr_in_addr(struct sockaddr *, socklen_t *);
 
-static inline void
+static __inline void
 sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,
     in_port_t port)
 {
@@ -600,7 +479,7 @@ sockaddr_in_init1(struct sockaddr_in *sin, const struct in_addr *addr,
 	memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 }
 
-static inline void
+static __inline void
 sockaddr_in_init(struct sockaddr_in *sin, const struct in_addr *addr,
     in_port_t port)
 {
@@ -609,7 +488,7 @@ sockaddr_in_init(struct sockaddr_in *sin, const struct in_addr *addr,
 	sockaddr_in_init1(sin, addr, port);
 }
 
-static inline struct sockaddr *
+static __inline struct sockaddr *
 sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 {
 	struct sockaddr *sa;

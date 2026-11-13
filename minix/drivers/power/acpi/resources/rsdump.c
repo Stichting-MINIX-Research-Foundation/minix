@@ -53,65 +53,52 @@
 
 /* Local prototypes */
 
-static void
-AcpiRsOutString (
+static void AcpiRsOutString (
     char                    *Title,
     char                    *Value);
 
-static void
-AcpiRsOutInteger8 (
+static void AcpiRsOutInteger8 (
     char                    *Title,
     UINT8                   Value);
 
-static void
-AcpiRsOutInteger16 (
+static void AcpiRsOutInteger16 (
     char                    *Title,
     UINT16                  Value);
 
-static void
-AcpiRsOutInteger32 (
+static void AcpiRsOutInteger32 (
     char                    *Title,
     UINT32                  Value);
 
-static void
-AcpiRsOutInteger64 (
+static void AcpiRsOutInteger64 (
     char                    *Title,
     UINT64                  Value);
 
-static void
-AcpiRsOutTitle (
+static void AcpiRsOutTitle (
     char                    *Title);
 
-static void
-AcpiRsDumpByteList (
+static void AcpiRsDumpByteList (
     UINT16                  Length,
     UINT8                   *Data);
 
-static void
-AcpiRsDumpWordList (
+static void AcpiRsDumpWordList (
     UINT16                   Length,
     UINT16                   *Data);
 
-static void
-AcpiRsDumpDwordList (
+static void AcpiRsDumpDwordList (
     UINT8                   Length,
     UINT32                  *Data);
 
-static void
-AcpiRsDumpShortByteList (
+static void AcpiRsDumpShortByteList (
     UINT8                  Length,
     UINT8                  *Data);
 
-static void
-AcpiRsDumpResourceSource (
+static void AcpiRsDumpResourceSource (
     ACPI_RESOURCE_SOURCE    *ResourceSource);
 
-static void
-AcpiRsDumpAddressCommon (
+static void AcpiRsDumpAddressCommon (
     ACPI_RESOURCE_DATA      *Resource);
 
-static void
-AcpiRsDumpDescriptor (
+static void AcpiRsDumpDescriptor (
     void                    *Resource,
     ACPI_RSDUMP_INFO *Table);
 
@@ -129,8 +116,7 @@ AcpiRsDumpDescriptor (
  *
  ******************************************************************************/
 
-static void
-AcpiRsDumpDescriptor (
+static void AcpiRsDumpDescriptor (
     void                    *Resource,
     ACPI_RSDUMP_INFO        *Table)
 {
@@ -324,8 +310,7 @@ AcpiRsDumpDescriptor (
  *
  ******************************************************************************/
 
-static void
-AcpiRsDumpResourceSource (
+static void AcpiRsDumpResourceSource (
     ACPI_RESOURCE_SOURCE    *ResourceSource)
 {
     ACPI_FUNCTION_ENTRY ();
@@ -358,8 +343,7 @@ AcpiRsDumpResourceSource (
  *
  ******************************************************************************/
 
-static void
-AcpiRsDumpAddressCommon (
+static void AcpiRsDumpAddressCommon (
     ACPI_RESOURCE_DATA      *Resource)
 {
     ACPI_FUNCTION_ENTRY ();
@@ -409,8 +393,7 @@ AcpiRsDumpAddressCommon (
  *
  ******************************************************************************/
 
-void
-AcpiRsDumpResourceList (
+void AcpiRsDumpResourceList (
     ACPI_RESOURCE           *ResourceList)
 {
     UINT32                  Count = 0;
@@ -489,8 +472,7 @@ AcpiRsDumpResourceList (
  *
  ******************************************************************************/
 
-void
-AcpiRsDumpIrqList (
+void AcpiRsDumpIrqList (
     UINT8                   *RouteTable)
 {
     ACPI_PCI_ROUTING_TABLE  *PrtElement;
@@ -536,8 +518,7 @@ AcpiRsDumpIrqList (
  *
  ******************************************************************************/
 
-static void
-AcpiRsOutString (
+static void AcpiRsOutString (
     char                    *Title,
     char                    *Value)
 {
@@ -549,32 +530,28 @@ AcpiRsOutString (
     AcpiOsPrintf ("\n");
 }
 
-static void
-AcpiRsOutInteger8 (
+static void AcpiRsOutInteger8 (
     char                    *Title,
     UINT8                   Value)
 {
     AcpiOsPrintf ("%27s : %2.2X\n", Title, Value);
 }
 
-static void
-AcpiRsOutInteger16 (
+static void AcpiRsOutInteger16 (
     char                    *Title,
     UINT16                  Value)
 {
     AcpiOsPrintf ("%27s : %4.4X\n", Title, Value);
 }
 
-static void
-AcpiRsOutInteger32 (
+static void AcpiRsOutInteger32 (
     char                    *Title,
     UINT32                  Value)
 {
     AcpiOsPrintf ("%27s : %8.8X\n", Title, Value);
 }
 
-static void
-AcpiRsOutInteger64 (
+static void AcpiRsOutInteger64 (
     char                    *Title,
     UINT64                  Value)
 {
@@ -582,8 +559,7 @@ AcpiRsOutInteger64 (
         ACPI_FORMAT_UINT64 (Value));
 }
 
-static void
-AcpiRsOutTitle (
+static void AcpiRsOutTitle (
     char                    *Title)
 {
     AcpiOsPrintf ("%27s : ", Title);
@@ -603,8 +579,7 @@ AcpiRsOutTitle (
  *
  ******************************************************************************/
 
-static void
-AcpiRsDumpByteList (
+static void AcpiRsDumpByteList (
     UINT16                  Length,
     UINT8                   *Data)
 {
@@ -618,8 +593,7 @@ AcpiRsDumpByteList (
     }
 }
 
-static void
-AcpiRsDumpShortByteList (
+static void AcpiRsDumpShortByteList (
     UINT8                  Length,
     UINT8                  *Data)
 {
@@ -633,8 +607,7 @@ AcpiRsDumpShortByteList (
     AcpiOsPrintf ("\n");
 }
 
-static void
-AcpiRsDumpDwordList (
+static void AcpiRsDumpDwordList (
     UINT8                   Length,
     UINT32                  *Data)
 {
@@ -648,8 +621,7 @@ AcpiRsDumpDwordList (
     }
 }
 
-static void
-AcpiRsDumpWordList (
+static void AcpiRsDumpWordList (
     UINT16                  Length,
     UINT16                  *Data)
 {

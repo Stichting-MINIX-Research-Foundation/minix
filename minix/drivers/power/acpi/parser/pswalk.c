@@ -61,8 +61,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiPsDeleteParseTree (
+void AcpiPsDeleteParseTree (
     ACPI_PARSE_OBJECT       *SubtreeRoot)
 {
     ACPI_PARSE_OBJECT       *Op = SubtreeRoot;

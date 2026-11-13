@@ -381,6 +381,16 @@ init_volzero_sig(struct open_file *f)
 	return 0;
 }
 
+/*
+ * XXX Hack alert.  GCC 8.3 mis-compiles this function and calls
+ * strncmp() with the wrong second pointer, as seen in PR#54703.
+ *
+ * Until the real cause is located, work around it by using -O1
+ * for this function.
+ */
+#if defined(__i386__) && !defined(__clang__)
+__attribute__((__optimize__("O1")))
+#endif
 __compactcall int
 ustarfs_open(const char *path, struct open_file *f)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.27 2015/07/25 07:06:11 isaki Exp $	*/
+/*	$NetBSD: cread.c,v 1.28 2016/01/17 04:35:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -87,10 +87,9 @@ void	zcfree(void *, void *);
 void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 
 /*
- * The libkern version of this function uses an 8K set of tables.
  * This is the double-loop version of LE CRC32 from if_ethersubr,
- * lightly modified -- it is 200 bytes smaller than the version using
- * a 4-bit table and at least 8K smaller than the libkern version.
+ * lightly modified -- it is ~1KB smaller than libkern version with
+ * DYNAMIC_CRC_TABLE but too much slower especially on ancient poor CPUs.
  */
 #ifndef ETHER_CRC_POLY_LE
 #define ETHER_CRC_POLY_LE	0xedb88320
@@ -98,6 +97,10 @@ void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 uint32_t
 crc32(uint32_t crc, const uint8_t *const buf, size_t len)
 {
+#if defined(LIBSA_CREAD_NOCRC)
+	/* XXX provide a stub to avoid pulling a larger libkern version */
+	return crc;
+#else
 	uint32_t c, carry;
 	size_t i, j;
 
@@ -114,6 +117,7 @@ crc32(uint32_t crc, const uint8_t *const buf, size_t len)
 		}
 	}
 	return (crc ^ 0xffffffffU);
+#endif /* defined(LIBSA_CREAD_NOCRC) */
 }
 
 /*
@@ -317,7 +321,9 @@ ssize_t
 read(int fd, void *buf, size_t len)
 {
 	struct sd *s;
+#if !defined(LIBSA_CREAD_NOCRC)
 	unsigned char *start = buf; /* starting point for crc computation */
+#endif
 
 	s = ss[fd];
 
@@ -373,13 +379,24 @@ read(int fd, void *buf, size_t len)
 		s->z_err = inflate(&(s->stream), Z_NO_FLUSH);
 
 		if (s->z_err == Z_STREAM_END) {
+			uint32_t total_out;
+#if !defined(LIBSA_CREAD_NOCRC)
+			uint32_t crc;
 			/* Check CRC and original size */
 			s->crc = crc32(s->crc, start, (unsigned int)
 					(s->stream.next_out - start));
 			start = s->stream.next_out;
+			crc = getLong(s);
+#else
+			(void)getLong(s);
+#endif
+			total_out = getLong(s);
 
-			if (getLong(s) != s->crc ||
-			    getLong(s) != s->stream.total_out) {
+			if (
+#if !defined(LIBSA_CREAD_NOCRC)
+			    crc != s->crc ||
+#endif
+			    total_out != s->stream.total_out) {
 
 				s->z_err = Z_DATA_ERROR;
 			} else {
@@ -387,7 +404,9 @@ read(int fd, void *buf, size_t len)
 				check_header(s);
 				if (s->z_err == Z_OK) {
 					inflateReset(&(s->stream));
+#if !defined(LIBSA_CREAD_NOCRC)
 					s->crc = crc32(0L, Z_NULL, 0);
+#endif
 				}
 			}
 		}
@@ -395,8 +414,10 @@ read(int fd, void *buf, size_t len)
 			break;
 	}
 
+#if !defined(LIBSA_CREAD_NOCRC)
 	s->crc = crc32(s->crc, start,
 	               (unsigned int)(s->stream.next_out - start));
+#endif
 
 	return (int)(len - s->stream.avail_out);
 }

@@ -36,8 +36,7 @@ static struct rmib_node minix_lwip_node =
  * minix.lwip trees with the MIB service.  Other modules must have added all
  * subtrees to those trees through mibtree_register_*() before this point.
  */
-void
-mibtree_init(void)
+void mibtree_init(void)
 {
 	const int inet_mib[] = { CTL_NET, PF_INET };
 #ifdef INET6
@@ -73,8 +72,7 @@ mibtree_init(void)
  * only be called *before* mibtree_init(), as the latter will register the
  * final tree with the MIB service.
  */
-void
-mibtree_register_inet(int domain, int protocol, struct rmib_node * node)
+void mibtree_register_inet(int domain, int protocol, struct rmib_node * node)
 {
 	struct rmib_node *parent;
 	struct rmib_indir *indir;
@@ -126,8 +124,7 @@ mibtree_register_inet(int domain, int protocol, struct rmib_node * node)
  * external variables, which is a bit of a hack, but with the expected low
  * number of miscellaneous subtrees there will be no performance penalty.
  */
-void
-mibtree_register_lwip(struct rmib_node * node)
+void mibtree_register_lwip(struct rmib_node * node)
 {
 	unsigned int i;
 

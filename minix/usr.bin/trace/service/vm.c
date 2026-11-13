@@ -4,8 +4,7 @@
 #include <sys/mman.h>
 #include <sys/resource.h>
 
-static int
-vm_brk_out(struct trace_proc * proc, const message * m_out)
+static int vm_brk_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ptr(proc, "addr", (vir_bytes)m_out->m_lc_vm_brk.addr);
@@ -48,8 +47,7 @@ static const struct flags mmap_flags[] = {
 	FLAG_MASK(MAP_ALIGNMENT_MASK, MAP_ALIGNMENT_64PB),
 };
 
-static int
-vm_mmap_out(struct trace_proc * proc, const message * m_out)
+static int vm_mmap_out(struct trace_proc * proc, const message * m_out)
 {
 
 	if (m_out->m_mmap.flags & MAP_THIRDPARTY)
@@ -66,8 +64,7 @@ vm_mmap_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-vm_mmap_in(struct trace_proc * proc, const message * __unused m_out,
+static void vm_mmap_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -78,8 +75,7 @@ vm_mmap_in(struct trace_proc * proc, const message * __unused m_out,
 		put_result(proc);
 }
 
-static int
-vm_munmap_out(struct trace_proc * proc, const message * m_out)
+static int vm_munmap_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ptr(proc, "addr", (vir_bytes)m_out->m_mmap.addr);

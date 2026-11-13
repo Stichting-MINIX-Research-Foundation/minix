@@ -26,9 +26,7 @@ void test11b(void);
 void test11c(void);
 void test11d(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

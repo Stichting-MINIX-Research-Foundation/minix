@@ -30,10 +30,9 @@ check_INSTIMGBASE: .PHONY .NOTMAIN
 IMAGEMB=	${INSTIMAGEMB}
 .endif
 SWAPMB=		0			# no swap
-OMIT_SWAPIMG=	yes			# nothing to write
 
-KERN_SET?=	kern-GENERIC
-SETS?=		modules base etc
+KERN_SET?=	minix-kernel
+SETS?=		minix-base minix-comp minix-games minix-man minix-tests tests
 
 FSTAB_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/fstab.install.in
 
@@ -62,7 +61,7 @@ INSTIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/installimage
 MKDIR?=		mkdir -p
 
 install_image: check_INSTIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
-	${MKDIR} ${INSTIMG_RELEASEDIR}
+	${MKDIR} ${MKDIRPERM} ${INSTIMG_RELEASEDIR}
 	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${INSTIMG_RELEASEDIR}
 	# note ${MAKESUM} will be calculated in src/etc/Makefile
 

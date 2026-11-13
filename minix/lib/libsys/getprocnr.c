@@ -2,8 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int
-getprocnr(pid_t pid, endpoint_t *proc_e)
+int getprocnr(pid_t pid, endpoint_t *proc_e)
 {
 	message m;
 	int r;

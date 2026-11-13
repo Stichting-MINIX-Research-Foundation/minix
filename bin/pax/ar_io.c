@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.56 2015/03/09 23:38:08 sevan Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,27 +42,30 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.56 2015/03/09 23:38:08 sevan Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#if defined(__minix) && defined(__x86_64__)
+#include <zlib.h>
+#endif
 #ifdef SUPPORT_RMT
 #define __RMTLIB_PRIVATE
 #include <rmt.h>
@@ -96,6 +99,24 @@ static int can_unlnk = 0;		/* do we unlink null archives?  */
 const char *arcname;			/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 static pid_t zpid = -1;			/* pid of child process */
+#if defined(__minix) && defined(__x86_64__)
+static gzFile pax_gzfile;
+
+/*
+ * The amd64 installer extracts gzip archives from regular files.  In direct
+ * extraction mode, read the compressed stream in-process instead of starting
+ * gzip and routing its output through a VFS pipe.
+ */
+static int
+pax_use_inline_gzip(void)
+{
+	const char *direct;
+
+	direct = getenv("PAX_DIRECT_EXTRACT");
+	return (act == EXTRACT && direct != NULL && strcmp(direct, "1") == 0 &&
+	    gzip_program != NULL && strcmp(gzip_program, "gzip") == 0);
+}
+#endif
 time_t starttime;			/* time the run started */
 int force_one_volume;			/* 1 if we ignore volume changes */
 
@@ -133,6 +154,12 @@ ar_open(const char *name)
 	struct mtget mb;
 #endif
 
+#if defined(__minix) && defined(__x86_64__)
+	if (pax_gzfile != NULL) {
+		(void)gzclose(pax_gzfile);
+		pax_gzfile = NULL;
+	} else
+#endif
 	if (arfd != -1)
 		(void)close(arfd);
 	arfd = -1;
@@ -169,6 +196,17 @@ ar_open(const char *name)
 			arcname = STDN;
 		} else if ((arfd = open(name, EXT_MODE, DMOD)) < 0)
 			syswarn(0, errno, "Failed open to read on %s", name);
+#if defined(__minix) && defined(__x86_64__)
+		if (arfd != -1 && gzip_program != NULL && pax_use_inline_gzip()) {
+			pax_gzfile = gzdopen(arfd, "rb");
+			if (pax_gzfile == NULL) {
+				/* Keep the original filter path as a fallback. */
+				syswarn(0, errno, "Cannot initialize inline gzip reader on %s",
+				    arcname);
+				ar_start_gzip(arfd, gzip_program, 0);
+			}
+		} else
+#endif
 		if (arfd != -1 && gzip_program != NULL)
 			ar_start_gzip(arfd, gzip_program, 0);
 		break;
@@ -210,6 +248,12 @@ ar_open(const char *name)
 	 */
 	if (fstat(arfd, &arsb) < 0) {
 		syswarn(0, errno, "Failed stat on %s", arcname);
+#if defined(__minix) && defined(__x86_64__)
+		if (pax_gzfile != NULL) {
+			(void)gzclose(pax_gzfile);
+			pax_gzfile = NULL;
+		} else
+#endif
 		(void)close(arfd);
 		arfd = -1;
 		can_unlnk = 0;
@@ -218,6 +262,12 @@ ar_open(const char *name)
 	if (S_ISDIR(arsb.st_mode)) {
 		tty_warn(0, "Cannot write an archive on top of a directory %s",
 		    arcname);
+#if defined(__minix) && defined(__x86_64__)
+		if (pax_gzfile != NULL) {
+			(void)gzclose(pax_gzfile);
+			pax_gzfile = NULL;
+		} else
+#endif
 		(void)close(arfd);
 		arfd = -1;
 		can_unlnk = 0;
@@ -245,6 +295,13 @@ ar_open(const char *name)
 		switch (act) {
 		case LIST:
 		case EXTRACT:
+#if defined(__minix) && defined(__x86_64__)
+			if (pax_gzfile != NULL) {
+				(void)gzclose(pax_gzfile);
+				pax_gzfile = NULL;
+				arfd = -1;
+			}
+#endif
 			return -1;
 		case APPND:
 			act = -ARCHIVE;
@@ -410,6 +467,12 @@ ar_close(void)
 	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0)
 		kill(zpid, SIGINT);
 
+#if defined(__minix) && defined(__x86_64__)
+	if (pax_gzfile != NULL) {
+		(void)gzclose(pax_gzfile);
+		pax_gzfile = NULL;
+	} else
+#endif
 #ifdef SUPPORT_RMT
 	if (artyp == ISRMT)
 		(void)rmtclose(arfd);
@@ -417,9 +480,11 @@ ar_close(void)
 #endif /* SUPPORT_RMT */
 		(void)close(arfd);
 
-	/* Do not exit before child to ensure data integrity */
-	if (zpid > 0)
-		waitpid(zpid, &status, 0);
+	/* Child filters must finish before pax exits. */
+	if (zpid > 0) {
+		(void)waitpid(zpid, &status, 0);
+		zpid = -1;
+	}
 
 	if ((vflag || Vflag) && (artyp == ISTAPE)) {
 		(void)fputs("done.\n", listf);
@@ -731,6 +796,26 @@ ar_read(char *buf, int cnt)
 	 */
 	if (lstrval <= 0)
 		return lstrval;
+
+#if defined(__minix) && defined(__x86_64__)
+	if (pax_gzfile != NULL) {
+		res = gzread(pax_gzfile, buf, (unsigned int)cnt);
+		if (res > 0) {
+			io_ok = 1;
+			return res;
+		}
+		lstrval = res;
+		if (res < 0) {
+			int zerr;
+			const char *zmsg = gzerror(pax_gzfile, &zerr);
+
+			tty_warn(1, "Failed gzip read on archive volume %d: %s",
+			    arvol, zmsg != NULL ? zmsg : "unknown zlib error");
+		} else
+			tty_warn(0, "End of archive volume %d reached", arvol);
+		return res;
+	}
+#endif
 
 	/*
 	 * how we read must be based on device type
@@ -1631,8 +1716,7 @@ void
 ar_summary(int n)
 {
 	time_t secs;
-	int len;
-	char buf[BUFSIZ];
+	char buf[4096];
 	char tbuf[MAXPATHLEN/4];	/* XXX silly size! */
 	char s1buf[MAXPATHLEN/8];	/* XXX very silly size! */
 	char s2buf[MAXPATHLEN/8];	/* XXX very silly size! */
@@ -1657,33 +1741,32 @@ ar_summary(int n)
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL && act != COPY) {
-		len = snprintf(buf, sizeof(buf),
+		snprintf(buf, sizeof(buf),
 		    "unknown format, %s skipped in %s\n",
 		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
 		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs, "bytes"));
 		if (n == 0)
 			(void)fprintf(outf, "%s: %s", argv0, buf);
 		else
-			(void)write(STDERR_FILENO, buf, len);
+			(void)write(STDERR_FILENO, buf, strlen(buf));
 		return;
 	}
 
 
 	if (n != 0 && *archd.name) {
-		len = snprintf(buf, sizeof(buf), "Working on `%s' (%s)\n",
+		snprintf(buf, sizeof(buf), "Working on `%s' (%s)\n",
 		    archd.name, sizefmt(s1buf, sizeof(s1buf), archd.sb.st_size));
-		(void)write(STDERR_FILENO, buf, len);
-		len = 0;
+		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 
 
 	if (act == COPY) {
-		len = snprintf(buf, sizeof(buf),
+		snprintf(buf, sizeof(buf),
 		    "%lu files in %s\n",
 		    (unsigned long)flcnt,
 		    timefmt(tbuf, sizeof(tbuf), flcnt, secs, "files"));
 	} else {
-		len = snprintf(buf, sizeof(buf),
+		snprintf(buf, sizeof(buf),
 		    "%s vol %d, %lu files, %s read, %s written in %s\n",
 		    frmt->name, arvol-1, (unsigned long)flcnt,
 		    sizefmt(s1buf, sizeof(s1buf), rdcnt),

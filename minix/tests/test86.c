@@ -10,8 +10,7 @@
  * Test for dynamic executables with no read permissions.  This test relies on
  * being linked dynamically.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	char *executable, cp_cmd[PATH_MAX + 9];
 	int status;

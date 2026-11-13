@@ -362,8 +362,7 @@ int do_ftruncate(void)
 /*===========================================================================*
  *				truncate_vnode				     *
  *===========================================================================*/
-int
-truncate_vnode(struct vnode *vp, off_t newsize)
+int truncate_vnode(struct vnode *vp, off_t newsize)
 {
 /* Truncate a regular file or a pipe */
   int r;
@@ -426,8 +425,7 @@ int do_slink(void)
 /*===========================================================================*
  *                              rdlink_direct                                *
  *===========================================================================*/
-int
-rdlink_direct(
+int rdlink_direct(
 	char *orig_path,
 	char link_path[PATH_MAX], /* should have length PATH_MAX */
 	struct fproc *rfp

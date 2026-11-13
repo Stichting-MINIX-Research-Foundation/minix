@@ -42,22 +42,23 @@ struct v7fs_lookup_arg {
 __BEGIN_DECLS
 /* core */
 int v7fs_file_lookup_by_name(struct v7fs_self *, struct v7fs_inode *,
-    const char*, v7fs_ino_t *);
+    const char*, size_t, v7fs_ino_t *);
 int v7fs_file_allocate(struct v7fs_self *, struct v7fs_inode *, const char *,
-    struct v7fs_fileattr *, v7fs_ino_t *);
-int v7fs_file_deallocate(struct v7fs_self *, struct v7fs_inode *, const char *);
+    size_t, struct v7fs_fileattr *, v7fs_ino_t *);
+int v7fs_file_deallocate(struct v7fs_self *, struct v7fs_inode *, const char *,
+    size_t);
 int v7fs_directory_add_entry(struct v7fs_self *,struct v7fs_inode *, v7fs_ino_t,
-    const char *);
+    const char *, size_t);
 int v7fs_directory_remove_entry(struct v7fs_self *,struct v7fs_inode *,
-    const char *);
+    const char *, size_t);
 
 /* util */
 int v7fs_file_rename(struct v7fs_self *, struct v7fs_inode *, const char *,
-    struct v7fs_inode *, const char *);
+    size_t, struct v7fs_inode *, const char *, size_t);
 int v7fs_directory_replace_entry(struct v7fs_self *, struct v7fs_inode *,
     const char *, v7fs_ino_t);
 int v7fs_file_link(struct v7fs_self *, struct v7fs_inode *, struct v7fs_inode *,
-    const char *);
+    const char *, size_t);
 bool v7fs_file_lookup_by_number(struct v7fs_self *, struct v7fs_inode *,
     v7fs_ino_t, char *);
 int v7fs_file_symlink(struct v7fs_self *, struct v7fs_inode *, const char *);

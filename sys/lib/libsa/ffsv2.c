@@ -16,6 +16,8 @@
 #endif
 
 #define ufs_dinode	ufs2_dinode
+#define ufs_dinode_swap	ffs_dinode2_swap
+#define ufs_indp_swap	bswap64
 #define indp_t		int64_t
 
 #include "ufs.c"

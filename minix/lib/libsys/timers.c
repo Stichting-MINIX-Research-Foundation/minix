@@ -22,8 +22,7 @@ static int expiring = FALSE;
 /*
  * Initialize the timer 'tp'.
  */
-void
-init_timer(minix_timer_t * tp)
+void init_timer(minix_timer_t * tp)
 {
 
 	tmr_inittimer(tp);
@@ -37,8 +36,7 @@ init_timer(minix_timer_t * tp)
  * of zero will cause the alarm to trigger on the next clock tick.  If the
  * timer was already set, it will be canceled first.
  */
-void
-set_timer(minix_timer_t *tp, clock_t ticks, tmr_func_t watchdog, int arg)
+void set_timer(minix_timer_t *tp, clock_t ticks, tmr_func_t watchdog, int arg)
 {
 	clock_t prev_time, next_time;
 	int r, had_timers;
@@ -61,8 +59,7 @@ set_timer(minix_timer_t *tp, clock_t ticks, tmr_func_t watchdog, int arg)
  * Cancel the timer 'tp'.  The timer object must have been initialized with
  * init_timer(3) first.  If the timer was not set before, the call is a no-op.
  */
-void
-cancel_timer(minix_timer_t * tp)
+void cancel_timer(minix_timer_t * tp)
 {
 	clock_t next_time, prev_time;
 	int r, have_timers;
@@ -93,8 +90,7 @@ cancel_timer(minix_timer_t * tp)
 /*
  * Expire all timers that were set to expire before/at the given current time.
  */
-void
-expire_timers(clock_t now)
+void expire_timers(clock_t now)
 {
         clock_t next_time;
 	int r, have_timers;

@@ -4,6 +4,10 @@
 #define EXTERN
 #endif
 
+#ifndef CONFIG_MAX_CPUS
+#define CONFIG_MAX_CPUS	1
+#endif
+
 /* Global variables. */
 EXTERN struct mproc *mp;	/* ptr to 'mproc' slot of current process */
 EXTERN int procs_in_use;	/* how many processes are marked as IN_USE */

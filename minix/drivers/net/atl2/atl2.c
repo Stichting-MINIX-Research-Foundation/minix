@@ -89,8 +89,7 @@ static const struct netdriver atl2_table = {
 /*
  * Read a value from the VPD register area.
  */
-static int
-atl2_read_vpd(int index, uint32_t * res)
+static int atl2_read_vpd(int index, uint32_t * res)
 {
 	uint32_t off, val;
 	int i;
@@ -124,8 +123,7 @@ atl2_read_vpd(int index, uint32_t * res)
  * Read the MAC address from the EEPROM, using the Vital Product Data register
  * interface.
  */
-static int
-atl2_get_vpd_hwaddr(void)
+static int atl2_get_vpd_hwaddr(void)
 {
 	uint32_t key, val;
 	int i, n, found[2];
@@ -177,8 +175,7 @@ atl2_get_vpd_hwaddr(void)
  * Get the MAC address of the card.  First try the EEPROM; if that fails, just
  * use whatever the card was already set to.
  */
-static void
-atl2_get_hwaddr(netdriver_addr_t * addr)
+static void atl2_get_hwaddr(netdriver_addr_t * addr)
 {
 
 	if (!atl2_get_vpd_hwaddr()) {
@@ -203,8 +200,7 @@ atl2_get_hwaddr(netdriver_addr_t * addr)
 /*
  * Read a MII PHY register using MDIO.
  */
-static int
-atl2_read_mdio(int addr, uint16_t * res)
+static int atl2_read_mdio(int addr, uint16_t * res)
 {
 	uint32_t rval;
 	int i;
@@ -234,8 +230,7 @@ atl2_read_mdio(int addr, uint16_t * res)
 /*
  * Allocate DMA ring buffers.
  */
-static int
-atl2_alloc_dma(void)
+static int atl2_alloc_dma(void)
 {
 
 	state.txd_base = alloc_contig(ATL2_TXD_BUFSIZE, AC_ALIGN4K,
@@ -269,8 +264,7 @@ atl2_alloc_dma(void)
 /*
  * Stop the device.
  */
-static void
-atl2_stop(void)
+static void atl2_stop(void)
 {
 	uint32_t val;
 	int i;
@@ -303,8 +297,7 @@ atl2_stop(void)
 /*
  * Reset the device to a known good state.
  */
-static int
-atl2_reset(void)
+static int atl2_reset(void)
 {
 	uint32_t val;
 	int i;
@@ -338,8 +331,7 @@ atl2_reset(void)
  * Reconfigure the device's promiscuity, multicast, and broadcast mode
  * settings.
  */
-static void
-atl2_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+static void atl2_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
 	unsigned int mcast_count __unused)
 {
 	uint32_t val;
@@ -360,8 +352,7 @@ atl2_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
 /*
  * Set up the device for normal operation.
  */
-static int
-atl2_setup(void)
+static int atl2_setup(void)
 {
 	uint32_t val;
 
@@ -456,8 +447,7 @@ atl2_setup(void)
 /*
  * Find a matching PCI device.
  */
-static int
-atl2_probe(int skip)
+static int atl2_probe(int skip)
 {
 	uint16_t vid, did;
 #if VERBOSE
@@ -491,10 +481,9 @@ atl2_probe(int skip)
 /*
  * Initialize the device.
  */
-static void
-atl2_init_hw(int devind, netdriver_addr_t * addr)
+static void atl2_init_hw(int devind, netdriver_addr_t * addr)
 {
-	uint32_t bar;
+	u64_t bar;
 	int r, flag;
 
 	/* Initialize global state. */
@@ -506,7 +495,7 @@ atl2_init_hw(int devind, netdriver_addr_t * addr)
 	if (state.size < ATL2_MIN_MMAP_SIZE || flag)
 		panic("invalid register bar");
 
-	state.base = vm_map_phys(SELF, (void *)bar, state.size);
+	state.base = vm_map_phys(SELF, (void *)(uintptr_t)bar, state.size);
 	if (state.base == MAP_FAILED)
 		panic("unable to map in registers");
 
@@ -533,8 +522,7 @@ atl2_init_hw(int devind, netdriver_addr_t * addr)
 /*
  * Update statistics for packet transmission.
  */
-static void
-atl2_tx_stat(uint32_t stat)
+static void atl2_tx_stat(uint32_t stat)
 {
 
 	if (stat & ATL2_TXS_SUCCESS)
@@ -549,8 +537,7 @@ atl2_tx_stat(uint32_t stat)
 /*
  * Update statistics for packet receipt.
  */
-static void
-atl2_rx_stat(uint32_t stat)
+static void atl2_rx_stat(uint32_t stat)
 {
 
 	if (!(stat & ATL2_RXD_SUCCESS))
@@ -560,8 +547,7 @@ atl2_rx_stat(uint32_t stat)
 /*
  * Advance the TxD/TxS tails by as many sent packets as found.
  */
-static int
-atl2_tx_advance(void)
+static int atl2_tx_advance(void)
 {
 	uint32_t stat, size, dsize;
 	int advanced;
@@ -598,13 +584,14 @@ atl2_tx_advance(void)
 		state.txs_tail = (state.txs_tail + 1) % ATL2_TXS_COUNT;
 		state.txs_num--;
 
-		if (stat & ATL2_TXS_SUCCESS)
+		if (stat & ATL2_TXS_SUCCESS) {
 			ATL2_DEBUG(("%s: successfully sent packet\n",
 			    netdriver_name()));
-		else
+		}
+		else {
 			ATL2_DEBUG(("%s: failed to send packet\n",
 			    netdriver_name()));
-
+		}
 		/* Update statistics. */
 		atl2_tx_stat(stat);
 
@@ -619,8 +606,7 @@ atl2_tx_advance(void)
  * there is an actual packet left to receive.  If 'next' is set, the packet at
  * the current tail has been processed.
  */
-static void
-atl2_rx_advance(int next)
+static void atl2_rx_advance(int next)
 {
 	int update_tail;
 	rxd_t *rxd;
@@ -688,8 +674,7 @@ atl2_rx_advance(int next)
 /*
  * Receive a packet.
  */
-static ssize_t
-atl2_recv(struct netdriver_data * data, size_t max)
+static ssize_t atl2_recv(struct netdriver_data * data, size_t max)
 {
 	rxd_t *rxd;
 	size_t size;
@@ -723,8 +708,7 @@ atl2_recv(struct netdriver_data * data, size_t max)
 /*
  * Send a packet.
  */
-static int
-atl2_send(struct netdriver_data * data, size_t size)
+static int atl2_send(struct netdriver_data * data, size_t size)
 {
 	size_t pos, chunk;
 	uint8_t *sizep;
@@ -777,8 +761,7 @@ atl2_send(struct netdriver_data * data, size_t size)
 /*
  * Process an interrupt.
  */
-static void
-atl2_intr(unsigned int __unused mask)
+static void atl2_intr(unsigned int __unused mask)
 {
 	uint32_t val;
 	int r, try_send, try_recv;
@@ -829,8 +812,7 @@ atl2_intr(unsigned int __unused mask)
 /*
  * Dump link status.
  */
-static void
-atl2_dump_link(void)
+static void atl2_dump_link(void)
 {
 	uint16_t val;
 	int link_up;
@@ -866,8 +848,7 @@ atl2_dump_link(void)
 /*
  * Initialize the atl2 driver.
  */
-static int
-atl2_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+static int atl2_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 	unsigned int * ticks __unused)
 {
 	int devind;
@@ -891,8 +872,7 @@ atl2_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
 /*
  * Deallocate resources as proof of concept.  Currently unused.
  */
-static void
-atl2_cleanup(void)
+static void atl2_cleanup(void)
 {
 	int r;
 
@@ -913,8 +893,7 @@ atl2_cleanup(void)
 /*
  * The ATL2 ethernet driver.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 
 	env_setargs(argc, argv);

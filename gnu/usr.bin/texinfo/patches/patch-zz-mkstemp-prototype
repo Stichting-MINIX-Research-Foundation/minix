@@ -1,0 +1,5 @@
+--- a/lib/mkstemp.c
++++ b/lib/mkstemp.c
+@@ -34 +34 @@
+-int __gen_tempname ();
++int __gen_tempname (char *, int); /* GCC 15 conflicting prototypes */

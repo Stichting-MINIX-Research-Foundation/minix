@@ -32,8 +32,7 @@ extern void ddekit_shutdown(void);		/* dde.c */
 /*===========================================================================*
  *    main                                                                   *
  *===========================================================================*/
-int
-main(int UNUSED(argc), char * UNUSED(argv[]))
+int main(int UNUSED(argc), char * UNUSED(argv[]))
 {
 	int ret_val;
 
@@ -72,8 +71,7 @@ main(int UNUSED(argc), char * UNUSED(argv[]))
 /*===========================================================================*
  *    usbd_sef_handler                                                       *
  *===========================================================================*/
-static int
-usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
+static int usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
 {
 	/* No DEBUG_DUMP, threading unavailable yet */
 
@@ -100,8 +98,7 @@ usbd_sef_handler(int type, sef_init_info_t * UNUSED(info))
 /*===========================================================================*
  *    usbd_signal_handler                                                    *
  *===========================================================================*/
-static void
-usbd_signal_handler(int UNUSED(signo))
+static void usbd_signal_handler(int UNUSED(signo))
 {
 	DEBUG_DUMP;
 
@@ -118,8 +115,7 @@ usbd_signal_handler(int UNUSED(signo))
 /*===========================================================================*
  *    usbd_start                                                             *
  *===========================================================================*/
-static int
-usbd_start(void)
+static int usbd_start(void)
 {
 	ddekit_thread_t * usbd_th;
 
@@ -154,8 +150,7 @@ usbd_start(void)
 /*===========================================================================*
  *    usbd_init                                                              *
  *===========================================================================*/
-static void
-usbd_init(void)
+static void usbd_init(void)
 {
 	/* No DEBUG_DUMP, threading unavailable yet */
 
@@ -175,8 +170,7 @@ usbd_init(void)
 /*===========================================================================*
  *    usbd_server_thread                                                     *
  *===========================================================================*/
-static void
-usbd_server_thread(void * UNUSED(unused))
+static void usbd_server_thread(void * UNUSED(unused))
 {
 	DEBUG_DUMP;
 

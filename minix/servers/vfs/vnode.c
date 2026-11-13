@@ -61,8 +61,7 @@ void check_vnode_locks_by_me(struct fproc *rfp)
 /*===========================================================================*
  *				check_vnode_locks			     *
  *===========================================================================*/
-void
-check_vnode_locks(void)
+void check_vnode_locks(void)
 {
   struct vnode *vp;
   int count = 0;
@@ -294,6 +293,15 @@ void put_vnode(struct vnode *vp)
   vp->v_fs_count = 0;
   vp->v_ref_count = 0;
   vp->v_mapfs_count = 0;
+  /* Clear the mapping eagerly, the same way get_free_vnode() does on reuse.
+   * Otherwise this vnode keeps a dangling v_mapfs_e/v_mapinode_nr pointing at
+   * the PFS inode we just released.  On SMP a concurrent reopen can observe or
+   * reuse this slot in the window before recycling and either skip remapping
+   * (map_vnode() early-returns on v_mapfs_e != NONE, routing I/O to the freed
+   * inode -> ENOENT/EINVAL) or putnode the same PFS inode a second time
+   * (-> "putnode failed: -22").  Was the test31 FIFO-reopen corruption. */
+  vp->v_mapfs_e = NONE;
+  vp->v_mapinode_nr = 0;
 
   unlock_vnode(vp);
 }

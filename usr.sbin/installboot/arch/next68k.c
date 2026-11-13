@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $ */
+/* $NetBSD: next68k.c,v 1.9 2019/05/07 04:35:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.9 2019/05/07 04:35:31 thorpej Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -54,8 +54,12 @@ __RCSID("$NetBSD: next68k.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $");
 static uint16_t nextstep_checksum(const void *, const void *);
 static int next68k_setboot(ib_params *);
 
-struct ib_mach ib_mach_next68k =
-	{ "next68k", next68k_setboot, no_clearboot, no_editboot, 0};
+struct ib_mach ib_mach_next68k = {
+	.name		=	"next68k",
+	.setboot	=	next68k_setboot,
+	.clearboot	=	no_clearboot,
+	.editboot	=	no_editboot,
+};
 
 static uint16_t
 nextstep_checksum(const void *vbuf, const void *vlimit)

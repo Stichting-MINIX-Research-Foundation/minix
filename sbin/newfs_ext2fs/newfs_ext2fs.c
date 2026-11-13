@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.9 2013/10/19 01:09:59 christos Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.10 2019/03/06 05:11:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -112,7 +112,7 @@ static void usage(void) __dead;
 #define	DFL_SECSIZE	512
 
 int	Nflag;			/* run without writing file system */
-int	Oflag = 0;		/* format as conservative REV0 by default */
+int	Oflag = 1;		/* format as REV1 by default */
 int	verbosity;		/* amount of printf() output */
 #define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior of newfs(8) */
 int64_t fssize;			/* file system size */

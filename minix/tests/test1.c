@@ -26,9 +26,7 @@ void parent1(int childpid);
 void func(int s);
 void child1(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
@@ -72,8 +70,7 @@ void parent()
   wait(&n);
 }
 
-void child(i)
-int i;
+void child(int i)
 {
   (void) getpid();
   exit(100+i);
@@ -98,8 +95,7 @@ void test1b()
   }
 }
 
-void parent1(childpid)
-int childpid;
+void parent1(int childpid)
 {
 
   int n;
@@ -110,8 +106,7 @@ int childpid;
   wait(&n);
 }
 
-void func(s)
-int s;				/* for ANSI */
+void func(int s)
 {
   glov++;
   gct++;

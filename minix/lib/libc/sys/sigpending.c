@@ -5,8 +5,7 @@
 #include <string.h>
 #include <signal.h>
 
-int sigpending(set)
-sigset_t *set;
+int sigpending(sigset_t *set)
 {
   message m;
 

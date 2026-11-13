@@ -26,9 +26,7 @@ void dolev(void);
 void catch(int s);
 void hard(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   jmp_buf envm;
   int i, j, m = 0xFFFF;
@@ -271,8 +269,7 @@ void dolev()
   longjmp(env, 3);
 }
 
-void catch(s)
-int s;
+void catch(int s)
 {
   longjmp(env, 4);
 }

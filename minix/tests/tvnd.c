@@ -13,8 +13,7 @@
  * this would cause a deadlock in VFS, since the corresponding filp object is
  * locked to perform the ioctl(2) call when VFS gets the copyfd(2) back-call.
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	struct vnd_ioctl vnd;
 	int fd;

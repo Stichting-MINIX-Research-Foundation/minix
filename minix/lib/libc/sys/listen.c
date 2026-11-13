@@ -18,8 +18,7 @@
 /*
  * Put a socket in listening mode.
  */
-static int
-__listen(int fd, int backlog)
+static int __listen(int fd, int backlog)
 {
 	message m;
 

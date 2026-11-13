@@ -1,0 +1,6 @@
+--- a/makeinfo/cmds.c
++++ b/makeinfo/cmds.c
+@@ -22,2 +22,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ #include "cmds.h"

@@ -1,0 +1,6 @@
+--- a/makeinfo/files.c
++++ b/makeinfo/files.c
+@@ -22,2 +22,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ #include "files.h"

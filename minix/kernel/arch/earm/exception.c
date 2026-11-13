@@ -109,8 +109,7 @@ static void pagefault( struct proc *pr,
 	return;
 }
 
-static void
-data_abort(int is_nested, struct proc *pr, reg_t *saved_lr,
+static void data_abort(int is_nested, struct proc *pr, reg_t *saved_lr,
 		       struct ex_s *ep, u32_t dfar, u32_t dfsr)
 {
 	/* Extract fault status bit [0:3, 10] from DFSR */

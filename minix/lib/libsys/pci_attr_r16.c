@@ -9,9 +9,7 @@ pci_attr_r16.c
 /*===========================================================================*
  *				pci_attr_r16				     *
  *===========================================================================*/
-u16_t pci_attr_r16(devind, port)
-int devind;
-int port;
+u16_t pci_attr_r16(int devind, int port)
 {
 	int r;
 	message m;

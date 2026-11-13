@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <minix/sysutil.h>
 
 #include "syslib.h"
@@ -26,24 +27,49 @@ void panic(const char *fmt, ...)
  */
   endpoint_t me = NONE;
   char name[20];
+  char diag[512];
   int priv_flags;
   int init_flags;
+  int diag_len, n;
   void (*suicide)(void);
   va_list args;
 
   if(sys_whoami(&me, name, sizeof(name), &priv_flags, &init_flags) == OK && me != NONE)
-	printf("%s(%d): panic: ", name, me);
+	diag_len = snprintf(diag, sizeof(diag), "%s(%d): panic: ", name, me);
   else
-	printf("(sys_whoami failed): panic: ");
+	diag_len = snprintf(diag, sizeof(diag), "(sys_whoami failed): panic: ");
+
+  if(diag_len < 0)
+	diag_len = 0;
+  if(diag_len >= (int)sizeof(diag))
+	diag_len = sizeof(diag) - 1;
 
   if(fmt) {
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	n = vsnprintf(diag + diag_len, sizeof(diag) - diag_len, fmt, args);
 	va_end(args);
   } else {
-	printf("no message\n");
+	n = snprintf(diag + diag_len, sizeof(diag) - diag_len, "no message");
   }
-  printf("\n");
+  if(n < 0)
+	n = 0;
+  if(n >= (int)(sizeof(diag) - diag_len))
+	n = sizeof(diag) - diag_len - 1;
+  diag_len += n;
+
+  if(diag_len >= (int)sizeof(diag) - 1)
+	diag_len = sizeof(diag) - 2;
+  diag[diag_len++] = '\n';
+  diag[diag_len] = '\0';
+
+  /*
+   * Keep service panics visible even before the kernel panics as a result
+   * of SYS_EXIT.  SYS_DIAGCTL_DIAG records the text in the kernel message
+   * buffer; on x86_64 the kernel mirrors that diagnostic to COM1 as well.
+   * Ignore errors here: a failed diagnostic must not recurse into panic().
+   */
+  (void)sys_diagctl_diag(diag, diag_len);
+  printf("%s", diag);
 
   printf("syslib:panic.c: stacktrace: ");
   util_stacktrace();

@@ -214,6 +214,7 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 
 # Minix libraries
 .for _lib in \
+	acpi \
 	audiodriver \
 	bdev \
 	blockdriver \

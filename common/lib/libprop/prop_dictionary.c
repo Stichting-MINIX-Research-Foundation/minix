@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_dictionary.c,v 1.39 2013/10/18 18:26:20 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.45 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,8 @@
 #include <prop/prop_array.h>
 #include <prop/prop_dictionary.h>
 #include <prop/prop_string.h>
-#include "prop_rb_impl.h"
+
+#include <sys/rbtree.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <errno.h>
@@ -132,7 +133,7 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_equals		=	_prop_dictionary_equals,
 	.pot_equals_finish	=	_prop_dictionary_equals_finish,
 	.pot_lock 	        =       _prop_dictionary_lock,
-	.pot_unlock 	        =       _prop_dictionary_unlock,		
+	.pot_unlock 	        =       _prop_dictionary_unlock,
 };
 
 static _prop_object_free_rv_t
@@ -210,7 +211,7 @@ _prop_dict_init(void)
 {
 
 	_PROP_MUTEX_INIT(_prop_dict_keysym_tree_mutex);
-	_prop_rb_tree_init(&_prop_dict_keysym_tree,
+	rb_tree_init(&_prop_dict_keysym_tree,
 			   &_prop_dict_keysym_rb_tree_ops);
 	return 0;
 }
@@ -235,7 +236,7 @@ _prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_keysym_t pdk = *obj;
 
-	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, pdk);
+	rb_tree_remove_node(&_prop_dict_keysym_tree, pdk);
 	_prop_dict_keysym_put(pdk);
 
 	return _PROP_OBJECT_FREE_DONE;
@@ -256,7 +257,7 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 						pdk->pdk_key) == false ||
 	    _prop_object_externalize_end_tag(ctx, "string") == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -292,7 +293,7 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find_node(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
@@ -328,14 +329,14 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find_node(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
-	rpdk = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
+	rpdk = rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
 	_PROP_ASSERT(rpdk == pdk);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (rpdk);
@@ -447,7 +448,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	pi = _prop_dictionary_iterator_locked(pd);
 	if (pi == NULL)
 		goto out;
-	
+
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
@@ -474,7 +475,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	}
 	if (_prop_object_externalize_end_tag(ctx, "dict") == false)
 		goto out;
-	
+
 	rv = true;
 
  out:
@@ -596,7 +597,7 @@ _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 
 	if (oarray != NULL)
 		_PROP_FREE(oarray, M_PROP_DICT);
-	
+
 	return (true);
 }
 
@@ -655,9 +656,7 @@ static void
 _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-#if defined(__minix) && defined(_REENTRANT)
 	prop_dictionary_t pd _PROP_ARG_UNUSED = pdi->pdi_base.pi_obj;
-#endif /* defined(__minix) && defined(_REENTRANT) */
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	_prop_dictionary_iterator_reset_locked(pdi);
@@ -690,7 +689,7 @@ prop_dictionary_create_with_capacity(unsigned int capacity)
  * prop_dictionary_copy --
  *	Copy a dictionary.  The new dictionary has an initial capacity equal
  *	to the number of objects stored int the original dictionary.  The new
- *	dictionary contains refrences to the original dictionary's objects,
+ *	dictionary contains references to the original dictionary's objects,
  *	not copies of those objects (i.e. a shallow copy).
  */
 prop_dictionary_t
@@ -916,19 +915,15 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
 
-#if defined(__minix) && defined(_REENTRANT)
 	if (!locked)
 		_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
-#endif /* defined(__minix) && defined(_REENTRANT) */
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
 		_PROP_ASSERT(pde->pde_objref != NULL);
 		po = pde->pde_objref;
 	}
-#if defined(__minix) && defined(_REENTRANT)
 	if (!locked)
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-#endif /* defined(__minix) && defined(_REENTRANT) */
 	return (po);
 }
 /*
@@ -975,7 +970,7 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 /*
  * prop_dictionary_set --
  *	Store a reference to an object at with the specified key.
- *	If the key already exisit, the original object is released.
+ *	If the key already exist, the original object is released.
  */
 bool
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
@@ -1175,9 +1170,22 @@ prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 }
 
 /*
- * prop_dictionary_keysym_cstring_nocopy --
- *	Return an immutable reference to the keysym's value.
+ * prop_dictionary_keysym_value --
+ *	Return a reference to the keysym's value.
  */
+const char *
+prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
+{
+
+	if (! prop_object_is_dictionary_keysym(pdk))
+		return (NULL);
+
+	return (pdk->pdk_key);
+}
+
+_PROP_DEPRECATED(prop_dictionary_keysym_cstring_nocopy,
+    "this program uses prop_dictionary_keysym_cstring_nocopy(), "
+    "which is deprecated; use prop_dictionary_keysym_value() instead.")
 const char *
 prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 {
@@ -1348,7 +1356,7 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	if (_prop_object_internalize_find_tag(ctx, "key",
 				_PROP_TAG_TYPE_END) == false)
 		goto bad;
-   
+
 	/* ..and now the beginning of the value. */
 	if (_prop_object_internalize_find_tag(ctx, NULL,
 				_PROP_TAG_TYPE_START) == false)

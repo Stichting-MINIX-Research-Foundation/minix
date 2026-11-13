@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.6 2003/08/07 11:25:33 agc Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.7 2017/02/09 04:42:53 kre Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -46,7 +46,7 @@ struct indir {
 
 	/* ffs.c */
 void panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
 	/* ffs_alloc.c */
 int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
@@ -59,14 +59,14 @@ void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int ffs_balloc(struct inode *, off_t, int, struct buf **);
 
 	/* ffs_bswap.c */
-void ffs_sb_swap(struct fs*, struct fs *);
+void ffs_sb_swap(const struct fs*, struct fs *);
 void ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 void ffs_csum_swap(struct csum *, struct csum *, int);
 void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
-void ffs_fragacct(struct fs *, int, int32_t[], int, int);
+void ffs_fragacct(struct fs *, int, uint32_t[], int, int);
 int ffs_isblock(struct fs *, u_char *, int32_t);
 int ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void ffs_clrblock(struct fs *, u_char *, int32_t);

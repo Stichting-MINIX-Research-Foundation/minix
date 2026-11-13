@@ -55,8 +55,7 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
  * (with errno set) on failure.  The original request code is given in
  * 'request' and must be replaced by the new request code to be used.
  */
-static vir_bytes
-ioctl_convert_if_to_minix(void * data, unsigned long * request)
+static vir_bytes ioctl_convert_if_to_minix(void * data, unsigned long * request)
 {
 	struct minix_ifmediareq *mifm;
 	struct ifmediareq *ifm;
@@ -111,8 +110,7 @@ ioctl_convert_if_to_minix(void * data, unsigned long * request)
  * the flat format used to make the call to MINIX3.  Called on success only.
  * The given request code is that of the (NetBSD-type) original.
  */
-static void
-ioctl_convert_if_from_minix(vir_bytes addr, void * data, unsigned long request)
+static void ioctl_convert_if_from_minix(vir_bytes addr, void * data, unsigned long request)
 {
 	struct minix_ifmediareq *mifm;
 	struct ifmediareq *ifm;
@@ -158,8 +156,7 @@ ioctl_convert_if_from_minix(vir_bytes addr, void * data, unsigned long request)
  * zero (with errno set) on failure.  The original request code is given in
  * 'request' and must be replaced by the new request code to be used.
  */
-static vir_bytes
-ioctl_convert_bpf_to_minix(void * data, unsigned long * request)
+static vir_bytes ioctl_convert_bpf_to_minix(void * data, unsigned long * request)
 {
 	struct minix_bpf_program *mbf;
 	struct bpf_program *bf;
@@ -217,8 +214,7 @@ ioctl_convert_bpf_to_minix(void * data, unsigned long * request)
  * pointers from the flat format used to make the call to MINIX3.  Called on
  * success only.  The given request code is that of the (NetBSD-type) original.
  */
-static void
-ioctl_convert_bpf_from_minix(vir_bytes addr, void * data,
+static void ioctl_convert_bpf_from_minix(vir_bytes addr, void * data,
 	unsigned long request)
 {
 	struct minix_bpf_dltlist *mbfl;
@@ -245,8 +241,7 @@ ioctl_convert_bpf_from_minix(vir_bytes addr, void * data,
 /*
  * Library implementation of FIOCLEX and FIONCLEX.
  */
-static int
-ioctl_to_setfd(int fd, int mask, int val)
+static int ioctl_to_setfd(int fd, int mask, int val)
 {
 	int fl;
 
@@ -261,8 +256,7 @@ ioctl_to_setfd(int fd, int mask, int val)
 /*
  * Library implementation of FIONBIO and FIOASYNC.
  */
-static int
-ioctl_to_setfl(int fd, void * data, int sfl)
+static int ioctl_to_setfl(int fd, void * data, int sfl)
 {
 	int arg, fl;
 
@@ -285,8 +279,7 @@ ioctl_to_setfl(int fd, void * data, int sfl)
  * the actual open file.  They should therefore be handled by VFS rather than
  * individual device drivers.  We rewrite them to use fcntl(2) instead here.
  */
-static int
-ioctl_to_fcntl(int fd, unsigned long request, void * data)
+static int ioctl_to_fcntl(int fd, unsigned long request, void * data)
 {
 	switch (request) {
 	case FIOCLEX:
@@ -308,7 +301,11 @@ ioctl_to_fcntl(int fd, unsigned long request, void * data)
 int     ioctl(int fd, unsigned long request, ...)
 {
   minix_i2c_ioctl_exec_t i2c;
-  int r, request_save;
+  int r;
+  unsigned long request_save;	/* must match 'request' width: ioctl codes
+				 * set bit 31 (IOC_IN), which an int would
+				 * sign-extend on LP64 and break the request
+				 * comparisons below */
   message m;
   vir_bytes addr;
   void *data;

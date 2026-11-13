@@ -30,6 +30,7 @@
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
 #	of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
+#   NOBINARIES will not build binaries, only includes and libraries
 #
 #   See mk.conf(5) for more details.
 #
@@ -92,13 +93,12 @@
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
-#   do-lib:          builds and installs prerequisites from lib
-#                    if ${MKCOMPAT} != "no".
+#   do-lib:          builds and installs prerequisites from lib.
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
 #                    if ${MKCOMPAT} != "no".
+#   do-x11:          builds and installs X11 tools and libraries
+#                    from src/external/mit/xorg if ${MKX11} != "no".
 #   do-build:        builds and installs the entire system.
-#   do-x11:          builds and installs X11 if ${MKX11} != "no"; either
-#                    X11R7 from src/external/mit/xorg 
 #   do-extsrc:       builds and installs extsrc if ${MKEXTSRC} != "no".
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
@@ -136,8 +136,9 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include gnu external crypto/external bin games
-_SUBDIR+=	libexec sbin usr.bin
+_SUBDIR=	tools .WAIT lib
+_SUBDIR+=	 include gnu external crypto/external bin
+_SUBDIR+=	games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
 _SUBDIR+=	.WAIT rescue .WAIT distrib regress
 .if defined(__MINIX)
@@ -177,7 +178,8 @@ afterinstall: .PHONY .MAKE
 	${MAKEDIRTARGET} . postinstall-check
 .endif
 
-_POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall \
+_POSTINSTALL=	${:!cd ${.CURDIR}/usr.sbin/postinstall && \
+			${MAKE} print-objdir!}/postinstall  \
 		-m ${MACHINE} -a ${MACHINE_ARCH}
 _POSTINSTALL_ENV= \
 	AWK=${TOOL_AWK:Q}		\
@@ -248,6 +250,7 @@ BUILDTARGETS+=	do-compat-lib
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
 .endif
+.if !defined(NOBINARIES)
 BUILDTARGETS+=	do-build
 .if ${MKEXTSRC} != "no"
 BUILDTARGETS+=	do-extsrc
@@ -258,6 +261,7 @@ BUILDTARGETS+=	do-installsrc
 .endif # defined(__MINIX)
 
 BUILDTARGETS+=	do-obsolete
+.endif
 
 #
 # Enforce proper ordering of some rules.
@@ -325,7 +329,6 @@ build: .PHONY .MAKE
 	${MAKEDIRTARGET} etc install-etc-release
 .if defined(__MINIX)
 	${MAKEDIRTARGET} etc install-etc-files-safe DESTDIR=${DESTDIR:U/}
-	${MAKEDIRTARGET} releasetools do-hdboot
 .endif # defined(__MINIX)
 	@echo   "Build started at:  ${START_TIME}"
 	@printf "Build finished at: " && date
@@ -347,7 +350,7 @@ distribution buildworld: .PHONY .MAKE
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
 	${MAKEDIRTARGET} . postinstall-fix-obsolete_stand
-	${MAKEDIRTARGET} distrib/sets checkflist
+	${MAKEDIRTARGET} distrib/sets checkflist SLOPPY_FLIST=YES
 .endif
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
@@ -503,6 +506,7 @@ do-tools: .PHONY .MAKE
 
 do-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} lib build_install
+	${MAKEDIRTARGET} minix/lib build_install
 
 do-compat-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} compat build_install BOOTSTRAP_SUBDIRS="../../../lib"
@@ -572,3 +576,4 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.clean.mk>

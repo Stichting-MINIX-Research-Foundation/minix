@@ -7,6 +7,7 @@
 #
 .                                                       minix-kernel
 ./boot                                                  minix-kernel
+./boot.cfg                                              minix-kernel
 ./boot/minix                                            minix-kernel
 ./boot/minix/.temp                                      minix-kernel
 ./boot/minix/.temp/kernel                               minix-kernel
@@ -29,3 +30,4 @@
 ./var/db                                                minix-kernel
 ./var/db/obsolete                                       minix-kernel
 ./var/db/obsolete/minix-kernel                          minix-kernel
+

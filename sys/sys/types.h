@@ -50,44 +50,44 @@
 
 #include <sys/ansi.h>
 
-#ifndef	int8_t
+#ifndef	_BSD_INT8_T_
 typedef	__int8_t	int8_t;
-#define	int8_t		__int8_t
+#define	_BSD_INT8_T_
 #endif
 
-#ifndef	uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef	__uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef	int16_t
+#ifndef	_BSD_INT16_T_
 typedef	__int16_t	int16_t;
-#define	int16_t		__int16_t
+#define	_BSD_INT16_T_
 #endif
 
-#ifndef	uint16_t
+#ifndef	_BSD_UINT16_T_
 typedef	__uint16_t	uint16_t;
-#define	uint16_t	__uint16_t
+#define	_BSD_UINT16_T_
 #endif
 
-#ifndef	int32_t
+#ifndef	_BSD_INT32_T_
 typedef	__int32_t	int32_t;
-#define	int32_t		__int32_t
+#define	_BSD_INT32_T_
 #endif
 
-#ifndef	uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef	__uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
-#ifndef	int64_t
+#ifndef	_BSD_INT64_T_
 typedef	__int64_t	int64_t;
-#define	int64_t		__int64_t
+#define	_BSD_INT64_T_
 #endif
 
-#ifndef	uint64_t
+#ifndef	_BSD_UINT64_T_
 typedef	__uint64_t	uint64_t;
-#define	uint64_t	__uint64_t
+#define	_BSD_UINT64_T_
 #endif
 
 typedef	uint8_t		u_int8_t;
@@ -116,7 +116,10 @@ typedef int64_t		i64_t;
 
 #ifdef _NETBSD_SOURCE
 /* some Minix specific types that do not conflict with posix */
+#ifndef __defined_zone_t
+#define __defined_zone_t
 typedef uint32_t zone_t;      /* zone number */
+#endif
 typedef uint32_t block_t;     /* block number */
 typedef uint64_t block64_t;   /* block number, 64-bit */
 typedef uint32_t bit_t;       /* bit number in a bit map */
@@ -192,14 +195,28 @@ typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
 #endif
 
-typedef	int		idtype_t;	/* type of the id */
 typedef	uint32_t	id_t;		/* group id, process id or user id */
+#ifdef __ino_t
+/*
+ * Some first stage bootloaders may want to avoid 64bit math, especially
+ * when the firmware can only access small disks/partitions anyway.
+ * Example: hppa/stand/xxboot
+ */
+typedef	__ino_t		ino_t;
+#undef __ino_t
+#else
 typedef	uint64_t	ino_t;		/* inode number */
+#endif
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
 typedef	__mode_t	mode_t;		/* permissions */
 #define	mode_t		__mode_t
+#endif
+
+#ifndef	accmode_t
+typedef	__accmode_t	accmode_t;	/* access permissions */
+#define	accmode_t	__accmode_t
 #endif
 
 typedef	uint32_t	nlink_t;	/* link count */
@@ -248,7 +265,7 @@ typedef int	boolean_t;
 
 #endif /* _KERNEL || _STANDALONE */
 
-#if defined(_KERNEL) || defined(_LIBC)
+#if defined(_KERNEL) || defined(_LIBC) || defined(_KMEMUSER)
 /*
  * semctl(2)'s argument structure.  This is here for the benefit of
  * <sys/syscallargs.h>.  It is not in the user's namespace in SUSv2.
@@ -260,7 +277,7 @@ union __semun {
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
 #include <sys/stdint.h>
-#endif /* _KERNEL || _LIBC */
+#endif /* _KERNEL || _LIBC || _KMEMUSER */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
@@ -290,9 +307,9 @@ typedef int32_t __devmajor_t, __devminor_t;
 #define	major(x)	((devmajor_t)(((uint32_t)(x) & 0x000fff00) >>  8))
 #define	minor(x)	((devminor_t)((((uint32_t)(x) & 0xfff00000) >> 12) | \
 				   (((uint32_t)(x) & 0x000000ff) >>  0)))
-#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
-				 (((y) << 12) & 0xfff00000) | \
-				 (((y) <<  0) & 0x000000ff)))
+#define	makedev(x,y)	((dev_t)((((dev_t)(x) <<  8) & 0x000fff00U) | \
+				 (((dev_t)(y) << 12) & 0xfff00000U) | \
+				 (((dev_t)(y) <<  0) & 0x000000ffU)))
 #endif
 
 #ifdef	_BSD_CLOCK_T_
@@ -373,7 +390,7 @@ struct	tty;
 struct	uio;
 #endif
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define SET(t, f)	((t) |= (f))
 #define	ISSET(t, f)	((t) & (f))
 #define	CLR(t, f)	((t) &= ~(f))

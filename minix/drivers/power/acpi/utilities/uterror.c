@@ -218,8 +218,7 @@ AcpiUtPredefinedBiosError (
  *
  ******************************************************************************/
 
-void
-AcpiUtNamespaceError (
+void AcpiUtNamespaceError (
     const char              *ModuleName,
     UINT32                  LineNumber,
     const char              *InternalName,
@@ -289,8 +288,7 @@ AcpiUtNamespaceError (
  *
  ******************************************************************************/
 
-void
-AcpiUtMethodError (
+void AcpiUtMethodError (
     const char              *ModuleName,
     UINT32                  LineNumber,
     const char              *Message,

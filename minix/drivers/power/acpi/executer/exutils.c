@@ -88,8 +88,7 @@ AcpiExDigitsNeeded (
  *
  ******************************************************************************/
 
-void
-AcpiExEnterInterpreter (
+void AcpiExEnterInterpreter (
     void)
 {
     ACPI_STATUS             Status;
@@ -131,8 +130,7 @@ AcpiExEnterInterpreter (
  *
  ******************************************************************************/
 
-void
-AcpiExExitInterpreter (
+void AcpiExExitInterpreter (
     void)
 {
     ACPI_STATUS             Status;
@@ -212,8 +210,7 @@ AcpiExTruncateFor32bitTable (
  *
  ******************************************************************************/
 
-void
-AcpiExAcquireGlobalLock (
+void AcpiExAcquireGlobalLock (
     UINT32                  FieldFlags)
 {
     ACPI_STATUS             Status;
@@ -257,8 +254,7 @@ AcpiExAcquireGlobalLock (
  *
  ******************************************************************************/
 
-void
-AcpiExReleaseGlobalLock (
+void AcpiExReleaseGlobalLock (
     UINT32                  FieldFlags)
 {
     ACPI_STATUS             Status;
@@ -353,8 +349,7 @@ AcpiExDigitsNeeded (
  *
  ******************************************************************************/
 
-void
-AcpiExEisaIdToString (
+void AcpiExEisaIdToString (
     char                    *OutString,
     UINT64                  CompressedId)
 {
@@ -407,8 +402,7 @@ AcpiExEisaIdToString (
  *
  ******************************************************************************/
 
-void
-AcpiExIntegerToString (
+void AcpiExIntegerToString (
     char                    *OutString,
     UINT64                  Value)
 {

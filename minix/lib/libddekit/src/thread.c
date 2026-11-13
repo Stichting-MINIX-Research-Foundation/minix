@@ -58,8 +58,7 @@ static void _ddekit_thread_sleep(unsigned long until)
 /*****************************************************************************
  *    _ddekit_dump_queues                                                    *
  ****************************************************************************/
-static void
-_ddekit_dump_queues(void)
+static void _ddekit_dump_queues(void)
 {
 #if DDEBUG >= DDEBUG_VERBOSE
 	ddekit_thread_t * current_thread;
@@ -315,8 +314,7 @@ void  ddekit_thread_exit()
 /*****************************************************************************
  *    ddekit_thread_terminate                                                *
  ****************************************************************************/
-void
-ddekit_thread_terminate(ddekit_thread_t * thread)
+void ddekit_thread_terminate(ddekit_thread_t * thread)
 {
 	if (thread == ddekit_thread_myself()) {
 		/* TODO: Whether or not this is an error, is to be decided.
@@ -468,8 +466,7 @@ void _ddekit_thread_enqueue(ddekit_thread_t *th)
 /*****************************************************************************
  *    _ddekit_thread_dequeue                                                 *
  ****************************************************************************/
-void
-_ddekit_thread_dequeue(ddekit_thread_t * th)
+void _ddekit_thread_dequeue(ddekit_thread_t * th)
 {
 	ddekit_thread_t * current_thread;
 	ddekit_thread_t * previous_thread;

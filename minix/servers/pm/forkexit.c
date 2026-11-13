@@ -41,8 +41,7 @@ static void cleanup(register struct mproc *rmp);
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-int
-do_fork(void)
+int do_fork(void)
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
@@ -88,6 +87,16 @@ do_fork(void)
   rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
   memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
+  /*
+   * "The set of signals pending for the child process shall be initialized to
+   * the empty set" (POSIX fork(2)).  The slot was copied wholesale above, so
+   * without this the child inherits whatever had been raised for the parent
+   * and not yet delivered, and that signal is then handled twice: once in each
+   * process.  In a program whose handler answers the sender -- test79 does
+   * exactly this -- the child answers too, before exiting.
+   */
+  (void) sigemptyset(&rmc->mp_sigpending);
+  (void) sigemptyset(&rmc->mp_ksigpending);
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;
@@ -142,8 +151,7 @@ do_fork(void)
 /*===========================================================================*
  *				do_srv_fork				     *
  *===========================================================================*/
-int
-do_srv_fork(void)
+int do_srv_fork(void)
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
@@ -191,6 +199,16 @@ do_srv_fork(void)
   rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
   memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
+  /*
+   * "The set of signals pending for the child process shall be initialized to
+   * the empty set" (POSIX fork(2)).  The slot was copied wholesale above, so
+   * without this the child inherits whatever had been raised for the parent
+   * and not yet delivered, and that signal is then handled twice: once in each
+   * process.  In a program whose handler answers the sender -- test79 does
+   * exactly this -- the child answers too, before exiting.
+   */
+  (void) sigemptyset(&rmc->mp_sigpending);
+  (void) sigemptyset(&rmc->mp_ksigpending);
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;
@@ -242,8 +260,7 @@ do_srv_fork(void)
 /*===========================================================================*
  *				do_exit					     *
  *===========================================================================*/
-int
-do_exit(void)
+int do_exit(void)
 {
  /* Perform the exit(status) system call. The real work is done by exit_proc(),
   * which is also called when a process is killed by a signal. System processes
@@ -264,8 +281,7 @@ do_exit(void)
 /*===========================================================================*
  *				exit_proc				     *
  *===========================================================================*/
-void
-exit_proc(
+void exit_proc(
 	register struct mproc *rmp,	/* pointer to the process to be terminated */
 	int exit_status,		/* the process' exit status (for parent) */
 	int dump_core			/* flag indicating whether to dump core */
@@ -471,8 +487,7 @@ void exit_restart(struct mproc *rmp)
 /*===========================================================================*
  *				do_wait4				     *
  *===========================================================================*/
-int
-do_wait4(void)
+int do_wait4(void)
 {
 /* A process wants to wait for a child to terminate. If a child is already
  * waiting, go clean it up and let this WAIT4 call terminate.  Otherwise,
@@ -499,7 +514,7 @@ do_wait4(void)
    */
   children = 0;
   for (rp = &mproc[0]; rp < &mproc[NR_PROCS]; rp++) {
-	if ((rp->mp_flags & (IN_USE | TOLD_PARENT)) != IN_USE) continue;
+	if (!LIVE_PROC(rp)) continue;
 	if (rp->mp_parent != who_p && rp->mp_tracer != who_p) continue;
 	if (rp->mp_parent != who_p && (rp->mp_flags & ZOMBIE)) continue;
 
@@ -566,8 +581,7 @@ do_wait4(void)
 /*===========================================================================*
  *				wait_test				     *
  *===========================================================================*/
-int
-wait_test(
+int wait_test(
 	struct mproc *rmp,			/* process that may be waiting */
 	struct mproc *child			/* process that may be waited for */
 )
@@ -590,8 +604,7 @@ wait_test(
 /*===========================================================================*
  *				zombify					     *
  *===========================================================================*/
-static void
-zombify(struct mproc *rmp)
+static void zombify(struct mproc *rmp)
 {
 /* Zombify a process. First check if the exiting process is traced by a process
  * other than its parent; if so, the tracer must be notified about the exit
@@ -626,8 +639,7 @@ zombify(struct mproc *rmp)
 /*===========================================================================*
  *				check_parent				     *
  *===========================================================================*/
-static void
-check_parent(
+static void check_parent(
 	struct mproc *child,			/* tells which process is exiting */
 	int try_cleanup			/* clean up the child when done? */
 )
@@ -728,8 +740,7 @@ static int tell_parent(struct mproc *child, vir_bytes addr)
 /*===========================================================================*
  *				tell_tracer				     *
  *===========================================================================*/
-static void
-tell_tracer(
+static void tell_tracer(
 	struct mproc *child			/* tells which process is exiting */
 )
 {
@@ -756,8 +767,7 @@ tell_tracer(
 /*===========================================================================*
  *				tracer_died				     *
  *===========================================================================*/
-static void
-tracer_died(
+static void tracer_died(
 	struct mproc *child			/* process being traced */
 )
 {
@@ -792,8 +802,7 @@ tracer_died(
 /*===========================================================================*
  *				cleanup					     *
  *===========================================================================*/
-static void
-cleanup(
+static void cleanup(
 	register struct mproc *rmp	/* tells which process is exiting */
 )
 {

@@ -55,8 +55,7 @@ static struct optset optset_table[] = {
 /*
  * Initialize this file server. Called at startup time.
  */
-static int
-init(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	const struct sffs_table *table;
 	int i, r, roflag;
@@ -107,8 +106,7 @@ init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*
  * Local SEF initialization.
  */
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 
 	/* Register initialization callback. */
@@ -123,8 +121,7 @@ sef_local_startup(void)
 /*
  * The main function of this file server.
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
 	/* Start up. */

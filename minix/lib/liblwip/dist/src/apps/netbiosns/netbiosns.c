@@ -145,8 +145,7 @@ static char netbiosns_local_name[NETBIOS_NAME_LEN];
 struct udp_pcb *netbiosns_pcb;
 
 /** Decode a NetBIOS name (from packet to string) */
-static int
-netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
+static int netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
 {
   char *pname;
   char  cname;
@@ -200,8 +199,7 @@ netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
 #if 0 /* function currently unused */
 /** Encode a NetBIOS name (from string to packet) - currently unused because
     we don't ask for names. */
-static int
-netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
+static int netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
 {
   char         *pname;
   char          cname;
@@ -250,8 +248,7 @@ netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
 #endif /* 0 */
 
 /** NetBIOS Name service recv callback */
-static void
-netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+static void netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   LWIP_UNUSED_ARG(arg);
 
@@ -318,8 +315,7 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
  * @ingroup netbiosns 
  * Init netbios responder
  */
-void
-netbiosns_init(void)
+void netbiosns_init(void)
 {
 #ifdef NETBIOS_LWIP_NAME
   LWIP_ASSERT("NetBIOS name is too long!", strlen(NETBIOS_LWIP_NAME) < NETBIOS_NAME_LEN);
@@ -339,8 +335,7 @@ netbiosns_init(void)
  * @ingroup netbiosns 
  * Set netbios name. ATTENTION: the hostname must be less than 15 characters!
  */
-void
-netbiosns_set_name(const char* hostname)
+void netbiosns_set_name(const char* hostname)
 {
   size_t copy_len = strlen(hostname);
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
@@ -355,8 +350,7 @@ netbiosns_set_name(const char* hostname)
  * @ingroup netbiosns 
  * Stop netbios responder
  */
-void
-netbiosns_stop(void)
+void netbiosns_stop(void)
 {
   if (netbiosns_pcb != NULL) {
     udp_remove(netbiosns_pcb);

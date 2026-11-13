@@ -67,22 +67,14 @@ static int remove_subr(struct v7fs_self *, void *, v7fs_daddr_t, size_t);
 
 int
 v7fs_file_lookup_by_name(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
-    const char *name, v7fs_ino_t *ino)
+    const char *name, size_t namelen, v7fs_ino_t *ino)
 {
 	char filename[V7FS_NAME_MAX + 1];
-	char *q;
 	int error;
-	size_t len;
 
-	if ((q = strchr(name, '/'))) {
-		/* Zap following path. */
-		len = MIN(V7FS_NAME_MAX, q - name);
-		memcpy(filename, name, len);
-		filename[len] = '\0';	/* '/' -> '\0' */
-	} else {
-		v7fs_dirent_filename(filename, name);
-	}
-	DPRINTF("%s(%s) dir=%d\n", filename, name, parent_dir->inode_number);
+	v7fs_dirent_filename(filename, name, namelen);
+	DPRINTF("%s(%.*s) dir=%d\n", filename, (int)namelen, name,
+	    parent_dir->inode_number);
 
 	struct v7fs_lookup_arg lookup_arg = { .name = filename,
 					      .inode_number = 0 };
@@ -135,20 +127,17 @@ lookup_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk, size_t sz)
 
 int
 v7fs_file_allocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
-    const char *srcname, struct v7fs_fileattr *attr, v7fs_ino_t *ino)
+    const char *srcname, size_t srclen, struct v7fs_fileattr *attr,
+    v7fs_ino_t *ino)
 {
 	struct v7fs_inode inode;
-	char filename[V7FS_NAME_MAX + 1];
 	struct v7fs_dirent *dir;
 	int error;
 
-	/* Truncate filename. */
-	v7fs_dirent_filename(filename, srcname);
-	DPRINTF("%s(%s)\n", filename, srcname);
-
 	/* Check filename. */
-	if (v7fs_file_lookup_by_name(fs, parent_dir, filename, ino) == 0) {
-		DPRINTF("%s exists\n", filename);
+	if (v7fs_file_lookup_by_name(fs, parent_dir, srcname, srclen,
+	    ino) == 0) {
+		DPRINTF("%.*s exists\n", (int)srclen, srcname);
 		return EEXIST;
 	}
 
@@ -219,7 +208,8 @@ v7fs_file_allocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 	v7fs_inode_writeback(fs, &inode);
 
 	/* Link this inode to parent directory. */
-	if ((error = v7fs_directory_add_entry(fs, parent_dir, *ino, filename)))
+	if ((error = v7fs_directory_add_entry(fs, parent_dir, *ino, srcname,
+	    srclen)))
 	{
 		DPRINTF("can't add dirent.\n");
 		return error;
@@ -230,24 +220,25 @@ v7fs_file_allocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 
 int
 v7fs_file_deallocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
-    const char *name)
+    const char *name, size_t namelen)
 {
 	v7fs_ino_t ino;
 	struct v7fs_inode inode;
 	int error;
 
-	DPRINTF("%s\n", name);
-	if ((error = v7fs_file_lookup_by_name(fs, parent_dir, name, &ino))) {
+	DPRINTF("%.*s\n", (int)namelen, name);
+	if ((error = v7fs_file_lookup_by_name(fs, parent_dir, name, namelen,
+	    &ino))) {
 		DPRINTF("no such a file: %s\n", name);
 		return error;
 	}
-	DPRINTF("%s->#%d\n", name, ino);
+	DPRINTF("%.*s->#%d\n", (int)namelen, name, ino);
 	if ((error = v7fs_inode_load(fs, &inode, ino)))
 		return error;
 
 	if (v7fs_inode_isdir(&inode)) {
 		char filename[V7FS_NAME_MAX + 1];
-		v7fs_dirent_filename(filename, name);
+		v7fs_dirent_filename(filename, name, namelen);
 		/* Check parent */
 		if (strncmp(filename, "..", V7FS_NAME_MAX) == 0) {
 			DPRINTF("can not remove '..'\n");
@@ -266,11 +257,12 @@ v7fs_file_deallocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 	} else {
 		/* Decrement reference count. */
 		--inode.nlink;	/* regular file. */
-		DPRINTF("%s nlink=%d\n", name, inode.nlink);
+		DPRINTF("%.*s nlink=%d\n", (int)namelen, name, inode.nlink);
 	}
 
 
-	if ((error = v7fs_directory_remove_entry(fs, parent_dir, name)))
+	if ((error = v7fs_directory_remove_entry(fs, parent_dir, name,
+	    namelen)))
 		return error;
 	DPRINTF("remove dirent\n");
 
@@ -281,7 +273,7 @@ v7fs_file_deallocate(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 
 int
 v7fs_directory_add_entry(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
-    v7fs_ino_t ino, const char *srcname)
+    v7fs_ino_t ino, const char *srcname, size_t srclen)
 {
 	struct v7fs_inode inode;
 	struct v7fs_dirent *dir;
@@ -291,8 +283,8 @@ v7fs_directory_add_entry(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 	char filename[V7FS_NAME_MAX + 1];
 
 	/* Truncate filename. */
-	v7fs_dirent_filename(filename, srcname);
-	DPRINTF("%s(%s) %d\n", filename, srcname, ino);
+	v7fs_dirent_filename(filename, srcname, srclen);
+	DPRINTF("%s(%.*s) %d\n", filename, (int)srclen, srcname, ino);
 
 	/* Target inode */
 	if ((error = v7fs_inode_load(fs, &inode, ino)))
@@ -335,15 +327,18 @@ v7fs_directory_add_entry(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 
 int
 v7fs_directory_remove_entry(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
-    const char *name)
+    const char *name, size_t namelen)
 {
 	struct v7fs_inode inode;
+	char filename[V7FS_NAME_MAX + 1];
 	int error;
 	struct v7fs_dirent lastdirent;
 	v7fs_daddr_t lastblk;
 	size_t sz, lastsz;
 	v7fs_off_t pos;
 	void *buf;
+
+	v7fs_dirent_filename(filename, name, namelen);
 
 	/* Setup replaced entry. */
 	sz = parent_dir->filesize;
@@ -360,7 +355,7 @@ v7fs_directory_remove_entry(struct v7fs_self *fs, struct v7fs_inode *parent_dir,
 	    V7FS_VAL16(fs, lastdirent.inode_number), lastdirent.name, pos);
 
 	struct v7fs_lookup_arg lookup_arg =
-	    { .name = name, .replace = &lastdirent/*disk endian */ };
+	    { .name = filename, .replace = &lastdirent/*disk endian */ };
 	/* Search entry that removed. replace it to last dirent. */
 	if ((error = v7fs_datablock_foreach(fs, parent_dir, remove_subr,
 	    &lookup_arg)) != V7FS_ITERATOR_BREAK)

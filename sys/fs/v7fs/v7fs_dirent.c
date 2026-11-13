@@ -81,9 +81,12 @@ v7fs_dirent_endian_convert(struct v7fs_self *fs, struct v7fs_dirent *dir, int n)
 
 void
 v7fs_dirent_filename(char *dst/* size must be V7FS_NAME_MAX + 1 */,
-    const char *src)
+    const char *src, size_t srclen)
 {
 
-	strncpy(dst, src, V7FS_NAME_MAX);
-	dst[V7FS_NAME_MAX] = '\0';
+	if (srclen > V7FS_NAME_MAX)
+		srclen = V7FS_NAME_MAX;
+
+	memset(dst, 0, V7FS_NAME_MAX + 1);
+	strncpy(dst, src, srclen);
 }

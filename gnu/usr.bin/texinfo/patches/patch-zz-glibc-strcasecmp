@@ -1,0 +1,8 @@
+--- a/lib/system.h
++++ b/lib/system.h
+@@ -123 +123 @@
+-extern int strcasecmp ();
++extern int strcasecmp (const char *, const char *);
+@@ -127 +127 @@
+-extern int strncasecmp ();
++extern int strncasecmp (const char *, const char *, size_t);

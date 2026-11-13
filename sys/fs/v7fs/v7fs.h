@@ -162,17 +162,17 @@ struct v7fs_inode_diskimage {
 
 /* File type */
 #define	V7FS_IFMT	0170000	/* File type mask */
-#define	V7FS_IFCHR	0020000	/* charcter device */
+#define	V7FS_IFCHR	0020000	/* character device */
 #define	V7FS_IFDIR	0040000	/* directory */
 #define	V7FS_IFBLK	0060000	/* block device */
 #define	V7FS_IFREG	0100000	/* file. */
 /* Obsoleted file type. */
 #define	V7FS_IFMPC	0030000	/* multiplexed char special */
 #define	V7FS_IFMPB	0070000	/* multiplexed block special */
-/* Don't apear original V7 filesystem. Found at 2.10BSD. */
+/* Don't appear original V7 filesystem. Found at 2.10BSD. */
 #define	V7FSBSD_IFLNK	0120000	/* symbolic link */
 #define	V7FSBSD_IFSOCK	0140000	/* socket */
-/* Don't apear original V7 filesystem. NetBSD. */
+/* Don't appear original V7 filesystem. NetBSD. */
 #define	V7FSBSD_IFFIFO	0010000	/* Named pipe. */
 
 #define	V7FSBSD_MAXSYMLINKLEN	V7FS_BSIZE

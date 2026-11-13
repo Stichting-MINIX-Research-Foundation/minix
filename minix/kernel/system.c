@@ -210,7 +210,7 @@ void system_init(void)
 
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
   map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */
 #endif
@@ -218,6 +218,9 @@ void system_init(void)
   /* Memory management. */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
   map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
+#if defined(__x86_64__)
+  map(SYS_MXVCTL, do_mxvctl);		/* MXV Intel VMX control */
+#endif
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
@@ -252,8 +255,8 @@ void system_init(void)
   map(SYS_PADCONF, do_padconf);		/* configure pinmux */
 #endif
 
-  /* i386-specific. */
-#if defined(__i386__)
+  /* i386/x86_64-specific (same x86 port I/O and BIOS access). */
+#if defined(__i386__) || defined(__x86_64__)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */

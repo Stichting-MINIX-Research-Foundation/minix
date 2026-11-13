@@ -74,8 +74,7 @@ static struct inode_stat default_file_stat = {
 /* Buffer size for read requests */
 #define DATA_SIZE	26
 
-int
-add_gpio_inode(char *name, int nr, int mode)
+int add_gpio_inode(char *name, int nr, int mode)
 {
 	/* Create 2 files nodes for "name" "nameon" and "nameoff" to read and
 	 * set values as we don't support writing yet */
@@ -162,8 +161,7 @@ add_gpio_inode(char *name, int nr, int mode)
 	return OK;
 }
 
-static void
-init_hook(void)
+static void init_hook(void)
 {
 	/* This hook will be called once, after VTreeFS has initialized. */
 	if (gpio_init()) {
@@ -255,14 +253,12 @@ static ssize_t
 	return len;
 }
 
-static void
-message_hook(message * m, int __unused ipc_status)
+static void message_hook(message * m, int __unused ipc_status)
 {
 	gpio_intr_message(m);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
 	struct fs_hooks hooks;

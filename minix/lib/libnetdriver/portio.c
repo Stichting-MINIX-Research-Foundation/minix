@@ -11,8 +11,7 @@
 /*
  * Port-based I/O byte sequence copy routine.
  */
-static void
-netdriver_portb(struct netdriver_data * data, size_t off, long port,
+static void netdriver_portb(struct netdriver_data * data, size_t off, long port,
 	size_t size, int portin)
 {
 	size_t chunk;
@@ -30,7 +29,7 @@ netdriver_portb(struct netdriver_data * data, size_t off, long port,
 		assert(chunk > 0);
 
 		if ((r = sys_sdevio(req, port, data->endpt,
-		    (void *)data->iovec[i].iov_grant, chunk, off)) != OK)
+		    (void *)(uintptr_t)data->iovec[i].iov_grant, chunk, off)) != OK)
 			panic("netdriver: port I/O failed: %d", r);
 
 		i++;
@@ -42,8 +41,7 @@ netdriver_portb(struct netdriver_data * data, size_t off, long port,
 /*
  * Transfer bytes from hardware to a destination buffer using port-based I/O.
  */
-void
-netdriver_portinb(struct netdriver_data * data, size_t off, long port,
+void netdriver_portinb(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
 
@@ -53,8 +51,7 @@ netdriver_portinb(struct netdriver_data * data, size_t off, long port,
 /*
  * Transfer bytes from a source buffer to hardware using port-based I/O.
  */
-void
-netdriver_portoutb(struct netdriver_data * data, size_t off, long port,
+void netdriver_portoutb(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
 
@@ -64,8 +61,7 @@ netdriver_portoutb(struct netdriver_data * data, size_t off, long port,
 /*
  * Transfer words from hardware to a destination buffer using port-based I/O.
  */
-void
-netdriver_portinw(struct netdriver_data * data, size_t off, long port,
+void netdriver_portinw(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
 	uint16_t buf;
@@ -127,8 +123,7 @@ netdriver_portinw(struct netdriver_data * data, size_t off, long port,
 /*
  * Transfer words from a source buffer to hardware using port-based I/O.
  */
-void
-netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
+void netdriver_portoutw(struct netdriver_data * data, size_t off, long port,
 	size_t size)
 {
 	uint16_t buf;

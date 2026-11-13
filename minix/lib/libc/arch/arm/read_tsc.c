@@ -1,8 +1,7 @@
 #include <sys/types.h>
 #include <minix/minlib.h>
 
-void
-read_tsc(u32_t *hi, u32_t *lo)
+void read_tsc(u32_t *hi, u32_t *lo)
 {
 /* Read Clock Cycle Counter (CCNT). Intel calls it Time Stamp Counter (TSC) */
 	u32_t ccnt;

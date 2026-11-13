@@ -2,8 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int
-vm_memctl(endpoint_t ep, int req, void** addr, size_t *len)
+int vm_memctl(endpoint_t ep, int req, void** addr, size_t *len)
 {
 	message m;
 	int r;

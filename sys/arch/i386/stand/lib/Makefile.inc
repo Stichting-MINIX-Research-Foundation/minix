@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2015/09/06 15:34:55 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2018/06/13 16:03:10 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -28,12 +28,12 @@ CWARNFLAGS.clang+=	-Wno-tautological-compare
 I386MAKE= \
 	cd ${I386DIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
 	    MAKEOBJDIR=${I386DST} ${MAKE} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    I386CPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
-	    I386MISCCPPFLAGS=${I386MISCCPPFLAGS:Q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    I386CPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:q} \
+	    I386MISCCPPFLAGS=${I386MISCCPPFLAGS:q} \
 	    ${I386MISCMAKEFLAGS}
 
 ${I386LIB}:		.NOTMAIN __always_make_i386lib

@@ -87,8 +87,7 @@ static int owns_unit (TDB_DATA pid, int unit);
 
 #define process_exists(n)	(kill((n), 0) == 0 || errno != ESRCH)
 
-void
-mp_check_options()
+void mp_check_options()
 {
 	lcp_options *wo = &lcp_wantoptions[0];
 	lcp_options *ao = &lcp_allowoptions[0];
@@ -115,8 +114,7 @@ mp_check_options()
  * Make a new bundle or join us to an existing bundle
  * if we are doing multilink.
  */
-int
-mp_join_bundle()
+int mp_join_bundle()
 {
 	lcp_options *go = &lcp_gotoptions[0];
 	lcp_options *ho = &lcp_hisoptions[0];
@@ -403,11 +401,7 @@ static void iterate_bundle_links(void (*func)(char *))
 	free(rec.dptr);
 }
 
-static int
-parse_num(str, key, valp)
-     char *str;
-     const char *key;
-     int *valp;
+static int parse_num(char *str, const char *key, int *valp)
 {
 	char *p, *endp;
 	int i;
@@ -427,10 +421,7 @@ parse_num(str, key, valp)
 /*
  * Check whether the pppd identified by `key' still owns ppp unit `unit'.
  */
-static int
-owns_unit(key, unit)
-     TDB_DATA key;
-     int unit;
+static int owns_unit(TDB_DATA key, int unit)
 {
 	char ifkey[32];
 	TDB_DATA kd, vd;
@@ -448,9 +439,7 @@ owns_unit(key, unit)
 	return ret;
 }
 
-static int
-get_default_epdisc(ep)
-     struct epdisc *ep;
+static int get_default_epdisc(struct epdisc *ep)
 {
 	char *p;
 	struct hostent *hp;
@@ -490,8 +479,7 @@ static char *endp_class_names[] = {
 };
 
 char *
-epdisc_to_str(ep)
-     struct epdisc *ep;
+epdisc_to_str(struct epdisc *ep)
 {
 	static char str[MAX_ENDP_LEN*3+8];
 	u_char *p = ep->value;
@@ -540,10 +528,7 @@ static int hexc_val(int c)
 	return c - '0';
 }
 
-int
-str_to_epdisc(ep, str)
-     struct epdisc *ep;
-     char *str;
+int str_to_epdisc(struct epdisc *ep, char *str)
 {
 	int i, l;
 	char *p, *endp;

@@ -1,0 +1,32 @@
+#	$NetBSD: list,v 1.6 2012/01/09 11:52:43 sborrill Exp $
+
+PROG	bin/chio
+PROG	bin/dd
+PROG	bin/df
+PROG	bin/ed
+PROG	bin/mt
+PROG	bin/rcmd
+PROG	bin/sync
+
+PROG	libexec/lfs_cleanerd
+
+PROG	sbin/dkctl
+PROG	sbin/fdisk
+PROG	sbin/mbrlabel
+PROG	sbin/mount_ext2fs
+PROG	sbin/mount_lfs
+PROG	sbin/mount_ntfs
+PROG	sbin/newfs_lfs
+PROG	sbin/raidctl
+PROG	sbin/restore	sbin/rrestore
+PROG	sbin/scsictl
+PROG	sbin/shutdown
+PROG	sbin/slattach
+PROG	sbin/sysctl
+
+PROG	usr/bin/less	usr/bin/more
+PROG	usr/bin/tip
+
+PROG	usr/sbin/installboot
+
+PROG	usr/sbin/wiconfig

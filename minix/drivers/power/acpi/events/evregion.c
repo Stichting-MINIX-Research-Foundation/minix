@@ -55,8 +55,7 @@ extern UINT8        AcpiGbl_DefaultAddressSpaces[];
 
 /* Local prototypes */
 
-static void
-AcpiEvOrphanEcRegMethod (
+static void AcpiEvOrphanEcRegMethod (
     ACPI_NAMESPACE_NODE     *EcDeviceNode);
 
 static ACPI_STATUS
@@ -341,8 +340,7 @@ AcpiEvAddressSpaceDispatch (
  *
  ******************************************************************************/
 
-void
-AcpiEvDetachRegion(
+void AcpiEvDetachRegion(
     ACPI_OPERAND_OBJECT     *RegionObj,
     BOOLEAN                 AcpiNsIsLocked)
 {
@@ -778,8 +776,7 @@ AcpiEvRegRun (
  *
  ******************************************************************************/
 
-static void
-AcpiEvOrphanEcRegMethod (
+static void AcpiEvOrphanEcRegMethod (
     ACPI_NAMESPACE_NODE     *EcDeviceNode)
 {
     ACPI_HANDLE             RegMethod;

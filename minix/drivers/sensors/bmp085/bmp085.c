@@ -168,8 +168,7 @@ static struct chardriver bmp085_tab = {
  * The chip does have a soft reset register (0xe0), but there
  * doesn't appear to be any documentation or example usage for it.
  */
-static int
-bmp085_init(void)
+static int bmp085_init(void)
 {
 	int r;
 	int32_t t, p;
@@ -187,8 +186,7 @@ bmp085_init(void)
 	return OK;
 }
 
-static int
-version_check(void)
+static int version_check(void)
 {
 	int r;
 	uint8_t chipid;
@@ -214,8 +212,7 @@ version_check(void)
  * set of calibration parameters that get used to compute the true temperature
  * and pressure.
  */
-static int
-read_cal_coef(void)
+static int read_cal_coef(void)
 {
 	int r;
 
@@ -313,8 +310,7 @@ read_cal_coef(void)
  * Note, the data sheet is light on the details when it comes to defining the
  * meaning of each variable, so this function has a lot of cryptic names in it.
  */
-static int
-measure(int32_t * temperature, int32_t * pressure)
+static int measure(int32_t * temperature, int32_t * pressure)
 {
 	int r;
 
@@ -417,8 +413,7 @@ measure(int32_t * temperature, int32_t * pressure)
 	return OK;
 }
 
-static ssize_t
-bmp085_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
+static ssize_t bmp085_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
     cp_grant_id_t grant, size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	u64_t dev_size;
@@ -448,8 +443,7 @@ bmp085_read(devminor_t UNUSED(minor), u64_t position, endpoint_t endpt,
 	return (r != OK) ? r : size;
 }
 
-static void
-bmp085_other(message * m, int ipc_status)
+static void bmp085_other(message * m, int ipc_status)
 {
 	int r;
 
@@ -466,16 +460,14 @@ bmp085_other(message * m, int ipc_status)
 	log_warn(&log, "Invalid message type (0x%x)\n", m->m_type);
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
 	return OK;
 }
 
-static int
-lu_state_restore(void)
+static int lu_state_restore(void)
 {
 	/* Restore the state. */
 	u32_t value;
@@ -491,8 +483,7 @@ lu_state_restore(void)
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t * UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 {
 	int r;
 
@@ -538,8 +529,7 @@ sef_cb_init(int type, sef_init_info_t * UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	/*
 	 * Register init callbacks. Use the same function for all event types
@@ -557,8 +547,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int r;
 

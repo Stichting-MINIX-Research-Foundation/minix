@@ -407,6 +407,8 @@ static void blockdriver_mt_receive(message *m_ptr, int *ipc_status)
 
   r = sef_receive_status(ANY, m_ptr, ipc_status);
 
+  if (r == EINTR && !running)
+	return;
   if (r != OK)
 	panic("blockdriver_mt: sef_receive_status() returned %d", r);
 }
@@ -452,8 +454,15 @@ void blockdriver_mt_terminate(void)
 {
 /* Instruct libblockdriver to shut down.
  */
+  unsigned int did;
 
   running = FALSE;
+
+  /* Wake all blocked worker threads so they can observe !running and exit. */
+  for (did = 0; did < MAX_DEVICES; did++)
+	mthread_event_fire_all(&device[did].queue_event);
+
+  sef_cancel();
 }
 
 /*===========================================================================*
@@ -513,8 +522,9 @@ void blockdriver_mt_set_workers(device_id_t id, unsigned int workers)
 
   dp = &device[id];
 
-  /* If we are cleaning up, wake up all threads waiting on a queue event. */
-  if (workers == 1 && dp->workers > workers)
+  /* Wake threads that are being retired so they observe the new workers
+   * count and exit rather than waiting forever for a queue event. */
+  if (dp->workers > workers)
 	mthread_event_fire_all(&dp->queue_event);
 
   dp->workers = workers;

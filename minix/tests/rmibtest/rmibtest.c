@@ -76,8 +76,7 @@ static struct rmib_node minix_rtest = RMIB_NODE(RMIB_RO, minix_rtest_table,
  * Test function that deflects reads and writes to its sibling node.  Not a
  * super useful thing to do, but a decent test of functionality regardless.
  */
-static ssize_t
-test_func(struct rmib_call * call, struct rmib_node * node,
+static ssize_t test_func(struct rmib_call * call, struct rmib_node * node,
 	struct rmib_oldp * oldp, struct rmib_newp * newp)
 {
 
@@ -90,8 +89,7 @@ test_func(struct rmib_call * call, struct rmib_node * node,
  * service also verifies these aspects remotely, at least without talking to it
  * directly.
  */
-static void
-test_local_failures(void)
+static void test_local_failures(void)
 {
 	int r, mib[CTL_SHORTNAME + 1];
 
@@ -118,8 +116,7 @@ test_local_failures(void)
  * service.  We will never know, but the userland test script can verify the
  * difference by comparing the number of remotes before and after.
  */
-static void
-test_remote_failures(void)
+static void test_remote_failures(void)
 {
 	int r, mib[CTL_SHORTNAME];
 
@@ -177,8 +174,7 @@ test_remote_failures(void)
 	 */
 }
 
-static int
-init(int type __unused, sef_init_info_t * info __unused)
+static int init(int type __unused, sef_init_info_t * info __unused)
 {
 	const int new_mib[] = { CTL_MINIX, CREATE_BASE - 2 };
 	const int shadow_mib[] = { CTL_MINIX, MINIX_TEST };
@@ -207,8 +203,7 @@ init(int type __unused, sef_init_info_t * info __unused)
 	return OK;
 }
 
-static void
-cleanup(void)
+static void cleanup(void)
 {
 	int r;
 
@@ -232,16 +227,14 @@ cleanup(void)
 	running = FALSE;
 }
 
-static void
-got_signal(int sig)
+static void got_signal(int sig)
 {
 
 	if (sig == SIGTERM && running)
 		cleanup();
 }
 
-int
-main(void)
+int main(void)
 {
 	message m;
 	int r, ipc_status;

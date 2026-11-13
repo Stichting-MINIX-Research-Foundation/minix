@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.8 2011/01/22 19:19:25 joerg Exp $
+# $NetBSD: newvers_stand.sh,v 1.9 2017/04/08 19:53:54 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,44 +33,48 @@
 # bootblock build on various architectures.
 #
 # Called as:
-#	sh ${S}/conf/newvers_stand.sh [-N] VERSION_FILE ARCH [EXTRA_MSG]
+#	sh ${S}/conf/newvers_stand.sh [-dkn] [-D <date>] [-m <machine>] VERSION_TEMPLATE [EXTRA_MSG]
 
-cwd=$(dirname $0)
+cwd=$(dirname "$0")
 
-add_name=yes
-add_date=no
-add_kernrev=yes
+add_name=true
+add_date=true
+add_kernrev=true
+machine="unknown"
+dateargs=
 
 # parse command args
-while getopts "DKN?" OPT; do
+while getopts "m:D:dknm:" OPT; do
 	case $OPT in
-	D)	add_date=yes;;
-	K)	add_kernrev=no;;
-	N)	add_name=no;;
-	?)	echo "Syntax: newvers_stand.sh [-NDMK] VERSION_TEMPLATE ARCH EXTRA_COMMENT" >&2
+	D)	dateargs="-r $OPTARG";;
+	d)	add_date=false;;
+	k)	add_kernrev=false;;
+	m)	machine=${OPTARG};;
+	n)	add_name=false;;
+	*)	echo "Usage: newvers_stand.sh [-dkn] [-D <date>] [-m <machine>] VERSION_TEMPLATE EXTRA_COMMENT" >&2
 		exit 1;;
 	esac
 done
 
-shift `expr $OPTIND - 1`
+shift $(expr $OPTIND - 1)
 
-r=`awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' $1`
-t=`LC_ALL=C date`
+r=$(awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' "$1")
+shift
+t=$(LC_ALL=C TZ=UTC date $dateargs)
 
-if [ $add_date = yes ]; then
+if $add_date; then
 	echo "const char bootprog_rev[] = \"${r} (${t})\";" > vers.c
 else
 	echo "const char bootprog_rev[] = \"${r}\";" > vers.c
 fi
 
-if [ $add_name = yes ]; then
-	a="$2"		# architecture name
-	extra=${3:+" $3"}
+if $add_name; then
+	extra=${1:+" $1"}
 
-	echo "const char bootprog_name[] = \"NetBSD/${a}${extra}\";" >> vers.c
+	echo "const char bootprog_name[] = \"NetBSD/${machine}${extra}\";" >> vers.c
 fi
 
-if [ $add_kernrev = yes ]; then
-	osr=$(sh ${cwd}/osrelease.sh)
+if $add_kernrev; then
+	osr=$(sh "${cwd}/osrelease.sh")
 	echo "const char bootprog_kernrev[] = \"${osr}\";" >> vers.c
 fi

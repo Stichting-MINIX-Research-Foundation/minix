@@ -7,8 +7,7 @@
 /*
  * The sysctl(2) system call, handled by the MIB service.
  */
-int
-__sysctl(const int * name, unsigned int namelen, void * oldp, size_t * oldlenp,
+int __sysctl(const int * name, unsigned int namelen, void * oldp, size_t * oldlenp,
 	const void * newp, size_t newlen)
 {
 	message m;

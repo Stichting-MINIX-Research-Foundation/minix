@@ -6,8 +6,7 @@
  * Convert a VirtualBox timestamp to a POSIX timespec structure.
  * VirtualBox' timestamps are in nanoseconds since the UNIX epoch.
  */
-static void
-get_time(struct timespec *tsp, u64_t nsecs)
+static void get_time(struct timespec *tsp, u64_t nsecs)
 {
 
 	tsp->tv_sec = (unsigned long)(nsecs / 1000000000);
@@ -17,8 +16,7 @@ get_time(struct timespec *tsp, u64_t nsecs)
 /*
  * Convert a POSIX timespec structure to a VirtualBox timestamp.
  */
-static u64_t
-set_time(struct timespec *tsp)
+static u64_t set_time(struct timespec *tsp)
 {
 
 	return ((u64_t)tsp->tv_sec * 1000000000) + tsp->tv_nsec;
@@ -27,8 +25,7 @@ set_time(struct timespec *tsp)
 /*
  * Fill the given attribute structure with VirtualBox object information.
  */
-void
-vboxfs_get_attr(struct sffs_attr *attr, vboxfs_objinfo_t *info)
+void vboxfs_get_attr(struct sffs_attr *attr, vboxfs_objinfo_t *info)
 {
 
 	if (attr->a_mask & SFFS_ATTR_SIZE)
@@ -48,8 +45,7 @@ vboxfs_get_attr(struct sffs_attr *attr, vboxfs_objinfo_t *info)
 /*
  * Get file attributes.
  */
-int
-vboxfs_getattr(const char *path, struct sffs_attr *attr)
+int vboxfs_getattr(const char *path, struct sffs_attr *attr)
 {
 	vbox_param_t param[3];
 	vboxfs_path_t pathbuf;
@@ -91,8 +87,7 @@ vboxfs_getattr(const char *path, struct sffs_attr *attr)
 /*
  * Set file size.
  */
-static int
-set_size(const char *path, u64_t size)
+static int set_size(const char *path, u64_t size)
 {
 	vboxfs_objinfo_t info;
 	vboxfs_handle_t h;
@@ -115,8 +110,7 @@ set_size(const char *path, u64_t size)
 /*
  * Set file attributes.
  */
-int
-vboxfs_setattr(const char *path, struct sffs_attr *attr)
+int vboxfs_setattr(const char *path, struct sffs_attr *attr)
 {
 	vboxfs_objinfo_t info;
 	vboxfs_handle_t h;

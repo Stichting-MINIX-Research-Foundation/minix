@@ -9,8 +9,7 @@
 #include <sys/reboot.h>
 #include <minix/profile.h>
 
-static int
-pm_exit_out(struct trace_proc * proc, const message * m_out)
+static int pm_exit_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "status", "%d", m_out->m_lc_pm_exit.status);
@@ -28,8 +27,7 @@ static const struct flags wait4_options[] = {
 	FLAG(WOPTSCHECKED),
 };
 
-static void
-put_wait4_status(struct trace_proc * proc, const char * name, int status)
+static void put_wait4_status(struct trace_proc * proc, const char * name, int status)
 {
 	const char *signame;
 	int sig;
@@ -84,8 +82,7 @@ put_wait4_status(struct trace_proc * proc, const char * name, int status)
 	put_value(proc, name, "0x%04x", status);
 }
 
-static int
-pm_wait4_out(struct trace_proc * proc, const message * m_out)
+static int pm_wait4_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "pid", "%d", m_out->m_lc_pm_wait4.pid);
@@ -93,8 +90,7 @@ pm_wait4_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-put_struct_rusage(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_rusage(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct rusage ru;
@@ -116,8 +112,7 @@ put_struct_rusage(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 0);
 }
 
-static void
-pm_wait4_in(struct trace_proc * proc, const message * m_out,
+static void pm_wait4_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -138,8 +133,7 @@ pm_wait4_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static void
-pm_getpid_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_getpid_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -152,8 +146,7 @@ pm_getpid_in(struct trace_proc * proc, const message * __unused m_out,
 }
 
 /* This function is shared between setuid and seteuid. */
-static int
-pm_setuid_out(struct trace_proc * proc, const message * m_out)
+static int pm_setuid_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "uid", "%u", m_out->m_lc_pm_setuid.uid);
@@ -161,8 +154,7 @@ pm_setuid_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-pm_getuid_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_getuid_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -174,8 +166,7 @@ pm_getuid_in(struct trace_proc * proc, const message * __unused m_out,
 	}
 }
 
-static int
-pm_stime_out(struct trace_proc * proc, const message * m_out)
+static int pm_stime_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_time(proc, "time", m_out->m_lc_pm_time.sec);
@@ -183,8 +174,7 @@ pm_stime_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_signal(struct trace_proc * proc, const char * name, int sig)
+static void put_signal(struct trace_proc * proc, const char * name, int sig)
 {
 	const char *signame;
 
@@ -194,8 +184,7 @@ put_signal(struct trace_proc * proc, const char * name, int sig)
 		put_value(proc, name, "%d", sig);
 }
 
-static void
-put_ptrace_req(struct trace_proc * proc, const char * name, int req)
+static void put_ptrace_req(struct trace_proc * proc, const char * name, int req)
 {
 	const char *text = NULL;
 
@@ -229,8 +218,7 @@ put_ptrace_req(struct trace_proc * proc, const char * name, int req)
 		put_value(proc, name, "%d", req);
 }
 
-static void
-put_struct_ptrace_range(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_ptrace_range(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct ptrace_range pr;
@@ -251,8 +239,7 @@ put_struct_ptrace_range(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, TRUE /*all*/);
 }
 
-static int
-pm_ptrace_out(struct trace_proc * proc, const message * m_out)
+static int pm_ptrace_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ptrace_req(proc, "req", m_out->m_lc_pm_ptrace.req);
@@ -294,8 +281,7 @@ pm_ptrace_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-pm_ptrace_in(struct trace_proc * proc, const message * m_out,
+static void pm_ptrace_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -314,8 +300,7 @@ pm_ptrace_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-void
-put_groups(struct trace_proc * proc, const char * name, int flags,
+void put_groups(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, int count)
 {
 	gid_t groups[NGROUPS_MAX];
@@ -338,8 +323,7 @@ put_groups(struct trace_proc * proc, const char * name, int flags,
 	put_close(proc, "]");
 }
 
-static int
-pm_setgroups_out(struct trace_proc * proc, const message * m_out)
+static int pm_setgroups_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "ngroups", "%d", m_out->m_lc_pm_groups.num);
@@ -349,8 +333,7 @@ pm_setgroups_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-pm_getgroups_out(struct trace_proc * proc, const message * m_out)
+static int pm_getgroups_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "ngroups", "%d", m_out->m_lc_pm_groups.num);
@@ -358,8 +341,7 @@ pm_getgroups_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-pm_getgroups_in(struct trace_proc * proc, const message * m_out,
+static void pm_getgroups_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -369,8 +351,7 @@ pm_getgroups_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-pm_kill_out(struct trace_proc * proc, const message * m_out)
+static int pm_kill_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "pid", "%d", m_out->m_lc_pm_sig.pid);
@@ -380,8 +361,7 @@ pm_kill_out(struct trace_proc * proc, const message * m_out)
 }
 
 /* This function is shared between setgid and setegid. */
-static int
-pm_setgid_out(struct trace_proc * proc, const message * m_out)
+static int pm_setgid_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "gid", "%u", m_out->m_lc_pm_setgid.gid);
@@ -389,8 +369,7 @@ pm_setgid_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-pm_getgid_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_getgid_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -402,8 +381,7 @@ pm_getgid_in(struct trace_proc * proc, const message * __unused m_out,
 	}
 }
 
-static int
-put_frame_string(struct trace_proc * proc, vir_bytes frame, size_t len,
+static int put_frame_string(struct trace_proc * proc, vir_bytes frame, size_t len,
 	vir_bytes addr)
 {
 	vir_bytes stacktop, offset;
@@ -446,8 +424,7 @@ put_frame_string(struct trace_proc * proc, vir_bytes frame, size_t len,
  * allocating large dynamic buffers as well.  The situation is complicated by
  * the fact that any string in the frame may run up to the end of the frame.
  */
-static void
-put_exec_frame(struct trace_proc * proc, vir_bytes addr, size_t len)
+static void put_exec_frame(struct trace_proc * proc, vir_bytes addr, size_t len)
 {
 	void *argv[64];
 	size_t off, chunk;
@@ -530,8 +507,7 @@ put_exec_frame(struct trace_proc * proc, vir_bytes addr, size_t len)
 	}
 }
 
-static int
-pm_exec_out(struct trace_proc * proc, const message * m_out)
+static int pm_exec_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_pm_exec.name,
@@ -543,15 +519,13 @@ pm_exec_out(struct trace_proc * proc, const message * m_out)
 }
 
 /* The idea is that this function may one day print a human-readable time. */
-void
-put_time(struct trace_proc * proc, const char * name, time_t time)
+void put_time(struct trace_proc * proc, const char * name, time_t time)
 {
 
 	put_value(proc, name, "%"PRId64, time);
 }
 
-void
-put_struct_timeval(struct trace_proc * proc, const char * name, int flags,
+void put_struct_timeval(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct timeval tv;
@@ -570,8 +544,7 @@ put_struct_timeval(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, TRUE /*all*/);
 }
 
-static void
-put_struct_itimerval(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_itimerval(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct itimerval it;
@@ -592,8 +565,7 @@ put_struct_itimerval(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, TRUE /*all*/);
 }
 
-static void
-put_itimer_which(struct trace_proc * proc, const char * name, int which)
+static void put_itimer_which(struct trace_proc * proc, const char * name, int which)
 {
 	const char *text = NULL;
 
@@ -619,8 +591,7 @@ pm_itimer_name(const message * m_out)
 	return (m_out->m_lc_pm_itimer.value != 0) ? "setitimer" : "getitimer";
 }
 
-static int
-pm_itimer_out(struct trace_proc * proc, const message * m_out)
+static int pm_itimer_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_itimer_which(proc, "which", m_out->m_lc_pm_itimer.which);
@@ -642,8 +613,7 @@ pm_itimer_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-pm_itimer_in(struct trace_proc * proc, const message * m_out,
+static void pm_itimer_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -657,8 +627,7 @@ pm_itimer_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static void
-put_struct_mcontext(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_mcontext(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	mcontext_t ctx;
@@ -674,15 +643,13 @@ put_struct_mcontext(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, FALSE /*all*/);
 }
 
-static int
-pm_getmcontext_out(struct trace_proc * proc, const message * m_out)
+static int pm_getmcontext_out(struct trace_proc * proc, const message * m_out)
 {
 
 	return CT_NOTDONE;
 }
 
-static void
-pm_getmcontext_in(struct trace_proc * proc, const message * m_out,
+static void pm_getmcontext_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -691,8 +658,7 @@ pm_getmcontext_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-pm_setmcontext_out(struct trace_proc * proc, const message * m_out)
+static int pm_setmcontext_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_struct_mcontext(proc, "mcp", 0, m_out->m_lc_pm_mcontext.ctx);
@@ -700,8 +666,7 @@ pm_setmcontext_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_sigset(struct trace_proc * proc, const char * name, sigset_t set)
+static void put_sigset(struct trace_proc * proc, const char * name, sigset_t set)
 {
 	const char *signame;
 	unsigned int count, unknown;
@@ -762,8 +727,7 @@ static const struct flags sa_flags[] = {
 	FLAG(SA_NOKERNINFO)
 };
 
-static void
-put_sa_handler(struct trace_proc * proc, const char * name, vir_bytes handler)
+static void put_sa_handler(struct trace_proc * proc, const char * name, vir_bytes handler)
 {
 	const char *text = NULL;
 
@@ -781,8 +745,7 @@ put_sa_handler(struct trace_proc * proc, const char * name, vir_bytes handler)
 		put_ptr(proc, name, handler);
 }
 
-static void
-put_struct_sigaction(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_sigaction(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct sigaction sa;
@@ -804,8 +767,7 @@ put_struct_sigaction(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 1);
 }
 
-static int
-pm_sigaction_out(struct trace_proc * proc, const message * m_out)
+static int pm_sigaction_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_signal(proc, "signal", m_out->m_lc_pm_sig.nr);
@@ -819,8 +781,7 @@ pm_sigaction_out(struct trace_proc * proc, const message * m_out)
 		return CT_NOTDONE;
 }
 
-static void
-pm_sigaction_in(struct trace_proc * proc, const message * m_out,
+static void pm_sigaction_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -832,8 +793,7 @@ pm_sigaction_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-pm_sigsuspend_out(struct trace_proc * proc, const message * m_out)
+static int pm_sigsuspend_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_sigset(proc, "set", m_out->m_lc_pm_sigset.set);
@@ -841,16 +801,14 @@ pm_sigsuspend_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-pm_sigpending_out(struct trace_proc * __unused proc,
+static int pm_sigpending_out(struct trace_proc * __unused proc,
 	const message * __unused m_out)
 {
 
 	return CT_NOTDONE;
 }
 
-static void
-pm_sigpending_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_sigpending_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -862,8 +820,7 @@ pm_sigpending_in(struct trace_proc * proc, const message * __unused m_out,
 	put_result(proc);
 }
 
-static void
-put_sigprocmask_how(struct trace_proc * proc, const char * name, int how)
+static void put_sigprocmask_how(struct trace_proc * proc, const char * name, int how)
 {
 	const char *text = NULL;
 
@@ -882,8 +839,7 @@ put_sigprocmask_how(struct trace_proc * proc, const char * name, int how)
 		put_value(proc, name, "%d", how);
 }
 
-static int
-pm_sigprocmask_out(struct trace_proc * proc, const message * m_out)
+static int pm_sigprocmask_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_sigprocmask_how(proc, "how", m_out->m_lc_pm_sigset.how);
@@ -895,8 +851,7 @@ pm_sigprocmask_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-pm_sigprocmask_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_sigprocmask_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -908,8 +863,7 @@ pm_sigprocmask_in(struct trace_proc * proc, const message * __unused m_out,
 	put_result(proc);
 }
 
-static int
-pm_sigreturn_out(struct trace_proc * proc, const message * m_out)
+static int pm_sigreturn_out(struct trace_proc * proc, const message * m_out)
 {
 	struct sigcontext scp;
 
@@ -942,8 +896,7 @@ pm_sigreturn_out(struct trace_proc * proc, const message * m_out)
 	return CT_NORETURN;
 }
 
-static void
-pm_sigreturn_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_sigreturn_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -953,8 +906,7 @@ pm_sigreturn_in(struct trace_proc * proc, const message * __unused m_out,
 	}
 }
 
-static void
-put_priority_which(struct trace_proc * proc, const char * name, int which)
+static void put_priority_which(struct trace_proc * proc, const char * name, int which)
 {
 	const char *text = NULL;
 
@@ -972,8 +924,7 @@ put_priority_which(struct trace_proc * proc, const char * name, int which)
 		put_value(proc, name, "%d", which);
 }
 
-static int
-pm_getpriority_out(struct trace_proc * proc, const message * m_out)
+static int pm_getpriority_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_priority_which(proc, "which", m_out->m_lc_pm_priority.which);
@@ -982,8 +933,7 @@ pm_getpriority_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-pm_getpriority_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_getpriority_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -993,8 +943,7 @@ pm_getpriority_in(struct trace_proc * proc, const message * __unused m_out,
 		put_result(proc);
 }
 
-static int
-pm_setpriority_out(struct trace_proc * proc, const message * m_out)
+static int pm_setpriority_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_priority_which(proc, "which", m_out->m_lc_pm_priority.which);
@@ -1004,16 +953,14 @@ pm_setpriority_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-pm_gettimeofday_out(struct trace_proc * __unused proc,
+static int pm_gettimeofday_out(struct trace_proc * __unused proc,
 	const message * __unused m_out)
 {
 
 	return CT_NOTDONE;
 }
 
-static void
-put_timespec_as_timeval(struct trace_proc * proc, const char * name,
+static void put_timespec_as_timeval(struct trace_proc * proc, const char * name,
 	time_t sec, long nsec)
 {
 
@@ -1026,8 +973,7 @@ put_timespec_as_timeval(struct trace_proc * proc, const char * name,
 	put_close(proc, "}");
 }
 
-static void
-pm_gettimeofday_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_gettimeofday_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -1046,8 +992,7 @@ pm_gettimeofday_in(struct trace_proc * proc, const message * __unused m_out,
 	put_result(proc);
 }
 
-static int
-pm_getsid_out(struct trace_proc * proc, const message * m_out)
+static int pm_getsid_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_value(proc, "pid", "%d", m_out->m_lc_pm_getsid.pid);
@@ -1055,8 +1000,7 @@ pm_getsid_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_clockid(struct trace_proc * proc, const char * name, clockid_t clock_id)
+static void put_clockid(struct trace_proc * proc, const char * name, clockid_t clock_id)
 {
 	const char *text = NULL;
 
@@ -1079,8 +1023,7 @@ put_clockid(struct trace_proc * proc, const char * name, clockid_t clock_id)
 		put_value(proc, name, "%d", clock_id);
 }
 
-static void
-put_clock_timespec(struct trace_proc * proc, const char * name, int flags,
+static void put_clock_timespec(struct trace_proc * proc, const char * name, int flags,
 	time_t sec, long nsec)
 {
 
@@ -1103,8 +1046,7 @@ put_clock_timespec(struct trace_proc * proc, const char * name, int flags,
 }
 
 /* This function is shared between clock_getres and clock_gettime. */
-static int
-pm_clock_get_out(struct trace_proc * proc, const message * m_out)
+static int pm_clock_get_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_clockid(proc, "clock_id", m_out->m_lc_pm_time.clk_id);
@@ -1112,8 +1054,7 @@ pm_clock_get_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-pm_clock_getres_in(struct trace_proc * proc, const message * __unused m_out,
+static void pm_clock_getres_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -1127,8 +1068,7 @@ pm_clock_getres_in(struct trace_proc * proc, const message * __unused m_out,
  * Same as pm_clock_getres_in, but different field name and the option to print
  * at least some results as time strings (in the future).
  */
-static void
-pm_clock_gettime_in(struct trace_proc * proc, const message * m_out,
+static void pm_clock_gettime_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 	int flags;
@@ -1153,8 +1093,7 @@ pm_clock_settime_name(const message * m_out)
 		return "clock_settime";
 }
 
-static int
-pm_clock_settime_out(struct trace_proc * proc, const message * m_out)
+static int pm_clock_settime_out(struct trace_proc * proc, const message * m_out)
 {
 	int flags;
 
@@ -1175,8 +1114,7 @@ pm_clock_settime_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-pm_getrusage_out(struct trace_proc * proc, const message * m_out)
+static int pm_getrusage_out(struct trace_proc * proc, const message * m_out)
 {
 
 	if (!valuesonly && m_out->m_lc_pm_rusage.who == RUSAGE_SELF)
@@ -1189,8 +1127,7 @@ pm_getrusage_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-pm_getrusage_in(struct trace_proc * proc, const message * m_out,
+static void pm_getrusage_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -1214,8 +1151,7 @@ static const struct flags reboot_flags[] = {
 	FLAG(RB_USERCONF),
 };
 
-static int
-pm_reboot_out(struct trace_proc * proc, const message * m_out)
+static int pm_reboot_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_flags(proc, "how", reboot_flags, COUNT(reboot_flags), "0x%x",
@@ -1225,8 +1161,7 @@ pm_reboot_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-pm_svrctl_out(struct trace_proc * proc, const message * m_out)
+static int pm_svrctl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ioctl_req(proc, "request", m_out->m_lc_svrctl.request,
@@ -1235,8 +1170,7 @@ pm_svrctl_out(struct trace_proc * proc, const message * m_out)
 	    m_out->m_lc_svrctl.arg, TRUE /*is_svrctl*/);
 }
 
-static void
-pm_svrctl_in(struct trace_proc * proc, const message * m_out,
+static void pm_svrctl_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -1244,8 +1178,7 @@ pm_svrctl_in(struct trace_proc * proc, const message * m_out,
 	    m_out->m_lc_svrctl.arg, TRUE /*is_svrctl*/);
 }
 
-static int
-pm_sprof_out(struct trace_proc * proc, const message * m_out)
+static int pm_sprof_out(struct trace_proc * proc, const message * m_out)
 {
 	int freq;
 

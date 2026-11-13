@@ -90,7 +90,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 
 	assert (bn >= UFS_NDADDR);
 
-	/* 
+	/*
 	 * Determine the number of levels of indirection.  After this loop
 	 * is done, blockcnt indicates the number of data blocks possible
 	 * at the given level of indirection, and UFS_NIADDR - i is the number
@@ -112,7 +112,7 @@ ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 	/* Calculate the address of the first meta-block. */
 	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + UFS_NIADDR - i);
 
-	/* 
+	/*
 	 * At each iteration, off is the offset into the bap array which is
 	 * an array of disk addresses at the current level of indirection.
 	 * The logical block number and the offset in that block are stored

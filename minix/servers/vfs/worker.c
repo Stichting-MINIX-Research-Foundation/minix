@@ -45,6 +45,7 @@ void worker_init(void)
 	wp->w_fp = NULL;		/* Mark not in use */
 	wp->w_next = NULL;
 	wp->w_task = NONE;
+	wp->w_woken = 0;
 	if (mutex_init(&wp->w_event_mutex, NULL) != 0)
 		panic("failed to initialize mutex");
 	if (cond_init(&wp->w_event, NULL) != 0)
@@ -131,7 +132,8 @@ static void worker_assign(struct fproc *rfp)
 	if (worker->w_fp == NULL)
 		break;
   }
-  assert(worker != NULL);
+  assert(i < NR_WTHREADS);
+  assert(worker->w_fp == NULL);
 
   /* Assign work to it. */
   rfp->fp_worker = worker;
@@ -446,8 +448,11 @@ static void worker_sleep(void)
   ASSERTW(worker);
   if (mutex_lock(&worker->w_event_mutex) != 0)
 	panic("unable to lock event mutex");
-  if (cond_wait(&worker->w_event, &worker->w_event_mutex) != 0)
-	panic("could not wait on conditional variable");
+  while (!worker->w_woken) {
+	if (cond_wait(&worker->w_event, &worker->w_event_mutex) != 0)
+		panic("could not wait on conditional variable");
+  }
+  worker->w_woken = 0;
   if (mutex_unlock(&worker->w_event_mutex) != 0)
 	panic("unable to unlock event mutex");
   self = worker;
@@ -462,11 +467,13 @@ static void worker_wake(struct worker_thread *worker)
   ASSERTW(worker);
   if (mutex_lock(&worker->w_event_mutex) != 0)
 	panic("unable to lock event mutex");
+  worker->w_woken = 1;
   if (cond_signal(&worker->w_event) != 0)
 	panic("unable to signal conditional variable");
   if (mutex_unlock(&worker->w_event_mutex) != 0)
 	panic("unable to unlock event mutex");
 }
+
 
 /*===========================================================================*
  *				worker_suspend				     *

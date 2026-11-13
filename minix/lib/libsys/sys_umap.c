@@ -3,12 +3,7 @@
 /*===========================================================================*
  *                                sys_umap				     *
  *===========================================================================*/
-int sys_umap(proc_ep, seg, vir_addr, bytes, phys_addr)
-endpoint_t proc_ep;			/* process number to do umap for */
-int seg;				/* T, D, or S segment */
-vir_bytes vir_addr;			/* address in bytes with segment*/
-vir_bytes bytes;			/* number of bytes to be copied */
-phys_bytes *phys_addr;			/* placeholder for result */
+int sys_umap(endpoint_t proc_ep, int seg, vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr)
 {
     message m;
     int result;

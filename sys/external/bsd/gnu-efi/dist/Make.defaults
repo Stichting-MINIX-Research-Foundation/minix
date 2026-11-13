@@ -1,0 +1,183 @@
+# -*- makefile -*-
+# Copyright (c) 1999-2007 Hewlett-Packard Development Company, L.P.
+#	Contributed by David Mosberger <davidm@hpl.hp.com>
+#	Contributed by Stephane Eranian <eranian@hpl.hp.com>
+#
+#    All rights reserved.
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions
+#    are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above
+#      copyright notice, this list of conditions and the following
+#      disclaimer in the documentation and/or other materials
+#      provided with the distribution.
+#    * Neither the name of Hewlett-Packard Co. nor the names of its
+#      contributors may be used to endorse or promote products derived
+#      from this software without specific prior written permission.
+#
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+#    CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+#    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+#    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+#    BE LIABLE FOR ANYDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+#    OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+#    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+#    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+#    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+#    THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+#    SUCH DAMAGE.
+#
+
+TOPDIR := $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
+
+#
+# Variables below overridable from command-line:
+#   make VARNAME=value ...
+#
+
+#
+# Where to install the package. GNU-EFI will create and access
+# lib and include under the root
+#
+INSTALLROOT  := /
+PREFIX       := /usr/local
+LIBDIR 	     := $(PREFIX)/lib
+INSTALL	     := install
+
+# Compilation tools
+HOSTCC       := $(prefix)gcc
+CC           := $(prefix)$(CROSS_COMPILE)gcc
+AS           := $(prefix)$(CROSS_COMPILE)as
+LD           := $(prefix)$(CROSS_COMPILE)ld
+AR           := $(prefix)$(CROSS_COMPILE)ar
+RANLIB       := $(prefix)$(CROSS_COMPILE)ranlib
+OBJCOPY      := $(prefix)$(CROSS_COMPILE)objcopy
+
+
+# Host/target identification
+OS           := $(shell uname -s)
+HOSTARCH     ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
+ARCH         ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
+
+# Get ARCH from the compiler if cross compiling 
+ifneq ($(CROSS_COMPILE),)
+  override ARCH := $(shell $(CC) -dumpmachine | cut -f1 -d-| sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
+endif
+
+# FreeBSD (and possibly others) reports amd64 instead of x86_64
+ifeq ($(ARCH),amd64)
+  override ARCH := x86_64
+endif
+
+#
+# Where to build the package
+#
+OBJDIR       := $(TOPDIR)/$(ARCH)
+
+#
+# Variables below derived from variables above
+#
+
+# Arch-specific compilation flags
+CPPFLAGS += -DCONFIG_$(ARCH)
+
+CFLAGS += -Wno-error=pragmas
+
+ifeq ($(ARCH),ia64)
+  CFLAGS += -mfixed-range=f32-f127
+endif
+
+ifeq ($(ARCH),ia32)
+  CFLAGS += -mno-mmx -mno-sse
+  ifeq ($(HOSTARCH),x86_64)
+    ARCH3264 = -m32
+  endif
+endif
+
+ifeq ($(ARCH),x86_64)
+  GCCVERSION   := $(shell $(CC) -dumpversion | cut -f1 -d.)
+  GCCMINOR     := $(shell $(CC) -dumpversion | cut -f2 -d.)
+  USING_CLANG  := $(shell $(CC) -v 2>&1 | grep -q 'clang version' && echo clang)
+
+  # Rely on GCC MS ABI support?
+  GCCNEWENOUGH := $(shell ( [ $(GCCVERSION) -gt "4" ]           \
+                            || ( [ $(GCCVERSION) -eq "4" ]      \
+                                 && [ $(GCCMINOR) -ge "7" ] ) ) \
+                          && echo 1)
+  ifeq ($(GCCNEWENOUGH),1)
+    CPPFLAGS += -DGNU_EFI_USE_MS_ABI -maccumulate-outgoing-args --std=c11
+  else ifeq ($(USING_CLANG),clang)
+    CPPFLAGS += -DGNU_EFI_USE_MS_ABI --std=c11
+  endif
+
+  CFLAGS += -mno-red-zone
+  ifeq ($(HOSTARCH),ia32)
+    ARCH3264 = -m64
+  endif
+endif
+
+ifneq (,$(filter $(ARCH),ia32 x86_64))
+  # Disable AVX, if the compiler supports that.
+  CC_CAN_DISABLE_AVX=$(shell $(CC) -Werror -c -o /dev/null -xc -mno-avx - </dev/null >/dev/null 2>&1 && echo 1)
+  ifeq ($(CC_CAN_DISABLE_AVX), 1)
+    CFLAGS += -mno-avx
+  endif
+endif
+
+ifeq ($(ARCH),mips64el)
+  CFLAGS += -march=mips64r2
+  ARCH3264 = -mabi=64
+endif
+
+#
+# Set HAVE_EFI_OBJCOPY if objcopy understands --target efi-[app|bsdrv|rtdrv],
+# otherwise we need to compose the PE/COFF header using the assembler
+#
+ifneq ($(ARCH),aarch64)
+ifneq ($(ARCH),arm)
+ifneq ($(ARCH),mips64el)
+export HAVE_EFI_OBJCOPY=y
+endif
+endif
+endif
+
+ifneq ($(ARCH),arm)
+export LIBGCC=$(shell $(CC) $(ARCH3264) -print-libgcc-file-name)
+endif
+
+ifeq ($(ARCH),arm)
+CFLAGS += -marm
+endif
+
+# Generic compilation flags
+INCDIR  += -I$(SRCDIR) -I$(TOPDIR)/inc -I$(TOPDIR)/inc/$(ARCH) \
+           -I$(TOPDIR)/inc/protocol
+
+# Only enable -fpic for non MinGW compilers (unneeded on MinGW)
+GCCMACHINE := $(shell $(CC) -dumpmachine)
+ifneq (mingw32,$(findstring mingw32, $(GCCMACHINE)))
+  CFLAGS += -fpic
+endif
+
+ifeq (FreeBSD, $(findstring FreeBSD, $(OS)))
+CFLAGS  += $(ARCH3264) -g -O2 -Wall -Wextra -Werror \
+           -fshort-wchar -fno-strict-aliasing \
+           -ffreestanding -fno-stack-protector
+else
+CFLAGS  += $(ARCH3264) -g -O2 -Wall -Wextra -Werror \
+           -fshort-wchar -fno-strict-aliasing \
+	   -ffreestanding -fno-stack-protector -fno-stack-check \
+           -fno-stack-check \
+           $(if $(findstring gcc,$(CC)),-fno-merge-all-constants,)
+endif
+
+ARFLAGS := rDv
+ASFLAGS += $(ARCH3264)
+LDFLAGS	+= -nostdlib --warn-common --no-undefined --fatal-warnings \
+	   --build-id=sha1

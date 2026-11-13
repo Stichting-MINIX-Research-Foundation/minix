@@ -53,8 +53,7 @@
 
 /* Local prototypes */
 
-static void
-AcpiNsExecModuleCode (
+static void AcpiNsExecModuleCode (
     ACPI_OPERAND_OBJECT     *MethodObj,
     ACPI_EVALUATE_INFO      *Info);
 
@@ -349,8 +348,7 @@ Cleanup:
  *
  ******************************************************************************/
 
-void
-AcpiNsExecModuleCodeList (
+void AcpiNsExecModuleCodeList (
     void)
 {
     ACPI_OPERAND_OBJECT     *Prev;
@@ -422,8 +420,7 @@ AcpiNsExecModuleCodeList (
  *
  ******************************************************************************/
 
-static void
-AcpiNsExecModuleCode (
+static void AcpiNsExecModuleCode (
     ACPI_OPERAND_OBJECT     *MethodObj,
     ACPI_EVALUATE_INFO      *Info)
 {

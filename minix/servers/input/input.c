@@ -82,8 +82,7 @@ input_revmap(int id)
 /*
  * Open an input device.
  */
-static int
-input_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
+static int input_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 {
 	struct input_dev *input_dev;
 
@@ -104,8 +103,7 @@ input_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 /*
  * Close an input device.
  */
-static int
-input_close(devminor_t minor)
+static int input_close(devminor_t minor)
 {
 	struct input_dev *input_dev;
 
@@ -127,8 +125,7 @@ input_close(devminor_t minor)
 /*
  * Copy input events to a reader.
  */
-static ssize_t
-input_copy_events(endpoint_t endpt, cp_grant_id_t grant,
+static ssize_t input_copy_events(endpoint_t endpt, cp_grant_id_t grant,
 	unsigned int event_count, struct input_dev *input_dev)
 {
 	int r, nbytes, wrap_left;
@@ -159,8 +156,7 @@ input_copy_events(endpoint_t endpt, cp_grant_id_t grant,
 /*
  * Read from an input device.
  */
-static ssize_t
-input_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
+static ssize_t input_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id)
 {
 	unsigned int event_count;
@@ -201,8 +197,7 @@ input_read(devminor_t minor, u64_t UNUSED(position), endpoint_t endpt,
 /*
  * Set keyboard LEDs on one or all keyboards.
  */
-static void
-input_set_leds(devminor_t minor, unsigned int mask)
+static void input_set_leds(devminor_t minor, unsigned int mask)
 {
 	struct input_dev *dev;
 	message m;
@@ -238,8 +233,7 @@ input_set_leds(devminor_t minor, unsigned int mask)
 /*
  * Process an IOCTL request.
  */
-static int
-input_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
+static int input_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 	cp_grant_id_t grant, int flags, endpoint_t user_endpt, cdev_id_t id)
 {
 	struct input_dev *input_dev;
@@ -279,8 +273,7 @@ input_ioctl(devminor_t minor, unsigned long request, endpoint_t endpt,
 /*
  * Cancel a suspended read request.
  */
-static int
-input_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
+static int input_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 {
 	struct input_dev *input_dev;
 
@@ -300,8 +293,7 @@ input_cancel(devminor_t minor, endpoint_t endpt, cdev_id_t id)
 /*
  * Perform a select call on an input device.
  */
-static int
-input_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+static int input_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 {
 	struct input_dev *input_dev;
 	int ready_ops;
@@ -329,8 +321,7 @@ input_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
  * An input device receives an input event.  Enqueue it, and possibly unsuspend
  * a read request or wake up a selector.
  */
-static void
-input_process(struct input_dev *input_dev, const message *m)
+static void input_process(struct input_dev *input_dev, const message *m)
 {
 	unsigned int next;
 	int r;
@@ -373,8 +364,7 @@ input_process(struct input_dev *input_dev, const message *m)
 /*
  * An input event has arrived from a driver.
  */
-static void
-input_event(message *m)
+static void input_event(message *m)
 {
 	struct input_dev *input_dev, *mux_dev;
 	int r, id;
@@ -427,8 +417,7 @@ input_event(message *m)
  * type, update that entry instead.  If no device ID could be allocated, return
  * INVALID_INPUT_ID.
  */
-static int
-input_alloc_id(int mouse, endpoint_t owner, const char *label)
+static int input_alloc_id(int mouse, endpoint_t owner, const char *label)
 {
 	int n, id, start, end;
 
@@ -472,8 +461,7 @@ input_alloc_id(int mouse, endpoint_t owner, const char *label)
 /*
  * Register keyboard and/or a mouse devices for a driver.
  */
-static void
-input_connect(endpoint_t owner, char *labelp, int typemask)
+static void input_connect(endpoint_t owner, char *labelp, int typemask)
 {
 	message m;
 	char label[DS_MAX_KEYLEN];
@@ -530,8 +518,7 @@ input_connect(endpoint_t owner, char *labelp, int typemask)
 /*
  * Disconnect a device.
  */
-static void
-input_disconnect(struct input_dev *input_dev)
+static void input_disconnect(struct input_dev *input_dev)
 {
 #if INPUT_DEBUG
 	printf("INPUT: disconnected device %u\n", input_dev - devs);
@@ -555,8 +542,7 @@ input_disconnect(struct input_dev *input_dev)
 /*
  * Check for driver status changes in the data store.
  */
-static void
-input_check(void)
+static void input_check(void)
 {
 	char key[DS_MAX_KEYLEN], *label;
 	const char *driver_prefix = "drv.inp.";
@@ -605,8 +591,7 @@ input_check(void)
 /*
  * Process messages not part of the character driver protocol.
  */
-static void
-input_other(message *m, int ipc_status)
+static void input_other(message *m, int ipc_status)
 {
 	if (is_ipc_notify(ipc_status)) {
 		switch (m->m_source) {
@@ -643,8 +628,7 @@ input_other(message *m, int ipc_status)
 /*
  * Initialize the input server.
  */
-static int
-input_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
+static int input_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	message m;
 	int i, r;
@@ -682,8 +666,7 @@ input_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*
  * Set callbacks and invoke SEF startup.
  */
-static void
-input_startup(void)
+static void input_startup(void)
 {
 	sef_setcb_init_fresh(input_init);
 
@@ -693,8 +676,7 @@ input_startup(void)
 /*
  * Main program of the input server.
  */
-int
-main(void)
+int main(void)
 {
 	input_startup();
 

@@ -58,7 +58,6 @@ static int try_async(struct proc *caller_ptr);
 static int try_one(endpoint_t receive_e, struct proc *src_ptr,
 	struct proc *dst_ptr);
 static struct proc * pick_proc(void);
-static void enqueue_head(struct proc *rp);
 
 /* all idles share the same idle_priv structure */
 static struct priv idle_priv;
@@ -166,7 +165,8 @@ static void switch_address_space_idle(void)
 	 * when the CPU wakes up the kernel is mapped and no surprises happen.
 	 * This is only a problem if more than 1 cpus are available
 	 */
-	switch_address_space(proc_addr(VM_PROC_NR));
+	//if (cpuid == bsp_cpu_id)
+		switch_address_space(proc_addr(VM_PROC_NR));
 #endif
 }
 
@@ -189,9 +189,37 @@ static void idle(void)
 
 	switch_address_space_idle();
 
+	/*
+	 * The idle setup-and-halt sequence must run with interrupts disabled,
+	 * for the same reason as the kernel-to-user exit window in
+	 * switch_to_user() (see the intr_disable() there). The kernel runs this
+	 * path with IF=1; if a HW interrupt or IPI is taken between setting
+	 * cpu_is_idle=1 and the hlt, the in-kernel interrupt path runs
+	 * context_stop_idle(), which clears cpu_is_idle back to 0 (and, on an
+	 * AP, restarts the local timer that we are about to stop again). We then
+	 * fall through to halt_cpu() and halt with cpu_is_idle==0 and the AP
+	 * timer stopped: enqueue() on another CPU sees cpu_is_idle==0 and skips
+	 * the wake IPI, and no timer tick ever arrives, so a runnable process
+	 * sits on this (halted) AP's run queue forever. halt_cpu() does sti;hlt,
+	 * which atomically re-enables interrupts and delivers any IPI that became
+	 * pending while we were disabled.
+	 */
+	intr_disable();
+
 #ifdef CONFIG_SMP
 	get_cpulocal_var(cpu_is_idle) = 1;
-	/* we don't need to keep time on APs as it is handled on the BSP */
+	/*
+	 * Stop the local timer on idle APs: a halted AP must not take local timer
+	 * interrupts, or context_stop() in the in-kernel interrupt path would spin
+	 * on the BKL with interrupts disabled and could deadlock against the BSP
+	 * (which may hold the BKL while waiting for an IPI ack from this AP). The
+	 * BSP keeps its timer (it is the timekeeper). stop_local_timer() preserves
+	 * the remaining one-shot count (see lapic_stop_timer/lapic_restart_timer)
+	 * so an AP that idles more often than once per tick still accumulates
+	 * run-time toward a tick instead of re-arming a full fresh period every
+	 * wakeup -- otherwise the one-shot never expired and process CPU-time
+	 * accounting / the SIGVTALRM/SIGPROF itimers never fired on the AP.
+	 */
 	if (cpuid != bsp_cpu_id)
 		stop_local_timer();
 	else
@@ -303,9 +331,10 @@ void switch_to_user(void)
 	 */
 	struct proc * p;
 #ifdef CONFIG_SMP
-	int tlb_must_refresh = 0;
+	int tlb_must_refresh;
+not_runnable_pick_new:
+	tlb_must_refresh = 0;
 #endif
-
 	p = get_cpulocal_var(proc_ptr);
 	/*
 	 * if the current process is still runnable check the misc flags and let
@@ -318,7 +347,9 @@ void switch_to_user(void)
 	 * need to pick a new one here and start from scratch. Also if the
 	 * current process wasn't runnable, we pick a new one here
 	 */
+#ifndef CONFIG_SMP
 not_runnable_pick_new:
+#endif
 	if (proc_is_preempted(p)) {
 		p->p_rts_flags &= ~RTS_PREEMPTED;
 		if (proc_is_runnable(p)) {
@@ -351,12 +382,33 @@ not_runnable_pick_new:
 check_misc_flags:
 
 	assert(p);
+#ifdef CONFIG_SMP
+	/*
+	 * In SMP, proc_ptr can be made non-runnable by another CPU between the
+	 * moment it was picked and here -- the scheduler (sched_proc) performs a
+	 * cross-CPU RTS_SET/RTS_UNSET on a process that is the running proc_ptr on
+	 * this CPU (see the FIXMEs in sched_proc), and a scheduling IPI sets
+	 * RTS_PREEMPTED on proc_ptr.  This is the same condition the misc-flags
+	 * loop below already tolerates, so recover the same way instead of
+	 * asserting; not_runnable_pick_new clears RTS_PREEMPTED and re-picks a
+	 * runnable process.
+	 */
+	if (!proc_is_runnable(p))
+		goto not_runnable_pick_new;
+#else
 	assert(proc_is_runnable(p));
+#endif
 	while (p->p_misc_flags &
 		(MF_KCALL_RESUME | MF_DELIVERMSG |
 		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
 
+#ifdef CONFIG_SMP
+		if (!proc_is_runnable(p))
+			// something crazy happened!
+			goto not_runnable_pick_new;
+#else
 		assert(proc_is_runnable(p));
+#endif
 		if (p->p_misc_flags & MF_KCALL_RESUME) {
 			kernel_call_resume(p);
 		}
@@ -428,14 +480,27 @@ check_misc_flags:
 		goto not_runnable_pick_new;
 
 	TRACE(VF_SCHEDULING, printf("cpu %d starting %s / %d "
-				"pc 0x%08x\n",
-		cpuid, p->p_name, p->p_endpoint, p->p_reg.pc););
+				"pc 0x%08lx\n",
+		(int)cpuid, p->p_name, p->p_endpoint, (unsigned long)p->p_reg.pc););
 #if DEBUG_TRACE
 	p->p_schedules++;
 #endif
 
 	p = arch_finish_switch_to_user();
 	assert(p->p_cpu_time_left);
+
+#ifdef CONFIG_SMP
+	/*
+	 * The kernel-to-user exit window must run with interrupts disabled. If a
+	 * HW interrupt is taken here (after context_stop() releases the BKL, before
+	 * restore_user_context()), the in-kernel interrupt path's context_stop_idle()
+	 * re-acquires the BKL, which then leaks into user mode -> the next kernel
+	 * entry on this CPU self-deadlocks on the BKL. (Confirmed via a BKL op-ring
+	 * trace: an L context_stop_idle after the final BKL release.) Enforce IF=0
+	 * here; restore_user_context()'s iret/sysret restores the user's IF.
+	 */
+	intr_disable();
+#endif
 
 	context_stop(proc_addr(KERNEL));
 
@@ -464,7 +529,7 @@ check_misc_flags:
 #endif
 	
 	restart_local_timer();
-	
+
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
@@ -1053,7 +1118,32 @@ static int mini_receive(struct proc * caller_ptr,
     xpp = &caller_ptr->p_caller_q;
     while (*xpp) {
 	struct proc * sender = *xpp;
-	endpoint_t sender_e = sender->p_endpoint;
+	endpoint_t sender_e;
+
+	/*
+	 * On SMP a queued sender can be torn down on another CPU (its slot
+	 * freed or endpoint revoked by clear_ipc()/clear_ipc_refs()) while
+	 * still linked on this caller queue, if its exit cleanup raced this
+	 * walk. Such an entry is a dead message whose sender will never wait
+	 * for a reply: unlink and skip it rather than delivering it (which
+	 * would also trip the assert below that encodes the UP-only invariant
+	 * that no dead process is ever queued to send).
+	 */
+	if (RTS_ISSET(sender, RTS_SLOT_FREE) ||
+	    RTS_ISSET(sender, RTS_NO_ENDPOINT)) {
+		static unsigned long c;
+		if ((c++ & 0x3ff) == 0)
+			printf("mini_receive: %s/%d dropped stale sender "
+			    "ep=%d rts=%x sendto=%d (n=%lu)\n",
+			    caller_ptr->p_name, caller_ptr->p_endpoint,
+			    sender->p_endpoint, sender->p_rts_flags,
+			    sender->p_sendto_e, c);
+		*xpp = sender->p_q_link;	/* unlink stale entry */
+		sender->p_q_link = NULL;
+		continue;
+	}
+
+	sender_e = sender->p_endpoint;
 
         if (CANRECEIVE(src_e, sender_e, caller_ptr, 0, &sender->p_sendmsg)) {
             int call;
@@ -1667,7 +1757,7 @@ void enqueue(
  * process on a run queue. We have to put this process back at the fron to be
  * fair
  */
-static void enqueue_head(struct proc *rp)
+void enqueue_head(struct proc *rp)
 {
   const int q = rp->p_priority;	 		/* scheduling queue to use */
 
@@ -1801,7 +1891,7 @@ static struct proc * pick_proc(void)
   rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
 	if(!(rp = rdy_head[q])) {
-		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
+		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", (int)cpuid, q););
 		continue;
 	}
 	assert(proc_is_runnable(rp));
@@ -1953,6 +2043,12 @@ void copr_not_available_handler(void)
 	}
 
 	*local_fpu_owner = p;
+#ifdef CONFIG_SMP
+	/* Same kernel-to-user exit invariant as switch_to_user: IF=0 from the BKL
+	 * release through restore_user_context, so no nested interrupt can leak the
+	 * BKL into user mode. */
+	intr_disable();
+#endif
 	context_stop(proc_addr(KERNEL));
 	restore_user_context(p);
 	NOT_REACHABLE;

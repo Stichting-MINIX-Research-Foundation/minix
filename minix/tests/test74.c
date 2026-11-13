@@ -50,8 +50,7 @@
 
 int max_error = 0;	/* make all e()'s fatal */
 
-int
-dowriteblock(int b, int blocksize, u32_t seed, char *data)
+int dowriteblock(int b, int blocksize, u32_t seed, char *data)
 {
 	u64_t offset;
 	int fd;
@@ -66,8 +65,7 @@ dowriteblock(int b, int blocksize, u32_t seed, char *data)
 	return blocksize;
 }
 
-int
-readblock(int b, int blocksize, u32_t seed, char *data)
+int readblock(int b, int blocksize, u32_t seed, char *data)
 {
 	u64_t offset;
 	int fd;
@@ -465,8 +463,7 @@ static void basic_regression(void)
  * The idea is that while we succeed in mapping in /proc/uptime, we also get
  * a new uptime value every time we map in the page -- VM must not cache it.
  */
-static void
-nonedev_regression(void)
+static void nonedev_regression(void)
 {
 	int fd, fd2;
 	char *buf;
@@ -540,8 +537,7 @@ nonedev_regression(void)
  * possibly no other file system.  However, if the subtest's assumptions are
  * not met, it will simply succeed.
  */
-static void
-corruption_regression(void)
+static void corruption_regression(void)
 {
 	char *ptr, *buf;
 	struct statvfs sf;
@@ -700,8 +696,7 @@ corruption_regression(void)
  * (through libminixfs) when a hole is being peeked; libminixfs currently fakes
  * a device offset to make this work.
  */
-static void
-hole_regression(void)
+static void hole_regression(void)
 {
 	struct statvfs st;
 	size_t block_size;
@@ -810,8 +805,7 @@ hole_regression(void)
  * In this test we hope that the root file system is mounted on a block device
  * usable for (read-only!) testing purposes.
  */
-static void
-softfault_partial(void)
+static void softfault_partial(void)
 {
 	struct statvfs stf;
 	struct stat st;
@@ -872,8 +866,7 @@ softfault_partial(void)
 	close(fd);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int i, iter = 2;
 

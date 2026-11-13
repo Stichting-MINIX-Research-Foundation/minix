@@ -1,0 +1,23 @@
+banner=Welcome to the MINIX @@VERSION@@ boot-only installation CD
+banner================================================================================
+banner=
+menu=Regular MINIX 3:multiboot /boot/minix_default/kernel bootcd=1 cdproberoot=1
+menu=Regular MINIX 3 (with AHCI):multiboot /boot/minix_default/kernel bootcd=1 cdproberoot=1 ahci=yes
+menu=Edit menu option:edit
+menu=Drop to boot prompt:prompt
+clear=1
+timeout=10
+default=1
+load=/boot/minix_default/mod01_ds
+load=/boot/minix_default/mod02_rs
+load=/boot/minix_default/mod03_pm
+load=/boot/minix_default/mod04_sched
+load=/boot/minix_default/mod05_vfs
+load=/boot/minix_default/mod06_memory
+load=/boot/minix_default/mod07_tty
+load=/boot/minix_default/mod08_mib
+load=/boot/minix_default/mod09_vm
+load=/boot/minix_default/mod10_pfs
+load=/boot/minix_default/mod11_mfs
+load=/boot/minix_default/mod12_init
+

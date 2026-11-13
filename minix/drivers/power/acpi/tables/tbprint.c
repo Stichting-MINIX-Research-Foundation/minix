@@ -51,13 +51,11 @@
 
 /* Local prototypes */
 
-static void
-AcpiTbFixString (
+static void AcpiTbFixString (
     char                    *String,
     ACPI_SIZE               Length);
 
-static void
-AcpiTbCleanupTableHeader (
+static void AcpiTbCleanupTableHeader (
     ACPI_TABLE_HEADER       *OutHeader,
     ACPI_TABLE_HEADER       *Header);
 
@@ -76,8 +74,7 @@ AcpiTbCleanupTableHeader (
  *
  ******************************************************************************/
 
-static void
-AcpiTbFixString (
+static void AcpiTbFixString (
     char                    *String,
     ACPI_SIZE               Length)
 {
@@ -108,8 +105,7 @@ AcpiTbFixString (
  *
  ******************************************************************************/
 
-static void
-AcpiTbCleanupTableHeader (
+static void AcpiTbCleanupTableHeader (
     ACPI_TABLE_HEADER       *OutHeader,
     ACPI_TABLE_HEADER       *Header)
 {
@@ -136,8 +132,7 @@ AcpiTbCleanupTableHeader (
  *
  ******************************************************************************/
 
-void
-AcpiTbPrintTableHeader (
+void AcpiTbPrintTableHeader (
     ACPI_PHYSICAL_ADDRESS   Address,
     ACPI_TABLE_HEADER       *Header)
 {

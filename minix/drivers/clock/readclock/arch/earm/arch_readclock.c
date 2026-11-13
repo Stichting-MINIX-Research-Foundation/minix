@@ -19,8 +19,7 @@
 #include "forward.h"
 #include "readclock.h"
 
-int
-arch_setup(struct rtc *r)
+int arch_setup(struct rtc *r)
 {
 	struct machine  machine ;
 	sys_getmachine(&machine);

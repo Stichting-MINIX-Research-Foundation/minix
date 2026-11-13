@@ -81,8 +81,7 @@ static void  ethernetif_input(struct netif *netif);
  * @param netif the already initialized lwip network interface structure
  *        for this ethernetif
  */
-static void
-low_level_init(struct netif *netif)
+static void low_level_init(struct netif *netif)
 {
   struct ethernetif *ethernetif = netif->state;
 
@@ -252,8 +251,7 @@ low_level_input(struct netif *netif)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
-static void
-ethernetif_input(struct netif *netif)
+static void ethernetif_input(struct netif *netif)
 {
   struct ethernetif *ethernetif;
   struct eth_hdr *ethhdr;

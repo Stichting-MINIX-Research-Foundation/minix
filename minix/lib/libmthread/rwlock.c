@@ -4,8 +4,7 @@
 /*===========================================================================*
  *				mthread_rwlock_init			     *
  *===========================================================================*/
-int mthread_rwlock_init(rwlock)
-mthread_rwlock_t *rwlock; /* The rwlock to be initialized */
+int mthread_rwlock_init(mthread_rwlock_t *rwlock)
 {
   /* Initialize a readers/writer lock. */
   int r;
@@ -30,8 +29,7 @@ mthread_rwlock_t *rwlock; /* The rwlock to be initialized */
 /*===========================================================================*
  *				mthread_rwlock_destroy			     *
  *===========================================================================*/
-int mthread_rwlock_destroy(rwlock)
-mthread_rwlock_t *rwlock; /* The rwlock to be destroyed */
+int mthread_rwlock_destroy(mthread_rwlock_t *rwlock)
 {
   /* Destroy a readers/writer lock. */
   int r;
@@ -52,8 +50,7 @@ mthread_rwlock_t *rwlock; /* The rwlock to be destroyed */
 /*===========================================================================*
  *				mthread_rwlock_rdlock			     *
  *===========================================================================*/
-int mthread_rwlock_rdlock(rwlock)
-mthread_rwlock_t *rwlock; /* The rwlock to be read locked */
+int mthread_rwlock_rdlock(mthread_rwlock_t *rwlock)
 {
   /* Acquire a reader lock. */
   int r;
@@ -77,8 +74,7 @@ mthread_rwlock_t *rwlock; /* The rwlock to be read locked */
 /*===========================================================================*
  *				mthread_rwlock_wrlock			     *
  *===========================================================================*/
-int mthread_rwlock_wrlock(rwlock)
-mthread_rwlock_t *rwlock; /* The rwlock to be write locked */
+int mthread_rwlock_wrlock(mthread_rwlock_t *rwlock)
 {
   /* Acquire a writer lock. */
   int r;
@@ -104,8 +100,7 @@ mthread_rwlock_t *rwlock; /* The rwlock to be write locked */
 /*===========================================================================*
  *				mthread_rwlock_unlock				*
  *===========================================================================*/
-int mthread_rwlock_unlock(rwlock)
-mthread_rwlock_t *rwlock; /* The rwlock to be unlocked */
+int mthread_rwlock_unlock(mthread_rwlock_t *rwlock)
 {
   /* Release a lock. */
   int r;

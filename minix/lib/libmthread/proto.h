@@ -4,6 +4,7 @@
 /* allocate.c */
 mthread_tcb_t * mthread_find_tcb(mthread_thread_t thread);
 void mthread_thread_reset(mthread_thread_t thread);
+void mthread_init(void);
 
 /* attribute.c */
 void mthread_init_valid_attributes(void);

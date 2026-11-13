@@ -286,9 +286,7 @@ int
 int do_decomp = 0;
 
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
     int overwrite = 0;	/* Do not overwrite unless given -f flag */
     char tempname[100];
@@ -1303,8 +1301,7 @@ dump_tab()	/* dump string table */
     }
 }
 
-int
-in_stack(c, stack_top)
+int in_stack(c, stack_top)
 	REGISTER int c, stack_top;
 {
 	if ( (isascii(c) && isprint(c) && c != '\\') || c == ' ' ) {
@@ -1344,8 +1341,7 @@ void writeerr()
     exit ( 1 );
 }
 
-void copystat(ifname, ofname)
-char *ifname, *ofname;
+void copystat(char *ifname, char *ofname)
 {
     struct stat statbuf;
     int mode;
@@ -1563,10 +1559,7 @@ void cl_hash(hsize)		/* reset code table */
 #endif
 }
 
-void prratio(stream, num, den)
-FILE *stream;
-long int num;
-long int den;
+void prratio(FILE *stream, long int num, long int den)
 {
 	REGISTER int q;			/* Doesn't need to be long */
 	if(num > 214748L) 

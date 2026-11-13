@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.2 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.4 2019/03/31 20:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 #define MENUFORMAT_LETTER 2
 
 #define DEFAULT_FORMAT  MENUFORMAT_AUTO
+#ifndef DEFAULT_TIMEOUT
 #define DEFAULT_TIMEOUT 10
+#endif
 
 struct bootcfg_def bootcfg_info;
 
@@ -80,6 +82,7 @@ bootcfg_do_noop(const char *cmd, char *arg)
  * timeout: Timeout in seconds (overrides that set by installboot)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
+ * root: the root device to use
  * format: how menu choices are displayed: (a)utomatic, (n)umbers or (l)etters
  * clear: whether to clear the screen or not
  *
@@ -89,17 +92,18 @@ bootcfg_do_noop(const char *cmd, char *arg)
  * menu=Boot NetBSD:boot netbsd
  * menu=Boot into single user mode:boot netbsd -s
  * menu=:boot hd1a:netbsd -cs
- * menu=Goto boot comand line:prompt
+ * menu=Goto boot command line:prompt
  * timeout=10
  * consdev=com0
  * default=1
 */
-void
+int
 perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 {
 	char *bc, *c;
-	int cmenu, cbanner, len;
-	int fd, err, off;
+	int cmenu, cbanner;
+	ssize_t len, off, resid;
+	int fd, err;
 	struct stat st;
 	char *next, *key, *value, *v2;
 
@@ -114,25 +118,25 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 
 	fd = open(conf, 0);
 	if (fd < 0)
-		return;
+		return ENOENT;
 
 	err = fstat(fd, &st);
 	if (err == -1) {
-		close(fd);
-		return;
+		/* file descriptor may not be backed by a libsa file-system */
+		st.st_size = maxsz;
 	}
 
 	/* if a maximum size is being requested for the boot.cfg enforce it. */
 	if (0 < maxsz && st.st_size > maxsz) {
 		close(fd);
-		return;
+		return EFBIG;
 	}
 
-	bc = alloc(st.st_size + 1);
+	bc = alloc((size_t)st.st_size + 1);
 	if (bc == NULL) {
 		printf("Could not allocate memory for boot configuration\n");
 		close(fd);
-		return;
+		return ENOMEM;
 	}
 
 	/*
@@ -145,12 +149,14 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 	 *       the storage anyway.
 	 */
 	off = 0;
+	resid = st.st_size;
 	do {
-		len = read(fd, bc + off, 1024);
+		len = read(fd, bc + off, uimin(1024, resid));
 		if (len <= 0)
 			break;
 		off += len;
-	} while (len > 0);
+		resid -= len;
+	} while (len > 0 && resid > 0);
 	bc[off] = '\0';
 
 	close(fd);
@@ -219,6 +225,8 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 			bootcfg_info.def = atoi(value) - 1;
 		} else if (!strncmp(key, "consdev", 7)) {
 			bootcfg_info.consdev = value;
+		} else if (!strncmp(key, "root", 4)) {
+			bootcfg_info.root = value;
 		} else if (!strncmp(key, BOOTCFG_CMD_LOAD, 4)) {
 			command(BOOTCFG_CMD_LOAD, value);
 		} else if (!strncmp(key, "format", 6)) {
@@ -269,4 +277,29 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 		bootcfg_info.def = 0;
 	if (bootcfg_info.def >= cmenu)
 		bootcfg_info.def = cmenu - 1;
+
+	return 0;
+}
+
+void
+print_bootcfg_banner(const char *bootprog_name, const char *bootprog_rev)
+{
+	int n = 0;
+
+	if (bootcfg_info.banner[0]) {  
+		for (; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n]; n++) 
+			printf("%s\n", bootcfg_info.banner[n]);
+		return;
+	}
+
+	/* If the user has not specified a banner, print a default one. */
+
+	printf("\n");
+	printf("  \\\\-__,------,___.\n");
+	printf("   \\\\        __,---`  %s\n", bootprog_name);
+	printf("    \\\\       `---,_.  Revision %s\n", bootprog_rev);
+	printf("     \\\\-,_____,.---`\n");
+	printf("      \\\\\n");
+	printf("       \\\\\n");
+	printf("        \\\\\n\n");
 }

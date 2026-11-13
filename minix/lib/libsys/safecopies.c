@@ -53,8 +53,7 @@ static int freelist = -1;
  * because no new memory can be allocated.  In that case, nothing will change;
  * the caller must check afterward whether there are newly available grants.
  */
-void
-cpf_prealloc(unsigned int count)
+void cpf_prealloc(unsigned int count)
 {
 	cp_grant_t *new_grants;
 	int g, new_size;
@@ -116,8 +115,7 @@ cpf_prealloc(unsigned int count)
 	ngrants = new_size;
 }
 
-static int
-cpf_new_grantslot(void)
+static int cpf_new_grantslot(void)
 {
 /* Find a new, free grant slot in the grant table, grow it if
  * necessary. If no free slot is found and the grow failed,
@@ -149,8 +147,7 @@ cpf_new_grantslot(void)
 	return g;
 }
 
-cp_grant_id_t
-cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
+cp_grant_id_t cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
 {
 	int g;
  
@@ -171,8 +168,7 @@ cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
 	return GRANT_ID(g, grants[g].cp_seq);
 }
 
-cp_grant_id_t
-cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from, cp_grant_id_t gr)
+cp_grant_id_t cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from, cp_grant_id_t gr)
 {
 /* Grant process A access into process B. B has granted us access as grant
  * id 'gr'.
@@ -194,8 +190,7 @@ cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from, cp_grant_id_t gr)
 	return GRANT_ID(g, grants[g].cp_seq);
 }
 
-cp_grant_id_t
-cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
+cp_grant_id_t cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
 	vir_bytes addr, size_t bytes, int access)
 {
 /* Grant process A access into process B. Not everyone can do this. */
@@ -225,8 +220,7 @@ cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
  * exception: return GRANT_FAULTED (1) if a grant was created with CPF_TRY and
  * during its lifetime, a copy from or to the grant experienced a soft fault.
  */
-int
-cpf_revoke(cp_grant_id_t grant)
+int cpf_revoke(cp_grant_id_t grant)
 {
 	int r, g;
 
@@ -281,8 +275,7 @@ cpf_revoke(cp_grant_id_t grant)
  * not offer the same protection against accidental reuse of an old grant by a
  * remote party as the regular API does, and is therefore deprecated.
  */
-int
-cpf_getgrants(cp_grant_id_t *grant_ids, int n)
+int cpf_getgrants(cp_grant_id_t *grant_ids, int n)
 {
 	int i;
 
@@ -297,13 +290,7 @@ cpf_getgrants(cp_grant_id_t *grant_ids, int n)
 	return i;
 }
 
-int
-cpf_setgrant_direct(gid, who, addr, bytes, access)
-cp_grant_id_t gid;
-endpoint_t who;
-vir_bytes addr;
-size_t bytes;
-int access;
+int cpf_setgrant_direct(cp_grant_id_t gid, endpoint_t who, vir_bytes addr, size_t bytes, int access)
 {
 	GID_CHECK(gid);
 	ACCESS_CHECK(access);
@@ -317,11 +304,7 @@ int access;
 	return 0;
 }
 
-int
-cpf_setgrant_indirect(gid, who_to, who_from, his_gid)
-cp_grant_id_t gid;
-endpoint_t who_to, who_from;
-cp_grant_id_t his_gid;
+int cpf_setgrant_indirect(cp_grant_id_t gid, endpoint_t who_to, endpoint_t who_from, cp_grant_id_t his_gid)
 {
 	GID_CHECK(gid);
 
@@ -334,13 +317,7 @@ cp_grant_id_t his_gid;
 	return 0;
 }
 
-int
-cpf_setgrant_magic(gid, who_to, who_from, addr, bytes, access)
-cp_grant_id_t gid;
-endpoint_t who_to, who_from;
-vir_bytes addr;
-size_t bytes;
-int access;
+int cpf_setgrant_magic(cp_grant_id_t gid, endpoint_t who_to, endpoint_t who_from, vir_bytes addr, size_t bytes, int access)
 {
 	GID_CHECK(gid);
 	ACCESS_CHECK(access);
@@ -355,9 +332,7 @@ int access;
 	return 0;
 }
 
-int
-cpf_setgrant_disable(gid)
-cp_grant_id_t gid;
+int cpf_setgrant_disable(cp_grant_id_t gid)
 {
 	GID_CHECK(gid);
 
@@ -370,8 +345,7 @@ cp_grant_id_t gid;
  * END OF DEPRECATED API
  */
 
-void
-cpf_reload(void)
+void cpf_reload(void)
 {
 /* Inform the kernel about the location of the grant table. This is needed
  * after a fork.

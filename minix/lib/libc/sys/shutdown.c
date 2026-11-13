@@ -21,8 +21,7 @@ static int _uds_shutdown(int sock, int how);
 /*
  * Shut down socket send and receive operations.
  */
-static int
-__shutdown(int fd, int how)
+static int __shutdown(int fd, int how)
 {
 	message m;
 

@@ -37,8 +37,7 @@ static char *writtenblocks[MAXBLOCKS];
 
 /* Some functions used by testcache.c */
 
-int
-dowriteblock(int b, int blocksize, u32_t seed, char *data)
+int dowriteblock(int b, int blocksize, u32_t seed, char *data)
 {
 	struct buf *bp;
 	int r;
@@ -59,8 +58,7 @@ dowriteblock(int b, int blocksize, u32_t seed, char *data)
 	return blocksize;
 }
 
-int
-readblock(int b, int blocksize, u32_t seed, char *data)
+int readblock(int b, int blocksize, u32_t seed, char *data)
 {
 	struct buf *bp;
 	int r;
@@ -103,8 +101,7 @@ static void allocate(int b)
 }
 
 /* Fake some libblockdriver functions */
-ssize_t
-bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
+ssize_t bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
 	int i, block;
 	size_t size, block_off;
@@ -132,8 +129,7 @@ bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 	return tot;
 }
 
-ssize_t
-bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
+ssize_t bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
 	int i, block;
 	size_t size, block_off;
@@ -161,8 +157,7 @@ bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 	return tot;
 }
 
-ssize_t
-bdev_read(dev_t dev, u64_t pos, char *data, size_t count, int flags)
+ssize_t bdev_read(dev_t dev, u64_t pos, char *data, size_t count, int flags)
 {
 	int block;
 
@@ -197,14 +192,12 @@ panic(const char *fmt, ...)
 	exit(1);
 }
 
-int
-vm_info_stats(struct vm_stats_info *vsi)
+int vm_info_stats(struct vm_stats_info *vsi)
 {
 	return ENOSYS;
 }
 
-void
-util_stacktrace(void)
+void util_stacktrace(void)
 {
 	fprintf(stderr, "fake stacktrace\n");
 }
@@ -247,8 +240,7 @@ int vm_clear_cache(dev_t dev)
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	size_t newblocksize;
 	int wss, cs, n = 0, p;

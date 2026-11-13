@@ -144,8 +144,7 @@ AcpiUtAddAddressRange (
  *
  ******************************************************************************/
 
-void
-AcpiUtRemoveAddressRange (
+void AcpiUtRemoveAddressRange (
     ACPI_ADR_SPACE_TYPE     SpaceId,
     ACPI_NAMESPACE_NODE     *RegionNode)
 {
@@ -297,8 +296,7 @@ AcpiUtCheckAddressRange (
  *
  ******************************************************************************/
 
-void
-AcpiUtDeleteAddressLists (
+void AcpiUtDeleteAddressLists (
     void)
 {
     ACPI_ADDRESS_RANGE      *Next;

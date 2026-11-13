@@ -84,8 +84,7 @@ static FILE *gcov_file = NULL;
 /*
  * LLVM hook for opening the .gcda file for a specific source module.
  */
-void
-llvm_gcda_start_file(const char * file_name, const char version[4],
+void llvm_gcda_start_file(const char * file_name, const char version[4],
 	uint32_t stamp)
 {
 	uint32_t word[3];
@@ -114,8 +113,7 @@ llvm_gcda_start_file(const char * file_name, const char version[4],
  * LLVM hook for writing a function announcement to the currently opened .gcda
  * file.
  */
-void
-llvm_gcda_emit_function(uint32_t ident, const char * func_name,
+void llvm_gcda_emit_function(uint32_t ident, const char * func_name,
 #if LLVM_35
 	uint32_t func_cksum, uint8_t extra_cksum, uint32_t cfg_cksum)
 #else
@@ -164,8 +162,7 @@ llvm_gcda_emit_function(uint32_t ident, const char * func_name,
  * LLVM hook for writing function arc counters to the currently opened .gcda
  * file.
  */
-void
-llvm_gcda_emit_arcs(uint32_t ncounters, uint64_t * counters)
+void llvm_gcda_emit_arcs(uint32_t ncounters, uint64_t * counters)
 {
 	uint32_t word[2];
 
@@ -182,8 +179,7 @@ llvm_gcda_emit_arcs(uint32_t ncounters, uint64_t * counters)
  * LLVM hook for writing summary information to the currently opened .gcda
  * file.
  */
-void
-llvm_gcda_summary_info(void)
+void llvm_gcda_summary_info(void)
 {
 	uint32_t word[13];
 
@@ -202,8 +198,7 @@ llvm_gcda_summary_info(void)
 /*
  * LLVM hook for closing the currently opened .gcda file.
  */
-void
-llvm_gcda_end_file(void)
+void llvm_gcda_end_file(void)
 {
 	uint32_t word[2];
 
@@ -221,8 +216,7 @@ llvm_gcda_end_file(void)
  * Our implementation for LLVM of the GCC function to flush the coverage data.
  * The function is called by our libsys's GCOV code.
  */
-void
-__gcov_flush(void)
+void __gcov_flush(void)
 {
 	unsigned int i;
 
@@ -236,8 +230,7 @@ __gcov_flush(void)
  * be used on exit, the latter on a pre-exit flush.  We use the latter only.
  * This function is basically called once for each compiled source module.
  */
-void
-llvm_gcov_init(write_cb_t write_cb __unused, flush_cb_t flush_cb)
+void llvm_gcov_init(write_cb_t write_cb __unused, flush_cb_t flush_cb)
 {
 
 	if (flush_cb == NULL)

@@ -41,7 +41,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
 
   if (!rip) {
 	printf("%s:%d put_inode: inode #%llu dev: %llx not found\n", __FILE__,
-		__LINE__, ino_nr, fs_dev);
+		__LINE__, (unsigned long long)ino_nr, (unsigned long long)fs_dev);
 	panic("fs_putnode failed");
   }
 
@@ -64,7 +64,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
 /*===========================================================================*
  *                init_inode_cache                                           *
  *===========================================================================*/
-void init_inode_cache()
+void init_inode_cache(void)
 {
   struct inode *rip;
   struct inodelist *rlp;

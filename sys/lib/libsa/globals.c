@@ -20,7 +20,6 @@ u_char	bcea[ETHER_ADDR_LEN] = BA;	/* broadcast ethernet address */
 char	rootpath[FNAME_SIZE];		/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */
 char	hostname[FNAME_SIZE];		/* our hostname */
-const char	*fsmod = NULL;		/* file system module name to load */
 struct	in_addr myip;			/* my ip address */
 struct	in_addr rootip;			/* root ip address */
 struct	in_addr gateip;			/* swap ip address */

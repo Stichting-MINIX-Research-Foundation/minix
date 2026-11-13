@@ -311,8 +311,7 @@ static void eap_send_success(ppp_pcb *pcb) {
  * Set DES key according to pseudonym-generating secret and current
  * date.
  */
-static bool
-pncrypt_setkey(int timeoffs)
+static bool pncrypt_setkey(int timeoffs)
 {
 	struct tm *tp;
 	char tbuf[9];
@@ -341,12 +340,7 @@ struct b64state {
 	int bs_offs;
 };
 
-static int
-b64enc(bs, inp, inlen, outp)
-struct b64state *bs;
-u_char *inp;
-int inlen;
-u_char *outp;
+static int b64enc(struct b64state *bs, u_char *inp, int inlen, u_char *outp)
 {
 	int outlen = 0;
 
@@ -367,10 +361,7 @@ u_char *outp;
 	return (outlen);
 }
 
-static int
-b64flush(bs, outp)
-struct b64state *bs;
-u_char *outp;
+static int b64flush(struct b64state *bs, u_char *outp)
 {
 	int outlen = 0;
 
@@ -389,12 +380,7 @@ u_char *outp;
 	return (outlen);
 }
 
-static int
-b64dec(bs, inp, inlen, outp)
-struct b64state *bs;
-u_char *inp;
-int inlen;
-u_char *outp;
+static int b64dec(struct b64state *bs, u_char *inp, int inlen, u_char *outp)
 {
 	int outlen = 0;
 	char *cp;
@@ -1083,13 +1069,7 @@ static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, const char 
 /*
  * Format and send a SRP EAP Response message.
  */
-static void
-eap_srp_response(esp, id, subtypenum, str, lenstr)
-eap_state *esp;
-u_char id;
-u_char subtypenum;
-u_char *str;
-int lenstr;
+static void eap_srp_response(eap_state *esp, u_char id, u_char subtypenum, u_char *str, int lenstr)
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	struct pbuf *p;
@@ -1125,12 +1105,7 @@ int lenstr;
 /*
  * Format and send a SRP EAP Client Validator Response message.
  */
-static void
-eap_srpval_response(esp, id, flags, str)
-eap_state *esp;
-u_char id;
-u32_t flags;
-u_char *str;
+static void eap_srpval_response(eap_state *esp, u_char id, u32_t flags, u_char *str)
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	struct pbuf *p;
@@ -1219,9 +1194,7 @@ name_of_pn_file()
 	return (path);
 }
 
-static int
-open_pn_file(modebits)
-mode_t modebits;
+static int open_pn_file(mode_t modebits)
 {
 	char *path;
 	int fd, err;
@@ -1235,8 +1208,7 @@ mode_t modebits;
 	return (fd);
 }
 
-static void
-remove_pn_file()
+static void remove_pn_file()
 {
 	char *path;
 
@@ -1246,11 +1218,7 @@ remove_pn_file()
 	}
 }
 
-static void
-write_pseudonym(esp, inp, len, id)
-eap_state *esp;
-u_char *inp;
-int len, id;
+static void write_pseudonym(eap_state *esp, u_char *inp, int len, int id)
 {
 	u_char val;
 	u_char *datp, *digp;

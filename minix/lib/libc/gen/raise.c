@@ -12,8 +12,7 @@
 int _kill(int pid, int sig);
 pid_t getpid(void);
 
-int
-raise(int sig)
+int raise(int sig)
 {
 	if (sig < 0 || sig >= _NSIG)
 		return -1;

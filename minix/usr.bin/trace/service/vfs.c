@@ -19,15 +19,13 @@
  * currently offers no benefit, but will in the future allow for features such
  * as color highlighting and tracking of specific open files (TODO).
  */
-void
-put_fd(struct trace_proc * proc, const char * name, int fd)
+void put_fd(struct trace_proc * proc, const char * name, int fd)
 {
 
 	put_value(proc, name, "%d", fd);
 }
 
-static int
-vfs_read_out(struct trace_proc * proc, const message * m_out)
+static int vfs_read_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_readwrite.fd);
@@ -35,8 +33,7 @@ vfs_read_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_read_in(struct trace_proc * proc, const message * m_out,
+static void vfs_read_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -47,8 +44,7 @@ vfs_read_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_write_out(struct trace_proc * proc, const message * m_out)
+static int vfs_write_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_readwrite.fd);
@@ -59,8 +55,7 @@ vfs_write_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_lseek_whence(struct trace_proc * proc, const char * name, int whence)
+static void put_lseek_whence(struct trace_proc * proc, const char * name, int whence)
 {
 	const char *text = NULL;
 
@@ -78,8 +73,7 @@ put_lseek_whence(struct trace_proc * proc, const char * name, int whence)
 		put_value(proc, name, "%d", whence);
 }
 
-static int
-vfs_lseek_out(struct trace_proc * proc, const message * m_out)
+static int vfs_lseek_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_lseek.fd);
@@ -89,8 +83,7 @@ vfs_lseek_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-vfs_lseek_in(struct trace_proc * proc, const message * __unused m_out,
+static void vfs_lseek_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -126,8 +119,7 @@ static const struct flags open_flags[] = {
 	FLAG(O_NOSIGPIPE),
 };
 
-static void
-put_open_flags(struct trace_proc * proc, const char * name, int value,
+static void put_open_flags(struct trace_proc * proc, const char * name, int value,
 	int full)
 {
 	const struct flags *fp;
@@ -169,8 +161,7 @@ static const struct flags mode_flags[] = {
 #define put_mode(p, n, v) \
 	put_flags(p, n, mode_flags, COUNT(mode_flags), "0%03o", v)
 
-static void
-put_path(struct trace_proc * proc, const message * m_out)
+static void put_path(struct trace_proc * proc, const message * m_out)
 {
 	size_t len;
 
@@ -181,8 +172,7 @@ put_path(struct trace_proc * proc, const message * m_out)
 		put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_path.name, len);
 }
 
-static int
-vfs_open_out(struct trace_proc * proc, const message * m_out)
+static int vfs_open_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_path(proc, m_out);
@@ -193,8 +183,7 @@ vfs_open_out(struct trace_proc * proc, const message * m_out)
 }
 
 /* This function is shared between creat and open. */
-static void
-vfs_open_in(struct trace_proc * proc, const message * __unused m_out,
+static void vfs_open_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -204,8 +193,7 @@ vfs_open_in(struct trace_proc * proc, const message * __unused m_out,
 		put_result(proc);
 }
 
-static int
-vfs_creat_out(struct trace_proc * proc, const message * m_out)
+static int vfs_creat_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_creat.name,
@@ -217,8 +205,7 @@ vfs_creat_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_close_out(struct trace_proc * proc, const message * m_out)
+static int vfs_close_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_close.fd);
@@ -227,8 +214,7 @@ vfs_close_out(struct trace_proc * proc, const message * m_out)
 }
 
 /* This function is used for link, rename, and symlink. */
-static int
-vfs_link_out(struct trace_proc * proc, const message * m_out)
+static int vfs_link_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path1", PF_PATH, m_out->m_lc_vfs_link.name1,
@@ -239,8 +225,7 @@ vfs_link_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_path_out(struct trace_proc * proc, const message * m_out)
+static int vfs_path_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_path(proc, m_out);
@@ -248,8 +233,7 @@ vfs_path_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_path_mode_out(struct trace_proc * proc, const message * m_out)
+static int vfs_path_mode_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_path(proc, m_out);
@@ -258,8 +242,7 @@ vfs_path_mode_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-void
-put_dev(struct trace_proc * proc, const char * name, dev_t dev)
+void put_dev(struct trace_proc * proc, const char * name, dev_t dev)
 {
 	devmajor_t major;
 	devminor_t minor;
@@ -274,8 +257,7 @@ put_dev(struct trace_proc * proc, const char * name, dev_t dev)
 		put_value(proc, name, "%"PRIu64, dev);
 }
 
-static int
-vfs_mknod_out(struct trace_proc * proc, const message * m_out)
+static int vfs_mknod_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_mknod.name,
@@ -286,8 +268,7 @@ vfs_mknod_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_chown_out(struct trace_proc * proc, const message * m_out)
+static int vfs_chown_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_chown.name,
@@ -304,8 +285,7 @@ static const struct flags mount_flags[] = {
 	FLAG(MNT_RDONLY),
 };
 
-static int
-vfs_mount_out(struct trace_proc * proc, const message * m_out)
+static int vfs_mount_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "special", PF_PATH, m_out->m_lc_vfs_mount.dev,
@@ -322,8 +302,7 @@ vfs_mount_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_umount_out(struct trace_proc * proc, const message * m_out)
+static int vfs_umount_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_umount.name,
@@ -332,8 +311,7 @@ vfs_umount_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-vfs_umount_in(struct trace_proc * proc, const message * m_out,
+static void vfs_umount_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -356,8 +334,7 @@ static const struct flags access_flags[] = {
 	FLAG(X_OK),
 };
 
-static int
-vfs_access_out(struct trace_proc * proc, const message * m_out)
+static int vfs_access_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_path(proc, m_out);
@@ -367,8 +344,7 @@ vfs_access_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_readlink_out(struct trace_proc * proc, const message * m_out)
+static int vfs_readlink_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_readlink.name,
@@ -377,8 +353,7 @@ vfs_readlink_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_readlink_in(struct trace_proc * proc, const message * m_out,
+static void vfs_readlink_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -390,8 +365,7 @@ vfs_readlink_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static void
-put_struct_stat(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_stat(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct stat buf;
@@ -453,8 +427,7 @@ put_struct_stat(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 1);
 }
 
-static int
-vfs_stat_out(struct trace_proc * proc, const message * m_out)
+static int vfs_stat_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_stat.name,
@@ -463,8 +436,7 @@ vfs_stat_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_stat_in(struct trace_proc * proc, const message * m_out,
+static void vfs_stat_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -473,8 +445,7 @@ vfs_stat_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_fstat_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fstat_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fstat.fd);
@@ -482,8 +453,7 @@ vfs_fstat_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_fstat_in(struct trace_proc * proc, const message * m_out,
+static void vfs_fstat_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -492,8 +462,7 @@ vfs_fstat_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_ioctl_out(struct trace_proc * proc, const message * m_out)
+static int vfs_ioctl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_ioctl.fd);
@@ -503,8 +472,7 @@ vfs_ioctl_out(struct trace_proc * proc, const message * m_out)
 	    (vir_bytes)m_out->m_lc_vfs_ioctl.arg, FALSE /*is_svrctl*/);
 }
 
-static void
-vfs_ioctl_in(struct trace_proc * proc, const message * m_out,
+static void vfs_ioctl_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -512,8 +480,7 @@ vfs_ioctl_in(struct trace_proc * proc, const message * m_out,
 	    (vir_bytes)m_out->m_lc_vfs_ioctl.arg, FALSE /*is_svrctl*/);
 }
 
-static void
-put_fcntl_cmd(struct trace_proc * proc, const char * name, int cmd)
+static void put_fcntl_cmd(struct trace_proc * proc, const char * name, int cmd)
 {
 	const char *text = NULL;
 
@@ -552,8 +519,7 @@ static const struct flags fd_flags[] = {
 #define put_fd_flags(p, n, v) \
 	put_flags(p, n, fd_flags, COUNT(fd_flags), "0x%x", v)
 
-static void
-put_flock_type(struct trace_proc * proc, const char * name, int type)
+static void put_flock_type(struct trace_proc * proc, const char * name, int type)
 {
 	const char *text = NULL;
 
@@ -575,8 +541,7 @@ put_flock_type(struct trace_proc * proc, const char * name, int type)
  * With PF_FULL, also print l_pid, unless l_type is F_UNLCK in which case
  * only that type is printed.   With PF_ALT, print only l_whence/l_start/l_len.
  */
-static void
-put_struct_flock(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_flock(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct flock flock;
@@ -600,8 +565,7 @@ put_struct_flock(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, TRUE /*all*/);
 }
 
-static int
-vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fcntl.fd);
@@ -644,8 +608,7 @@ vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
 	return (m_out->m_lc_vfs_fcntl.cmd != F_GETLK) ? CT_DONE : CT_NOTDONE;
 }
 
-static void
-vfs_fcntl_in(struct trace_proc * proc, const message * m_out,
+static void vfs_fcntl_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -670,16 +633,14 @@ vfs_fcntl_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_pipe2_out(struct trace_proc * __unused proc,
+static int vfs_pipe2_out(struct trace_proc * __unused proc,
 	const message * __unused m_out)
 {
 
 	return CT_NOTDONE;
 }
 
-static void
-vfs_pipe2_in(struct trace_proc * proc, const message * m_out,
+static void vfs_pipe2_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -696,8 +657,7 @@ vfs_pipe2_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_umask_out(struct trace_proc * proc, const message * m_out)
+static int vfs_umask_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_mode(proc, NULL, m_out->m_lc_vfs_umask.mask);
@@ -705,8 +665,7 @@ vfs_umask_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-vfs_umask_in(struct trace_proc * proc, const message * __unused m_out,
+static void vfs_umask_in(struct trace_proc * proc, const message * __unused m_out,
 	const message * m_in, int failed)
 {
 
@@ -717,8 +676,7 @@ vfs_umask_in(struct trace_proc * proc, const message * __unused m_out,
 
 }
 
-static void
-put_dirent_type(struct trace_proc * proc, const char * name, unsigned int type)
+static void put_dirent_type(struct trace_proc * proc, const char * name, unsigned int type)
 {
 	const char *text = NULL;
 
@@ -742,8 +700,7 @@ put_dirent_type(struct trace_proc * proc, const char * name, unsigned int type)
 		put_value(proc, name, "%u", type);
 }
 
-static void
-put_struct_dirent(struct trace_proc * proc, const char *name, int flags,
+static void put_struct_dirent(struct trace_proc * proc, const char *name, int flags,
 	vir_bytes addr)
 {
 	struct dirent dirent;
@@ -765,8 +722,7 @@ put_struct_dirent(struct trace_proc * proc, const char *name, int flags,
 	put_close_struct(proc, verbose > 1);
 }
 
-static void
-put_dirent_array(struct trace_proc * proc, const char * name, int flags,
+static void put_dirent_array(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, ssize_t size)
 {
 	struct dirent dirent;
@@ -833,8 +789,7 @@ put_dirent_array(struct trace_proc * proc, const char * name, int flags,
 	put_close(proc, "]");
 }
 
-static int
-vfs_getdents_out(struct trace_proc * proc, const message * m_out)
+static int vfs_getdents_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_readwrite.fd);
@@ -842,8 +797,7 @@ vfs_getdents_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_getdents_in(struct trace_proc * proc, const message * m_out,
+static void vfs_getdents_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -854,8 +808,7 @@ vfs_getdents_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static void
-put_fd_set(struct trace_proc * proc, const char * name, vir_bytes addr,
+static void put_fd_set(struct trace_proc * proc, const char * name, vir_bytes addr,
 	int nfds)
 {
 	fd_set set;
@@ -930,8 +883,7 @@ put_fd_set(struct trace_proc * proc, const char * name, vir_bytes addr,
 	put_close(proc, "]");
 }
 
-static int
-vfs_select_out(struct trace_proc * proc, const message * m_out)
+static int vfs_select_out(struct trace_proc * proc, const message * m_out)
 {
 	int nfds;
 
@@ -949,8 +901,7 @@ vfs_select_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-vfs_select_in(struct trace_proc * proc, const message * m_out,
+static void vfs_select_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 	vir_bytes readfds, writefds, errorfds;
@@ -980,8 +931,7 @@ vfs_select_in(struct trace_proc * proc, const message * m_out,
 	put_close(proc, ")");
 }
 
-static int
-vfs_fchdir_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fchdir_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fchdir.fd);
@@ -989,8 +939,7 @@ vfs_fchdir_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_fsync_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fsync_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fsync.fd);
@@ -998,8 +947,7 @@ vfs_fsync_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_truncate_out(struct trace_proc * proc, const message * m_out)
+static int vfs_truncate_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_truncate.name,
@@ -1009,8 +957,7 @@ vfs_truncate_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_ftruncate_out(struct trace_proc * proc, const message * m_out)
+static int vfs_ftruncate_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_truncate.fd);
@@ -1019,8 +966,7 @@ vfs_ftruncate_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_fchmod_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fchmod_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fchmod.fd);
@@ -1029,8 +975,7 @@ vfs_fchmod_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_fchown_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fchown_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_chown.fd);
@@ -1066,8 +1011,7 @@ static const struct flags at_flags[] = {
 	FLAG(AT_REMOVEDIR),
 };
 
-static void
-put_utimens_timespec(struct trace_proc * proc, const char * name,
+static void put_utimens_timespec(struct trace_proc * proc, const char * name,
 	time_t sec, long nsec)
 {
 
@@ -1086,8 +1030,7 @@ put_utimens_timespec(struct trace_proc * proc, const char * name,
 	put_close(proc, "}");
 }
 
-static int
-vfs_utimens_out(struct trace_proc * proc, const message * m_out)
+static int vfs_utimens_out(struct trace_proc * proc, const message * m_out)
 {
 	int has_path, has_flags;
 
@@ -1153,8 +1096,7 @@ static const struct flags st_flags[] = {
 	FLAG(ST_NOTRUNC),
 };
 
-static void
-put_struct_statvfs(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_statvfs(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr)
 {
 	struct statvfs buf;
@@ -1213,8 +1155,7 @@ put_struct_statvfs(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 1);
 }
 
-static void
-put_statvfs_array(struct trace_proc * proc, const char * name, int flags,
+static void put_statvfs_array(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, int count)
 {
 	struct statvfs buf;
@@ -1269,8 +1210,7 @@ put_statvfs_array(struct trace_proc * proc, const char * name, int flags,
 	put_close(proc, "]");
 }
 
-static int
-vfs_getvfsstat_out(struct trace_proc * proc, const message * m_out)
+static int vfs_getvfsstat_out(struct trace_proc * proc, const message * m_out)
 {
 
 	if (m_out->m_lc_vfs_getvfsstat.buf == 0) {
@@ -1284,8 +1224,7 @@ vfs_getvfsstat_out(struct trace_proc * proc, const message * m_out)
 		return CT_NOTDONE;
 }
 
-static void
-vfs_getvfsstat_in(struct trace_proc * proc, const message * m_out,
+static void vfs_getvfsstat_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -1301,8 +1240,7 @@ vfs_getvfsstat_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_statvfs1_out(struct trace_proc * proc, const message * m_out)
+static int vfs_statvfs1_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "path", PF_PATH, m_out->m_lc_vfs_statvfs1.name,
@@ -1311,8 +1249,7 @@ vfs_statvfs1_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_statvfs1_in(struct trace_proc * proc, const message * m_out,
+static void vfs_statvfs1_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -1324,8 +1261,7 @@ vfs_statvfs1_in(struct trace_proc * proc, const message * m_out,
 }
 
 /* This function is shared between statvfs1 and fstatvfs1. */
-static int
-vfs_fstatvfs1_out(struct trace_proc * proc, const message * m_out)
+static int vfs_fstatvfs1_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_statvfs1.fd);
@@ -1333,8 +1269,7 @@ vfs_fstatvfs1_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static int
-vfs_svrctl_out(struct trace_proc * proc, const message * m_out)
+static int vfs_svrctl_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_ioctl_req(proc, "request", m_out->m_lc_svrctl.request,
@@ -1343,8 +1278,7 @@ vfs_svrctl_out(struct trace_proc * proc, const message * m_out)
 	    m_out->m_lc_svrctl.arg, TRUE /*is_svrctl*/);
 }
 
-static void
-vfs_svrctl_in(struct trace_proc * proc, const message * m_out,
+static void vfs_svrctl_in(struct trace_proc * proc, const message * m_out,
 	const message * __unused m_in, int failed)
 {
 
@@ -1352,8 +1286,7 @@ vfs_svrctl_in(struct trace_proc * proc, const message * m_out,
 	    m_out->m_lc_svrctl.arg, TRUE /*is_svrctl*/);
 }
 
-static int
-vfs_gcov_flush_out(struct trace_proc * proc, const message * m_out)
+static int vfs_gcov_flush_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_buf(proc, "label", PF_STRING, m_out->m_lc_vfs_gcov.label,
@@ -1364,8 +1297,7 @@ vfs_gcov_flush_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-void
-put_socket_family(struct trace_proc * proc, const char * name, int family)
+void put_socket_family(struct trace_proc * proc, const char * name, int family)
 {
 	const char *text = NULL;
 
@@ -1435,15 +1367,13 @@ static const struct flags socket_types[] = {
 	FLAG(SOCK_NOSIGPIPE),
 };
 
-void
-put_socket_type(struct trace_proc * proc, const char * name, int type)
+void put_socket_type(struct trace_proc * proc, const char * name, int type)
 {
 
 	put_flags(proc, name, socket_types, COUNT(socket_types), "%d", type);
 }
 
-static void
-put_socket_protocol(struct trace_proc * proc, const char * name, int family,
+static void put_socket_protocol(struct trace_proc * proc, const char * name, int family,
 	int type, int protocol)
 {
 	const char *text = NULL;
@@ -1482,8 +1412,7 @@ put_socket_protocol(struct trace_proc * proc, const char * name, int family,
 		put_value(proc, name, "%d", protocol);
 }
 
-static int
-vfs_socket_out(struct trace_proc * proc, const message * m_out)
+static int vfs_socket_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_socket_family(proc, "domain", m_out->m_lc_vfs_socket.domain);
@@ -1495,8 +1424,7 @@ vfs_socket_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_socketpair_out(struct trace_proc * proc, const message * m_out)
+static int vfs_socketpair_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_socket_family(proc, "domain", m_out->m_lc_vfs_socket.domain);
@@ -1508,8 +1436,7 @@ vfs_socketpair_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_socketpair_in(struct trace_proc * proc, const message * m_out,
+static void vfs_socketpair_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -1524,8 +1451,7 @@ vfs_socketpair_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-void
-put_in_addr(struct trace_proc * proc, const char * name, struct in_addr in)
+void put_in_addr(struct trace_proc * proc, const char * name, struct in_addr in)
 {
 
 	if (!valuesonly) {
@@ -1535,8 +1461,7 @@ put_in_addr(struct trace_proc * proc, const char * name, struct in_addr in)
 		put_value(proc, name, "0x%08x", ntohl(in.s_addr));
 }
 
-static void
-put_in6_addr(struct trace_proc * proc, const char * name, struct in6_addr * in)
+static void put_in6_addr(struct trace_proc * proc, const char * name, struct in6_addr * in)
 {
 	char buf[INET6_ADDRSTRLEN];
 	const char *ptr;
@@ -1553,8 +1478,7 @@ put_in6_addr(struct trace_proc * proc, const char * name, struct in6_addr * in)
 	}
 }
 
-static void
-put_struct_sockaddr(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_sockaddr(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, socklen_t addr_len)
 {
 	char buf[UCHAR_MAX + 1];
@@ -1646,8 +1570,7 @@ put_struct_sockaddr(struct trace_proc * proc, const char * name, int flags,
 }
 
 /* This function is shared between bind and connect. */
-static int
-vfs_bind_out(struct trace_proc * proc, const message * m_out)
+static int vfs_bind_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
@@ -1658,8 +1581,7 @@ vfs_bind_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_listen_out(struct trace_proc * proc, const message * m_out)
+static int vfs_listen_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_listen.fd);
@@ -1668,8 +1590,7 @@ vfs_listen_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_accept_out(struct trace_proc * proc, const message * m_out)
+static int vfs_accept_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
@@ -1677,8 +1598,7 @@ vfs_accept_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_accept_in(struct trace_proc * proc, const message * m_out,
+static void vfs_accept_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -1721,8 +1641,7 @@ static const struct flags msg_flags[] = {
 	FLAG(MSG_WAITFORONE),
 };
 
-static int
-vfs_sendto_out(struct trace_proc * proc, const message * m_out)
+static int vfs_sendto_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sendrecv.fd);
@@ -1738,8 +1657,7 @@ vfs_sendto_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static void
-put_struct_iovec(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_iovec(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, int len, ssize_t bmax)
 {
 	struct iovec iov;
@@ -1802,8 +1720,7 @@ put_struct_iovec(struct trace_proc * proc, const char * name, int flags,
 	put_close(proc, "]");
 }
 
-static void
-put_struct_sockcred(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_sockcred(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, size_t left)
 {
 	struct sockcred sc;
@@ -1830,8 +1747,7 @@ put_struct_sockcred(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, verbose > 1);
 }
 
-static void
-put_socket_level(struct trace_proc * proc, const char * name, int level)
+static void put_socket_level(struct trace_proc * proc, const char * name, int level)
 {
 
 	/*
@@ -1846,8 +1762,7 @@ put_socket_level(struct trace_proc * proc, const char * name, int level)
 		put_value(proc, name, "%d", level);
 }
 
-void
-put_cmsg_type(struct trace_proc * proc, const char * name, int type)
+void put_cmsg_type(struct trace_proc * proc, const char * name, int type)
 {
 	const char *text = NULL;
 
@@ -1865,8 +1780,7 @@ put_cmsg_type(struct trace_proc * proc, const char * name, int type)
 		put_value(proc, name, "%d", type);
 }
 
-static void
-put_cmsg_rights(struct trace_proc * proc, const char * name, char * buf,
+static void put_cmsg_rights(struct trace_proc * proc, const char * name, char * buf,
 	size_t size, char * cptr, size_t chunk, vir_bytes addr, size_t len)
 {
 	unsigned int i, nfds;
@@ -1909,8 +1823,7 @@ put_cmsg_rights(struct trace_proc * proc, const char * name, char * buf,
 	put_close(proc, "]");
 }
 
-static void
-put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
+static void put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
 	size_t len)
 {
 	struct cmsghdr cmsg;
@@ -1985,8 +1898,7 @@ put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
 	put_close(proc, "]");
 }
 
-static void
-put_struct_msghdr(struct trace_proc * proc, const char * name, int flags,
+static void put_struct_msghdr(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, ssize_t max)
 {
 	struct msghdr msg;
@@ -2034,8 +1946,7 @@ put_struct_msghdr(struct trace_proc * proc, const char * name, int flags,
 	put_close_struct(proc, all);
 }
 
-static int
-vfs_sendmsg_out(struct trace_proc * proc, const message * m_out)
+static int vfs_sendmsg_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sockmsg.fd);
@@ -2047,8 +1958,7 @@ vfs_sendmsg_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_recvfrom_out(struct trace_proc * proc, const message * m_out)
+static int vfs_recvfrom_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sendrecv.fd);
@@ -2056,8 +1966,7 @@ vfs_recvfrom_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_recvfrom_in(struct trace_proc * proc, const message * m_out,
+static void vfs_recvfrom_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -2080,8 +1989,7 @@ vfs_recvfrom_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static int
-vfs_recvmsg_out(struct trace_proc * proc, const message * m_out)
+static int vfs_recvmsg_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sockmsg.fd);
@@ -2089,8 +1997,7 @@ vfs_recvmsg_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_recvmsg_in(struct trace_proc * proc, const message * m_out,
+static void vfs_recvmsg_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -2111,8 +2018,7 @@ vfs_recvmsg_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-static void
-put_sockopt_name(struct trace_proc * proc, const char * name, int level,
+static void put_sockopt_name(struct trace_proc * proc, const char * name, int level,
 	int optname)
 {
 	const char *text = NULL;
@@ -2156,8 +2062,7 @@ put_sockopt_name(struct trace_proc * proc, const char * name, int level,
 		put_value(proc, name, "0x%x", optname);
 }
 
-static void
-put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
+static void put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 	int level, int optname, vir_bytes addr, socklen_t len)
 {
 	const char *text;
@@ -2252,8 +2157,7 @@ put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 	}
 }
 
-static int
-vfs_setsockopt_out(struct trace_proc * proc, const message * m_out)
+static int vfs_setsockopt_out(struct trace_proc * proc, const message * m_out)
 {
 	int level, name;
 
@@ -2270,8 +2174,7 @@ vfs_setsockopt_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vfs_getsockopt_out(struct trace_proc * proc, const message * m_out)
+static int vfs_getsockopt_out(struct trace_proc * proc, const message * m_out)
 {
 	int level;
 
@@ -2284,8 +2187,7 @@ vfs_getsockopt_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_getsockopt_in(struct trace_proc * proc, const message * m_out,
+static void vfs_getsockopt_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -2307,8 +2209,7 @@ vfs_getsockopt_in(struct trace_proc * proc, const message * m_out,
 }
 
 /* This function is shared between getsockname and getpeername. */
-static int
-vfs_getsockname_out(struct trace_proc * proc, const message * m_out)
+static int vfs_getsockname_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
@@ -2316,8 +2217,7 @@ vfs_getsockname_out(struct trace_proc * proc, const message * m_out)
 	return CT_NOTDONE;
 }
 
-static void
-vfs_getsockname_in(struct trace_proc * proc, const message * m_out,
+static void vfs_getsockname_in(struct trace_proc * proc, const message * m_out,
 	const message * m_in, int failed)
 {
 
@@ -2335,8 +2235,7 @@ vfs_getsockname_in(struct trace_proc * proc, const message * m_out,
 	put_result(proc);
 }
 
-void
-put_shutdown_how(struct trace_proc * proc, const char * name, int how)
+void put_shutdown_how(struct trace_proc * proc, const char * name, int how)
 {
 	const char *text = NULL;
 
@@ -2354,8 +2253,7 @@ put_shutdown_how(struct trace_proc * proc, const char * name, int how)
 		put_value(proc, name, "%d", how);
 }
 
-static int
-vfs_shutdown_out(struct trace_proc * proc, const message * m_out)
+static int vfs_shutdown_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_shutdown.fd);

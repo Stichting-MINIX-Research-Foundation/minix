@@ -20,8 +20,7 @@ void mthread_init_valid_attributes(void)
 /*===========================================================================*
  *				mthread_attr_add			     *
  *===========================================================================*/
-static void mthread_attr_add(a) 
-mthread_attr_t *a;
+static void mthread_attr_add(mthread_attr_t *a)
 {
 /* Add attribute to list of valid, initialized attributes */
 
@@ -41,8 +40,7 @@ mthread_attr_t *a;
 /*===========================================================================*
  *				mthread_attr_destroy			     *
  *===========================================================================*/
-int mthread_attr_destroy(attr)
-mthread_attr_t *attr;
+int mthread_attr_destroy(mthread_attr_t *attr)
 {
 /* Invalidate attribute and deallocate resources. */
 
@@ -64,13 +62,13 @@ mthread_attr_t *attr;
 /*===========================================================================*
  *				mthread_attr_init			     *
  *===========================================================================*/
-int mthread_attr_init(attr)
-mthread_attr_t *attr;	/* Attribute */
+int mthread_attr_init(mthread_attr_t *attr)
 {
 /* Initialize the attribute to a known state. */
   struct __mthread_attr *a;
 
-  if (attr == NULL) 
+  mthread_init();
+  if (attr == NULL)
   	return(EAGAIN);
   else if (mthread_attr_valid(attr)) 
   	return(EBUSY);
@@ -91,9 +89,7 @@ mthread_attr_t *attr;	/* Attribute */
 /*===========================================================================*
  *				mthread_attr_getdetachstate			     *
  *===========================================================================*/
-int mthread_attr_getdetachstate(attr, detachstate)
-mthread_attr_t *attr;
-int *detachstate;
+int mthread_attr_getdetachstate(mthread_attr_t *attr, int *detachstate)
 {
 /* Get detachstate of a thread attribute */
   struct __mthread_attr *a;
@@ -114,9 +110,7 @@ int *detachstate;
 /*===========================================================================*
  *				mthread_attr_setdetachstate			     *
  *===========================================================================*/
-int mthread_attr_setdetachstate(attr, detachstate)
-mthread_attr_t *attr;
-int detachstate;
+int mthread_attr_setdetachstate(mthread_attr_t *attr, int detachstate)
 {
 /* Set detachstate of a thread attribute */
   struct __mthread_attr *a;
@@ -140,10 +134,7 @@ int detachstate;
 /*===========================================================================*
  *				mthread_attr_getstack			     *
  *===========================================================================*/
-int mthread_attr_getstack(attr, stackaddr, stacksize)
-mthread_attr_t *attr;
-void **stackaddr;
-size_t *stacksize;
+int mthread_attr_getstack(mthread_attr_t *attr, void **stackaddr, size_t *stacksize)
 {
 /* Get stack attribute */
   struct __mthread_attr *a;
@@ -165,9 +156,7 @@ size_t *stacksize;
 /*===========================================================================*
  *				mthread_attr_getstacksize		     *
  *===========================================================================*/
-int mthread_attr_getstacksize(attr, stacksize)
-mthread_attr_t *attr;
-size_t *stacksize;
+int mthread_attr_getstacksize(mthread_attr_t *attr, size_t *stacksize)
 {
 /* Get stack size attribute */
   struct __mthread_attr *a;
@@ -188,10 +177,7 @@ size_t *stacksize;
 /*===========================================================================*
  *				mthread_attr_setstack			     *
  *===========================================================================*/
-int mthread_attr_setstack(attr, stackaddr, stacksize)
-mthread_attr_t *attr;
-void *stackaddr;
-size_t stacksize;
+int mthread_attr_setstack(mthread_attr_t *attr, void *stackaddr, size_t stacksize)
 {
 /* Set stack attribute */
   struct __mthread_attr *a;
@@ -218,9 +204,7 @@ size_t stacksize;
 /*===========================================================================*
  *				mthread_attr_setstacksize			     *
  *===========================================================================*/
-int mthread_attr_setstacksize(attr, stacksize)
-mthread_attr_t *attr;
-size_t stacksize;
+int mthread_attr_setstacksize(mthread_attr_t *attr, size_t stacksize)
 {
 /* Set stack size attribute */
   struct __mthread_attr *a;
@@ -241,8 +225,7 @@ size_t stacksize;
 /*===========================================================================*
  *				mthread_attr_remove			     *
  *===========================================================================*/
-static void mthread_attr_remove(a)
-mthread_attr_t *a;
+static void mthread_attr_remove(mthread_attr_t *a)
 {
 /* Remove attribute from list of valid, initialized attributes */
 
@@ -261,8 +244,7 @@ mthread_attr_t *a;
 /*===========================================================================*
  *				mthread_attr_valid			     *
  *===========================================================================*/
-static int mthread_attr_valid(a)
-mthread_attr_t *a;
+static int mthread_attr_valid(mthread_attr_t *a)
 {
 /* Check to see if attribute is on the list of valid attributes */
   struct __mthread_attr *loopitem;

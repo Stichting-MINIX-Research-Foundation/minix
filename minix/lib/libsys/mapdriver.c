@@ -3,8 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int
-mapdriver(const char * label, devmajor_t major, const int * domains,
+int mapdriver(const char * label, devmajor_t major, const int * domains,
 	int ndomains)
 {
 	message m;

@@ -53,8 +53,7 @@ struct link {
 /*
  * Spawn a child process, with a pair of pipes to talk to it bidirectionally.
  */
-static void
-spawn(struct link *link, void (*proc)(struct link *))
+static void spawn(struct link *link, void (*proc)(struct link *))
 {
 	int up[2], dn[2];
 
@@ -95,8 +94,7 @@ spawn(struct link *link, void (*proc)(struct link *))
 /*
  * Wait for a child process to terminate, and clean up.
  */
-static void
-collect(struct link *link)
+static void collect(struct link *link)
 {
 	int status;
 
@@ -112,8 +110,7 @@ collect(struct link *link)
 /*
  * Forcibly terminate a child process, and clean up.
  */
-static void
-terminate(struct link *link)
+static void terminate(struct link *link)
 {
 	int status;
 
@@ -135,8 +132,7 @@ terminate(struct link *link)
 /*
  * Send an integer value to the child or parent.
  */
-static void
-snd(struct link *link, int val)
+static void snd(struct link *link, int val)
 {
 	if (write(link->sndfd, (void *) &val, sizeof(val)) != sizeof(val))
 		e(0);
@@ -145,8 +141,7 @@ snd(struct link *link, int val)
 /*
  * Receive an integer value from the child or parent, or -1 on EOF.
  */
-static int
-rcv(struct link *link)
+static int rcv(struct link *link)
 {
 	int r, val;
 
@@ -162,8 +157,7 @@ rcv(struct link *link)
  * Set a signal handler for a particular signal, blocking either all or no
  * signals when the signal handler is invoked.
  */
-static void
-set_handler(int sig, void (*proc)(int), int block)
+static void set_handler(int sig, void (*proc)(int), int block)
 {
 	struct sigaction act;
 
@@ -177,8 +171,7 @@ set_handler(int sig, void (*proc)(int), int block)
 /*
  * Generic signal handler for the worker process.
  */
-static void
-worker_handler(int sig)
+static void worker_handler(int sig)
 {
 	int i;
 
@@ -327,8 +320,7 @@ worker_proc(struct link *parent)
  * Signal handler procedure for the signaler processes, counting the number of
  * signals received from the worker process.
  */
-static void
-signaler_handler(int sig)
+static void signaler_handler(int sig)
 {
 	sig_counter++;
 }
@@ -339,8 +331,7 @@ signaler_handler(int sig)
  * process, waiting for a SIGUSR1 signal back from the worker before
  * continuing.  This signal ping-pong is repeated for a set number of times.
  */
-static void
-signaler_proc(struct link *parent)
+static void signaler_proc(struct link *parent)
 {
 	sigset_t set, oset;
 	pid_t pid;
@@ -371,8 +362,7 @@ signaler_proc(struct link *parent)
  * Set up the worker and signaler processes, wait for the signaler processes to
  * do their work and terminate, and then terminate the worker process.
  */
-static void
-sub79a(int job, int signalers, int options)
+static void sub79a(int job, int signalers, int options)
 {
 	struct link worker, signaler[MAX_SIGNALERS];
 	int i;
@@ -417,8 +407,7 @@ sub79a(int job, int signalers, int options)
  * are blocked while executing a signal handler in the worker, and whether the
  * worker process has a timer running at high frequency.
  */
-static void
-test79a(void)
+static void test79a(void)
 {
 	int job, signalers, options;
 
@@ -434,8 +423,7 @@ test79a(void)
  * Set up the worker process and optionally a signaler process, wait for a
  * predetermined amount of time, and then kill all the child processes.
  */
-static void
-sub79b(int job, int use_signaler, int options)
+static void sub79b(int job, int use_signaler, int options)
 {
 	struct link worker, signaler;
 	struct timeval tv;
@@ -481,8 +469,7 @@ sub79b(int job, int use_signaler, int options)
  * itself as possible this way.  A signaler process is optional in this test,
  * and if used, it will not stop after a predetermined number of signals.
  */
-static void
-test79b(void)
+static void test79b(void)
 {
 	int job, signalers, options;
 
@@ -498,8 +485,7 @@ test79b(void)
 /*
  * PM signal handling robustness test program.
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, m;
 

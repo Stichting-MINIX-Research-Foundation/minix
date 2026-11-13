@@ -89,8 +89,7 @@ static struct log log = {
  * Spin until a register flag is set, or the time runs out.
  * Return the flag value.
  */
-static uint32_t
-spin_until_set(uint32_t address, uint32_t flag)
+static uint32_t spin_until_set(uint32_t address, uint32_t flag)
 {
 	spin_t s;
 	int spin;
@@ -109,8 +108,7 @@ spin_until_set(uint32_t address, uint32_t flag)
  * Spin until a register flag is clear, or the time runs out.
  * Return the flag value.
  */
-static uint32_t
-spin_until_clear(uint32_t address, uint32_t flag)
+static uint32_t spin_until_clear(uint32_t address, uint32_t flag)
 {
 	spin_t s;
 	int spin;
@@ -129,8 +127,7 @@ spin_until_clear(uint32_t address, uint32_t flag)
  * Change the bus clock frequency (divisor).
  * Return 0 on success, a negative integer on error.
  */
-static int
-set_bus_clkd(uint32_t clkd)
+static int set_bus_clkd(uint32_t clkd)
 {
 	/*
 	 * Disable the bus clock, set the clock divider, wait until the
@@ -150,8 +147,7 @@ set_bus_clkd(uint32_t clkd)
  * Receive an interrupt request.
  * Return 0 on success, a negative integer on error.
  */
-static int
-irq_receive(void)
+static int irq_receive(void)
 {
 	message m;
 	int ipc_status;
@@ -176,8 +172,7 @@ irq_receive(void)
  * Wait for an interrupt request.
  * Return 0 on interrupt, a negative integer on error.
  */
-static int
-irq_wait(void)
+static int irq_wait(void)
 {
 	int r;
 
@@ -195,8 +190,7 @@ irq_wait(void)
 /*
  * Software reset for mmc_cmd or mmc_dat line.
  */
-static void
-reset_mmchs_fsm(uint32_t line)
+static void reset_mmchs_fsm(uint32_t line)
 {
 	/*
 	 * "The proper procedure is: (a) Set to 1 to start reset,
@@ -212,8 +206,7 @@ reset_mmchs_fsm(uint32_t line)
  * Send a command to the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-send_cmd(uint32_t arg, uint32_t cmd)
+static int send_cmd(uint32_t arg, uint32_t cmd)
 {
 	uint32_t stat;
 
@@ -247,8 +240,7 @@ send_cmd(uint32_t arg, uint32_t cmd)
  * Send a command to the card, and check for errors in the response (R1).
  * Return 0 on success, a negative integer on error.
  */
-static int
-send_cmd_check_r1(uint32_t arg, uint32_t cmd)
+static int send_cmd_check_r1(uint32_t arg, uint32_t cmd)
 {
 	if (send_cmd(arg, cmd) < 0)
 		return -1;
@@ -260,15 +252,13 @@ send_cmd_check_r1(uint32_t arg, uint32_t cmd)
 }
 
 /* Send CMD0 (GO_IDLE_STATE) command to the card. */
-static int
-go_idle_state(void)
+static int go_idle_state(void)
 {
 	return send_cmd(MMC_GO_IDLE_STATE, MMC_GO_IDLE_STATE);
 }
 
 /* Send CMD1 (SEND_OP_COND) command to the card. */
-static int
-send_op_cond(void)
+static int send_op_cond(void)
 {
 	uint32_t cmd;
 
@@ -279,8 +269,7 @@ send_op_cond(void)
 }
 
 /* Send CMD2 (ALL_SEND_CID) command to the card. */
-static int
-all_send_cid(void)
+static int all_send_cid(void)
 {
 	uint32_t cmd;
 
@@ -291,8 +280,7 @@ all_send_cid(void)
 }
 
 /* Send CMD3 (SET_RELATIVE_ADDR) command to the card. */
-static int
-set_relative_addr(void)
+static int set_relative_addr(void)
 {
 	uint32_t cmd;
 
@@ -304,8 +292,7 @@ set_relative_addr(void)
 }
 
 /* Send CMD6 (SWITCH) command to the card. */
-static int
-mmc_switch(uint32_t access, uint32_t index, uint32_t value)
+static int mmc_switch(uint32_t access, uint32_t index, uint32_t value)
 {
 	uint32_t arg, cmd;
 
@@ -319,8 +306,7 @@ mmc_switch(uint32_t access, uint32_t index, uint32_t value)
 }
 
 /* Send CMD7 (SELECT_CARD) command to the card. */
-static int
-select_card(void)
+static int select_card(void)
 {
 	uint32_t cmd;
 
@@ -332,8 +318,7 @@ select_card(void)
 }
 
 /* Send CMD8 (SEND_EXT_CSD) command to the card. */
-static int
-send_ext_csd(void)
+static int send_ext_csd(void)
 {
 	uint32_t cmd;
 
@@ -347,8 +332,7 @@ send_ext_csd(void)
 }
 
 /* Send CMD9 (SEND_CSD) command to the card. */
-static int
-send_csd(void)
+static int send_csd(void)
 {
 	uint32_t cmd;
 
@@ -359,8 +343,7 @@ send_csd(void)
 }
 
 /* Send CMD13 (SEND_STATUS) command to the card. */
-static int
-send_status(void)
+static int send_status(void)
 {
 	uint32_t cmd;
 
@@ -372,8 +355,7 @@ send_status(void)
 }
 
 /* Send CMD16 (SET_BLOCKLEN) command to the card. */
-static int
-set_blocklen(void)
+static int set_blocklen(void)
 {
 	uint32_t cmd;
 
@@ -386,8 +368,7 @@ set_blocklen(void)
 }
 
 /* Send CMD17 (READ_SINGLE_BLOCK) to the card. */
-static int
-read_single_block(uint32_t addr)
+static int read_single_block(uint32_t addr)
 {
 	uint32_t cmd;
 
@@ -401,8 +382,7 @@ read_single_block(uint32_t addr)
 }
 
 /* Send CMD24 (WRITE_BLOCK) to the card. */
-static int
-write_block(uint32_t addr)
+static int write_block(uint32_t addr)
 {
 	uint32_t cmd;
 
@@ -419,8 +399,7 @@ write_block(uint32_t addr)
  * Repeat CMD1 until the card is ready, or the time runs out.
  * Return 0 on ready, a negative integer on error.
  */
-static int
-repeat_send_op_cond(void)
+static int repeat_send_op_cond(void)
 {
 	spin_t s;
 	int spin;
@@ -444,8 +423,7 @@ repeat_send_op_cond(void)
  * Read (receive) the busy signal from the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-read_busy(void)
+static int read_busy(void)
 {
 	uint32_t stat;
 	/*
@@ -470,8 +448,7 @@ read_busy(void)
  * Read (receive) data from the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-read_data(uint32_t *data)
+static int read_data(uint32_t *data)
 {
 	uint32_t stat, i;
 
@@ -504,8 +481,7 @@ read_data(uint32_t *data)
  * Write (send) data to the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-write_data(uint32_t *data)
+static int write_data(uint32_t *data)
 {
 	uint32_t stat, i;
 
@@ -538,8 +514,7 @@ write_data(uint32_t *data)
  * Read a block from the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-cim_read_block(uint32_t addr, uint32_t *data)
+static int cim_read_block(uint32_t addr, uint32_t *data)
 {
 	/* Send CMD17. */
 	if (read_single_block(addr) < 0)
@@ -552,8 +527,7 @@ cim_read_block(uint32_t addr, uint32_t *data)
  * Write a block to the card.
  * Return 0 on success, a negative integer on error.
  */
-static int
-cim_write_block(uint32_t addr, uint32_t *data)
+static int cim_write_block(uint32_t addr, uint32_t *data)
 {
 	/* Send CMD24. */
 	if (write_block(addr) < 0)
@@ -569,8 +543,7 @@ cim_write_block(uint32_t addr, uint32_t *data)
 /*
  * Interface to the MINIX block device driver.
  */
-static int
-emmc_host_set_instance(struct mmc_host *host, int instance)
+static int emmc_host_set_instance(struct mmc_host *host, int instance)
 {
 	if (instance != 0)
 		return EIO;
@@ -581,8 +554,7 @@ emmc_host_set_instance(struct mmc_host *host, int instance)
  * Initialize the driver and kernel structures.
  * Return 0 on success, a negative integer on error.
  */
-static int
-minix_init(void)
+static int minix_init(void)
 {
 	struct minix_mem_range mr;
 	uint32_t v_base;
@@ -634,8 +606,7 @@ minix_init(void)
  * Multiplex pins GPMC_AD4-7 to signals MMC1_DAT4-7 (Mode 1).
  * Return 0 on success, a negative integer on error.
  */
-static int
-conf_gpmc_ad(void)
+static int conf_gpmc_ad(void)
 {
 	uint32_t i;
 
@@ -652,8 +623,7 @@ conf_gpmc_ad(void)
  * Host controller initialization.
  * Return 0 on success, a negative integer on error.
  */
-static int
-emmc_host_init(struct mmc_host *host)
+static int emmc_host_init(struct mmc_host *host)
 {
 	struct machine machine;
 
@@ -747,8 +717,7 @@ emmc_host_init(struct mmc_host *host)
  * Interface to the MINIX block device driver.
  * Set the log level.
  */
-static void
-emmc_set_log_level(int level)
+static void emmc_set_log_level(int level)
 {
 	log.log_level = level;
 }
@@ -759,8 +728,7 @@ emmc_set_log_level(int level)
  * Unused, but declared in mmchost.h.
  */
 #if 0
-static int
-emmc_host_reset(struct mmc_host *host)
+static int emmc_host_reset(struct mmc_host *host)
 {
 	return 0;
 }
@@ -770,8 +738,7 @@ emmc_host_reset(struct mmc_host *host)
  * Interface to the MINIX block device driver.
  * Card detection.
  */
-static int
-emmc_card_detect(struct sd_slot *slot)
+static int emmc_card_detect(struct sd_slot *slot)
 {
 	/* The card is detected during card initialization. */
 	return 1;
@@ -907,8 +874,7 @@ emmc_card_initialize(struct sd_slot *slot)
  * Interface to the MINIX block device driver.
  * Card release.
  */
-static int
-emmc_card_release(struct sd_card *card)
+static int emmc_card_release(struct sd_card *card)
 {
 	/* Decrements the "in-use count." */
 	card->open_ct--;
@@ -925,8 +891,7 @@ emmc_card_release(struct sd_card *card)
  * Interface to the MINIX block device driver.
  * Handle unexpected interrupts.
  */
-static void
-emmc_hw_intr(unsigned int irqs)
+static void emmc_hw_intr(unsigned int irqs)
 {
 	log_warn(&log, "register SD_STAT == 0x%08x\n", reg->SD_STAT);
 }
@@ -936,8 +901,7 @@ emmc_hw_intr(unsigned int irqs)
  * Read/write blocks.
  * Return the number of blocks read/written, or a negative integer on error.
  */
-static int
-emmc_read_write(int (*cim_read_write)(uint32_t, uint32_t *),
+static int emmc_read_write(int (*cim_read_write)(uint32_t, uint32_t *),
 	uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	int blocks, r;
@@ -973,8 +937,7 @@ emmc_read_write(int (*cim_read_write)(uint32_t, uint32_t *),
  * Interface to the MINIX block device driver.
  * Read blocks.
  */
-static int
-emmc_read(struct sd_card *card,
+static int emmc_read(struct sd_card *card,
 	uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	return emmc_read_write(&cim_read_block, blknr, count, buf);
@@ -984,8 +947,7 @@ emmc_read(struct sd_card *card,
  * Interface to the MINIX block device driver.
  * Write blocks.
  */
-static int
-emmc_write(struct sd_card *card,
+static int emmc_write(struct sd_card *card,
 	uint32_t blknr, uint32_t count, unsigned char *buf)
 {
 	if (card_write_protect)
@@ -997,8 +959,7 @@ emmc_write(struct sd_card *card,
  * Interface to the MINIX block device driver.
  * Driver interface registration.
  */
-void
-host_initialize_host_structure_mmchs(struct mmc_host *host)
+void host_initialize_host_structure_mmchs(struct mmc_host *host)
 {
 	uint32_t i;
 
@@ -1024,7 +985,6 @@ host_initialize_host_structure_mmchs(struct mmc_host *host)
  * Interface to the MINIX block device driver.
  * Unused, but declared in mmchost.h.
  */
-void
-host_initialize_host_structure_dummy(struct mmc_host *host)
+void host_initialize_host_structure_dummy(struct mmc_host *host)
 {
 }

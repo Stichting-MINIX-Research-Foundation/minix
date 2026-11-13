@@ -71,8 +71,7 @@ AcpiNsFindParentName (
  *
  ******************************************************************************/
 
-void
-AcpiNsPrintNodePathname (
+void AcpiNsPrintNodePathname (
     ACPI_NAMESPACE_NODE     *Node,
     const char              *Message)
 {
@@ -179,8 +178,7 @@ AcpiNsLocal (
  *
  ******************************************************************************/
 
-void
-AcpiNsGetInternalNameLength (
+void AcpiNsGetInternalNameLength (
     ACPI_NAMESTRING_INFO    *Info)
 {
     const char              *NextExternalChar;
@@ -687,8 +685,7 @@ AcpiNsValidateHandle (
  *
  ******************************************************************************/
 
-void
-AcpiNsTerminate (
+void AcpiNsTerminate (
     void)
 {
     ACPI_STATUS             Status;

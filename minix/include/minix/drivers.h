@@ -27,7 +27,7 @@
 #include <sys/types.h>
 
 #include <machine/interrupt.h>	/* IRQ vectors and miscellaneous ports */
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/bios.h>	/* BIOS index numbers */
 #include <machine/ports.h>	/* Well-known ports */
 #endif

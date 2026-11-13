@@ -174,7 +174,7 @@ void rule_io_hook(char *buf, size_t size, u64_t pos, int flag)
 /*===========================================================================*
  *				rule_post_hook				     *
  *===========================================================================*/
-void rule_post_hook(size_t osize, int *result)
+void rule_post_hook(size_t osize, ssize_t *result)
 {
 	int i;
 

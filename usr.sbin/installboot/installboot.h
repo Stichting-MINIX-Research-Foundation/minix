@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.39 2014/02/24 07:23:44 skrll Exp $	*/
+/*	$NetBSD: installboot.h,v 1.42 2020/06/21 17:17:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,18 @@ typedef enum {
 	IB_CONSADDR = 	1<<20,		/* i386 console io address */
 	IB_MODULES =	1<<21,		/* i386: load modules */
 	IB_BOOTCONF = 	1<<22,		/* i386: read boot.conf */
+
+	IB_BOARD =	1<<23,		/* evb*: board specification */
+	IB_DTB=		1<<24,		/* evb*: device tree blob */
+
+	/* IB_MEDIA is required for some evb*, but not all. */
+	IB_MEDIA =	1<<25,		/* evb*: boot media type */
 } ib_flags;
+
+typedef enum {
+
+	MF_UBOOT =	1<<0,		/* platform (maybe) uses u-boot */
+} m_flags;
 
 typedef struct {
 	ib_flags	 flags;		/* flags (see above) */
@@ -91,6 +102,12 @@ typedef struct {
 	const char	*password;	/* boot password */
 	int		 timeout;	/* interactive boot timeout */
 	const char	*keymap;	/* keyboard translations */
+	const char	*board;		/* board specification */
+	const char	*dtb;		/* dtb specification */
+	const char	*media;		/* boot media type */
+
+		/* temporary working data */
+	void		*mach_data;	/* platform-specific data */
 } ib_params;
 
 typedef struct {
@@ -103,7 +120,9 @@ struct ib_mach {
 	int		(*setboot)	(ib_params *);
 	int		(*clearboot)	(ib_params *);
 	int		(*editboot)	(ib_params *);
+	void		(*usage)	(ib_params *);
 	ib_flags	valid_flags;
+	m_flags		mach_flags;
 };
 
 struct ib_fs {
@@ -166,14 +185,17 @@ void		install_master(const char *device, char *masterboot, char **guide);
 int		isoption(const char *option, const char *test);
 
 	/* minixfs3.c */
-int minixfs3_is_minix_partition(ib_params *params);
-int minixfs3_has_bootblock_space(ib_params *params);
-
+int		minixfs3_is_minix_partition(ib_params *params);
+int		minixfs3_has_bootblock_space(ib_params *params);
 
 	/* machines.c */
+#if !defined(__minix)
 extern struct ib_mach ib_mach_alpha;
 extern struct ib_mach ib_mach_amd64;
 extern struct ib_mach ib_mach_amiga;
+extern struct ib_mach ib_mach_emips;
+extern struct ib_mach ib_mach_evbarm;
+extern struct ib_mach ib_mach_evbmips;
 extern struct ib_mach ib_mach_ews4800mips;
 extern struct ib_mach ib_mach_hp300;
 extern struct ib_mach ib_mach_hppa;
@@ -190,5 +212,9 @@ extern struct ib_mach ib_mach_sun2;
 extern struct ib_mach ib_mach_sun3;
 extern struct ib_mach ib_mach_vax;
 extern struct ib_mach ib_mach_x68k;
+#else
+extern struct ib_mach ib_mach_amd64;
+extern struct ib_mach ib_mach_i386;
+#endif /* !defined(__minix) */
 
 #endif	/* _INSTALLBOOT_H */

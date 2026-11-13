@@ -113,8 +113,7 @@ static struct netif* ip4_default_multicast_netif;
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
-void
-ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
+void ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
 {
   ip4_default_multicast_netif = default_multicast_netif;
 }
@@ -231,8 +230,7 @@ ip4_route(const ip4_addr_t *dest)
  * @param p the packet to forward
  * @return 1: can forward 0: discard
  */
-static int
-ip4_canforward(struct pbuf *p)
+static int ip4_canforward(struct pbuf *p)
 {
   u32_t addr = lwip_htonl(ip4_addr_get_u32(ip4_current_dest_addr()));
 
@@ -267,8 +265,7 @@ ip4_canforward(struct pbuf *p)
  * @param iphdr the IP header of the input packet
  * @param inp the netif on which this packet was received
  */
-static void
-ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
+static void ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
 
@@ -367,8 +364,7 @@ return_noroute:
 #endif /* IP_FORWARD */
 
 /** Return true if the current input packet should be accepted on this netif */
-static int
-ip4_input_accept(struct netif *netif)
+static int ip4_input_accept(struct netif *netif)
 {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
       ip4_addr_get_u32(ip4_current_dest_addr()), ip4_addr_get_u32(netif_ip4_addr(netif)),
@@ -1061,8 +1057,7 @@ ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 /* Print an IP header by using LWIP_DEBUGF
  * @param p an IP packet, p->payload pointing to the IP header
  */
-void
-ip4_debug_print(struct pbuf *p)
+void ip4_debug_print(struct pbuf *p)
 {
   struct ip_hdr *iphdr = (struct ip_hdr *)p->payload;
 

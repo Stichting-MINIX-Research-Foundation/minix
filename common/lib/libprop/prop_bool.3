@@ -1,6 +1,6 @@
-.\"	$NetBSD: prop_bool.3,v 1.6 2008/08/03 03:11:28 thorpej Exp $
+.\"	$NetBSD: prop_bool.3,v 1.8 2020/06/06 21:25:59 thorpej Exp $
 .\"
-.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,14 +27,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2006
+.Dd June 2, 2020
 .Dt PROP_BOOL 3
 .Os
 .Sh NAME
 .Nm prop_bool ,
 .Nm prop_bool_create ,
 .Nm prop_bool_copy ,
-.Nm prop_bool_true
+.Nm prop_bool_true ,
+.Nm prop_bool_value
 .Nd boolean value property object
 .Sh LIBRARY
 .Lb libprop
@@ -48,9 +49,11 @@
 .\"
 .Ft bool
 .Fn prop_bool_true "prop_bool_t bool"
+.Ft bool
+.Fn prop_bool_value "prop_bool_t bool"
 .Sh DESCRIPTION
 The
-.Nm prop_bool
+.Nm
 family of functions operate on a boolean value property object type.
 .Bl -tag -width "xxxxx"
 .It Fn prop_bool_create "bool val"
@@ -62,7 +65,9 @@ If the supplied object isn't a boolean,
 .Dv NULL
 is returned.
 .It Fn prop_bool_true "prop_bool_t bool"
+.It Fn prop_bool_value "prop_bool_t bool"
 Returns the value of the boolean value object.
+Both functions are equivalent.
 If the supplied object isn't a boolean,
 .Dv false
 is returned.
@@ -77,6 +82,6 @@ is returned.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

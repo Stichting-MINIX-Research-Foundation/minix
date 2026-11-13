@@ -6,8 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int fd, fd_parent;
 	char buf[1];

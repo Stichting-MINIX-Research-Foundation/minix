@@ -74,7 +74,8 @@ static int ffs_balloc_ufs2(struct inode *, off_t, int, struct buf **);
 int
 ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 {
-	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC)
+	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC ||
+	    ip->i_fs->fs_magic == FS_UFS2EA_MAGIC)
 		return ffs_balloc_ufs2(ip, offset, bufsize, bpp);
 	else
 		return ffs_balloc_ufs1(ip, offset, bufsize, bpp);

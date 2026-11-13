@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.11 2010/02/25 13:09:17 tsutsui Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.14 2019/04/13 19:29:27 maya Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd March 1, 2009
+.Dd April 13, 2019
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -89,9 +89,9 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar block-size
-.It \*[Lt]= 512 MB
+.It <= 512 MB
 1 KB
-.It \*[Gt] 512 MB
+.It > 512 MB
 4 KB
 .El
 .It Fl D Ar inodesize
@@ -140,10 +140,10 @@ Select the filesystem-format.
 .Ql GOOD_OLD_REV ;
 this option is primarily used to build root file systems that can be
 understood by old or dumb firmwares for bootstrap.
-(default)
 .It 1
 .Ql DYNAMIC_REV ;
-various extended (and sometimes incompatible) features are enabled
+the default.
+Various extended (and sometimes incompatible) features are enabled
 (though not all features are supported on
 .Nx ) .
 Currently only the following features are supported:
@@ -208,10 +208,6 @@ This specifies a volume name for the file system.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .
-This is necessary if the image is to be used by
-.Xr vnd 4
-(which doesn't support file systems with
-.Sq holes ) .
 .El
 .Pp
 The following option overrides the standard sizes for the disk geometry.

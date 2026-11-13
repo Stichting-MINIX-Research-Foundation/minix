@@ -22,9 +22,7 @@ int main(int argc, char *argv []);
 void test6a(void);
 void test6b(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

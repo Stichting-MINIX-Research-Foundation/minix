@@ -12,8 +12,9 @@
 #	CDBASE		Basename of the iso
 #
 # Optional variables:
-#	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
+#	CDRELEASE	Set to 'true' to include $RELEASEDIR/$RELEASEMACHINEDIR on the CD
 #	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
+#	CDRELEASE_NODEBUG	Excludes debug sets if set
 #	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
 #	CDEXTRA		Set to a list of files or directories containing extra
 #			stuff to put on CD (set by build.sh -C flag)
@@ -21,6 +22,8 @@
 #			stuff to put on CD (use in Makefiles)
 #	CDEXTRA_SKIP	A list of file exclusion paths to exclude when copying
 #			directories of extra stuff in CDEXTRA AND CDBUILDEXTRA
+#	CDDEV_POPULATE	Set to 'true' to fully populate /dev on the CD (and
+#			safe a tmpfs union mount)
 #	BOOT		Defaults to $DESTDIR/usr/mdec/boot
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
@@ -43,6 +46,7 @@ BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
 CDRELEASE?=	false
 CDSOURCE?=	false
+CDDEV_POPULATE?=false
 .if ${CDRELEASE} == false
 CDROMS_RELEASEDIR?=	${MACHINE}/installation/cdrom
 .else
@@ -51,6 +55,12 @@ CDROMS_RELEASEDIR?=	images
 .if defined(CDRELEASE_NOISOS)
 CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
 .endif
+.if defined(CDRELEASE_NODEBUG)
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug.tgz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/xdebug.tgz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug.tar.xz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/xdebug.tar.xz,,gp'
+.endif
 .if !defined(CDRELEASE_LIVEIMAGE)
 CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
 .endif
@@ -58,6 +68,7 @@ CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
 CDRELEASE_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
 .endif
 
+KERN_DIR?=	minix_default
 SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 
 .include <bsd.own.mk> 		# For PRINTOBJDIR
@@ -66,12 +77,19 @@ SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 DISTRIBVER!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 CUROBJDIR!=	cd ${.CURDIR} && ${PRINTOBJDIR}
-ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
-PUBLISHER?= The_NetBSD_Project
+#ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
+#PUBLISHER?= The_NetBSD_Project
+ISO_VOLID=	MINIX
+PUBLISHER?= Minix_Project
 .if defined(CDMAKEFSOPTIONS)
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
 .else
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
+.endif
+
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
+PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 .endif
 
 .if ${MKUNPRIVED} == "no"
@@ -92,7 +110,8 @@ ECHO?=		echo
 .if ${CDRELEASE} == false
 CDIMAGE=	${CDBASE}.iso
 .else
-CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
+#CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
+CDIMAGE=	Minix-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
 .endif
 WORKSPEC=	fs.spec
 
@@ -134,27 +153,32 @@ _INSTKERNELNOBJDIR!=	cd ${.CURDIR}/${CDINSTKERNEL} && ${PRINTOBJDIR}
 .if exists(${DESTDIR}/usr/mdec/boot.${MACHINE})
 BOOT2=boot.${MACHINE}
 .else
-BOOT2=boot
+#BOOT2=boot
+BOOT2=boot_monitor
 .endif
+.endif
+.if defined(__MINIX)
+SECONDARY_BOOT=minixboot
 .endif
 
 prepare:
-	${MKDIR} "${CUROBJDIR}/cdrom"
-.if defined(CDKERNELS)
-.for kernel target in ${CDKERNELS}
-	${CP} ${_INSTKERNELNOBJDIR}/${kernel} cdrom/${target}
-.endfor
+	${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom"
+#.if defined(CDKERNELS)
+#.for kernel target in ${CDKERNELS}
+#	${INSTALL} ${COPY} -m 0644 ${_INSTKERNELNOBJDIR}/${kernel} cdrom/${target}
+#.endfor
 .if exists(${DESTDIR}/usr/mdec/bootxx_cd9660)
 	${RM} -f cdrom/${BOOT2}
-	${CP} ${DESTDIR}/usr/mdec/${BOOT2} cdrom/${BOOT2}
+	${INSTALL} ${COPY} -m 0644 ${DESTDIR}/usr/mdec/${BOOT2} cdrom/${BOOT2}
 	${RM} -f bootxx.${MACHINE}
-	${CP} ${DESTDIR}/usr/mdec/bootxx_cd9660 bootxx.${MACHINE}
+
+	${INSTALL} ${COPY} -m 0644 ${DESTDIR}/usr/mdec/bootxx_cd9660 bootxx.${MACHINE}
 	${CHMOD} +w bootxx.${MACHINE}
 .if defined(CDBOOTOPTIONS)
 	${TOOL_INSTALLBOOT} -m${MACHINE} -e ${CDBOOTOPTIONS} bootxx.${MACHINE}
 .endif
 .endif
-.endif
+#.endif #defined(CDKERNELS)
 
 .if ${MAKEVERBOSE} >= 2
 PAX_v?= -v
@@ -174,11 +198,11 @@ copy-releasedir:
 			echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 			exit 1; 					\
 		fi; 							\
-		${MKDIR} "${CUROBJDIR}/cdrom/${MACHINE}"; 		\
-		release_destdir="${CUROBJDIR}/cdrom/${MACHINE}";	\
+		${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/${RELEASEMACHINEDIR}"; 	\
+		release_destdir="${CUROBJDIR}/cdrom/${RELEASEMACHINEDIR}";	\
 		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 			\
 		echo Copying $$(pwd) to $$release_destdir ...; 		\
-		${TOOL_PAX} 						\
+		${TOOL_PAX} ${PAX_TIMESTAMP}				\
 			-rw -pe ${PAX_v}				\
 			${CDRELEASE_EXCLUDE}				\
 			. $$release_destdir; 				\
@@ -189,11 +213,11 @@ copy-releasedir:
 			echo "Missing ${RELEASEDIR}/source, aborting"; 	\
 			exit 1; 					\
 		fi; 							\
-		${MKDIR} "${CUROBJDIR}/cdrom/source"; 			\
+		${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/source"; 	\
 		release_destdir="${CUROBJDIR}/cdrom/source";	 	\
 		cd ${RELEASEDIR}/source; 				\
 		echo Copying $$(pwd) to $$release_destdir ...;		\
-		${TOOL_PAX} 						\
+		${TOOL_PAX} ${PAX_TIMESTAMP} 				\
 			-rw -pe ${PAX_v}				\
 			. $$release_destdir; 				\
 		cd "${CUROBJDIR}";					\
@@ -204,7 +228,8 @@ copy-releasedir:
 		cd ${DESTDIR};						\
 		for cde in ${CDRUNTIME};				\
 		do							\
-			${TOOL_PAX} -rw -pp ${PAX_v} $${cde} $$release_destdir;\
+			${TOOL_PAX} ${PAX_TIMESTAMP} -rw -pp ${PAX_v}	\
+				$${cde} $$release_destdir;		\
 		done;							\
 		cd "${CUROBJDIR}";					\
 	fi
@@ -226,13 +251,14 @@ copy-releasedir:
 			release_destdir="${CUROBJDIR}/cdrom";		\
 			if [ -f $${cde} ]; then				\
 				echo Copying $${cde} to $$release_destdir ...;	\
-				${CP} $${cde} $${release_destdir};	\
+				${INSTALL} ${COPY} -m 0644 $${cde} $${release_destdir};	\
 			elif [ -d $${cde} ]; then			\
 				cd $${cde};				\
 				echo Copying $$(pwd) to $$release_destdir ...;	\
 				${TOOL_MTREE} -c $${skipflag} |		\
-					${TOOL_PAX} -rw -pe ${PAX_v} -M	\
-					$$release_destdir; 		\
+					${TOOL_PAX} ${PAX_TIMESTAMP}	\
+					-rw -pe ${PAX_v}		\
+					-M $$release_destdir; 		\
 			else						\
 				echo "Missing $${cde}, aborting"; 	\
 				exit 1; 				\
@@ -241,7 +267,7 @@ copy-releasedir:
 		done;							\
 	fi
 .if !empty(CD_SETS)
-	${MKDIR} "${CUROBJDIR}/cdrom/etc/mtree"
+	${MKDIR} ${MKDIRPERM} "${CUROBJDIR}/cdrom/etc/mtree"
 .for set in ${CD_SETS}
 	if [ -f ${CUROBJDIR:Q}/cdrom/etc/mtree/set.${set} ]; then	\
 		${CHMOD} +w ${CUROBJDIR:Q}/cdrom/etc/mtree/set.${set};	\
@@ -251,9 +277,21 @@ copy-releasedir:
 	    -F "${CUROBJDIR}/cdrom/etc/mtree"				\
 	    -d "${DESTDIR:S,^$,/,}" ${set}
 .endfor
+.if defined(__MINIX)
+	@echo Moving boot...
+	@${MKDIR} ${CUROBJDIR}/cdrom/boot/${KERN_DIR}
+	@mv ${CUROBJDIR}/cdrom/boot/minix/.temp/* ${CUROBJDIR}/cdrom/boot/${KERN_DIR}
+	@rm -rf ${CUROBJDIR}/cdrom/boot/minix/.temp
+	@rm -f ${CUROBJDIR}/cdrom/minixboot
+	@cp ${CUROBJDIR}/cdrom/boot_monitor ${CUROBJDIR}/cdrom/minixboot
+.endif
 	if [ -d "${CUROBJDIR}/cdrom/var/spool/ftp/hidden" ]; then	\
 		${CHMOD} +r "${CUROBJDIR}/cdrom/var/spool/ftp/hidden";	\
 	fi
+.endif
+
+.if ${CDDEV_POPULATE} != true
+DELDEV=-e '/^\.\/dev\/.*type=char/d'
 .endif
 
 image:
@@ -262,9 +300,11 @@ image:
 	if [ -d cdrom/etc/mtree ]; then				\
 		cat cdrom/etc/mtree/* |				\
 		    ${TOOL_SED} -e 's/ size=[0-9]*//'		\
+		     ${DELDEV}					\
 		     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC};	\
 	fi
-	if [ -r cdrom/dev/MAKEDEV ]; then			\
+	if [ -r cdrom/dev/MAKEDEV ] &&				\
+		 ${CDDEV_POPULATE} == true; then		\
 		${HOST_SH} cdrom/dev/MAKEDEV -s init |		\
 		    ${TOOL_SED} -e '/^\. type=dir/d' 		\
 			-e 's,^\.,./dev,' >> ${WORKSPEC};	\
@@ -281,11 +321,11 @@ image:
 .endif
 	if [ -s ${WORKSPEC} ]; then specarg="-F ${WORKSPEC}"; fi;	\
 	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 $${specarg} 	\
-		${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+		${MAKEFS_TIMESTAMP} ${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
 
 .if ${CDRELEASE} == false
 release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
-	${MKDIR} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+	${MKDIR} ${MKDIRPERM} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
 	${RELEASE_INSTALL} ${CDIMAGE} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
 
 iso_image:
@@ -293,7 +333,7 @@ iso_image:
 release:
 
 iso_image: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
-	${MKDIR} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
+	${MKDIR} ${MKDIRPERM} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
 	${RELEASE_INSTALL} ${CDIMAGE} ${RELEASEDIR}/${CDROMS_RELEASEDIR}
 .endif
 

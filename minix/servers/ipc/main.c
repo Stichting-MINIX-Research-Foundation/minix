@@ -23,8 +23,7 @@ static int (* const call_vec[])(message *) = {
  * Remote MIB implementation of CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.  This
  * function handles all queries on the "kern.ipc.sysvipc_info" sysctl(2) node.
  */
-static ssize_t
-kern_ipc_info(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t kern_ipc_info(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 
@@ -76,8 +75,7 @@ static struct rmib_node kern_ipc_node =
 /*
  * Initialize the IPC server.
  */
-static int
-sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
+static int sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
 {
 	const int mib[] = { CTL_KERN, KERN_SYSVIPC };
 	int r;
@@ -97,8 +95,7 @@ sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
 /*
  * The service has received a signal.
  */
-static void
-sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 
 	/* Only check for termination signal, ignore anything else. */
@@ -120,8 +117,7 @@ sef_cb_signal_handler(int signo)
 /*
  * Perform SEF initialization.
  */
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 
 	/* Register init callbacks. */
@@ -140,8 +136,7 @@ sef_local_startup(void)
  * modules has changed its subscription needs.  This code is set up so that
  * support for SysV IPC message queues can be added easily later.
  */
-static void
-update_sub(unsigned int new_mask)
+static void update_sub(unsigned int new_mask)
 {
 
 	/* If the old and new mask are not both zero or nonzero, update. */
@@ -172,8 +167,7 @@ update_sub(unsigned int new_mask)
 /*
  * Update the process event subscription mask for the semaphore code.
  */
-void
-update_sem_sub(int want_events)
+void update_sem_sub(int want_events)
 {
 	unsigned int new_mask;
 
@@ -187,8 +181,7 @@ update_sem_sub(int want_events)
 /*
  * PM sent us a process event message.  Handle it, and reply.
  */
-static void
-got_proc_event(message * m)
+static void got_proc_event(message * m)
 {
 	endpoint_t endpt;
 	int r, has_exited;
@@ -212,8 +205,7 @@ got_proc_event(message * m)
 /*
  * The System V IPC server.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	message m;
 	unsigned int call_index;

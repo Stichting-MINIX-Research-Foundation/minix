@@ -30,8 +30,7 @@ static void el2_stop(dpeth_t *dep);
 /*===========================================================================*
  *				el2_init				     *
  *===========================================================================*/
-static void el2_init(dep)
-dpeth_t * dep;
+static void el2_init(dpeth_t *dep)
 {
   /* Initalize hardware and data structures. */
   int ix, irq;
@@ -119,8 +118,7 @@ dpeth_t * dep;
 /*===========================================================================*
  *				el2_stop				     *
  *===========================================================================*/
-static void el2_stop(dep)
-dpeth_t * dep;
+static void el2_stop(dpeth_t *dep)
 {
   /* Stops board by disabling interrupts. */
 
@@ -134,8 +132,7 @@ dpeth_t * dep;
 /*===========================================================================*
  *				el2_probe				     *
  *===========================================================================*/
-int el2_probe(dep)
-dpeth_t * dep;
+int el2_probe(dpeth_t *dep)
 {
   /* Probe for the presence of an EtherLink II card.  Initialize memory
    * addressing if card detected.

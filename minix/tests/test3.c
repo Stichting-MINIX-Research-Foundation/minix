@@ -27,9 +27,7 @@ void test3c(void);
 void test3d(void);
 void test3e(void);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

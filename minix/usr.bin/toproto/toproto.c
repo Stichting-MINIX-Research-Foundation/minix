@@ -58,8 +58,7 @@ struct entry
 static struct entry entries[MAX_ENTRIES];
 static int entry_total_count;
 
-static int
-convert_to_entry(char *line, struct entry *entry)
+static int convert_to_entry(char *line, struct entry *entry)
 {
 	/* convert a input line from sanitized input into an entry */
 	char *saveptr;
@@ -143,8 +142,7 @@ convert_to_entry(char *line, struct entry *entry)
 	return 0;
 }
 
-static int
-iterate_over_input(int fh_in, void (*callback) (char *line))
+static int iterate_over_input(int fh_in, void (*callback) (char *line))
 {
 	char buf[MAX_LINE_SIZE];
 	int r_size, err;
@@ -211,8 +209,7 @@ iterate_over_input(int fh_in, void (*callback) (char *line))
 	return 0;
 }
 
-static void
-parse_line_cb(char *line)
+static void parse_line_cb(char *line)
 {
 	if (convert_to_entry(line, &entries[entry_total_count]) == 0) {
 		entry_total_count++;
@@ -222,8 +219,7 @@ parse_line_cb(char *line)
 	}
 }
 
-static int
-create_entries(int handle)
+static int create_entries(int handle)
 {
 	int c;
 	char *p;
@@ -315,8 +311,7 @@ static char *parse_filename(char *path)
 	return &path[1];
 }
 
-static int
-dump_entry(FILE * out, int mindex, const char *base_dir)
+static int dump_entry(FILE * out, int mindex, const char *base_dir)
 {
 
 	int space;
@@ -378,8 +373,7 @@ dump_entry(FILE * out, int mindex, const char *base_dir)
 	return 0;
 }
 
-static int
-dump_proto(FILE * out, const char *base_dir)
+static int dump_proto(FILE * out, const char *base_dir)
 {
 	int i;
 	fprintf(out, "boot\n0 0");
@@ -392,8 +386,7 @@ dump_proto(FILE * out, const char *base_dir)
 	return 0;
 }
 
-static void
-print_usage(void)
+static void print_usage(void)
 {
 	printf("Usage: toproto [OPTION]...\n");
 	printf
@@ -405,8 +398,7 @@ print_usage(void)
 	printf("  -h show this this help and exit\n");
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int ch, fh_in;
 	FILE *out;

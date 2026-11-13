@@ -44,8 +44,7 @@
 #define INCR(counter)
 #endif
 
-void
-vj_compress_init(struct vjcompress *comp)
+void vj_compress_init(struct vjcompress *comp)
 {
   u8_t i;
   struct cstate *tstate = comp->tstate;
@@ -156,8 +155,7 @@ PACK_STRUCT_END
  * Return the VJ type code indicating whether or not the packet was
  * compressed.
  */
-u8_t
-vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
+u8_t vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
 {
   struct pbuf *np = *pb;
   struct ip_hdr *ip = (struct ip_hdr *)np->payload;
@@ -449,8 +447,7 @@ uncompressed:
 /*
  * Called when we may have missed a packet.
  */
-void
-vj_uncompress_err(struct vjcompress *comp)
+void vj_uncompress_err(struct vjcompress *comp)
 {
   comp->flags |= VJF_TOSS;
   INCR(vjs_errorin);
@@ -460,8 +457,7 @@ vj_uncompress_err(struct vjcompress *comp)
  * "Uncompress" a packet of type TYPE_UNCOMPRESSED_TCP.
  * Return 0 on success, -1 on failure.
  */
-int
-vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
+int vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
 {
   u32_t hlen;
   struct cstate *cs;
@@ -497,8 +493,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
  * This procedure replaces the compressed header with the uncompressed
  * header and returns the length of the VJ header.
  */
-int
-vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
+int vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 {
   u8_t *cp;
   struct tcp_hdr *th;

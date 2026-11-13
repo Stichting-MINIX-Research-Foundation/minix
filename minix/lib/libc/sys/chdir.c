@@ -5,8 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int chdir(name)
-const char *name;
+int chdir(const char *name)
 {
   message m;
 
@@ -15,8 +14,7 @@ const char *name;
   return(_syscall(VFS_PROC_NR, VFS_CHDIR, &m));
 }
 
-int fchdir(fd)
-int fd;
+int fchdir(int fd)
 {
   message m;
 

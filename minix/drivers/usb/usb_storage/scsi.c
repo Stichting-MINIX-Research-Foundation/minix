@@ -28,8 +28,7 @@ static int create_request_sense_scsi_cmd(mass_storage_cbw *);
 /*===========================================================================*
  *    create_scsi_cmd                                                        *
  *===========================================================================*/
-int
-create_scsi_cmd(mass_storage_cbw * cbw, int cmd, scsi_transfer * info)
+int create_scsi_cmd(mass_storage_cbw * cbw, int cmd, scsi_transfer * info)
 {
 	MASS_DEBUG_DUMP;
 
@@ -60,8 +59,7 @@ create_scsi_cmd(mass_storage_cbw * cbw, int cmd, scsi_transfer * info)
 /*===========================================================================*
  *    create_inquiry_scsi_cmd                                                *
  *===========================================================================*/
-static int
-create_inquiry_scsi_cmd(mass_storage_cbw * cbw)
+static int create_inquiry_scsi_cmd(mass_storage_cbw * cbw)
 {
 	MASS_DEBUG_DUMP;
 
@@ -80,8 +78,7 @@ create_inquiry_scsi_cmd(mass_storage_cbw * cbw)
 /*===========================================================================*
  *    create_test_scsi_cmd                                                   *
  *===========================================================================*/
-static int
-create_test_scsi_cmd(mass_storage_cbw * cbw)
+static int create_test_scsi_cmd(mass_storage_cbw * cbw)
 {
 	MASS_DEBUG_DUMP;
 
@@ -96,8 +93,7 @@ create_test_scsi_cmd(mass_storage_cbw * cbw)
 /*===========================================================================*
  *    create_read_capacity_scsi_cmd                                          *
  *===========================================================================*/
-static int
-create_read_capacity_scsi_cmd(mass_storage_cbw * cbw)
+static int create_read_capacity_scsi_cmd(mass_storage_cbw * cbw)
 {
 	MASS_DEBUG_DUMP;
 
@@ -115,8 +111,7 @@ create_read_capacity_scsi_cmd(mass_storage_cbw * cbw)
 /*===========================================================================*
  *    create_write_scsi_cmd                                                  *
  *===========================================================================*/
-static int
-create_write_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
+static int create_write_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
 {
 	MASS_DEBUG_DUMP;
 
@@ -138,8 +133,7 @@ create_write_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
 /*===========================================================================*
  *    create_read_scsi_cmd                                                   *
  *===========================================================================*/
-static int
-create_read_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
+static int create_read_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
 {
 	MASS_DEBUG_DUMP;
 
@@ -161,8 +155,7 @@ create_read_scsi_cmd(mass_storage_cbw * cbw, scsi_transfer * info)
 /*===========================================================================*
  *    create_mode_sense_scsi_cmd                                             *
  *===========================================================================*/
-static int
-create_mode_sense_scsi_cmd(mass_storage_cbw * cbw)
+static int create_mode_sense_scsi_cmd(mass_storage_cbw * cbw)
 {
 	MASS_DEBUG_DUMP;
 
@@ -181,8 +174,7 @@ create_mode_sense_scsi_cmd(mass_storage_cbw * cbw)
 /*===========================================================================*
  *    create_request_sense_scsi_cmd                                          *
  *===========================================================================*/
-static int
-create_request_sense_scsi_cmd(mass_storage_cbw * cbw)
+static int create_request_sense_scsi_cmd(mass_storage_cbw * cbw)
 {
 	MASS_DEBUG_DUMP;
 
@@ -200,8 +192,7 @@ create_request_sense_scsi_cmd(mass_storage_cbw * cbw)
 /*===========================================================================*
  *    check_inquiry_reply                                                    *
  *===========================================================================*/
-int
-check_inquiry_reply(uint8_t * scsi_reply)
+int check_inquiry_reply(uint8_t * scsi_reply)
 {
 	char vendor_name[SCSI_INQUIRY_VENDOR_NAME_LEN + 1];
 	char product_name[SCSI_INQUIRY_PRODUCT_NAME_LEN + 1];
@@ -232,8 +223,7 @@ check_inquiry_reply(uint8_t * scsi_reply)
 /*===========================================================================*
  *    check_read_capacity_reply                                              *
  *===========================================================================*/
-int
-check_read_capacity_reply(uint8_t * scsi_reply, uint32_t * lba, uint32_t * blen)
+int check_read_capacity_reply(uint8_t * scsi_reply, uint32_t * lba, uint32_t * blen)
 {
 	MASS_DEBUG_DUMP;
 
@@ -247,8 +237,7 @@ check_read_capacity_reply(uint8_t * scsi_reply, uint32_t * lba, uint32_t * blen)
 /*===========================================================================*
  *    check_mode_sense_reply                                                 *
  *===========================================================================*/
-int
-check_mode_sense_reply(uint8_t * scsi_reply, unsigned * cyl,
+int check_mode_sense_reply(uint8_t * scsi_reply, unsigned * cyl,
 			unsigned * head, unsigned * sect)
 {
 	MASS_DEBUG_DUMP;
@@ -264,8 +253,7 @@ check_mode_sense_reply(uint8_t * scsi_reply, unsigned * cyl,
 /*===========================================================================*
  *    check_csw                                                              *
  *===========================================================================*/
-int
-check_csw(mass_storage_csw * csw, unsigned int tag)
+int check_csw(mass_storage_csw * csw, unsigned int tag)
 {
 	MASS_DEBUG_DUMP;
 

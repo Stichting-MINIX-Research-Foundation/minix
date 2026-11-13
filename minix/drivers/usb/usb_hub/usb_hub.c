@@ -216,8 +216,7 @@ ddekit_thread_t * ddekit_usb_thread = NULL;
 /*===========================================================================*
  *    main                                                                   *
  *===========================================================================*/
-int
-main(int argc, char * argv[])
+int main(int argc, char * argv[])
 {
 	HUB_MSG("Starting driver... (built: %s %s)", __DATE__, __TIME__);
 
@@ -277,8 +276,7 @@ main(int argc, char * argv[])
 /*===========================================================================*
  *    hub_sef_hdlr                                                           *
  *===========================================================================*/
-static int
-hub_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
+static int hub_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 {
 	HUB_DEBUG_DUMP;
 
@@ -301,8 +299,7 @@ hub_sef_hdlr(int type, sef_init_info_t * UNUSED(info))
 /*===========================================================================*
  *    hub_signal_handler                                                     *
  *===========================================================================*/
-static void
-hub_signal_handler(int this_signal)
+static void hub_signal_handler(int this_signal)
 {
 	HUB_DEBUG_DUMP;
 
@@ -320,8 +317,7 @@ hub_signal_handler(int this_signal)
 /*===========================================================================*
  *    ddekit_usb_task                                                        *
  *===========================================================================*/
-static void
-ddekit_usb_task(void * UNUSED(arg))
+static void ddekit_usb_task(void * UNUSED(arg))
 {
 	HUB_DEBUG_DUMP;
 
@@ -334,8 +330,7 @@ ddekit_usb_task(void * UNUSED(arg))
 /*===========================================================================*
  *    usb_driver_completion                                                  *
  *===========================================================================*/
-static void
-usb_driver_completion(void * UNUSED(priv))
+static void usb_driver_completion(void * UNUSED(priv))
 {
 	HUB_DEBUG_DUMP;
 
@@ -348,8 +343,7 @@ usb_driver_completion(void * UNUSED(priv))
 /*===========================================================================*
  *    usb_driver_connect                                                     *
  *===========================================================================*/
-static void
-usb_driver_connect(struct ddekit_usb_dev * dev, unsigned int interfaces)
+static void usb_driver_connect(struct ddekit_usb_dev * dev, unsigned int interfaces)
 {
 	HUB_DEBUG_DUMP;
 
@@ -370,8 +364,7 @@ usb_driver_connect(struct ddekit_usb_dev * dev, unsigned int interfaces)
 /*===========================================================================*
  *    usb_driver_disconnect                                                  *
  *===========================================================================*/
-static void
-usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
+static void usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
 {
 	HUB_DEBUG_DUMP;
 
@@ -386,8 +379,7 @@ usb_driver_disconnect(struct ddekit_usb_dev * UNUSED(dev))
 /*===========================================================================*
  *    hub_task                                                               *
  *===========================================================================*/
-static void
-hub_task(void * UNUSED(arg))
+static void hub_task(void * UNUSED(arg))
 {
 	hub_port_status port_status;
 	hub_state * s;
@@ -510,8 +502,7 @@ hub_task(void * UNUSED(arg))
 /*===========================================================================*
  *    hub_get_descriptor                                                     *
  *===========================================================================*/
-static int
-hub_get_descriptor(hub_descriptor * descriptor)
+static int hub_get_descriptor(hub_descriptor * descriptor)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -564,8 +555,7 @@ hub_get_descriptor(hub_descriptor * descriptor)
 /*===========================================================================*
  *    hub_port_feature                                                       *
  *===========================================================================*/
-static int
-hub_port_feature(int port_num, class_code code, class_feature feature)
+static int hub_port_feature(int port_num, class_code code, class_feature feature)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -627,8 +617,7 @@ hub_port_feature(int port_num, class_code code, class_feature feature)
 /*===========================================================================*
  *    hub_get_port_status                                                    *
  *===========================================================================*/
-static int
-hub_get_port_status(int port_num, hub_port_status * p)
+static int hub_get_port_status(int port_num, hub_port_status * p)
 {
 	/* URB to be send */
 	struct ddekit_usb_urb urb;
@@ -822,8 +811,7 @@ hub_handle_change(int port_num, hub_port_status * status)
 /*===========================================================================*
  *    hub_handle_connection                                                  *
  *===========================================================================*/
-static int
-hub_handle_connection(int port_num, hub_port_status * status)
+static int hub_handle_connection(int port_num, hub_port_status * status)
 {
 	struct timespec wait_time;
 	int reset_tries;
@@ -925,8 +913,7 @@ hub_handle_connection(int port_num, hub_port_status * status)
 /*===========================================================================*
  *    hub_handle_disconnection                                               *
  *===========================================================================*/
-static int
-hub_handle_disconnection(int port_num)
+static int hub_handle_disconnection(int port_num)
 {
 	HUB_DEBUG_DUMP;
 

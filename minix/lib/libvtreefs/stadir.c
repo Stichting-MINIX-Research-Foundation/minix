@@ -5,8 +5,7 @@
 /*
  * Retrieve file status.
  */
-int
-fs_stat(ino_t ino_nr, struct stat * buf)
+int fs_stat(ino_t ino_nr, struct stat * buf)
 {
 	char path[PATH_MAX];
 	time_t cur_time;
@@ -45,8 +44,7 @@ fs_stat(ino_t ino_nr, struct stat * buf)
 /*
  * Change file mode.
  */
-int
-fs_chmod(ino_t ino_nr, mode_t * mode)
+int fs_chmod(ino_t ino_nr, mode_t * mode)
 {
 	struct inode *node;
 	struct inode_stat istat;
@@ -77,8 +75,7 @@ fs_chmod(ino_t ino_nr, mode_t * mode)
 /*
  * Change file ownership.
  */
-int
-fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
+int fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 {
 	struct inode *node;
 	struct inode_stat istat;
@@ -111,8 +108,7 @@ fs_chown(ino_t ino_nr, uid_t uid, gid_t gid, mode_t * mode)
 /*
  * Retrieve file system statistics.
  */
-int
-fs_statvfs(struct statvfs * buf)
+int fs_statvfs(struct statvfs * buf)
 {
 
 	buf->f_flag = ST_NOTRUNC;

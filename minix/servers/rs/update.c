@@ -259,11 +259,7 @@ int srv_update(endpoint_t src_e, endpoint_t dst_e, int sys_upd_flags)
 /*===========================================================================*
  *				update_service				     *
  *===========================================================================*/
-int update_service(src_rpp, dst_rpp, swap_flag, sys_upd_flags)
-struct rproc **src_rpp;
-struct rproc **dst_rpp;
-int swap_flag;
-int sys_upd_flags;
+int update_service(struct rproc **src_rpp, struct rproc **dst_rpp, int swap_flag, int sys_upd_flags)
 {
 /* Update an existing service. */
   int r;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.12 2014/09/30 21:33:14 christos Exp $
+.\"	$NetBSD: tutorial.ms,v 1.14 2020/12/18 15:47:34 rillig Exp $
 .\" Copyright (c) 1988, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -117,6 +117,15 @@
 .de No
 .br
 .ne 0.5i
+.ie n \{\
+.nr g3 \w'NOTE '
+.po -\\n(g3u
+.br
+NOTE
+.br
+.po +\\n(g3u
+.\}
+.el \{\
 .po -0.5i
 .br
 .mk 
@@ -148,12 +157,14 @@
 .rt 
 .ft \\n(g3
 .ps \\n(g4
+.\}
 ..
 .de Bp
 .ie !\\n(.$ .IP \(bu 2
 .el .IP "\&" 2
 ..
-.po +.3i
+.ie n .po +\w'NOTE  'u
+.el .po +.3i
 .TL
 PMake \*- A Tutorial
 .AU
@@ -1907,15 +1918,15 @@ Suff_FindDeps (jive.c)
 	applying .l -> .c to "jive.l"
 Suff_FindDeps (jive.l)
 Examining jive.l...modified 17:16:01 Oct 4, 1987...up-to-date
-Examining jive.c...non-existent...out-of-date
+Examining jive.c...nonexistent...out-of-date
 --- jive.c ---
 lex jive.l
 \&.\|.\|. meaningless lex output deleted .\|.\|.
 mv lex.yy.c jive.c
-Examining jive.o...non-existent...out-of-date
+Examining jive.o...nonexistent...out-of-date
 --- jive.o ---
 cc -c jive.c
-Examining jive.out...non-existent...out-of-date
+Examining jive.out...nonexistent...out-of-date
 --- jive.out ---
 cc -o jive.out jive.o
 .DE
@@ -2860,7 +2871,7 @@ current directory. While people have suggested that PMake should read
 the directories each time, my experience suggests that the caching seldom
 causes problems. In addition, not caching the directories slows things
 down enormously because of PMake's attempts to apply transformation
-rules through non-existent files \*- the number of extra file-system
+rules through nonexistent files \*- the number of extra file-system
 searches is truly staggering, especially if many files without
 suffixes are used and the null suffix isn't changed from
 .CW .out .

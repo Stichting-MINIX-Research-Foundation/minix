@@ -37,11 +37,20 @@
 
 #ifdef _STANDALONE
 
-#define LOADADDR(a)		((((u_long)(a)) & 0x07ffffff) + offset)
 #define ALIGNENTRY(a)		((u_long)(a) & 0x00100000)
+#ifndef EFIBOOT
+#define LOADADDR(a)		((((u_long)(a)) & 0x07ffffff) + offset)
 #define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
 #define BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
+#else
+extern u_long			load_offset;
+#define LOADADDR(a)		((((u_long)(a)) & 0x07ffffff) + offset + \
+				    load_offset)
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#endif /* EFIBOOT */
 #define	WARN(a)			do { \
 					(void)printf a; \
 					if (errno) \
@@ -50,15 +59,21 @@
 					else \
 						(void)printf("\n"); \
 				} while(/* CONSTCOND */0)
+#ifndef EFIBOOT
 #define PROGRESS(a)		x86_progress a
+#else
+#define PROGRESS(a)		/* nothing */
+#endif /* EFIBOOT */
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
 
+#ifndef EFIBOOT
 void x86_progress(const char *, ...) __printflike(1, 2);
 void vpbcopy(const void *, void *, size_t);
 void pbzero(void *, size_t);
 ssize_t pread(int, void *, size_t);
+#endif
 
 #else
 #ifdef TEST

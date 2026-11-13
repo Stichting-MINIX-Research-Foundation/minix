@@ -330,8 +330,7 @@ PACK_STRUCT_END
  * Initialize all modules.
  * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */
-void
-lwip_init(void)
+void lwip_init(void)
 {
 #ifndef LWIP_SKIP_CONST_CHECK
   int a;

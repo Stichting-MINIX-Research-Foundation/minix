@@ -10,6 +10,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
 
 int max_error = 10;
@@ -41,8 +42,8 @@ int main(int argc, char *argv[])
 			double da = a/4.0, db = b/4.0;
 			signed long long a64s = a, b64s = b, ds, ms;
 			unsigned long long a64u = a, b64u = b, mu;
-			signed long a32s = a, b32s = b, ds32, ms32;
-			unsigned long a32u = a, b32u = b, mu32;
+			int32_t a32s = a, b32s = b, ds32, ms32;
+			uint32_t a32u = a, b32u = b, mu32;
 
 			/* indicate no result */
 			mu32 = ds32 = ms32 = mu = ds = ms = 31337;

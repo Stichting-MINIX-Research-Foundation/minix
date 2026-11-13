@@ -492,8 +492,7 @@ AcpiNsRepairNullElement (
  *
  *****************************************************************************/
 
-void
-AcpiNsRemoveNullElements (
+void AcpiNsRemoveNullElements (
     ACPI_EVALUATE_INFO      *Info,
     UINT8                   PackageType,
     ACPI_OPERAND_OBJECT     *ObjDesc)

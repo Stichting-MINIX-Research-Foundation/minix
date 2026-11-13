@@ -48,7 +48,28 @@ append_body() {
 	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
+atf_test_case pax_extended_header
+pax_extended_header_head() {
+	atf_set "descr" "Extract POSIX PAX file and global extended headers"
+}
+pax_extended_header_body() {
+	atf_check -s eq:0 -o empty -e empty \
+	    uudecode "$(atf_get_srcdir)/pax-extended.tar.gz.uu"
+
+	atf_check -s eq:0 -o empty -e empty pax -r -f pax-extended.tar.gz
+	atf_check -s eq:0 -o inline:"pax-header-ok\n" -e empty \
+	    cat pax-test/path-overridden.txt
+	atf_check -s eq:0 -o inline:"global-header-ok\n" -e empty \
+	    cat global-only.txt
+	atf_check -s eq:0 -o inline:"1700000123\n" -e empty \
+	    stat -f "%m" pax-test/path-overridden.txt
+	atf_check -s eq:0 -o inline:"1700000000\n" -e empty \
+	    stat -f "%m" global-only.txt
+}
+
+
 atf_init_test_cases()
 {
 	atf_add_test_case append
+	atf_add_test_case pax_extended_header
 }

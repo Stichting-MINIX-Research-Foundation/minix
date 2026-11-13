@@ -70,8 +70,7 @@
  *
  ******************************************************************************/
 
-void
-AcpiUtStrlwr (
+void AcpiUtStrlwr (
     char                    *SrcString)
 {
     char                    *String;
@@ -111,8 +110,7 @@ AcpiUtStrlwr (
  *
  ******************************************************************************/
 
-int
-AcpiUtStricmp (
+int AcpiUtStricmp (
     char                    *String1,
     char                    *String2)
 {
@@ -149,8 +147,7 @@ AcpiUtStricmp (
  *
  ******************************************************************************/
 
-void
-AcpiUtStrupr (
+void AcpiUtStrupr (
     char                    *SrcString)
 {
     char                    *String;
@@ -402,8 +399,7 @@ ErrorExit:
  *
  ******************************************************************************/
 
-void
-AcpiUtPrintString (
+void AcpiUtPrintString (
     char                    *String,
     UINT16                  MaxLength)
 {
@@ -595,8 +591,7 @@ AcpiUtValidAcpiName (
  *
  ******************************************************************************/
 
-void
-AcpiUtRepairName (
+void AcpiUtRepairName (
     char                    *Name)
 {
     UINT32                  i;
@@ -661,8 +656,7 @@ AcpiUtRepairName (
  *
  ******************************************************************************/
 
-void
-UtConvertBackslashes (
+void UtConvertBackslashes (
     char                    *Pathname)
 {
 

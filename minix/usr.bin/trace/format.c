@@ -21,8 +21,7 @@ static char formatbuf[FORMAT_BUFSZ];
 /*
  * Reset the line formatting for the given process.
  */
-void
-format_reset(struct trace_proc * proc)
+void format_reset(struct trace_proc * proc)
 {
 
 	proc->next_sep = NULL;
@@ -33,8 +32,7 @@ format_reset(struct trace_proc * proc)
  * Set the next separator for the given process.  The given separator may be
  * NULL.
  */
-void
-format_set_sep(struct trace_proc * proc, const char * sep)
+void format_set_sep(struct trace_proc * proc, const char * sep)
 {
 
 	proc->next_sep = sep;
@@ -43,8 +41,7 @@ format_set_sep(struct trace_proc * proc, const char * sep)
 /*
  * Print and clear the next separator for the process, if any.
  */
-void
-format_push_sep(struct trace_proc * proc)
+void format_push_sep(struct trace_proc * proc)
 {
 
 	if (proc->next_sep != NULL) {
@@ -62,8 +59,7 @@ format_push_sep(struct trace_proc * proc)
  * printing text for the same field with e.g. put_text().  As such, the given
  * text may even be an empty string.
  */
-void
-put_field(struct trace_proc * proc, const char * name, const char * text)
+void put_field(struct trace_proc * proc, const char * name, const char * text)
 {
 
 	/*
@@ -95,8 +91,7 @@ put_field(struct trace_proc * proc, const char * name, const char * text)
  * given separator is used to separate the fields within the nested block, and
  * should generally be ", " to maintain output consistency.
  */
-void
-put_open(struct trace_proc * proc, const char * name, int flags,
+void put_open(struct trace_proc * proc, const char * name, int flags,
 	const char * string, const char * sep)
 {
 
@@ -116,8 +111,7 @@ put_open(struct trace_proc * proc, const char * name, int flags,
  * Decrease the nesting depth by ending a nested block of fields.  The given
  * string is the closing parenthesis, bracket, etcetera.
  */
-void
-put_close(struct trace_proc * proc, const char * string)
+void put_close(struct trace_proc * proc, const char * string)
 {
 
 	assert(proc->depth >= 0);
@@ -135,8 +129,7 @@ put_close(struct trace_proc * proc, const char * string)
 /*
  * Version of put_text with variadic arguments.  The given process may be NULL.
  */
-void
-put_fmt(struct trace_proc * proc, const char * fmt, ...)
+void put_fmt(struct trace_proc * proc, const char * fmt, ...)
 {
 	va_list ap;
 
@@ -150,8 +143,7 @@ put_fmt(struct trace_proc * proc, const char * fmt, ...)
 /*
  * Version of put_field with variadic arguments.
  */
-void
-put_value(struct trace_proc * proc, const char * name, const char * fmt, ...)
+void put_value(struct trace_proc * proc, const char * name, const char * fmt, ...)
 {
 	va_list ap;
 
@@ -173,8 +165,7 @@ put_value(struct trace_proc * proc, const char * name, const char * fmt, ...)
  * pointer will be printed and the call will return FALSE.  If PF_LOCADDR is
  * given, 'addr' is a local address, and an intraprocess copy will be made.
  */
-int
-put_open_struct(struct trace_proc * proc, const char * name, int flags,
+int put_open_struct(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, void * ptr, size_t size)
 {
 
@@ -207,8 +198,7 @@ put_open_struct(struct trace_proc * proc, const char * name, int flags,
  * of the structure have been printed; if not, a ".." continuation text is
  * printed to show the user that some structure fields have not been printed.
  */
-void
-put_close_struct(struct trace_proc * proc, int all)
+void put_close_struct(struct trace_proc * proc, int all)
 {
 
 	if (!all)
@@ -220,8 +210,7 @@ put_close_struct(struct trace_proc * proc, int all)
 /*
  * Print a pointer.  NULL is treated as a special case.
  */
-void
-put_ptr(struct trace_proc * proc, const char * name, vir_bytes addr)
+void put_ptr(struct trace_proc * proc, const char * name, vir_bytes addr)
 {
 
 	if (addr == 0 && !valuesonly)
@@ -243,8 +232,7 @@ put_ptr(struct trace_proc * proc, const char * name, vir_bytes addr)
  * string will be printed no matter its size (used mainly for path names, which
  * typically become useless once cut off).
  */
-void
-put_buf(struct trace_proc * proc, const char * name, int flags, vir_bytes addr,
+void put_buf(struct trace_proc * proc, const char * name, int flags, vir_bytes addr,
 	ssize_t size)
 {
 	const char *escaped;
@@ -352,8 +340,7 @@ put_buf(struct trace_proc * proc, const char * name, int flags, vir_bytes addr,
  * for which nothing has been printed, the remaining bits will be printed with
  * the 'fmt' format string for an integer (generally "%d" should be used).
  */
-void
-put_flags(struct trace_proc * proc, const char * name, const struct flags * fp,
+void put_flags(struct trace_proc * proc, const char * name, const struct flags * fp,
 	unsigned int num, const char * fmt, unsigned int value)
 {
 	unsigned int left;
@@ -415,8 +402,7 @@ put_flags(struct trace_proc * proc, const char * name, const struct flags * fp,
  * 'printed' is typically the result of an arbitrary limit set based on the
  * verbosity level.
  */
-void
-put_tail(struct trace_proc * proc, unsigned int count, unsigned int printed)
+void put_tail(struct trace_proc * proc, unsigned int count, unsigned int printed)
 {
 
 	if (count == 0)

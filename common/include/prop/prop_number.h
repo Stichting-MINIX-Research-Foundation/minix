@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_number.h,v 1.6 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: prop_number.h,v 1.7 2020/06/06 21:25:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,18 +40,51 @@
 typedef struct _prop_number *prop_number_t;
 
 __BEGIN_DECLS
-prop_number_t	prop_number_create_integer(int64_t);
-prop_number_t	prop_number_create_unsigned_integer(uint64_t);
+prop_number_t	prop_number_create_signed(intmax_t);
+prop_number_t	prop_number_create_unsigned(uintmax_t);
+
+intmax_t	prop_number_signed_value(prop_number_t);
+uintmax_t	prop_number_unsigned_value(prop_number_t);
+
+bool		prop_number_schar_value(prop_number_t, signed char *);
+bool		prop_number_short_value(prop_number_t, short *);
+bool		prop_number_int_value(prop_number_t, int *);
+bool		prop_number_long_value(prop_number_t, long *);
+bool		prop_number_longlong_value(prop_number_t, long long *);
+bool		prop_number_intptr_value(prop_number_t, intptr_t *);
+bool		prop_number_int8_value(prop_number_t, int8_t *);
+bool		prop_number_int16_value(prop_number_t, int16_t *);
+bool		prop_number_int32_value(prop_number_t, int32_t *);
+bool		prop_number_int64_value(prop_number_t, int64_t *);
+
+bool		prop_number_uchar_value(prop_number_t, unsigned char *);
+bool		prop_number_ushort_value(prop_number_t, unsigned short *);
+bool		prop_number_uint_value(prop_number_t, unsigned int *);
+bool		prop_number_ulong_value(prop_number_t, unsigned long *);
+bool		prop_number_ulonglong_value(prop_number_t,
+					    unsigned long long *);
+bool		prop_number_uintptr_value(prop_number_t, uintptr_t *);
+bool		prop_number_uint8_value(prop_number_t, uint8_t *);
+bool		prop_number_uint16_value(prop_number_t, uint16_t *);
+bool		prop_number_uint32_value(prop_number_t, uint32_t *);
+bool		prop_number_uint64_value(prop_number_t, uint64_t *);
 
 prop_number_t	prop_number_copy(prop_number_t);
 
 int		prop_number_size(prop_number_t);
 bool		prop_number_unsigned(prop_number_t);
+bool		prop_number_equals(prop_number_t, prop_number_t);
+bool		prop_number_equals_signed(prop_number_t, intmax_t);
+bool		prop_number_equals_unsigned(prop_number_t, uintmax_t);
+
+
+/* Deprecated functions. */
+prop_number_t	prop_number_create_integer(int64_t);
+prop_number_t	prop_number_create_unsigned_integer(uint64_t);
 
 int64_t		prop_number_integer_value(prop_number_t);
 uint64_t	prop_number_unsigned_integer_value(prop_number_t);
 
-bool		prop_number_equals(prop_number_t, prop_number_t);
 bool		prop_number_equals_integer(prop_number_t, int64_t);
 bool		prop_number_equals_unsigned_integer(prop_number_t, uint64_t);
 __END_DECLS

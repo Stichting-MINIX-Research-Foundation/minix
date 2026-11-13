@@ -36,7 +36,7 @@ int usb_send_urb(struct usb_urb* urb)
 	
 	if (gid == -1) {
 		printf("usb_send_urb: grant failed: "
-		      "cpf_grant_direct(%d,%p,%d)\n", hcd_ep, urb, urb->urb_size);
+		      "cpf_grant_direct(%d,%p,%zu)\n", hcd_ep, urb, urb->urb_size);
 		return EINVAL;
 	}
 	
@@ -228,8 +228,7 @@ int usb_handle_msg(struct usb_driver *ud, message *msg)
 /*****************************************************************************
  *         usb_send_info                                                     *
  *****************************************************************************/
-int
-usb_send_info(long info_type, long info_value)
+int usb_send_info(long info_type, long info_value)
 {
 	int res;
 	message msg;

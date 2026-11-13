@@ -61,6 +61,7 @@ typedef struct tty {
   endpoint_t tty_outcaller;	/* process that made the call, or NONE */
   cdev_id_t tty_outid;		/* ID of suspended write request */
   cp_grant_id_t tty_outgrant;	/* grant where data comes from */
+  const char *tty_outbuf;	/* direct kernel output buffer */
   size_t tty_outleft;		/* # chars yet to be output */
   size_t tty_outcum;		/* # chars output so far */
   endpoint_t tty_iocaller;	/* process that made the call, or NONE */
@@ -68,10 +69,20 @@ typedef struct tty {
   unsigned int tty_ioreq;	/* ioctl request code */
   cp_grant_id_t tty_iogrant;	/* virtual address of ioctl buffer or grant */
 
-  /* select() data */
-  unsigned int tty_select_ops;	/* which operations are interesting */
-  endpoint_t tty_select_proc;	/* which process wants notification */
-  devminor_t tty_select_minor;	/* minor used to start select query */
+  /* select() data.  One tty object may legitimately be watched
+   * through several minors at once (/dev/console and /dev/log both map
+   * to the console tty, and both follow a console= redirect onto a
+   * serial line that has a minor of its own), and VFS matches select
+   * replies by the requesting minor, so each watch must be tracked -
+   * and replied to - under its own minor.
+   */
+#define TTY_SELWATCH	4	/* concurrent select minors per tty */
+  struct tty_selwatch {
+	unsigned int tsw_ops;	/* pending CDEV_OP_*; 0 = free slot */
+	endpoint_t tsw_proc;	/* who wants notification (VFS) */
+	devminor_t tsw_minor;	/* minor used to start select query */
+  } tty_selw[TTY_SELWATCH];
+  unsigned int tty_select_ops;	/* union of all pending tsw_ops */
 
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */

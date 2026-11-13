@@ -55,8 +55,7 @@ static unsigned int got_signal;
 /*
  * Signal handler.
  */
-static void
-test94_signal(int sig)
+static void test94_signal(int sig)
 {
 
 	if (sig != SIGUSR1) e(0);
@@ -70,8 +69,7 @@ test94_signal(int sig)
  * packet generation and is at least of 'size' bytes.  Return the number of
  * packets sent.
  */
-static uint32_t
-test94_fill_exact(int fd, uint8_t * buf, size_t size, uint32_t seq)
+static uint32_t test94_fill_exact(int fd, uint8_t * buf, size_t size, uint32_t seq)
 {
 	size_t hdrlen, len;
 
@@ -104,8 +102,7 @@ test94_fill_exact(int fd, uint8_t * buf, size_t size, uint32_t seq)
  * provided buffer 'buf' may be used for packet generation and is at least of
  * 'size' bytes.
  */
-static void
-test94_fill_random(int fd, uint8_t * buf, size_t size)
+static void test94_fill_random(int fd, uint8_t * buf, size_t size)
 {
 	size_t hdrlen, len;
 	ssize_t left;
@@ -134,8 +131,7 @@ test94_fill_random(int fd, uint8_t * buf, size_t size)
  * Send a UDP packet with a specific size of 'size' bytes and sequence number
  * 'seq' on socket 'fd', using 'buf' as scratch buffer.
  */
-static void
-test94_add_specific(int fd, uint8_t * buf, size_t size, uint32_t seq)
+static void test94_add_specific(int fd, uint8_t * buf, size_t size, uint32_t seq)
 {
 
 	size += sizeof(seq);
@@ -154,8 +150,7 @@ test94_add_specific(int fd, uint8_t * buf, size_t size, uint32_t seq)
  * using sequence number 'seq'.  The buffer 'buf' may be used as scratch buffer
  * which is at most 'size' bytes--the same size as the total BPF buffer.
  */
-static void
-test94_add_random(int fd, uint8_t * buf, size_t size, uint32_t seq)
+static void test94_add_random(int fd, uint8_t * buf, size_t size, uint32_t seq)
 {
 
 	test94_add_specific(fd, buf, lrand48() % (size / 10), seq);
@@ -166,8 +161,7 @@ test94_add_random(int fd, uint8_t * buf, size_t size, uint32_t seq)
  * 'datalen' data bytes is one we sent.  If so, return an offset to the packet
  * data.  If not, return a negative value.
  */
-static ssize_t
-test94_check_pkt(uint8_t * buf, ssize_t caplen, ssize_t datalen)
+static ssize_t test94_check_pkt(uint8_t * buf, ssize_t caplen, ssize_t datalen)
 {
 	struct ip ip;
 	struct udphdr uh;
@@ -206,8 +200,7 @@ test94_check_pkt(uint8_t * buf, ssize_t caplen, ssize_t datalen)
  * should be no other packets in the capture; otherwise, other packets are
  * ignored.
  */
-static uint32_t
-test94_check(uint8_t * buf, ssize_t len, uint32_t seq, int filtered,
+static uint32_t test94_check(uint8_t * buf, ssize_t len, uint32_t seq, int filtered,
 	uint32_t * caplen, uint32_t * datalen)
 {
 	struct bpf_hdr bh;
@@ -311,8 +304,7 @@ static struct bpf_insn test94_filter[] = {
  * If the given size is non-zero, use that as buffer size.  Return the BPF
  * device's actual buffer size, which is also the size of 'buf'.
  */
-static size_t
-test94_setup(int * fd, int * fd2, int * fd3, uint8_t ** buf, unsigned int size,
+static size_t test94_setup(int * fd, int * fd2, int * fd3, uint8_t ** buf, unsigned int size,
 	int set_filter)
 {
 	struct sockaddr_in sinA, sinB;
@@ -376,8 +368,7 @@ test94_setup(int * fd, int * fd2, int * fd3, uint8_t ** buf, unsigned int size,
 /*
  * Clean up resources allocated by test94_setup().
  */
-static void
-test94_cleanup(int fd, int fd2, int fd3, uint8_t * buf)
+static void test94_cleanup(int fd, int fd2, int fd3, uint8_t * buf)
 {
 
 	if (close(fd3) != 0) e(0);
@@ -392,8 +383,7 @@ test94_cleanup(int fd, int fd2, int fd3, uint8_t * buf)
 /*
  * Test reading packets from a BPF device, using regular mode.
  */
-static void
-test94a(void)
+static void test94a(void)
 {
 	struct bpf_program bf;
 	struct timeval tv;
@@ -740,8 +730,7 @@ test94a(void)
 /*
  * Test reading packets from a BPF device, using immediate mode.
  */
-static void
-test94b(void)
+static void test94b(void)
 {
 	struct timeval tv;
 	fd_set fds;
@@ -962,8 +951,7 @@ test94b(void)
  * some other bounds checks so all that might make this worth it anyway.  While
  * we are exercising full control over our buffers, also check statistics.
  */
-static void
-test94c(void)
+static void test94c(void)
 {
 	struct bpf_stat bs;
 	fd_set fds;
@@ -1121,8 +1109,7 @@ test94c(void)
  * truncated to the size of the buffer, but unless the filter specifies a
  * smaller capture size, no more than that.
  */
-static void
-test94d(void)
+static void test94d(void)
 {
 	struct bpf_hdr bh;
 	uint8_t *buf, *buf2;
@@ -1211,8 +1198,7 @@ test94d(void)
  * device (e.g., X11) and the extra code specifically to extract our packets in
  * the other direction is simply not worth it.
  */
-static void
-test94_comm(int fd, int fd2, int fd3, int filtered)
+static void test94_comm(int fd, int fd2, int fd3, int filtered)
 {
 	struct bpf_stat bs;
 	char c;
@@ -1248,8 +1234,7 @@ test94_comm(int fd, int fd2, int fd3, int filtered)
 /*
  * Test filter installation and mechanics.
  */
-static void
-test94e(void)
+static void test94e(void)
 {
 	struct bpf_program bf;
 	struct bpf_stat bs;
@@ -1443,8 +1428,7 @@ test94e(void)
 /*
  * Compute an IP checksum.
  */
-static uint16_t
-test94_cksum(uint8_t * buf, size_t len)
+static uint16_t test94_cksum(uint8_t * buf, size_t len)
 {
 	uint32_t sum, word;
 
@@ -1472,8 +1456,7 @@ test94_cksum(uint8_t * buf, size_t len)
  * contain the headers and the (to be appended) data.  The function returns the
  * offset into the buffer to the data portion of the packet.
  */
-static size_t
-test94_make_pkt(uint8_t * buf, size_t len, int v6)
+static size_t test94_make_pkt(uint8_t * buf, size_t len, int v6)
 {
 	struct ip ip;
 	struct ip6_hdr ip6;
@@ -1525,8 +1508,7 @@ test94_make_pkt(uint8_t * buf, size_t len, int v6)
 /*
  * Test sending packets by writing to a BPF device.
  */
-static void
-test94f(void)
+static void test94f(void)
 {
 	struct bpf_stat bs;
 	struct ifreq ifr;
@@ -1639,8 +1621,7 @@ test94f(void)
 /*
  * Test read, write, and select operations on unconfigured devices.
  */
-static void
-test94g(void)
+static void test94g(void)
 {
 	fd_set rfds, wfds;
 	uint8_t *buf;
@@ -1683,8 +1664,7 @@ test94g(void)
  * test their functionality properly.  Also note that we skip various checks
  * performed as part of the earlier subtests.
  */
-static void
-test94h(void)
+static void test94h(void)
 {
 	struct bpf_stat bs;
 	struct bpf_version bv;
@@ -2116,8 +2096,7 @@ static struct bpf_insn test94_filter6[] = {
  * IPv6 packets are properly filtered and captured at all.  The rest of the
  * code is entirely version agnostic anyway.
  */
-static void
-test94i(void)
+static void test94i(void)
 {
 	struct sockaddr_in6 sin6A, sin6B;
 	struct bpf_program bf;
@@ -2246,8 +2225,7 @@ test94i(void)
 /*
  * Test the BPF sysctl(7) interface at a basic level.
  */
-static void
-test94j(void)
+static void test94j(void)
 {
 	struct bpf_stat bs1, bs2;
 	struct bpf_d_ext *bde;
@@ -2424,8 +2402,7 @@ test94j(void)
 /*
  * Test privileged operations as an unprivileged caller.
  */
-static void
-test94k(void)
+static void test94k(void)
 {
 	struct passwd *pw;
 	pid_t pid;
@@ -2486,8 +2463,7 @@ test94k(void)
  * test packets to the local network!  As such it must be performed only when
  * USENETWORK=yes and therefore at the user's risk.
  */
-static void
-test94l(void)
+static void test94l(void)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -2616,8 +2592,7 @@ test94l(void)
 /*
  * Test program for LWIP BPF.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

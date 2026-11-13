@@ -102,8 +102,7 @@ static void autoip_start_probing(struct netif *netif);
  * @param netif the netif for which to set the struct autoip
  * @param autoip (uninitialised) autoip struct allocated by the application
  */
-void
-autoip_set_struct(struct netif *netif, struct autoip *autoip)
+void autoip_set_struct(struct netif *netif, struct autoip *autoip)
 {
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("autoip != NULL", autoip != NULL);
@@ -120,8 +119,7 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
  *
  * @param netif The netif under AutoIP control
  */
-static void
-autoip_restart(struct netif *netif)
+static void autoip_restart(struct netif *netif)
 {
   struct autoip* autoip = netif_autoip_data(netif);
   autoip->tried_llipaddr++;
@@ -131,8 +129,7 @@ autoip_restart(struct netif *netif)
 /**
  * Handle a IP address conflict after an ARP conflict detection
  */
-static void
-autoip_handle_arp_conflict(struct netif *netif)
+static void autoip_handle_arp_conflict(struct netif *netif)
 {
   struct autoip* autoip = netif_autoip_data(netif);
 
@@ -164,8 +161,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * @param netif network interface on which create the IP-Address
  * @param ipaddr ip address to initialize
  */
-static void
-autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
+static void autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
 {
   struct autoip* autoip = netif_autoip_data(netif);
 
@@ -294,8 +290,7 @@ autoip_start(struct netif *netif)
   return result;
 }
 
-static void
-autoip_start_probing(struct netif *netif)
+static void autoip_start_probing(struct netif *netif)
 {
   struct autoip* autoip = netif_autoip_data(netif);
 
@@ -328,8 +323,7 @@ autoip_start_probing(struct netif *netif)
  * If there is an AutoIP address configured, take the interface down
  * and begin probing with the same address.
  */
-void
-autoip_network_changed(struct netif *netif)
+void autoip_network_changed(struct netif *netif)
 {
   struct autoip* autoip = netif_autoip_data(netif);
 
@@ -361,8 +355,7 @@ autoip_stop(struct netif *netif)
 /**
  * Has to be called in loop every AUTOIP_TMR_INTERVAL milliseconds
  */
-void
-autoip_tmr(void)
+void autoip_tmr(void)
 {
   struct netif *netif;
   /* loop through netif's */
@@ -447,8 +440,7 @@ autoip_tmr(void)
  * @param netif network interface to use for autoip processing
  * @param hdr Incoming ARP packet
  */
-void
-autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
+void autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
 {
   struct autoip* autoip = netif_autoip_data(netif);
 
@@ -505,8 +497,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
  * @return 1 if AutoIP supplied netif->ip_addr (state BOUND or ANNOUNCING),
  *         0 otherwise
  */
-u8_t
-autoip_supplied_address(const struct netif *netif)
+u8_t autoip_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif_autoip_data(netif) != NULL)) {
     struct autoip* autoip = netif_autoip_data(netif);
@@ -515,8 +506,7 @@ autoip_supplied_address(const struct netif *netif)
   return 0;
 }
 
-u8_t
-autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
+u8_t autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
 {
   struct autoip* autoip = netif_autoip_data(netif);
   return (autoip != NULL) && ip4_addr_cmp(addr, &(autoip->llipaddr));

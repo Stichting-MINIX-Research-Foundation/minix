@@ -73,8 +73,7 @@ int main(int argc, char **argv)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -118,8 +117,7 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-static void
-get_work(void)
+static void get_work(void)
 {
     int status = 0;
     status = sef_receive(ANY, &m_in);   /* this blocks until message arrives */
@@ -132,8 +130,7 @@ get_work(void)
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-static void
-reply(
+static void reply(
 	int who,                           	/* destination */
 	int result                           	/* report result to replyee */
 )

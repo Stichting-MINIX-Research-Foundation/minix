@@ -312,9 +312,7 @@ void makelongnames()
 ** <user_name>:<passwd>:<uid>:<gid>:<other_stuff>
 ** If no uids and gids can be found, it will only return 0 ids.
 */
-void getids(r_uid, r_gid)
-uid_t *r_uid;
-gid_t *r_gid;
+void getids(uid_t *r_uid, gid_t *r_gid)
 {
   char line[N];
   unsigned char *p;

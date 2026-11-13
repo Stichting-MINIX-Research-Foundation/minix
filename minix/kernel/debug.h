@@ -27,10 +27,10 @@
 #define DEBUG_ENABLE_IPC_WARNINGS	1
 
 /* Sanity checks. */
-#define DEBUG_SANITYCHECKS		0
+#define DEBUG_SANITYCHECKS		1
 
 /* Verbose messages. */
-#define DEBUG_TRACE			0
+#define DEBUG_TRACE			1
 
 /* DEBUG_RACE makes every process preemptible, schedules
  * every process on the same priority queue, and randomizes
@@ -83,8 +83,10 @@
 #endif
 
 #ifdef _SYSTEM
-#define DEBUG_PRINT(params, level) do { \
-	if (verboseboot >= (level)) printf params; } while (0)
+// NN: show all debug messages
+//#define DEBUG_PRINT(params, level) do { \
+//	if (verboseboot >= (level)) printf params; } while (0)
+#define DEBUG_PRINT(params, level) do { printf params; } while (0)
 #define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
 #define DEBUGEXTRA(params) DEBUG_PRINT(params, VERBOSEBOOT_EXTRA)
 #define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)

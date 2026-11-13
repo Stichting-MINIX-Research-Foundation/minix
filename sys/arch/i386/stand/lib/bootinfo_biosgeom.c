@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.22 2013/05/16 19:06:44 christos Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.23.18.1 2019/08/13 14:46:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -60,6 +60,7 @@ void
 bi_getbiosgeom(void)
 {
 	struct btinfo_biosgeom *bibg;
+	size_t bibg_len = sizeof(*bibg);
 	int i, j, nvalid;
 	int nhd;
 	unsigned int cksum;
@@ -72,13 +73,12 @@ bi_getbiosgeom(void)
 	printf("nhd %d\n", nhd);
 #endif
 
-	bibg = alloc(sizeof(struct btinfo_biosgeom)
-		     + (nhd - 1) * sizeof(struct bi_biosgeom_entry));
+	bibg_len += nhd * sizeof(struct bi_biosgeom_entry); 
+	bibg = alloc(bibg_len);
 	if (bibg == NULL)
 		return;
 
 	for (i = nvalid = 0; i < MAX_BIOSDISKS && nvalid < nhd; i++) {
-
 		d.dev = 0x80 + i;
 
 		if (set_geometry(&d, &ed))
@@ -176,6 +176,8 @@ bi_getbiosgeom(void)
 
 	bibg->num = nvalid;
 
-	BI_ADD(bibg, BTINFO_BIOSGEOM, sizeof(struct btinfo_biosgeom)
-	       + nvalid * sizeof(struct bi_biosgeom_entry));
+	if (nvalid < nhd)
+		bibg_len -= (nhd - nvalid) * sizeof(struct bi_biosgeom_entry);
+
+	BI_ADD(bibg, BTINFO_BIOSGEOM, bibg_len);
 }

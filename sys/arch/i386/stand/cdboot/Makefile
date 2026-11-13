@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/01/12 15:26:29 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2018/06/02 14:30:07 christos Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -7,12 +7,7 @@ AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 USE_BITCODE=no
 .endif # defined(__MINIX)
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
-
-NOMAN=		# defined
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# nothing
 
@@ -41,7 +36,8 @@ CPPFLAGS+=	-DDISABLE_KEYPRESS
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=	-Wl,-m,elf_i386
-AFLAGS+=	-m32
+# MINIX's clang ignores -m32 and warns that it is unused.
+AFLAGS+=	${${ACTIVE_CC} == "clang":?:-m32}
 .endif
 
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \

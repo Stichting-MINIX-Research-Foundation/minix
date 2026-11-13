@@ -164,7 +164,7 @@ void arch_eoi(void)
  * arch specific cpulocals. As this variable is write-once-read-only it is ok to
  * have at as an array until we resolve the cpulocals properly
  */
-static u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
+static u64_t lapic_bus_freq[CONFIG_MAX_CPUS];
 /* the probe period will be roughly 100ms */
 #define PROBE_TICKS	(system_hz / 10)
 
@@ -442,7 +442,8 @@ static int spurious_irq_handler(irq_hook_t * UNUSED(hook))
 
 static void apic_calibrate_clocks(unsigned cpu)
 {
-	u32_t lvtt, val, lapic_delta;
+	u32_t lvtt, val;
+	u64_t lapic_delta;
 	u64_t tsc_delta;
 	u64_t cpu_freq;
 
@@ -515,7 +516,7 @@ static void apic_calibrate_clocks(unsigned cpu)
 	tsc_delta = tsc1 - tsc0;
 
 	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
-	BOOT_VERBOSE(printf("APIC bus freq %u MHz\n",
+	BOOT_VERBOSE(printf("APIC bus freq %llu MHz\n",
 				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = (tsc_delta / (PROBE_TICKS - 1)) * make64(system_hz, 0);
 	cpu_set_freq(cpuid, cpu_freq);
@@ -561,9 +562,23 @@ void lapic_set_timer_periodic(const unsigned freq)
 	lapic_write(LAPIC_TIMER_ICR, lapic_ticks_per_clock_tick);
 }
 
+/*
+ * Remaining one-shot count saved when a CPU stops its timer on idle, so it can
+ * resume the same countdown on the next wakeup instead of re-arming a full
+ * fresh period.  Without this, an AP that idles more often than once per tick
+ * (e.g. running a process that busy-loops with frequent syscalls) would reset
+ * its one-shot on every wakeup and never count down a whole tick, so the AP
+ * would never receive a timer interrupt and per-process CPU-time accounting and
+ * the virtual/profiling itimers (SIGVTALRM/SIGPROF) would never fire for procs
+ * scheduled onto it.  (See docs/kernel-arch-x86_64.md #17.)
+ */
+static u32_t lapic_timer_rem[CONFIG_MAX_CPUS];
+
 void lapic_stop_timer(void)
 {
 	u32_t lvtt;
+	/* Save the remaining count so lapic_restart_timer() can resume it. */
+	lapic_timer_rem[cpuid] = lapic_read(LAPIC_TIMER_CCR);
 	lvtt = lapic_read(LAPIC_LVTTR);
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
 	/* zero the current counter so it can be restarted again */
@@ -573,6 +588,21 @@ void lapic_stop_timer(void)
 
 void lapic_restart_timer(void)
 {
+	unsigned cpu = cpuid;
+	u32_t rem = lapic_timer_rem[cpu];
+
+	/*
+	 * If we stopped the timer on idle with a partial countdown remaining,
+	 * resume that same countdown rather than arming a full fresh period.
+	 */
+	if (rem) {
+		lapic_timer_rem[cpu] = 0;
+		lapic_write(LAPIC_TIMER_ICR, rem);
+		lapic_write(LAPIC_TIMER_DCR, APIC_TDCR_1);
+		lapic_write(LAPIC_LVTTR, APIC_TIMER_INT_VECTOR);
+		return;
+	}
+
 	/* restart the timer only if the counter reached zero, i.e. expired */
 	if (lapic_read(LAPIC_TIMER_CCR) == 0)
 		lapic_set_timer_one_shot(1000000/system_hz);
@@ -848,14 +878,14 @@ static struct gate_table_s gate_table_smp[] = {
 #endif
 
 #ifdef APIC_DEBUG
-static void lapic_set_dummy_handlers(void)
+void lapic_set_dummy_handlers(void)
 {
 	char * handler;
 	int vect = 32; /* skip the reserved vectors */
 
 	handler = &lapic_intr_dummy_handles_start;
 	handler += vect * LAPIC_INTR_DUMMY_HANDLER_SIZE;
-	for(; handler < &lapic_intr_dummy_handles_end;
+	for(; handler < &lapic_intr_dummy_handles_end && vect < IDT_SIZE;
 			handler += LAPIC_INTR_DUMMY_HANDLER_SIZE) {
 		int_gate_idt(vect++, (vir_bytes) handler,
 				PRESENT | INT_GATE_TYPE |
@@ -884,7 +914,9 @@ void apic_idt_init(const int reset)
 #ifdef APIC_DEBUG
 	if (is_bsp)
 		printf("APIC debugging is enabled\n");
+#ifdef CONFIG_SMP
 	lapic_set_dummy_handlers();
+#endif
 #endif
 
 	/* Build descriptors for interrupt gates in IDT. */
@@ -978,7 +1010,10 @@ void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 
 	switch (type) {
 		case APIC_IPI_DEST:
-			if (!cpu_is_ready(cpu))
+			/* Shutdown sends the halt IPI after marking its target STOPPING. */
+			if (!cpu_is_ready(cpu) &&
+			    (vector != APIC_SMP_CPU_HALT_VECTOR ||
+			     cpu_state(cpu) != CPU_STATE_STOPPING))
 				return;
 			lapic_write_icr2(icr2 |	(cpuid2apicid[cpu] << 24));
 			lapic_write_icr1(icr1 |	APIC_ICR_DEST_FIELD | vector);
@@ -999,6 +1034,40 @@ void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 			printf("WARNING : unknown send ipi type request\n");
 	}
 
+}
+
+
+/*
+ * Send a halt IPI without allowing a busy local APIC command register to
+ * stall system shutdown forever. The one-shot timer also bounds the caller's
+ * subsequent wait for the target CPU to acknowledge the halt IPI.
+ */
+int apic_send_smp_halt_ipi(unsigned cpu, u32_t timeout_us)
+{
+	u32_t icr1, icr2;
+
+	assert(cpu < ncpus);
+	if (ncpus == 1)
+		return 0;
+
+	lapic_set_timer_one_shot(timeout_us);
+	while (lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) {
+		if (lapic_read(LAPIC_TIMER_CCR) == 0)
+			return -1;
+		arch_pause();
+	}
+
+	if (lapic_read(LAPIC_TIMER_CCR) == 0 ||
+	    cpu_state(cpu) != CPU_STATE_STOPPING)
+		return -1;
+
+	icr1 = lapic_read(LAPIC_ICR1) & 0xFFF0F800;
+	icr2 = lapic_read(LAPIC_ICR2) & 0xFFFFFF;
+	lapic_write(LAPIC_ICR2, icr2 | (cpuid2apicid[cpu] << 24));
+	lapic_write(LAPIC_ICR1, icr1 | APIC_ICR_DEST_FIELD |
+	    APIC_SMP_CPU_HALT_VECTOR);
+
+	return 0;
 }
 
 int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)

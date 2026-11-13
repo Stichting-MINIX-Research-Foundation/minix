@@ -31,8 +31,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 /*
  * Set socket options.
  */
-static int
-__setsockopt(int fd, int level, int option_name, const void * option_value,
+static int __setsockopt(int fd, int level, int option_name, const void * option_value,
 	socklen_t option_len)
 {
 	message m;

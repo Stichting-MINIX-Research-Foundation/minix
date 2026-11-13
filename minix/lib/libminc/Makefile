@@ -38,7 +38,7 @@ CFLAGS+=	-fno-builtin
 #
 # Customized versions of libc functions.
 #
-SRCS+= atoi.c fputs.c _snprintf.c strtol.c
+SRCS+= atoi.c fputs.c _snprintf.c strtol.c intoa.c 
 CPPFLAGS._snprintf.c+=	-I${LIBSADIR}
 
 CPPFLAGS.strtol.c+=	-D_STANDALONE
@@ -169,9 +169,23 @@ CPPFLAGS.strtoul.c+=	-D_STANDALONE
 CPPFLAGS.strtoul.c+=	-I${NETBSDSRCDIR}/sys
 
 .for f in \
-	strcasecmp.o strcspn.o strncasecmp.o strnlen.o strlcat.o
+	strcasecmp.o strcspn.o strncasecmp.o strnlen.o strlcat.o \
+	strstr.o strspn.o popcount32.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
 ${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
+OBJS+=	${f}
+CLEANFILES+= ${f}
+
+.if ${USE_BITCODE:Uno} == "yes"
+OBJS+=	${f:C/\.o/.bc/}
+CLEANFILES+= ${f:C/\.o/.bc/}
+.endif # ${USE_BITCODE:Uno} == "yes"
+.endfor
+
+.for f in \
+	inet_addr.o
+${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/inet/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/inet/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 

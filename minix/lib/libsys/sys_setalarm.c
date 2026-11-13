@@ -8,8 +8,7 @@
  * optionally return the time left on the previous timer (TMR_NEVER if none was
  * set) and the current time.
  */
-int
-sys_setalarm2(clock_t exp_time, int abs_time, clock_t * time_left,
+int sys_setalarm2(clock_t exp_time, int abs_time, clock_t * time_left,
 	clock_t * uptime)
 {
 	message m;

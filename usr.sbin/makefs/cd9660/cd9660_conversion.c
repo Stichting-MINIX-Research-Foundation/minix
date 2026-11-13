@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_conversion.c,v 1.4 2007/03/14 14:11:17 christos Exp $	*/
+/*	$NetBSD: cd9660_conversion.c,v 1.5 2017/02/08 21:33:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_conversion.c,v 1.4 2007/03/14 14:11:17 christos Exp $");
+__RCSID("$NetBSD: cd9660_conversion.c,v 1.5 2017/02/08 21:33:12 christos Exp $");
 #endif  /* !__lint */
 
 
@@ -150,6 +150,9 @@ cd9660_pad_string_spaces(char *str, int len)
 static char
 cd9660_compute_gm_offset(time_t tim)
 {
+	if (stampst.st_ino)
+		return 0;
+
 	struct tm t, gm;
 
 	(void)localtime_r(&tim, &t);
@@ -173,7 +176,10 @@ cd9660_time_8426(unsigned char *buf, time_t tim)
 	struct tm t;
 	char temp[18];
 
-	(void)localtime_r(&tim, &t);
+	if (stampst.st_ino)
+		(void)gmtime_r(&tim, &t);
+	else
+		(void)localtime_r(&tim, &t);
 	(void)snprintf(temp, sizeof(temp), "%04i%02i%02i%02i%02i%02i%02i",
 		1900+(int)t.tm_year,
 		(int)t.tm_mon+1,
@@ -192,7 +198,10 @@ cd9660_time_915(unsigned char *buf, time_t tim)
 {
 	struct tm t;
 
-	(void)localtime_r(&tim, &t);
+	if (stampst.st_ino)
+		(void)gmtime_r(&tim, &t);
+	else
+		(void)localtime_r(&tim, &t);
 	buf[0] = t.tm_year;
 	buf[1] = t.tm_mon+1;
 	buf[2] = t.tm_mday;

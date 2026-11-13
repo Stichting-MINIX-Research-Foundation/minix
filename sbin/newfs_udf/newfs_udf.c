@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.18 2013/08/09 15:11:08 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.20 2020/04/05 15:25:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -72,7 +72,6 @@
 int newfs_udf(int argc, char **argv);
 static void usage(void) __attribute__((__noreturn__));
 
-
 /* queue for temporary storage of sectors to be written out */
 struct wrsect {
 	uint64_t  sectornr;
@@ -121,11 +120,13 @@ udf_write_sector(void *sector, uint64_t location)
 	if ((seekpos == NULL) || (seekpos->sectornr != location)) {
 		pos = calloc(1, sizeof(struct wrsect));
 		if (pos == NULL)
-			return ENOMEM;
+			return errno;
 		/* allocate space for copy of sector data */
 		pos->sector_data = calloc(1, context.sector_size);
-		if (pos->sector_data == NULL)
-			return ENOMEM;
+		if (pos->sector_data == NULL) {
+			free(pos);
+			return errno;
+		}
 		pos->sectornr = location;
 
 		if (seekpos) {

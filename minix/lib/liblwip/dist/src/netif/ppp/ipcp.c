@@ -327,8 +327,7 @@ static void ipcp_clear_addrs(ppp_pcb *pcb, u32_t ouraddr, u32_t hisaddr, u8_t re
  * Make a string representation of a network IP address.
  */
 char *
-ip_ntoa(ipaddr)
-u32_t ipaddr;
+ip_ntoa(u32_t ipaddr)
 {
     static char b[64];
 
@@ -344,9 +343,7 @@ u32_t ipaddr;
 /*
  * setvjslots - set maximum number of connection slots for VJ compression
  */
-static int
-setvjslots(argv)
-    char **argv;
+static int setvjslots(char **argv)
 {
     int value;
 
@@ -366,9 +363,7 @@ setvjslots(argv)
 /*
  * setdnsaddr - set the dns address(es)
  */
-static int
-setdnsaddr(argv)
-    char **argv;
+static int setdnsaddr(char **argv)
 {
     u32_t dns;
     struct hostent *hp;
@@ -402,9 +397,7 @@ setdnsaddr(argv)
  * This is primrarly used with the Samba package under UNIX or for pointing
  * the caller to the existing WINS server on a Windows NT platform.
  */
-static int
-setwinsaddr(argv)
-    char **argv;
+static int setwinsaddr(char **argv)
 {
     u32_t wins;
     struct hostent *hp;
@@ -439,11 +432,7 @@ setwinsaddr(argv)
  * potentially an IP address specification.
  * Not static so that plugins can call it to set the addresses
  */
-int
-setipaddr(arg, argv, doit)
-    char *arg;
-    char **argv;
-    int doit;
+int setipaddr(char *arg, char **argv, int doit)
 {
     struct hostent *hp;
     char *colon;
@@ -506,8 +495,7 @@ setipaddr(arg, argv, doit)
     return 1;
 }
 
-static void
-printipaddr(opt, printer, arg)
+static void printipaddr(opt, printer, arg)
     option_t *opt;
     void (*printer) (void *, char *, ...);
     void *arg;
@@ -524,9 +512,7 @@ printipaddr(opt, printer, arg)
 /*
  * setnetmask - set the netmask to be used on the interface.
  */
-static int
-setnetmask(argv)
-    char **argv;
+static int setnetmask(char **argv)
 {
     u32_t mask;
     int n;
@@ -552,10 +538,7 @@ setnetmask(argv)
     return (1);
 }
 
-int
-parse_dotted_ip(p, vp)
-    char *p;
-    u32_t *vp;
+int parse_dotted_ip(char *p, u32_t *vp)
 {
     int n;
     u32_t v, b;
@@ -1800,8 +1783,7 @@ endswitch:
  * ip_check_options - check that any IP-related options are OK,
  * and assign appropriate defaults.
  */
-static void
-ip_check_options()
+static void ip_check_options()
 {
     struct hostent *hp;
     u32_t local;
@@ -1833,9 +1815,7 @@ ip_check_options()
  * ip_demand_conf - configure the interface as though
  * IPCP were up, for use with dial-on-demand.
  */
-static int
-ip_demand_conf(u)
-    int u;
+static int ip_demand_conf(int u)
 {
     ppp_pcb *pcb = &ppp_pcb_list[u];
     ipcp_options *wo = &ipcp_wantoptions[u];
@@ -2219,9 +2199,7 @@ static void ipcp_finished(fsm *f) {
 /*
  * create_resolv - create the replacement resolv.conf file
  */
-static void
-create_resolv(peerdns1, peerdns2)
-    u32_t peerdns1, peerdns2;
+static void create_resolv(u32_t peerdns1, u32_t peerdns2)
 {
 
 }
@@ -2389,10 +2367,7 @@ static int ipcp_printpkt(const u_char *p, int plen,
 #define get_tcpoff(x)	(((unsigned char *)(x))[12] >> 4)
 #define get_tcpflags(x)	(((unsigned char *)(x))[13])
 
-static int
-ip_active_pkt(pkt, len)
-    u_char *pkt;
-    int len;
+static int ip_active_pkt(u_char *pkt, int len)
 {
     u_char *tcp;
     int hlen;

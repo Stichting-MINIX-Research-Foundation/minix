@@ -38,9 +38,7 @@ void test21n(void);
 void test21o(void);
 int get_link(char *name);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 
   int i, m = 0xFFFF;
@@ -626,8 +624,7 @@ void test21o()
   if (rmdir("D1") != 0) e(14);
 }
 
-int get_link(name)
-char *name;
+int get_link(char *name)
 {
   struct stat statbuf;
 

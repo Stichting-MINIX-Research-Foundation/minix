@@ -4,8 +4,7 @@
 /*
  * Copy data from the caller into the local address space.
  */
-int
-fsdriver_copyin(const struct fsdriver_data * data, size_t off, void * ptr,
+int fsdriver_copyin(const struct fsdriver_data * data, size_t off, void * ptr,
 	size_t len)
 {
 
@@ -30,8 +29,7 @@ fsdriver_copyin(const struct fsdriver_data * data, size_t off, void * ptr,
 /*
  * Copy data from the local address space to the caller.
  */
-int
-fsdriver_copyout(const struct fsdriver_data * data, size_t off,
+int fsdriver_copyout(const struct fsdriver_data * data, size_t off,
 	const void * ptr, size_t len)
 {
 
@@ -56,8 +54,7 @@ fsdriver_copyout(const struct fsdriver_data * data, size_t off,
 /*
  * Zero out a data region in the caller.
  */
-int
-fsdriver_zero(const struct fsdriver_data * data, size_t off, size_t len)
+int fsdriver_zero(const struct fsdriver_data * data, size_t off, size_t len)
 {
 
 	/* Do nothing for peek requests. */
@@ -80,8 +77,7 @@ fsdriver_zero(const struct fsdriver_data * data, size_t off, size_t len)
 /*
  * Copy in a null-terminated name, and perform sanity checks.
  */
-int
-fsdriver_getname(endpoint_t endpt, cp_grant_id_t grant, size_t len,
+int fsdriver_getname(endpoint_t endpt, cp_grant_id_t grant, size_t len,
 	char * name, size_t size, int not_empty)
 {
 	int r;

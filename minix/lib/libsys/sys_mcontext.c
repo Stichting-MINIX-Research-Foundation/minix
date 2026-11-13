@@ -1,8 +1,6 @@
 #include "syslib.h"
 
-int sys_getmcontext(proc, mcp)
-endpoint_t proc;		/* process retrieving context */
-vir_bytes mcp;			/* where to store context */
+int sys_getmcontext(endpoint_t proc, vir_bytes mcp)
 {
 /* A process wants to store its context in mcp. */
 
@@ -15,9 +13,7 @@ vir_bytes mcp;			/* where to store context */
   return r;
 }
 
-int sys_setmcontext(proc, mcp)
-endpoint_t proc;		/* process setting context */
-vir_bytes mcp;			/* where to get context from */
+int sys_setmcontext(endpoint_t proc, vir_bytes mcp)
 {
 /* A process wants to restore context stored in ucp. */
 

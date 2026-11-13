@@ -5,14 +5,7 @@
 /*===========================================================================*
  *                                sys_sprof				     *
  *===========================================================================*/
-int sys_sprof(action, size, freq, type, endpt, ctl_ptr, mem_ptr)
-int action; 				/* start/stop profiling */
-int size;				/* available profiling memory */
-int freq;				/* sample frequency */
-int type;
-endpoint_t endpt;			/* caller endpoint */
-vir_bytes ctl_ptr;			/* location of info struct */
-vir_bytes mem_ptr;			/* location of profiling memory */
+int sys_sprof(int action, int size, int freq, int type, endpoint_t endpt, vir_bytes ctl_ptr, vir_bytes mem_ptr)
 {
   message m;
 

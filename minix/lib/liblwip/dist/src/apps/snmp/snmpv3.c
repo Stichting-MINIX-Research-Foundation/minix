@@ -46,8 +46,7 @@
 #define SNMP_MAX_TIME_BOOT 2147483647UL
 
 /** Call this if engine has been changed. Has to reset boots, see below */
-void
-snmpv3_engine_id_changed(void)
+void snmpv3_engine_id_changed(void)
 {
   snmpv3_set_engine_boots(0);
 }
@@ -58,8 +57,7 @@ snmpv3_engine_id_changed(void)
  * (re-)initialized itself since snmpEngineID
  * was last configured.
  */
-s32_t
-snmpv3_get_engine_boots_internal(void)
+s32_t snmpv3_get_engine_boots_internal(void)
 {
   if (snmpv3_get_engine_boots() == 0 ||
       snmpv3_get_engine_boots() < SNMP_MAX_TIME_BOOT) {
@@ -75,8 +73,7 @@ snmpv3_get_engine_boots_internal(void)
  * Once the timer reaches 2147483647 it gets reset to zero and the
  * engine boot ups get incremented.
  */
-s32_t
-snmpv3_get_engine_time_internal(void)
+s32_t snmpv3_get_engine_time_internal(void)
 {
   if (snmpv3_get_engine_time() >= SNMP_MAX_TIME_BOOT) {
     snmpv3_reset_engine_time();

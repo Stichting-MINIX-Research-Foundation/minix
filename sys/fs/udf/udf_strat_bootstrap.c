@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_bootstrap.c,v 1.4 2014/11/10 18:46:33 maxv Exp $ */
+/* $NetBSD: udf_strat_bootstrap.c,v 1.5 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.4 2014/11/10 18:46:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.5 2016/05/24 09:55:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -115,6 +115,14 @@ udf_queuebuf_bootstrap(struct udf_strat_args *args)
 	VOP_STRATEGY(ump->devvp, buf);
 }
 
+
+static void
+udf_sync_caches_bootstrap(struct udf_strat_args *args)
+{
+	/* empty */
+}
+
+
 static void
 udf_discstrat_init_bootstrap(struct udf_strat_args *args)
 {
@@ -137,6 +145,7 @@ struct udf_strategy udf_strat_bootstrap =
 	udf_read_logvol_dscr_bootstrap,
 	udf_write_logvol_dscr_bootstrap,
 	udf_queuebuf_bootstrap,
+	udf_sync_caches_bootstrap,
 	udf_discstrat_init_bootstrap,
 	udf_discstrat_finish_bootstrap
 };

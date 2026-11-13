@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.19 2015/05/11 16:48:34 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.25 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 		error = errno;
 	else
 		error = 0;
-	
+
 	free(buf);
 
 	return (error);
@@ -162,7 +162,7 @@ prop_array_send_ioctl(prop_array_t array, int fd, unsigned long cmd)
 	if (rv != 0) {
 		errno = rv;	/* pass up error value in errno */
 		return rv;
-	} else 
+	} else
 		return 0;
 }
 
@@ -179,7 +179,7 @@ prop_dictionary_send_ioctl(prop_dictionary_t dict, int fd, unsigned long cmd)
 	if (rv != 0) {
 		errno = rv;	/* pass up error value in errno */
 		return rv;
-	} else 
+	} else
 		return 0;
 }
 
@@ -354,7 +354,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 		error = errno;
 	else
 		error = 0;
-	
+
 	free(buf);
 
 	if (error != 0)
@@ -384,8 +384,8 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 
 #include "prop_object_impl.h"
 
-/* Arbitrary limit ioctl input to 64KB */
-unsigned int prop_object_copyin_limit = 65536;
+/* Arbitrary limit ioctl input to 128KB */
+unsigned int prop_object_copyin_limit = 128 * 1024;
 
 /* initialize proplib for use in the kernel */
 void
@@ -401,21 +401,19 @@ prop_kern_init(void)
 
 static int
 _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
-			  prop_object_t *objp)
+			  prop_object_t *objp, size_t lim)
 {
 	prop_object_t obj = NULL;
 	char *buf;
 	int error;
 
-	if (pref->pref_len >= prop_object_copyin_limit)
-		return EINVAL;
+	if (pref->pref_len >= lim)
+		return E2BIG;
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
-	 *
-	 * Allow malloc to fail in case pmap would be exhausted.
 	 */
-	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK | M_CANFAIL);
+	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK);
 	if (buf == NULL)
 		return (ENOMEM);
 	error = copyin(pref->pref_plist, buf, pref->pref_len);
@@ -449,12 +447,12 @@ _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
 
 static int
 _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
-			  const u_long cmd, prop_object_t *objp)
+			  const u_long cmd, prop_object_t *objp, size_t lim)
 {
 	if ((cmd & IOC_IN) == 0)
 		return (EFAULT);
 
-	return _prop_object_copyin(pref, type, objp);
+	return _prop_object_copyin(pref, type, objp, lim);
 }
 
 /*
@@ -462,10 +460,17 @@ _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
  *	Copy in an array passed as a syscall arg.
  */
 int
+prop_array_copyin_size(const struct plistref *pref, prop_array_t *arrayp,
+	size_t lim)
+{
+	return _prop_object_copyin(pref, PROP_TYPE_ARRAY,
+	    (prop_object_t *)arrayp, lim);
+}
+
+int
 prop_array_copyin(const struct plistref *pref, prop_array_t *arrayp)
 {
-	return (_prop_object_copyin(pref, PROP_TYPE_ARRAY,
-					  (prop_object_t *)arrayp));
+	return prop_array_copyin_size(pref, arrayp, prop_object_copyin_limit);
 }
 
 /*
@@ -473,23 +478,38 @@ prop_array_copyin(const struct plistref *pref, prop_array_t *arrayp)
  *	Copy in a dictionary passed as a syscall arg.
  */
 int
-prop_dictionary_copyin(const struct plistref *pref, prop_dictionary_t *dictp)
+prop_dictionary_copyin_size(const struct plistref *pref,
+    prop_dictionary_t *dictp, size_t lim)
 {
-	return (_prop_object_copyin(pref, PROP_TYPE_DICTIONARY,
-					  (prop_object_t *)dictp));
+	return _prop_object_copyin(pref, PROP_TYPE_DICTIONARY,
+	    (prop_object_t *)dictp, lim);
 }
 
+int
+prop_dictionary_copyin(const struct plistref *pref, prop_dictionary_t *dictp)
+{
+	return prop_dictionary_copyin_size(pref, dictp,
+	    prop_object_copyin_limit);
+}
 
 /*
  * prop_array_copyin_ioctl --
  *	Copy in an array send with an ioctl.
  */
 int
-prop_array_copyin_ioctl(const struct plistref *pref, const u_long cmd,
-			prop_array_t *arrayp)
+prop_array_copyin_ioctl_size(const struct plistref *pref, const u_long cmd,
+    prop_array_t *arrayp, size_t lim)
 {
-	return (_prop_object_copyin_ioctl(pref, PROP_TYPE_ARRAY,
-					  cmd, (prop_object_t *)arrayp));
+	return _prop_object_copyin_ioctl(pref, PROP_TYPE_ARRAY,
+	    cmd, (prop_object_t *)arrayp, lim);
+}
+
+int
+prop_array_copyin_ioctl(const struct plistref *pref, const u_long cmd,
+    prop_array_t *arrayp)
+{
+	return prop_array_copyin_ioctl_size(pref, cmd, arrayp,
+	    prop_object_copyin_limit);
 }
 
 /*
@@ -497,11 +517,19 @@ prop_array_copyin_ioctl(const struct plistref *pref, const u_long cmd,
  *	Copy in a dictionary sent with an ioctl.
  */
 int
-prop_dictionary_copyin_ioctl(const struct plistref *pref, const u_long cmd,
-			     prop_dictionary_t *dictp)
+prop_dictionary_copyin_ioctl_size(const struct plistref *pref, const u_long cmd,
+    prop_dictionary_t *dictp, size_t lim)
 {
-	return (_prop_object_copyin_ioctl(pref, PROP_TYPE_DICTIONARY,
-					  cmd, (prop_object_t *)dictp));
+	return _prop_object_copyin_ioctl(pref, PROP_TYPE_DICTIONARY,
+	    cmd, (prop_object_t *)dictp, lim);
+}
+
+int
+prop_dictionary_copyin_ioctl(const struct plistref *pref, const u_long cmd,
+    prop_dictionary_t *dictp)
+{
+    return prop_dictionary_copyin_ioctl_size(pref, cmd, dictp,
+	prop_object_copyin_limit);
 }
 
 static int

@@ -21,9 +21,16 @@ touch-genfiles:
 
 .SUFFIXES:      .mfs .c .o
 
+# objcopy BFD arch name: x86_64 targets still use "i386"
+.if ${MACHINE_ARCH} == "x86_64"
+OBJCOPY_ARCH=	i386
+.else
+OBJCOPY_ARCH=	${MACHINE_CPU}
+.endif
+
 .mfs.o:
 	${_MKTARGET_CREATE}
-	${OBJCOPY} -Ibinary -B${MACHINE_CPU} -O${MACHINE_GNU_PLATFORM} $< $@
+	${OBJCOPY} -Ibinary -B${OBJCOPY_ARCH} -O${MACHINE_GNU_PLATFORM} $< $@
 
 CLEANFILES+=	../ramdisk/image
 # BJG - don't invoke parallel Makes

@@ -70,8 +70,7 @@ typedef struct cape_info_a1
 	char dc_supp[2];
 } cape_info_a1_t;
 
-static int
-board_info_beaglebone(int fd, i2c_addr_t address, int flags,
+static int board_info_beaglebone(int fd, i2c_addr_t address, int flags,
     enum device_types device_type)
 {
 	int r;
@@ -105,8 +104,7 @@ board_info_beaglebone(int fd, i2c_addr_t address, int flags,
 	return 0;
 }
 
-static int
-board_info_cape_a0(int fd, i2c_addr_t address, int flags,
+static int board_info_cape_a0(int fd, i2c_addr_t address, int flags,
     enum device_types device_type)
 {
 	int r;
@@ -152,8 +150,7 @@ board_info_cape_a0(int fd, i2c_addr_t address, int flags,
 	return 0;
 }
 
-static int
-board_info_cape_a1(int fd, i2c_addr_t address, int flags,
+static int board_info_cape_a1(int fd, i2c_addr_t address, int flags,
     enum device_types device_type)
 {
 	int r;
@@ -199,8 +196,7 @@ board_info_cape_a1(int fd, i2c_addr_t address, int flags,
 	return 0;
 }
 
-int
-board_info(int fd, i2c_addr_t address, int flags,
+int board_info(int fd, i2c_addr_t address, int flags,
     enum device_types device_type)
 {
 	int r;

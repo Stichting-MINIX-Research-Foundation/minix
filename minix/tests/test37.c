@@ -67,9 +67,7 @@ void test37o(void);
 void clearsigstate(void);
 void wait_for(int pid);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0377777;
 
@@ -209,14 +207,12 @@ void test37a()
   if (sigismember(&s, SIGPWR) != 0) e(82);
 }
 
-void func1(sig)
-int sig;
+void func1(int sig)
 {
   sig1++;
 }
 
-void func2(sig)
-int sig;
+void func2(int sig)
 {
   sig2++;
 }
@@ -399,14 +395,12 @@ void test37b()
 int x;
 sigset_t glo_vol_set;
 
-void catch1(signo)
-int signo;
+void catch1(int signo)
 {
   x = 42;
 }
 
-void catch2(signo)
-int signo;
+void catch2(int signo)
 {
   if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *) &glo_vol_set) != 0)
 	e(1);
@@ -493,8 +487,7 @@ void test37c()
 static int y;
 static int z;
 
-void catch3(signo)
-int signo;
+void catch3(int signo)
 {
   if (z == 1) {			/* catching a nested signal */
 	y = 2;
@@ -531,8 +524,7 @@ void test37d()
 * previous signal mask is restored when the signal handler returns.
 */
 
-void catch4(signo)
-int signo;
+void catch4(int signo)
 {
   sigset_t oset;
   sigset_t set;
@@ -575,8 +567,7 @@ void test37e()
 
 /* Test the basic functionality of sigsuspend(2). */
 
-void catch5(signo)
-int signo;
+void catch5(int signo)
 {
   x = 1;
 }
@@ -627,15 +618,13 @@ void test37f()
 * invoked.
 */
 
-void sigint_handler(signo)
-int signo;
+void sigint_handler(int signo)
 {
   x = 1;
   z++;
 }
 
-void sigpipe_handler(signo)
-int signo;
+void sigpipe_handler(int signo)
 {
   x = 2;
   z++;
@@ -697,22 +686,19 @@ void test37g()
 * two handlers will be invoked.
 */
 
-void sighup8(signo)
-int signo;
+void sighup8(int signo)
 {
   x = 1;
   z++;
 }
 
-void sigpip8(signo)
-int signo;
+void sigpip8(int signo)
 {
   x = 1;
   z++;
 }
 
-void sigter8(signo)
-int signo;
+void sigter8(int signo)
 {
   x = 2;
   z++;
@@ -773,14 +759,12 @@ void test37h()
 * that these signals are delivered.
 */
 
-void sighup9(signo)
-int signo;
+void sighup9(int signo)
 {
   y++;
 }
 
-void sigter9(signo)
-int signo;
+void sigter9(int signo)
 {
   z++;
 }
@@ -832,14 +816,12 @@ void test37i()
 * should remain pending.
 */
 
-void sighup10(signo)
-int signo;
+void sighup10(int signo)
 {
   y++;
 }
 
-void sigalrm_handler10(signo)
-int signo;
+void sigalrm_handler10(int signo)
 {
   z++;
 }
@@ -940,10 +922,7 @@ void longjerr()
 * Catch a signal.  While in signal handler do setjmp/longjmp.
 */
 
-void catch14(signo, code, scp)
-int signo;
-int code;
-struct sigcontext *scp;
+void catch14(int signo, int code, struct sigcontext *scp)
 {
   jmp_buf jb;
 
@@ -985,8 +964,7 @@ void test37n()
  */
 jmp_buf glo_jb;
 
-void catch15(signo)
-int signo;
+void catch15(int signo)
 {
   z++;
   longjmp(glo_jb, 7);
@@ -1028,8 +1006,7 @@ void clearsigstate()
   sigprocmask(SIG_UNBLOCK, &sigset_var, (sigset_t *)NULL);
 }
 
-void wait_for(pid)
-pid_t pid;
+void wait_for(pid_t pid)
 {
 /* Expect exactly one child, and that it exits with 0. */
 

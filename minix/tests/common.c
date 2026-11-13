@@ -27,8 +27,7 @@ __weak_alias(max_error,Max_error);
 int Max_error = 5;
 extern int max_error;
 
-void start(test_nr)
-int test_nr;
+void start(int test_nr)
 {
   char buf[64];
   int i;
@@ -86,8 +85,7 @@ int name_max(char *path)
 }
 
 
-void rm_rf_dir(test_nr)
-int test_nr;
+void rm_rf_dir(int test_nr)
 {
   char buf[128];
 
@@ -95,8 +93,7 @@ int test_nr;
   if (system_p(buf) != 0) printf("Warning: system(\"%s\") failed\n", buf);
 }
 
-void rm_rf_ppdir(test_nr)
-int test_nr;
+void rm_rf_ppdir(int test_nr)
 {
 /* Attempt to remove everything in the test directory (== the current dir). */
 
@@ -159,8 +156,7 @@ void quit()
   }
 }
 
-void
-printprogress(char *msg, int i, int max)
+void printprogress(char *msg, int i, int max)
 {
         int use_i = i + 1;
         static time_t start_time, prev_time;
@@ -225,8 +221,7 @@ int get_setting_use_network(void)
 	return get_setting("USENETWORK", 0);
 }
 
-int
-system_p(const char *command)
+int system_p(const char *command)
 {
 	extern char **environ;
 	pid_t pid;

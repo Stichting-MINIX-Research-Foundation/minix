@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.11 2011/06/12 03:35:55 rmind Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.12 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.11 2011/06/12 03:35:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.12 2016/05/24 09:55:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -692,6 +692,19 @@ udf_discstrat_queuebuf(struct udf_mount *ump, struct buf *nestbuf)
 	args.nestbuf = nestbuf;
 
 	(strategy->queuebuf)(&args);
+}
+
+
+void
+udf_synchronise_caches(struct udf_mount *ump)
+{
+	struct udf_strategy *strategy = ump->strategy;
+	struct udf_strat_args args;
+
+	KASSERT(strategy);
+	args.ump = ump;
+
+	(strategy->sync_caches)(&args);
 }
 
 

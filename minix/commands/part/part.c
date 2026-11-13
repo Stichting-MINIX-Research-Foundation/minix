@@ -791,7 +791,7 @@ void print(object_t *op)
 		sprintf(op->value, "%s%d",
 			curdev->parttype >= PRIMARY ? "p" :
 				curdev->parttype == SUBPART ? "s" : "",
-			(curdev->parttype == SUBPART ||
+			(int)(curdev->parttype == SUBPART ||
 				curdev->parttype == FLOPPY ? pe - table
 					: sort_index[pe - table]) - 1);
 		break;

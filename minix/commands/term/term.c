@@ -125,9 +125,7 @@ void set_uart(int argc, char *argv[], struct termios *tcp);
 void set_raw(struct termios *tcp);
 void quit(int code);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i;
   unsigned char key;
@@ -298,8 +296,7 @@ void tell(int fd, ...)
 }
 
 
-void reader(on)
-int on;
+void reader(int on)
 {
 /* Start or end a process that copies from the modem to the screen. */
 
@@ -390,8 +387,7 @@ void shell(char *cmd)
 }
 
 
-void lock_device(device)
-char *device;
+void lock_device(char *device)
 {
 /* Lock a device by creating a lock file using SYSV style locking. */
 
@@ -473,10 +469,7 @@ void setnum(char *s, int n)
 }
 
 
-void set_uart(argc, argv, tcp)
-int argc;
-char *argv[];
-struct termios *tcp;
+void set_uart(int argc, char *argv[], struct termios *tcp)
 {
 /* Set up the UART parameters. */
 
@@ -515,8 +508,7 @@ struct termios *tcp;
 }
 
 
-void set_raw(tcp)
-struct termios *tcp;
+void set_raw(struct termios *tcp)
 {
   /* Set termios attributes for RAW mode. */
 
@@ -528,8 +520,7 @@ struct termios *tcp;
 }
 
 
-void quit(code)
-int code;
+void quit(int code)
 {
 /* Stop the reader process, reset the terminal, and exit. */
   reader(0);

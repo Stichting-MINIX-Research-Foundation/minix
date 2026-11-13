@@ -12,8 +12,7 @@ pci_set_acl.c
 /*===========================================================================*
  *				pci_set_acl				     *
  *===========================================================================*/
-int pci_set_acl(rs_pci)
-struct rs_pci *rs_pci;
+int pci_set_acl(struct rs_pci *rs_pci)
 {
 	int r;
 	cp_grant_id_t gid;

@@ -267,9 +267,14 @@ static int do_probe(void)
 {
 /* See if there is a printer at all. */
 
-  /* Get the base port for first printer. */
-  if(sys_readbios(LPT1_IO_PORT_ADDR, &port_base, LPT1_IO_PORT_SIZE) != OK) {
-	panic("do_probe: sys_readbios failed");
+  {
+    kinfo_t kinfo;
+    if (sys_getkinfo(&kinfo) == OK && kinfo.boot_mode != 0) {
+      port_base = 0x378;  /* standard ISA LPT1 port; no BDA in UEFI mode */
+    } else {
+      if (sys_readbios(LPT1_IO_PORT_ADDR, &port_base, LPT1_IO_PORT_SIZE) != OK)
+        panic("do_probe: sys_readbios failed");
+    }
   }
 
   /* If the port is zero, the parallel port is not available at all. */

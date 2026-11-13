@@ -56,8 +56,7 @@ static u64_t has_restarted_t1, has_restarted_t2;
 
 static int open_counter[FB_DEV_NR];		/* Open count */
 
-static int
-fb_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
+static int fb_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 {
 	int r;
 	static int initialized = 0;
@@ -87,8 +86,7 @@ fb_open(devminor_t minor, int UNUSED(access), endpoint_t UNUSED(user_endpt))
 	return ENXIO;
 }
 
-static int
-fb_close(devminor_t minor)
+static int fb_close(devminor_t minor)
 {
 	if (minor < 0 || minor >= FB_DEV_NR) return ENXIO;
 	assert(open_counter[minor] > 0);
@@ -96,8 +94,7 @@ fb_close(devminor_t minor)
 	return OK;
 }
 
-static ssize_t
-fb_read(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
+static ssize_t fb_read(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
 	size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	struct device dev;
@@ -118,8 +115,7 @@ fb_read(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
 	return (r != OK) ? r : size;
 }
 
-static int
-fb_ioctl(devminor_t minor, unsigned long request, endpoint_t ep,
+static int fb_ioctl(devminor_t minor, unsigned long request, endpoint_t ep,
 	cp_grant_id_t gid, int UNUSED(flags), endpoint_t UNUSED(user_ep),
 	cdev_id_t UNUSED(id))
 {
@@ -146,8 +142,7 @@ fb_ioctl(devminor_t minor, unsigned long request, endpoint_t ep,
 	return ENOTTY;
 }
 
-static int
-do_get_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
+static int do_get_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 {
 	int r;
 	struct fb_var_screeninfo fbvs;
@@ -159,8 +154,7 @@ do_get_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 	return r;
 }
 
-static int
-do_put_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
+static int do_put_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 {
 	int r;
 	struct fb_var_screeninfo fbvs_copy;
@@ -177,8 +171,7 @@ do_put_varscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 	return arch_put_varscreeninfo(minor, &fbvs_copy);
 }
 
-static int
-do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid)
+static int do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid)
 {
 	int r;
         struct fb_var_screeninfo fbvs_copy;
@@ -195,8 +188,7 @@ do_pan_display(int minor, endpoint_t ep, cp_grant_id_t gid)
         return arch_pan_display(minor, &fbvs_copy);
 }
 
-static int
-do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
+static int do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
 {
         int r;
         struct fb_fix_screeninfo fbfs;
@@ -208,8 +200,7 @@ do_get_fixscreeninfo(int minor, endpoint_t ep, cp_grant_id_t gid)
         return r;
 }
 
-static ssize_t
-fb_write(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
+static ssize_t fb_write(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
 	size_t size, int UNUSED(flags), cdev_id_t UNUSED(id))
 {
 	struct device dev;
@@ -233,8 +224,7 @@ fb_write(devminor_t minor, u64_t pos, endpoint_t ep, cp_grant_id_t gid,
 	return (r != OK) ? r : size;
 }
 
-static int
-sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
+static int sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 /* Save the state. */
 	ds_publish_u32("open_counter", open_counter[0], DSF_OVERWRITE);
@@ -242,8 +232,7 @@ sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 	return OK;
 }
 
-static int
-lu_state_restore() {
+static int lu_state_restore() {
 /* Restore the state. */
 	u32_t value;
 
@@ -254,8 +243,7 @@ lu_state_restore() {
 	return OK;
 }
 
-static int
-sef_cb_init(int type, sef_init_info_t *UNUSED(info))
+static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the fb driver. */
 	int do_announce_driver = TRUE;
@@ -289,8 +277,7 @@ sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 	return OK;
 }
 
-static void
-sef_local_startup()
+static void sef_local_startup()
 {
 	/* Register init callbacks. Use the same function for all event types */
 	sef_setcb_init_fresh(sef_cb_init);
@@ -304,8 +291,7 @@ sef_local_startup()
 	sef_startup();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	env_setargs(argc, argv);
 	fb_edid_args_parse();
@@ -315,8 +301,7 @@ main(int argc, char *argv[])
 	return OK;
 }
 
-static int
-keep_displaying_restarted()
+static int keep_displaying_restarted(void)
 {
 	u64_t delta;
 	u32_t micro_delta;
@@ -334,21 +319,18 @@ keep_displaying_restarted()
 	return 0;
 }
 
-static void
-paint_bootlogo(int minor)
+static void paint_bootlogo(int minor)
 {
 	paint_centered(minor, bootlogo_data, bootlogo_width, bootlogo_height);
 }
 
-static void
-paint_restartlogo(int minor)
+static void paint_restartlogo(int minor)
 {
 	paint_centered(minor, restartlogo_data, restartlogo_width,
 			restartlogo_height);
 }
 
-static void
-paint_centered(int minor, char *data, int width, int height)
+static void paint_centered(int minor, char *data, int width, int height)
 {
 	u8_t pixel[3];
 	u32_t i, min_x, min_y, max_x, max_y, x_painted = 0, rows = 0;

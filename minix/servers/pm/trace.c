@@ -38,8 +38,7 @@
 /*===========================================================================*
  *				do_trace  				     *
  *===========================================================================*/
-int
-do_trace(void)
+int do_trace(void)
 {
   register struct mproc *child;
   struct ptrace_range pr;
@@ -252,8 +251,7 @@ do_trace(void)
 /*===========================================================================*
  *				trace_stop				     *
  *===========================================================================*/
-void
-trace_stop(register struct mproc *rmp, int signo)
+void trace_stop(register struct mproc *rmp, int signo)
 {
 /* A traced process got a signal so stop it. */
 

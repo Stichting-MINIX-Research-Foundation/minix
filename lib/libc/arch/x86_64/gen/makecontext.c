@@ -81,6 +81,15 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	 * in that order, so those arguments can just be copied to
 	 * the gregs array.
 	 */
+	/*
+	 * setcontext() restores all six argument registers when this context
+	 * is not marked _UC_NOVOLATILE.  Initialize registers for arguments
+	 * that makecontext() was not asked to set as well: getcontext() may
+	 * have taken its fast path, leaving those slots untouched.
+	 */
+	for (i = 0; i < 6; i++)
+		gr[i] = 0;
+
 	va_start(ap, argc);
 	for (i = 0; i < 6 && argc > 0; i++) {
 		argc--;
@@ -94,4 +103,9 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	}
 
 	va_end(ap);
+
+#if defined(__minix) && defined(__x86_64__)
+	/* makecontext populated the argument GPRs, so setcontext must restore them. */
+	ucp->uc_flags &= ~_UC_NOVOLATILE;
+#endif
 }

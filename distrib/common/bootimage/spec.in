@@ -1,5 +1,20 @@
 # $NetBSD: spec.in,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
-./netbsd	type=file mode=0755 uname=root gname=wheel
-./kern		type=dir mode=0755 uname=root gname=wheel
-./proc		type=dir mode=0755 uname=root gname=wheel
+#./netbsd	type=file mode=0755 uname=root gname=wheel
+#./kern		type=dir mode=0755 uname=root gname=wheel
+#./proc		type=dir mode=0755 uname=root gname=wheel
 ./tmp		type=dir mode=1777 uname=root gname=wheel
+
+# Minix: spec.in
+./boot/minix_default/kernel type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod01_ds type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod02_rs type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod03_pm type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod04_sched type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod05_vfs type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod06_memory type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod07_tty type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod08_mib type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod09_vm type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod10_pfs type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod11_mfs type=file mode=0755 uname=root gname=wheel
+./boot/minix_default/mod12_init type=file mode=0755 uname=root gname=wheel

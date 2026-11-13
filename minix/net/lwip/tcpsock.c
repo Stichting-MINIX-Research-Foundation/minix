@@ -186,8 +186,7 @@ static struct rmib_node net_inet6_tcp6_node =
 /*
  * Initialize the TCP sockets module.
  */
-void
-tcpsock_init(void)
+void tcpsock_init(void)
 {
 	unsigned int slot;
 
@@ -209,8 +208,7 @@ tcpsock_init(void)
 /*
  * Initialize the state of a TCP socket's send queue.
  */
-static void
-tcpsock_reset_send(struct tcpsock * tcp)
+static void tcpsock_reset_send(struct tcpsock * tcp)
 {
 
 	tcp->tcp_snd.ts_tail = NULL;
@@ -224,8 +222,7 @@ tcpsock_reset_send(struct tcpsock * tcp)
 /*
  * Initialize the state of a TCP socket's receive queue.
  */
-static void
-tcpsock_reset_recv(struct tcpsock * tcp)
+static void tcpsock_reset_recv(struct tcpsock * tcp)
 {
 
 	tcp->tcp_rcv.tr_pre_tailp = NULL;
@@ -291,8 +288,7 @@ tcpsock_socket(int domain, int protocol, struct sock ** sockp,
  * so add it to the queue of connetions pending for the listening socket.  On
  * success, return OK.  On failure, return a negative error code.
  */
-static int
-tcpsock_clone(struct tcpsock * listener, struct tcp_pcb * pcb)
+static int tcpsock_clone(struct tcpsock * listener, struct tcp_pcb * pcb)
 {
 	struct tcpsock *tcp;
 
@@ -352,8 +348,7 @@ tcpsock_alloc_buf(void)
  * next buffer(s) in the chain as well.  This may be called for pbufs other
  * than those allocated with tcpsock_alloc_buf().
  */
-static void
-tcpsock_free_buf(struct pbuf * pbuf)
+static void tcpsock_free_buf(struct pbuf * pbuf)
 {
 
 	/*
@@ -370,8 +365,7 @@ tcpsock_free_buf(struct pbuf * pbuf)
  * Clear the send queue of a TCP socket.  The caller must ensure that lwIP will
  * no longer access any of data on the send queue.
  */
-static void
-tcpsock_clear_send(struct tcpsock * tcp)
+static void tcpsock_clear_send(struct tcpsock * tcp)
 {
 	struct pbuf *phead;
 
@@ -393,8 +387,7 @@ tcpsock_clear_send(struct tcpsock * tcp)
  * Clear the receive queue of a TCP socket.  If 'ack_data' is set, also
  * acknowledge the previous contents of the receive queue to lwIP.
  */
-static size_t
-tcpsock_clear_recv(struct tcpsock * tcp, int ack_data)
+static size_t tcpsock_clear_recv(struct tcpsock * tcp, int ack_data)
 {
 	struct pbuf *phead;
 	size_t rlen;
@@ -432,8 +425,7 @@ tcpsock_clear_recv(struct tcpsock * tcp, int ack_data)
  * freed only if 'may_free' is TRUE.  If the socket is not freed, its receive
  * queue is left as is, as it may still have data to be received by userland.
  */
-static int
-tcpsock_cleanup(struct tcpsock * tcp, int may_free)
+static int tcpsock_cleanup(struct tcpsock * tcp, int may_free)
 {
 	int destroy;
 
@@ -486,8 +478,7 @@ tcpsock_cleanup(struct tcpsock * tcp, int may_free)
  * connected, this will cause the connection to be reset.  The PCB, which must
  * have still been present before the call, will be gone after the call.
  */
-static void
-tcpsock_pcb_abort(struct tcpsock * tcp)
+static void tcpsock_pcb_abort(struct tcpsock * tcp)
 {
 
 	assert(tcp->tcp_pcb != NULL);
@@ -511,8 +502,7 @@ tcpsock_pcb_abort(struct tcpsock * tcp)
  * The PCB, which must have still been present before the call, will be gone
  * after the call.
  */
-static void
-tcpsock_pcb_close(struct tcpsock * tcp)
+static void tcpsock_pcb_close(struct tcpsock * tcp)
 {
 	err_t err;
 
@@ -539,8 +529,7 @@ tcpsock_pcb_close(struct tcpsock * tcp)
  * FALSE if they are not.  Upon calling this function, the socket's PCB must
  * still be around.
  */
-static int
-tcpsock_may_close(struct tcpsock * tcp)
+static int tcpsock_may_close(struct tcpsock * tcp)
 {
 
 	assert(tcp->tcp_pcb != NULL);
@@ -567,8 +556,7 @@ tcpsock_may_close(struct tcpsock * tcp)
  * freeing the socket.  Return TRUE if the socket has indeed been freed this
  * way, or FALSE if the socket is still around.
  */
-static int
-tcpsock_finish_close(struct tcpsock * tcp)
+static int tcpsock_finish_close(struct tcpsock * tcp)
 {
 
 	assert(tcp->tcp_snd.ts_len == 0);
@@ -610,8 +598,7 @@ tcpsock_finish_close(struct tcpsock * tcp)
  * tcpsock_may_close() if TRUE is returned.  Return FALSE if nothing new could
  * be enqueued, in which case no send attempt need to be made either.
  */
-static int
-tcpsock_pcb_enqueue(struct tcpsock * tcp)
+static int tcpsock_pcb_enqueue(struct tcpsock * tcp)
 {
 	struct pbuf *punsent;
 	size_t space, chunk;
@@ -734,8 +721,7 @@ tcpsock_pcb_enqueue(struct tcpsock * tcp)
  * socket object is not freed, and if 'raise_error' is TRUE, raise the error
  * on the socket object.
  */
-static int
-tcpsock_pcb_send(struct tcpsock * tcp, int raise_error)
+static int tcpsock_pcb_send(struct tcpsock * tcp, int raise_error)
 {
 	err_t err;
 	int r;
@@ -874,8 +860,7 @@ tcpsock_event_sent(void * arg, struct tcp_pcb * pcb __unused, uint16_t len)
  * should be acknowledged, possibly allowing the remote end to send additional
  * data as a result.
  */
-static void
-tcpsock_ack_recv(struct tcpsock * tcp)
+static void tcpsock_ack_recv(struct tcpsock * tcp)
 {
 	size_t rcvbuf, left, delta, ack;
 
@@ -929,8 +914,7 @@ tcpsock_ack_recv(struct tcpsock * tcp)
  * made about whether 'ptail' and 'pbuf' still exist in any form.  Return FALSE
  * if no merging was necessary or if no new buffer could be allocated.
  */
-static int
-tcpsock_try_merge(struct pbuf **pnext, struct pbuf * ptail, struct pbuf * pbuf)
+static int tcpsock_try_merge(struct pbuf **pnext, struct pbuf * ptail, struct pbuf * pbuf)
 {
 	struct pbuf *pnew;
 
@@ -1185,8 +1169,7 @@ tcpsock_event_recv(void * arg, struct tcp_pcb * pcb __unused,
  * connection has been aborted locally (ERR_ABRT), it has been reset by the
  * remote end (ERR_RST), or it is closed due to state transitions (ERR_CLSD).
  */
-static void
-tcpsock_event_err(void * arg, err_t err)
+static void tcpsock_event_err(void * arg, err_t err)
 {
 	struct tcpsock *tcp = (struct tcpsock *)arg;
 	int r;
@@ -1349,8 +1332,7 @@ tcpsock_event_poll(void * arg, struct tcp_pcb * pcb __unused)
 /*
  * Bind a TCP socket to a local address.
  */
-static int
-tcpsock_bind(struct sock * sock, const struct sockaddr * addr,
+static int tcpsock_bind(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -1427,8 +1409,7 @@ tcpsock_event_accept(void * arg, struct tcp_pcb * pcb, err_t err)
 /*
  * Put a TCP socket in listening mode.
  */
-static int
-tcpsock_listen(struct sock * sock, int backlog)
+static int tcpsock_listen(struct sock * sock, int backlog)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 	struct tcp_pcb *pcb;
@@ -1530,8 +1511,7 @@ tcpsock_event_connected(void * arg, struct tcp_pcb * pcb __unused, err_t err)
 /*
  * Connect a TCP socket to a remote address.
  */
-static int
-tcpsock_connect(struct sock * sock, const struct sockaddr * addr,
+static int tcpsock_connect(struct sock * sock, const struct sockaddr * addr,
 	socklen_t addr_len, endpoint_t user_endpt)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -1610,8 +1590,7 @@ tcpsock_connect(struct sock * sock, const struct sockaddr * addr,
 /*
  * Test whether any new connections are pending on a listening TCP socket.
  */
-static int
-tcpsock_test_accept(struct sock * sock)
+static int tcpsock_test_accept(struct sock * sock)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 
@@ -1670,8 +1649,7 @@ tcpsock_accept(struct sock * sock, struct sockaddr * addr,
 /*
  * Perform preliminary checks on a send request.
  */
-static int
-tcpsock_pre_send(struct sock * sock, size_t len __unused,
+static int tcpsock_pre_send(struct sock * sock, size_t len __unused,
 	socklen_t ctl_len __unused, const struct sockaddr * addr __unused,
 	socklen_t addr_len __unused, endpoint_t user_endpt __unused, int flags)
 {
@@ -1690,8 +1668,7 @@ tcpsock_pre_send(struct sock * sock, size_t len __unused,
 /*
  * Test whether the given number of data bytes can be sent on a TCP socket.
  */
-static int
-tcpsock_test_send(struct sock * sock, size_t min)
+static int tcpsock_test_send(struct sock * sock, size_t min)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 	size_t sndbuf;
@@ -1727,8 +1704,7 @@ tcpsock_test_send(struct sock * sock, size_t min)
 /*
  * Send data on a TCP socket.
  */
-static int
-tcpsock_send(struct sock * sock, const struct sockdriver_data * data,
+static int tcpsock_send(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * offp, const struct sockdriver_data * ctl __unused,
 	socklen_t ctl_len __unused, socklen_t * ctl_off __unused,
 	const struct sockaddr * addr __unused, socklen_t addr_len __unused,
@@ -1916,8 +1892,7 @@ tcpsock_send(struct sock * sock, const struct sockdriver_data * data,
 /*
  * Perform preliminary checks on a receive request.
  */
-static int
-tcpsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
+static int tcpsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
 	int flags)
 {
 
@@ -1936,8 +1911,7 @@ tcpsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
  * Return TRUE if receive calls may wait for more data to come in on the
  * connection, or FALSE if we already know that that is not going to happen.
  */
-static int
-tcpsock_may_wait(struct tcpsock * tcp)
+static int tcpsock_may_wait(struct tcpsock * tcp)
 {
 
 	return (tcp->tcp_pcb != NULL &&
@@ -1948,8 +1922,7 @@ tcpsock_may_wait(struct tcpsock * tcp)
  * Test whether data can be received on a TCP socket, and if so, how many bytes
  * of data.
  */
-static int
-tcpsock_test_recv(struct sock * sock, size_t min, size_t * size)
+static int tcpsock_test_recv(struct sock * sock, size_t min, size_t * size)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 	int may_wait;
@@ -1982,8 +1955,7 @@ tcpsock_test_recv(struct sock * sock, size_t min, size_t * size)
 /*
  * Receive data on a TCP socket.
  */
-static int
-tcpsock_recv(struct sock * sock, const struct sockdriver_data * data,
+static int tcpsock_recv(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * offp, const struct sockdriver_data * ctl __unused,
 	socklen_t ctl_len __unused, socklen_t * ctl_off __unused,
 	struct sockaddr * addr __unused, socklen_t * addr_len __unused,
@@ -2080,8 +2052,7 @@ tcpsock_recv(struct sock * sock, const struct sockdriver_data * data,
 /*
  * Update the set of flag-type socket options on a TCP socket.
  */
-static void
-tcpsock_setsockmask(struct sock * sock, unsigned int mask)
+static void tcpsock_setsockmask(struct sock * sock, unsigned int mask)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 
@@ -2102,8 +2073,7 @@ tcpsock_setsockmask(struct sock * sock, unsigned int mask)
 /*
  * Prepare a helper structure for IP-level option processing.
  */
-static void
-tcpsock_get_ipopts(struct tcpsock * tcp, struct ipopts * ipopts)
+static void tcpsock_get_ipopts(struct tcpsock * tcp, struct ipopts * ipopts)
 {
 
 	ipopts->local_ip = &tcp->tcp_pcb->local_ip;
@@ -2119,8 +2089,7 @@ tcpsock_get_ipopts(struct tcpsock * tcp, struct ipopts * ipopts)
 /*
  * Set socket options on a TCP socket.
  */
-static int
-tcpsock_setsockopt(struct sock * sock, int level, int name,
+static int tcpsock_setsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t len)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -2252,8 +2221,7 @@ tcpsock_setsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve socket options on a TCP socket.
  */
-static int
-tcpsock_getsockopt(struct sock * sock, int level, int name,
+static int tcpsock_getsockopt(struct sock * sock, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -2344,8 +2312,7 @@ tcpsock_getsockopt(struct sock * sock, int level, int name,
 /*
  * Retrieve the local socket address of a TCP socket.
  */
-static int
-tcpsock_getsockname(struct sock * sock, struct sockaddr * addr,
+static int tcpsock_getsockname(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -2362,8 +2329,7 @@ tcpsock_getsockname(struct sock * sock, struct sockaddr * addr,
 /*
  * Retrieve the remote socket address of a TCP socket.
  */
-static int
-tcpsock_getpeername(struct sock * sock, struct sockaddr * addr,
+static int tcpsock_getpeername(struct sock * sock, struct sockaddr * addr,
 	socklen_t * addr_len)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
@@ -2383,8 +2349,7 @@ tcpsock_getpeername(struct sock * sock, struct sockaddr * addr,
  * immediately due to memory conditions, in which case it will be completed at
  * a later time.
  */
-static void
-tcpsock_send_fin(struct tcpsock * tcp)
+static void tcpsock_send_fin(struct tcpsock * tcp)
 {
 
 	sockevent_set_shutdown(tcpsock_get_sock(tcp), SFL_SHUT_WR);
@@ -2410,8 +2375,7 @@ tcpsock_send_fin(struct tcpsock * tcp)
 /*
  * Shut down a TCP socket for reading and/or writing.
  */
-static int
-tcpsock_shutdown(struct sock * sock, unsigned int mask)
+static int tcpsock_shutdown(struct sock * sock, unsigned int mask)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 
@@ -2477,8 +2441,7 @@ tcpsock_shutdown(struct sock * sock, unsigned int mask)
  * function may be called twice on the same socket: the first time with the
  * 'force' flag cleared, and the second time with the 'force' flag set.
  */
-static int
-tcpsock_close(struct sock * sock, int force)
+static int tcpsock_close(struct sock * sock, int force)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 	struct tcpsock *queued;
@@ -2630,8 +2593,7 @@ tcpsock_close(struct sock * sock, int force)
 /*
  * Free up a closed TCP socket.
  */
-static void
-tcpsock_free(struct sock * sock)
+static void tcpsock_free(struct sock * sock)
 {
 	struct tcpsock *tcp = (struct tcpsock *)sock;
 
@@ -2666,8 +2628,7 @@ static const struct {
  * Fill the given kinfo_pcb sysctl(7) structure with information about the TCP
  * PCB identified by the given pointer.
  */
-static void
-tcpsock_get_info(struct kinfo_pcb * ki, const void * ptr)
+static void tcpsock_get_info(struct kinfo_pcb * ki, const void * ptr)
 {
 	const struct tcp_pcb *pcb = (const struct tcp_pcb *)ptr;
 	struct tcpsock *tcp;
@@ -2761,8 +2722,7 @@ tcpsock_enum(const void * last)
 /*
  * Obtain the list of TCP protocol control blocks, for sysctl(7).
  */
-static ssize_t
-tcpsock_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
+static ssize_t tcpsock_pcblist(struct rmib_call * call, struct rmib_node * node __unused,
 	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
 {
 

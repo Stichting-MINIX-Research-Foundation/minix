@@ -8,8 +8,7 @@
 #include <minix/ipc.h>
 #include <minix/ds.h>
 
-void
-i2cdriver_announce(uint32_t bus)
+void i2cdriver_announce(uint32_t bus)
 {
 	/* Announce we are up after a fresh start or restart. */
 	int r;
@@ -38,8 +37,7 @@ i2cdriver_announce(uint32_t bus)
 	}
 }
 
-int
-i2cdriver_env_parse(uint32_t * bus, i2c_addr_t * address,
+int i2cdriver_env_parse(uint32_t * bus, i2c_addr_t * address,
     i2c_addr_t * valid_addrs)
 {
 	/* fill in bus and address with the values passed on the command line */
@@ -78,8 +76,7 @@ i2cdriver_env_parse(uint32_t * bus, i2c_addr_t * address,
 	return 0;
 }
 
-endpoint_t
-i2cdriver_bus_endpoint(uint32_t bus)
+endpoint_t i2cdriver_bus_endpoint(uint32_t bus)
 {
 	/* locate the driver for the i2c bus itself */
 	int r;
@@ -97,8 +94,7 @@ i2cdriver_bus_endpoint(uint32_t bus)
 	return bus_endpoint;
 }
 
-int
-i2cdriver_subscribe_bus_updates(uint32_t bus)
+int i2cdriver_subscribe_bus_updates(uint32_t bus)
 {
 	int r;
 	char regex[DS_MAX_KEYLEN];
@@ -115,8 +111,7 @@ i2cdriver_subscribe_bus_updates(uint32_t bus)
 	return OK;
 }
 
-void
-i2cdriver_handle_bus_update(endpoint_t * bus_endpoint, uint32_t bus,
+void i2cdriver_handle_bus_update(endpoint_t * bus_endpoint, uint32_t bus,
     i2c_addr_t address)
 {
 	char key[DS_MAX_KEYLEN];
@@ -152,8 +147,7 @@ i2cdriver_handle_bus_update(endpoint_t * bus_endpoint, uint32_t bus,
 	}
 }
 
-int
-i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
+int i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
 {
 	int r;
 	message m;
@@ -169,8 +163,7 @@ i2cdriver_reserve_device(endpoint_t bus_endpoint, i2c_addr_t address)
 	return m.m_type;	/* return reply code OK, EBUSY, EINVAL, etc. */
 }
 
-int
-i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
+int i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 {
 	int r;
 	message m;
@@ -193,8 +186,7 @@ i2cdriver_exec(endpoint_t bus_endpoint, minix_i2c_ioctl_exec_t * ioctl_exec)
 	return m.m_type;
 }
 
-static int
-__i2creg_read(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
+static int __i2creg_read(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
     uint8_t reg, uint32_t * val, size_t vallen)
 {
 	uint32_t i;
@@ -231,8 +223,7 @@ __i2creg_read(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
 	return OK;
 }
 
-int
-i2creg_raw_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t * val)
+int i2creg_raw_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t * val)
 {
 	int r;
 	uint32_t val32;
@@ -243,8 +234,7 @@ i2creg_raw_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t * val)
 	return r;
 }
 
-int
-i2creg_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint8_t * val)
 {
 	int r;
@@ -256,8 +246,7 @@ i2creg_read8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
 	return r;
 }
 
-int
-i2creg_read16(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_read16(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint16_t * val)
 {
 	int r;
@@ -269,15 +258,13 @@ i2creg_read16(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
 	return r;
 }
 
-int
-i2creg_read24(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_read24(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint32_t * val)
 {
 	return __i2creg_read(bus_endpoint, address, 0, reg, val, 3);
 }
 
-static int
-__i2creg_write(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
+static int __i2creg_write(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
     uint8_t reg, uint8_t val)
 {
 	int r;
@@ -308,21 +295,18 @@ __i2creg_write(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t raw,
 	return OK;
 }
 
-int
-i2creg_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint8_t val)
 {
 	return __i2creg_write(bus_endpoint, address, 0, reg, val);
 }
 
-int
-i2creg_raw_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t val)
+int i2creg_raw_write8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t val)
 {
 	return __i2creg_write(bus_endpoint, address, 1, 0, val);
 }
 
-int
-i2creg_set_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_set_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint8_t bits)
 {
 	int r;
@@ -343,8 +327,7 @@ i2creg_set_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
 	return OK;
 }
 
-int
-i2creg_clear_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
+int i2creg_clear_bits8(endpoint_t bus_endpoint, i2c_addr_t address, uint8_t reg,
     uint8_t bits)
 {
 	int r;

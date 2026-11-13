@@ -121,8 +121,7 @@ AcpiTbCompareTables (
  *
  ******************************************************************************/
 
-void
-AcpiTbInstallTableWithOverride (
+void AcpiTbInstallTableWithOverride (
     UINT32                  TableIndex,
     ACPI_TABLE_DESC         *NewTableDesc,
     BOOLEAN                 Override)
@@ -411,8 +410,7 @@ ReleaseAndExit:
  *
  ******************************************************************************/
 
-void
-AcpiTbOverrideTable (
+void AcpiTbOverrideTable (
     ACPI_TABLE_DESC         *OldTableDesc)
 {
     ACPI_STATUS             Status;
@@ -538,8 +536,7 @@ AcpiTbStoreTable (
  *
  ******************************************************************************/
 
-void
-AcpiTbUninstallTable (
+void AcpiTbUninstallTable (
     ACPI_TABLE_DESC         *TableDesc)
 {
 

@@ -56,8 +56,7 @@ static int tcp_oos_pbuf_count(struct tcp_pcb* pcb)
  * @param seg_index index of the segment on the ooseq list
  * @return seqno of the segment
  */
-static u32_t
-tcp_oos_seg_seqno(struct tcp_pcb* pcb, int seg_index)
+static u32_t tcp_oos_seg_seqno(struct tcp_pcb* pcb, int seg_index)
 {
   int num = 0;
   struct tcp_seg* seg = pcb->ooseq;
@@ -80,8 +79,7 @@ tcp_oos_seg_seqno(struct tcp_pcb* pcb, int seg_index)
  * @param seg_index index of the segment on the ooseq list
  * @return tcplen of the segment
  */
-static int
-tcp_oos_seg_tcplen(struct tcp_pcb* pcb, int seg_index)
+static int tcp_oos_seg_tcplen(struct tcp_pcb* pcb, int seg_index)
 {
   int num = 0;
   struct tcp_seg* seg = pcb->ooseq;
@@ -103,8 +101,7 @@ tcp_oos_seg_tcplen(struct tcp_pcb* pcb, int seg_index)
  * @param pcb the pcb to check for ooseq segments
  * @return tcplen of all segment
  */
-static int
-tcp_oos_tcplen(struct tcp_pcb* pcb)
+static int tcp_oos_tcplen(struct tcp_pcb* pcb)
 {
   int len = 0;
   struct tcp_seg* seg = pcb->ooseq;
@@ -119,14 +116,12 @@ tcp_oos_tcplen(struct tcp_pcb* pcb)
 
 /* Setup/teardown functions */
 
-static void
-tcp_oos_setup(void)
+static void tcp_oos_setup(void)
 {
   tcp_remove_all();
 }
 
-static void
-tcp_oos_teardown(void)
+static void tcp_oos_teardown(void)
 {
   tcp_remove_all();
   netif_list = NULL;
@@ -805,8 +800,7 @@ START_TEST(test_tcp_recv_ooseq_max_pbufs)
 }
 END_TEST
 
-static void
-check_rx_counters(struct tcp_pcb *pcb, struct test_tcp_counters *counters, u32_t exp_close_calls, u32_t exp_rx_calls,
+static void check_rx_counters(struct tcp_pcb *pcb, struct test_tcp_counters *counters, u32_t exp_close_calls, u32_t exp_rx_calls,
                   u32_t exp_rx_bytes, u32_t exp_err_calls, int exp_oos_count, int exp_oos_len)
 {
   int oos_len;

@@ -56,7 +56,7 @@
 #define AC97_RESET				0x00
 #endif
 
-int get_set_volume(u32_t *pbase, struct volume_level *level, int flag);
-void dev_set_default_volume(u32_t *pbase);
+int get_set_volume(vir_bytes *pbase, struct volume_level *level, int flag);
+void dev_set_default_volume(vir_bytes *pbase);
 
 #endif

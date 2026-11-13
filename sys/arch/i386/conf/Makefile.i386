@@ -1,0 +1,129 @@
+#	$NetBSD: Makefile.i386,v 1.194 2018/09/22 12:24:02 rin Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/i386/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/i386/conf/Makefile.i386
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+NOSANITIZER=	# defined
+MACHINE_ARCH=	i386
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+USE_SSP?=	yes
+
+##
+## (1) port identification
+##
+I386=		$S/arch/i386
+GENASSYM_CONF=	${I386}/i386/genassym.cf
+
+##
+## (2) compile settings
+##
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
+CPPFLAGS+=	-Di386
+CFLAGS+=	-msoft-float
+## no-sse implies no-sse2 but not no-avx
+CFLAGS+=	-mno-mmx -mno-sse -mno-avx
+
+.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0 && ${HAVE_GCC:U0} > 0
+CFLAGS+=	-mindirect-branch=thunk
+CFLAGS+=	-mindirect-branch-register
+.endif
+
+##
+## (3) libkern and compat
+##
+OPT_MODULAR=	%MODULAR%
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+MD_OBJS=	locore.o copy.o spl.o vector.o lock_stubs.o
+MD_CFILES=
+MD_SFILES=	${I386}/i386/locore.S ${I386}/i386/copy.S ${I386}/i386/spl.S \
+		${I386}/i386/vector.S ${I386}/i386/lock_stubs.S
+
+locore.o: ${I386}/i386/locore.S assym.h
+	${NORMAL_S}
+
+copy.o: ${I386}/i386/copy.S assym.h
+	${NORMAL_S}
+
+spl.o: ${I386}/i386/spl.S assym.h
+	${NORMAL_S}
+
+vector.o: ${I386}/i386/vector.S assym.h
+	${NORMAL_S}
+
+lock_stubs.o: ${I386}/i386/lock_stubs.S assym.h
+	${NORMAL_S}
+
+##
+## (5) link settings
+##
+TEXTADDR?=	c0100000
+LINKFLAGS_NORMAL=	-X
+KERNLDSCRIPT?=	${I386}/conf/kern.ldscript
+
+##
+## (6) port specific target dependencies
+##
+
+i386func.o: assym.h
+linux_sigcode.o lock_stubs.o: assym.h
+cpufunc.o cpu_in_cksum.o pnpbioscall.o bioscall.o: assym.h
+mptramp.o: assym.h
+acpi_wakeup_low.o busfunc.o: assym.h
+
+##
+## (7) misc settings
+##
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN::
+	-@rm -f i386 && \
+		ln -s $S/arch/i386/include i386
+.endif
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+## Include rules for ACPI wakecode
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

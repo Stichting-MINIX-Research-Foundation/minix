@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_send_syscall.3,v 1.5 2011/09/30 22:08:18 jym Exp $
+.\"	$NetBSD: prop_send_syscall.3,v 1.6 2017/02/12 16:00:53 abhinav Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,11 +51,11 @@
     "prop_dictionary_t *dictp"
 .Sh DESCRIPTION
 The
-.Nm prop_array_send_syscall ,
-.Nm prop_array_recv_syscall ,
-.Nm prop_dictionary_send_syscall ,
+.Fn prop_array_send_syscall ,
+.Fn prop_array_recv_syscall ,
+.Fn prop_dictionary_send_syscall ,
 and
-.Nm prop_dictionary_recv_syscall
+.Fn prop_dictionary_recv_syscall
 functions implement the user space side of a protocol for sending property
 lists to and from the kernel using
 .Xr syscall 2 .
@@ -123,6 +123,6 @@ Not supported
 .Xr prop_copyin_ioctl 9
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

@@ -98,8 +98,7 @@ static void tcp_timewait_input(struct tcp_pcb *pcb);
  * @param p received TCP segment to process (p->payload pointing to the TCP header)
  * @param inp network interface on which this segment was received
  */
-void
-tcp_input(struct pbuf *p, struct netif *inp)
+void tcp_input(struct pbuf *p, struct netif *inp)
 {
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
@@ -541,8 +540,7 @@ dropped:
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */
-static void
-tcp_listen_input(struct tcp_pcb_listen *pcb)
+static void tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
   u32_t iss;
@@ -640,8 +638,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */
-static void
-tcp_timewait_input(struct tcp_pcb *pcb)
+static void tcp_timewait_input(struct tcp_pcb *pcb)
 {
   /* RFC 1337: in TIME_WAIT, ignore RST and ACK FINs + any 'acceptable' segments */
   /* RFC 793 3.9 Event Processing - Segment Arrives:
@@ -946,8 +943,7 @@ tcp_process(struct tcp_pcb *pcb)
  *
  * Called from tcp_receive()
  */
-static void
-tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
+static void tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 {
   struct tcp_seg *old_seg;
 
@@ -992,8 +988,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
  *
  * Called from tcp_process().
  */
-static void
-tcp_receive(struct tcp_pcb *pcb)
+static void tcp_receive(struct tcp_pcb *pcb)
 {
   struct tcp_seg *next;
 #if TCP_QUEUE_OOSEQ
@@ -1685,8 +1680,7 @@ tcp_receive(struct tcp_pcb *pcb)
   }
 }
 
-static u8_t
-tcp_getoptbyte(void)
+static u8_t tcp_getoptbyte(void)
 {
   if ((tcphdr_opt2 == NULL) || (tcp_optidx < tcphdr_opt1len)) {
     u8_t* opts = (u8_t *)tcphdr + TCP_HLEN;
@@ -1705,8 +1699,7 @@ tcp_getoptbyte(void)
  *
  * @param pcb the tcp_pcb for which a segment arrived
  */
-static void
-tcp_parseopt(struct tcp_pcb *pcb)
+static void tcp_parseopt(struct tcp_pcb *pcb)
 {
   u8_t data;
   u16_t mss;
@@ -1808,8 +1801,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
   }
 }
 
-void
-tcp_trigger_input_pcb_close(void)
+void tcp_trigger_input_pcb_close(void)
 {
   recv_flags |= TF_CLOSED;
 }

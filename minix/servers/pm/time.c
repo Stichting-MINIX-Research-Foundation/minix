@@ -18,8 +18,7 @@
 /*===========================================================================*
  *				do_gettime				     *
  *===========================================================================*/
-int
-do_gettime(void)
+int do_gettime(void)
 {
   clock_t ticks, realtime, clock;
   time_t boottime;
@@ -49,8 +48,7 @@ do_gettime(void)
 /*===========================================================================*
  *				do_getres				     *
  *===========================================================================*/
-int
-do_getres(void)
+int do_getres(void)
 {
   switch (m_in.m_lc_pm_time.clk_id) {
 	case CLOCK_REALTIME:
@@ -67,8 +65,7 @@ do_getres(void)
 /*===========================================================================*
  *				do_settime				     *
  *===========================================================================*/
-int
-do_settime(void)
+int do_settime(void)
 {
   int s;
 
@@ -90,8 +87,7 @@ do_settime(void)
 /*===========================================================================*
  *				do_time					     *
  *===========================================================================*/
-int
-do_time(void)
+int do_time(void)
 {
 /* Perform the time(tp) system call. */
   struct timespec tv;
@@ -106,8 +102,7 @@ do_time(void)
 /*===========================================================================*
  *				do_stime				     *
  *===========================================================================*/
-int
-do_stime(void)
+int do_stime(void)
 {
 /* Perform the stime(tp) system call. Retrieve the system's uptime (ticks
  * since boot) and pass the new time in seconds at system boot to the kernel.

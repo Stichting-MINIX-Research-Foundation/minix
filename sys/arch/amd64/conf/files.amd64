@@ -1,0 +1,200 @@
+#	$NetBSD: files.amd64,v 1.120.20.1 2023/05/13 13:26:57 martin Exp $
+#
+# new style config file for amd64 architecture
+#
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 16
+
+maxusers 2 16 128
+
+# delay before cpu_reset() for reboot.
+defparam		CPURESET_DELAY
+
+# The REAL{BASE,EXT}MEM options
+defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
+
+# Enable GCC spectre V2 mitigation options
+defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
+
+# Enable kernel self-relocation at bootstrap
+defflag opt_selfreloc.h SELFRELOC
+
+#
+# XXX these are just here at the moment so that we can share files
+# with the i386 (they include the opt_*.h for these)
+#
+
+defflag			USER_LDT
+defflag eisa.h		EISA
+
+# Start code
+file	arch/amd64/amd64/locore.S		machdep
+file	arch/amd64/amd64/vector.S		machdep
+file	arch/amd64/amd64/copy.S			machdep
+file	arch/amd64/amd64/spl.S			machdep
+
+file	arch/amd64/amd64/amd64_trap.S		machdep
+file	arch/amd64/amd64/autoconf.c		machdep & !xenpv
+file	arch/amd64/amd64/busfunc.S		machdep
+file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
+file	arch/amd64/amd64/cpufunc.S		machdep
+file	arch/amd64/amd64/db_disasm.c		ddb
+file	arch/amd64/amd64/db_interface.c		ddb
+file	arch/amd64/amd64/db_machdep.c		ddb
+file	arch/amd64/amd64/kobj_machdep.c		modular
+file	kern/subr_disk_mbr.c			disk
+file	arch/amd64/amd64/gdt.c			machdep
+file	arch/amd64/amd64/machdep.c		machdep
+file	arch/amd64/amd64/prekern.c		kaslr
+file	arch/amd64/amd64/process_machdep.c	machdep
+file	arch/amd64/amd64/trap.c			machdep
+file	arch/x86/x86/fpu.c			machdep
+file	arch/x86/x86/dbregs.c			machdep
+file	arch/x86/x86/convert_xmm_s87.c		machdep
+file	arch/x86/x86/spectre.c			machdep & !xenpv
+file	arch/amd64/amd64/lock_stubs.S		machdep
+file	dev/cons.c				machdep
+
+file	arch/amd64/amd64/mptramp.S        multiprocessor & !xenpv
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
+
+#
+# Machine-independent SCSI drivers
+#
+
+include	"dev/scsipi/files.scsipi"
+
+#
+# Machine-independent ATA drivers
+#
+
+include	"dev/ata/files.ata"
+
+# Memory Disk for install floppy
+file	dev/md_root.c			memory_disk_hooks
+
+#
+# Machine-independent I2O drivers
+#
+
+include	"dev/i2o/files.i2o"
+
+#
+# System bus types
+#
+
+# XXX BIOS32 only if something that uses it is configured!
+device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus,
+	ipmibus, hypervisorbus
+attach	mainbus at root
+file	arch/amd64/amd64/amd64_mainbus.c	mainbus & !xenpv
+file	arch/x86/x86/mainbus.c			mainbus
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+
+include	"dev/pci/files.pci"
+defparam			PCI_CONF_MODE
+include "dev/pci/files.agp"
+
+# x86 specific PCI hardware
+include "arch/x86/pci/files.pci"
+
+#
+# ISA or ISA+PCI drivers
+#
+
+include	"dev/isa/files.isa"
+
+# attribute used to represent the "keyboard controller"
+# XXX should be a real device
+define	pckbcport { [irq = -1], [port = -1] }
+
+include	"dev/pckbport/files.pckbport"
+
+device	sysbeep
+attach	sysbeep at pcppi
+
+# Floppy disk controller
+device	fdc {drive = -1}: isadma
+file	dev/isa/fd.c				fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
+
+device	fd: disk
+attach	fd at fdc
+
+#
+# Compatibility modules
+#
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/amd64/amd64/compat_13_machdep.c	compat_13
+file	arch/amd64/amd64/compat_16_machdep.c	compat_16
+
+# NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
+include "compat/netbsd32/files.netbsd32"
+file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
+file	arch/amd64/amd64/netbsd32_machdep_13.c	compat_netbsd32 & compat_13
+file	arch/amd64/amd64/netbsd32_machdep_16.c	compat_netbsd32 & compat_16
+file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
+file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
+
+# Linux compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/amd64/files.linux_amd64"
+file	arch/amd64/amd64/linux_sigcode.S		compat_linux
+file	arch/amd64/amd64/linux_syscall.c		compat_linux
+file	arch/x86/x86/linux_trap.c			compat_linux
+
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/amd64/files.linux32_amd64"
+file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
+file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
+
+# OSS audio driver compatibility
+include	"compat/ossaudio/files.ossaudio"
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/amd64/amd64/rbus_machdep.c	cardbus
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
+
+include	"dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
+
+include "dev/sdmmc/files.sdmmc"
+
+include "dev/ieee1394/files.ieee1394"
+include "dev/apm/files.apm"
+include "dev/acpi/files.acpi"
+file	arch/amd64/acpi/acpi_wakeup_low.S	acpi & !xenpv
+
+# Microsoft Hyper-V
+include "dev/hyperv/files.hyperv"
+
+attach	vmbus at acpinodebus with vmbus_acpi
+file	dev/acpi/vmbus_acpi.c			vmbus_acpi
+
+include	"arch/amd64/conf/majors.amd64"

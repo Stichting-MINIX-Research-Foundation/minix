@@ -1350,8 +1350,7 @@ int netif_get_mtu(ppp_pcb *pcb) {
 /*
  * ccp_test - whether a given compression method is acceptable for use.
  */
-int
-ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
+int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
 {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(opt_ptr);
@@ -1364,8 +1363,7 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
 /*
  * ccp_set - inform about the current state of CCP.
  */
-void
-ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
+void ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
 {
   LWIP_UNUSED_ARG(isopen);
   LWIP_UNUSED_ARG(isup);
@@ -1375,8 +1373,7 @@ ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit
            pcb->netif->num, isopen, isup, receive_method, transmit_method));
 }
 
-void
-ccp_reset_comp(ppp_pcb *pcb)
+void ccp_reset_comp(ppp_pcb *pcb)
 {
   switch (pcb->ccp_transmit_method) {
 #if MPPE_SUPPORT
@@ -1389,8 +1386,7 @@ ccp_reset_comp(ppp_pcb *pcb)
   }
 }
 
-void
-ccp_reset_decomp(ppp_pcb *pcb)
+void ccp_reset_decomp(ppp_pcb *pcb)
 {
   switch (pcb->ccp_receive_method) {
 #if MPPE_SUPPORT
@@ -1409,8 +1405,7 @@ ccp_reset_decomp(ppp_pcb *pcb)
  * result of an error detected after decompression of a packet,
  * 0 otherwise.  This is necessary because of patent nonsense.
  */
-int
-ccp_fatal_error(ppp_pcb *pcb)
+int ccp_fatal_error(ppp_pcb *pcb)
 {
   LWIP_UNUSED_ARG(pcb);
   return 1;

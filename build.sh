@@ -458,7 +458,8 @@ initdefaults()
 
 	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
-	    bomb "build.sh must be run from the top source level"
+	    bomb "usr.bin/make not found; build.sh must be run from the top \
+level of source directory"
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
@@ -493,7 +494,7 @@ initdefaults()
 	uname_m=$(uname -m 2>/dev/null)
 	uname_p=$(uname -p 2>/dev/null || echo "unknown")
 	case "${uname_p}" in
-	''|unknown|*[^-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
+	''|unknown|*[!-_A-Za-z0-9]*) uname_p="${uname_m}" ;;
 	esac
 
 	id_u=$(id -u 2>/dev/null || /usr/xpg4/bin/id -u 2>/dev/null)
@@ -506,7 +507,7 @@ initdefaults()
 	# XXX Except that doesn't work on Solaris. Or many Linuces.
 	#
 	unset PWD
-	TOP=$(/bin/pwd -P 2>/dev/null || /bin/pwd 2>/dev/null)
+	TOP=$( (exec pwd -P 2>/dev/null) || (exec pwd 2>/dev/null) )
 
 	# The user can set HOST_SH in the environment, or we try to
 	# guess an appropriate value.  Then we set several other
@@ -536,6 +537,7 @@ initdefaults()
 	do_rebuildmake=false
 	do_removedirs=false
 	do_tools=false
+	do_libs=false
 	do_cleandir=false
 	do_obj=false
 	do_build=false
@@ -555,7 +557,7 @@ initdefaults()
 	do_live_image=false
 	do_install_image=false
 	do_disk_image=false
-	do_show_params=false
+	do_params=false
 	do_rump=false
 
 	# done_{operation}=true if given operation has been done.
@@ -613,8 +615,8 @@ initdefaults()
 # and with a blank MACHINE_ARCH.
 #
 valid_MACHINE_ARCH='
-MACHINE=acorn26		MACHINE_ARCH=arm
 MACHINE=acorn32		MACHINE_ARCH=arm
+MACHINE=acorn32		MACHINE_ARCH=earmv4	ALIAS=eacorn32 DEFAULT
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=alpha		MACHINE_ARCH=alpha
@@ -633,26 +635,27 @@ MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
 MACHINE=epoc32		MACHINE_ARCH=arm
+MACHINE=epoc32		MACHINE_ARCH=earmv4	ALIAS=eepoc32 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evboarm-el
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evboarm-eb
-MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el DEFAULT
-MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
-MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
-MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el
-MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el
-MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
-MACHINE=evbarm64	MACHINE_ARCH=aarch64	ALIAS=evbarm64-el DEFAULT
-MACHINE=evbarm64	MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
+MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el	ALIAS=evbarm-el DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb	ALIAS=evbarm-eb
+MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el	ALIAS=evbarmhf-el
+MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb	ALIAS=evbarmhf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el	ALIAS=evbarmv4-el
+MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb	ALIAS=evbarmv4-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el	ALIAS=evbarmv5-el
+MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb	ALIAS=evbarmv5-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el	ALIAS=evbarmv6-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el	ALIAS=evbarmv6hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb	ALIAS=evbarmv6-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb	ALIAS=evbarmv6hf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el	ALIAS=evbarmv7-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb	ALIAS=evbarmv7-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el	ALIAS=evbarmv7hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb	ALIAS=evbarmv7hf-eb
+MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el	ALIAS=evbarm64 DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
 MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbmips		MACHINE_ARCH=mips64eb	ALIAS=evbmips64-eb
@@ -953,11 +956,34 @@ setmakeenv()
 	eval "$1='$2'; export $1"
 	makeenv="${makeenv} $1"
 }
+safe_setmakeenv()
+{
+	case "$1" in
+
+	#	Look for any vars we want to prohibit here, like:
+	# Bad | Dangerous)	usage "Cannot override $1 with -V";;
+
+	# That first char is OK has already been verified.
+	*[!A-Za-z0-9_]*)	usage "Bad variable name (-V): '$1'";;
+	esac
+	setmakeenv "$@"
+}
 
 unsetmakeenv()
 {
 	eval "unset $1"
 	makeenv="${makeenv} $1"
+}
+safe_unsetmakeenv()
+{
+	case "$1" in
+
+	#	Look for any vars user should not be able to unset
+	# Needed | Must_Have)	usage "Variable $1 cannot be unset";;
+
+	[!A-Za-z_]* | *[!A-Za-z0-9_]*)	usage "Bad variable name (-Z): '$1'";;
+	esac
+	unsetmakeenv "$1"
 }
 
 # Given a variable name in $1, modify the variable in place as follows:
@@ -1005,7 +1031,7 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
+Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
                 [-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
                 [-O obj] [-R release] [-S seed] [-T tools]
                 [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
@@ -1038,6 +1064,7 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     sets                Create binary sets in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
                         DESTDIR should be populated beforehand.
+    distsets            Same as "distribution sets".
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
@@ -1053,6 +1080,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
                         patterns or exact values in MACHINE or MACHINE_ARCH.
+    mkrepro-timestamp   Show the latest source timestamp used for reproducable
+                        builds and exit.  Requires -P or -V MKREPRO=yes.
 
  Options:
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
@@ -1060,7 +1089,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     -C cdextras    Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
     -D dest        Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E             Set "expert" mode; disables various safety checks.
-                   Should not be used without expert knowledge of the build system.
+                   Should not be used without expert knowledge of the build
+                   system.
     -h             Print this help message.
     -j njob        Run up to njob jobs in parallel; see make(1) -j.
     -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
@@ -1072,7 +1102,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
                        0   Minimal output ("quiet")
                        1   Describe what is occurring
-                       2   Describe what is occurring and echo the actual command
+                       2   Describe what is occurring and echo the actual
+                           command
                        3   Ignore the effect of the "@" prefix in make commands
                        4   Trace shell commands using the shell's -x flag
                    [Default: 2]
@@ -1080,6 +1111,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     -O obj         Set obj root directory to obj; sets a MAKEOBJDIR pattern.
                    Unsets MAKEOBJDIRPREFIX.
     -o             Set MKOBJDIRS=no; do not create objdirs at start of build.
+    -P             Set MKREPRO and MKREPRO_TIMESTAMP to the latest source
+                   CVS timestamp for reproducible builds.
     -R release     Set RELEASEDIR to release.  [Default: releasedir]
     -r             Remove contents of TOOLDIR and DESTDIR before building.
     -S seed        Set BUILDSEED to seed.  [Default: NetBSD-majorversion]
@@ -1105,7 +1138,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:X:xY:yZ:'
+	opts='a:B:C:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xY:yZ:'
 	opt_a=false
 	opt_m=false
 
@@ -1221,6 +1254,10 @@ parseoptions()
 			MKOBJDIRS=no
 			;;
 
+		-P)
+			MKREPRO=yes
+			;;
+
 		-R)
 			eval ${optargcmd}; resolvepath OPTARG
 			setmakeenv RELEASEDIR "${OPTARG}"
@@ -1254,11 +1291,14 @@ parseoptions()
 			eval ${optargcmd}
 			case "${OPTARG}" in
 		    # XXX: consider restricting which variables can be changed?
-			[a-zA-Z_][a-zA-Z_0-9]*=*)
-				setmakeenv "${OPTARG%%=*}" "${OPTARG#*=}"
+			[a-zA-Z_]*=*)
+				safe_setmakeenv "${OPTARG%%=*}" "${OPTARG#*=}"
+				;;
+			[a-zA-Z_]*)
+				safe_setmakeenv "${OPTARG}" ""
 				;;
 			*)
-				usage "-V argument must be of the form 'var=[value]'"
+				usage "-V argument must be of the form 'var[=value]'"
 				;;
 			esac
 			;;
@@ -1289,7 +1329,7 @@ parseoptions()
 		-Z)
 			eval ${optargcmd}
 		    # XXX: consider restricting which variables can be unset?
-			unsetmakeenv "${OPTARG}"
+			safe_unsetmakeenv "${OPTARG}"
 			;;
 
 		--)
@@ -1318,11 +1358,12 @@ parseoptions()
 
 		list-arch)
 			listarch "${MACHINE}" "${MACHINE_ARCH}"
-			exit $?
+			exit
 			;;
-
-		show-params)
-			op=show_params	# used as part of a variable name
+		mkrepro-timestamp)
+			setup_mkrepro quiet
+			echo ${MKREPRO_TIMESTAMP:-0}
+			[ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
 			;;
 
 		kernel=*|releasekernel=*|kernel.gdb=*)
@@ -1347,6 +1388,12 @@ parseoptions()
 			    bomb "Must supply a directory with \`install=...'"
 			;;
 
+		distsets)
+			operations="$(echo "$operations" | sed 's/distsets/distribution sets/')"
+			do_sets=true
+			op=distribution
+			;;
+
 		build|\
 		cleandir|\
 		distribution|\
@@ -1354,6 +1401,7 @@ parseoptions()
 		iso-image-source|\
 		iso-image|\
 		kernels|\
+		libs|\
 		live-image|\
 		makewrapper|\
 		modules|\
@@ -1386,6 +1434,7 @@ parseoptions()
 		[ "${uname_s}" = "Minix" ] ||
 		    bomb "MACHINE must be set, or -m must be used, for cross builds."
 		MACHINE=${uname_m}
+		MACHINE_ARCH=${uname_p}
 	fi
 	if $opt_m && ! $opt_a; then
 		# Settings implied by the command line -m option
@@ -1440,8 +1489,82 @@ sanitycheck()
 		fi
 		;;
 	esac
+
+	while [ ${MKX11-no} = "yes" ]; do		# not really a loop
+		test -n "${X11SRCDIR}" && {
+		    test -d "${X11SRCDIR}" ||
+		    	bomb "X11SRCDIR (${X11SRCDIR}) does not exist (with -x)"
+		    break
+		}
+		for _xd in \
+		    "${NETBSDSRCDIR%/*}/xsrc" \
+		    "${NETBSDSRCDIR}/xsrc" \
+		    /usr/xsrc
+		do
+		    test -d "${_xd}" &&
+			setmakeenv X11SRCDIR "${_xd}" &&
+			break 2
+		done
+		bomb "Asked to build X11 but no xsrc"
+	done
 }
 
+# print_tooldir_make --
+# Try to find and print a path to an existing
+# ${TOOLDIR}/bin/${toolprefix}program
+print_tooldir_program()
+{
+	local possible_TOP_OBJ
+	local possible_TOOLDIR
+	local possible_program
+	local tooldir_program
+	local program=${1}
+
+	if [ -n "${TOOLDIR}" ]; then
+		echo "${TOOLDIR}/bin/${toolprefix}${program}"
+		return
+	fi
+
+	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
+	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
+	#
+	local host_ostype="${uname_s}-$(
+		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+		)-$(
+		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
+		)"
+
+	# Look in a few potential locations for
+	# ${possible_TOOLDIR}/bin/${toolprefix}${program}.
+	# If we find it, then set possible_program.
+	#
+	# In the usual case (without interference from environment
+	# variables or /etc/mk.conf), <bsd.own.mk> should set TOOLDIR to
+	# "${_SRC_TOP_OBJ_}/tooldir.${host_ostype}".
+	#
+	# In practice it's difficult to figure out the correct value
+	# for _SRC_TOP_OBJ_.  In the easiest case, when the -M or -O
+	# options were passed to build.sh, then ${TOP_objdir} will be
+	# the correct value.  We also try a few other possibilities, but
+	# we do not replicate all the logic of <bsd.obj.mk>.
+	#
+	for possible_TOP_OBJ in \
+		"${TOP_objdir}" \
+		"${MAKEOBJDIRPREFIX:+${MAKEOBJDIRPREFIX}${TOP}}" \
+		"${TOP}" \
+		"${TOP}/obj" \
+		"${TOP}/obj.${MACHINE}"
+	do
+		[ -n "${possible_TOP_OBJ}" ] || continue
+		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
+		possible_program="${possible_TOOLDIR}/bin/${toolprefix}${program}"
+		if [ -x "${possible_make}" ]; then
+			echo ${possible_program}
+			return;
+		fi
+	done
+	echo ""
+}
 # print_tooldir_make --
 # Try to find and print a path to an existing
 # ${TOOLDIR}/bin/${toolprefix}make, for use by rebuildmake() before a
@@ -1465,56 +1588,11 @@ sanitycheck()
 #
 print_tooldir_make()
 {
-	local possible_TOP_OBJ
-	local possible_TOOLDIR
 	local possible_make
+	local possible_TOOLDIR
 	local tooldir_make
 
-	if [ -n "${TOOLDIR}" ]; then
-		echo "${TOOLDIR}/bin/${toolprefix}make"
-		return 0
-	fi
-
-	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
-	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
-	#
-	local host_ostype="${uname_s}-$(
-		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
-		)-$(
-		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
-		)"
-
-	# Look in a few potential locations for
-	# ${possible_TOOLDIR}/bin/${toolprefix}make.
-	# If we find it, then set possible_make.
-	#
-	# In the usual case (without interference from environment
-	# variables or /etc/mk.conf), <bsd.own.mk> should set TOOLDIR to
-	# "${_SRC_TOP_OBJ_}/tooldir.${host_ostype}".
-	#
-	# In practice it's difficult to figure out the correct value
-	# for _SRC_TOP_OBJ_.  In the easiest case, when the -M or -O
-	# options were passed to build.sh, then ${TOP_objdir} will be
-	# the correct value.  We also try a few other possibilities, but
-	# we do not replicate all the logic of <bsd.obj.mk>.
-	#
-	for possible_TOP_OBJ in \
-		"${TOP_objdir}" \
-		"${MAKEOBJDIRPREFIX:+${MAKEOBJDIRPREFIX}${TOP}}" \
-		"${TOP}" \
-		"${TOP}/obj" \
-		"${TOP}/obj.${MACHINE}"
-	do
-		[ -n "${possible_TOP_OBJ}" ] || continue
-		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
-		possible_make="${possible_TOOLDIR}/bin/${toolprefix}make"
-		if [ -x "${possible_make}" ]; then
-			break
-		else
-			unset possible_make
-		fi
-	done
-
+	possible_make=$(print_tooldir_program make)
 	# If the above didn't work, search the PATH for a suitable
 	# ${toolprefix}make, nbmake, bmake, or make.
 	#
@@ -1599,21 +1677,23 @@ rebuildmake()
 	fi
 
 	# Build bootstrap ${toolprefix}make if needed.
-	if ${do_rebuildmake}; then
-		statusmsg "Bootstrapping ${toolprefix}make"
-		${runcmd} cd "${tmpdir}"
-		${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
-			CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-			${HOST_SH} "${TOP}/tools/make/configure" ||
-		    ( cp ${tmpdir}/config.log ${tmpdir}-config.log
-		      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
-		${runcmd} ${HOST_SH} buildmake.sh ||
-		    bomb "Build of ${toolprefix}make failed"
-		make="${tmpdir}/${toolprefix}make"
-		${runcmd} cd "${TOP}"
-		${runcmd} rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
-		done_rebuildmake=true
+	if ! ${do_rebuildmake}; then
+		return
 	fi
+
+	statusmsg "Bootstrapping ${toolprefix}make"
+	${runcmd} cd "${tmpdir}"
+	${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
+		CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
+	    ${HOST_SH} "${TOP}/tools/make/configure" ||
+	( cp ${tmpdir}/config.log ${tmpdir}-config.log
+	      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
+	${runcmd} ${HOST_SH} buildmake.sh ||
+	    bomb "Build of ${toolprefix}make failed"
+	make="${tmpdir}/${toolprefix}make"
+	${runcmd} cd "${TOP}"
+	${runcmd} rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
+	done_rebuildmake=true
 }
 
 # validatemakeparams --
@@ -1894,17 +1974,11 @@ EOF
 			fi
 		done
 
-		eval cat <<EOF
-MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
-USETOOLS=yes; export USETOOLS
-# LSC We are cross compiling, so do not install to root!
-MKINSTALLBOOT=no; export MKINSTALLBOOT
-EOF
-	} | eval sort -u "${makewrapout}"
-	eval cat <<EOF "${makewrapout}"
+		cat <<EOF
 
 exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
+	} | eval cat "${makewrapout}"
 	[ "${runcmd}" = "echo" ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
 	statusmsg2 "Updated makewrapper:" "${makewrapper}"
@@ -1912,8 +1986,8 @@ EOF
 
 make_in_dir()
 {
-	dir="$1"
-	op="$2"
+	local dir="$1"
+	local op="$2"
 	${runcmd} cd "${dir}" ||
 	    bomb "Failed to cd to \"${dir}\""
 	${runcmd} "${makewrapper}" ${parallel} ${op} ||
@@ -1933,6 +2007,21 @@ buildtools()
 	fi
 	make_in_dir tools build_install
 	statusmsg "Tools built to ${TOOLDIR}"
+}
+
+buildlibs()
+{
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		${runcmd} "${makewrapper}" ${parallel} obj ||
+		    bomb "Failed to make obj"
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir lib cleandir
+	fi
+	make_in_dir . do-distrib-dirs
+	make_in_dir . includes
+	make_in_dir . do-lib
+	statusmsg "libs built"
 }
 
 getkernelconf()
@@ -2105,7 +2194,8 @@ RUMP_LIBSETS='
 	-lrumpkern_tty -lrumpvfs -lrump,
 	-lrumpfs_tmpfs -lrumpvfs -lrump,
 	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
-	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump,
+	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet 
+	    -lrumpdev -lrumpvfs -lrump,
 	-lrumpnet_sockin -lrumpfs_smbfs -lrumpdev_netsmb
 	    -lrumpkern_crypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
 	-lrumpnet_sockin -lrumpfs_nfs -lrumpnet -lrumpvfs -lrump,
@@ -2176,6 +2266,74 @@ dorump()
 	statusmsg "Rump build&link tests successful"
 }
 
+repro_date() {
+	# try the bsd date fail back the the linux one
+	date -u -r "$1" 2> /dev/null || date -u -d "@$1"
+}
+
+setup_mkrepro()
+{
+	local quiet="$1"
+
+	if [ ${MKREPRO-no} != "yes" ]; then
+		return
+	fi
+	if [ ${MKREPRO_TIMESTAMP-0} -ne 0 ]; then
+		return;
+	fi
+
+	local dirs=${NETBSDSRCDIR-/usr/src}/
+	if [ ${MKX11-no} = "yes" ]; then
+		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
+	fi
+
+	local cvslatest=$(print_tooldir_program cvslatest)
+	if [ ! -x "${cvslatest}" ]; then
+		buildtools
+	fi
+
+	local cvslatestflags=
+	if ${do_expertmode}; then
+		cvslatestflags=-i
+	fi
+
+	MKREPRO_TIMESTAMP=0
+	local d
+	local t
+	local vcs
+	for d in ${dirs}; do
+		if [ -d "${d}CVS" ]; then
+			t=$("${cvslatest}" ${cvslatestflags} "${d}")
+			vcs=cvs
+		elif [ -d "${d}.git" ]; then
+			t=$(cd "${d}" && git log -1 --format=%ct)
+			vcs=git
+		elif [ -d "${d}.hg" ]; then
+			t=$(cd "${d}" &&
+			    hg log -r . --template '{date(date, "%s")}\n')
+			vcs=hg
+		else
+			bomb "Cannot determine VCS for '$d'"
+		fi
+
+		if [ -z "$t" ]; then
+			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
+		fi
+
+		#echo "latest $d $vcs $t"
+		if [ "$t" -gt "$MKREPRO_TIMESTAMP" ]; then
+			MKREPRO_TIMESTAMP="$t"
+		fi
+	done
+
+	[ "${MKREPRO_TIMESTAMP}" != "0" ] || bomb "Failed to compute timestamp"
+	if [ -z "${quiet}" ]; then
+		statusmsg2 "MKREPRO_TIMESTAMP" \
+			"$(repro_date "${MKREPRO_TIMESTAMP}")"
+	fi
+	export MKREPRO MKREPRO_TIMESTAMP
+}
+
 main()
 {
 	initdefaults
@@ -2206,6 +2364,7 @@ main()
 	rebuildmake
 	validatemakeparams
 	createmakewrapper
+	setup_mkrepro
 
 	# Perform the operations.
 	#
@@ -2219,6 +2378,9 @@ main()
 		tools)
 			buildtools
 			;;
+		libs)
+			buildlibs
+			;;
 
 		sets)
 			statusmsg "Building sets from pre-populated ${DESTDIR}"
@@ -2228,7 +2390,13 @@ main()
 			statusmsg "Built sets to ${setdir}"
 			;;
 
-		cleandir|obj|build|distribution|release|sourcesets|syspkgs|show-params)
+		build|distribution|release)
+			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
+
+		cleandir|obj|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"

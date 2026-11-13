@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 2014/02/15 13:34:28 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.31 2020/04/04 00:47:30 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 MODULE=		binutils
 
@@ -11,10 +11,16 @@ BRANDING?=	\
 	--with-bugurl="http://www.NetBSD.org/support/send-pr.html" \
 	--with-lib-path="=/usr/lib" --with-sysroot
 
-CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
+BASE_CONFIGURE_ARGS= \
+	--target=${MACHINE_GNU_PLATFORM} \
+	--enable-initfini-array=yes \
+	--enable-default-execstack=no \
+	${BRANDING}
+
+CONFIGURE_ARGS= --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--disable-werror \
-		${BRANDING}
+		${BASE_CONFIGURE_ARGS}
 
 .if defined(__MINIX) && ! exists(${GNUHOSTDIST}/gas/m68k-parse.c)
 # MINIX: LSC: Make sure we trigger the fetch rule
@@ -62,7 +68,27 @@ CONFIGURE_ARGS+= \
 .endif # defined(__MINIX)
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+# The MINIX target triple is x86_64-elf64-minix.  Add explicit
+# target-table entries before configure, independent of upstream line numbers.
+.if defined(__MINIX)
+# UEFI boot images are PE/COFF executables.  The MINIX target is ELF-only
+# by default, so explicitly add the GNU/MinGW BFD targets that provide
+# pei-x86-64 and pei-i386 output formats for objcopy.
+CONFIGURE_ARGS+= --enable-targets=x86_64-w64-mingw32,i686-w64-mingw32
+
+MINIX_TARGET_SETUP=${NETBSDSRCDIR}/external/gpl3/binutils/apply-minix-targets.sh
+
+.binutils_minix_target_done: ${fetch_done} ${MINIX_TARGET_SETUP}
+	${HOST_SH} ${MINIX_TARGET_SETUP} ${GNUHOSTDIST}
+	@touch ${.TARGET}
+
+.configure_done: .binutils_minix_target_done
+.endif # defined(__MINIX)
+
+CCADDFLAGS=	-I${GNUHOSTDIST}/include  -I${DESTDIR}/usr/include
+CCADDFLAGS+=	-B${DESTDIR}/usr/lib/
+CCADDFLAGS+=	${HOST_CPPFLAGS}
+LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 
 # Force avoiding possibly non-executable install-sh.
 CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
@@ -83,7 +109,8 @@ native-binutils: .native/.configure_done
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			CFLAGS= CPPFLAGS= CXXFLAGS= \
+			LDFLAGS=${LDADDFLAGS:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
@@ -92,8 +119,7 @@ native-binutils: .native/.configure_done
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM} \
-			${BRANDING} \
+			${BASE_CONFIGURE_ARGS} \
 		)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MAKE} configure-host)

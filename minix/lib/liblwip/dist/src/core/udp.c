@@ -83,8 +83,7 @@ struct udp_pcb *udp_pcbs;
 /**
  * Initialize this module.
  */
-void
-udp_init(void)
+void udp_init(void)
 {
 #if LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND)
   udp_port = UDP_ENSURE_LOCAL_PORT_RANGE(LWIP_RAND());
@@ -96,8 +95,7 @@ udp_init(void)
  *
  * @return a new (free) local UDP port number
  */
-static u16_t
-udp_new_port(void)
+static u16_t udp_new_port(void)
 {
   u16_t n = 0;
   struct udp_pcb *pcb;
@@ -126,8 +124,7 @@ again:
  * @param broadcast 1 if his is an IPv4 broadcast (global or subnet-only), 0 otherwise (only used for IPv4)
  * @return 1 on match, 0 otherwise
  */
-static u8_t
-udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
+static u8_t udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(inp);       /* in IPv6 only case */
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
@@ -181,8 +178,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
  * @param inp network interface on which the datagram was received.
  *
  */
-void
-udp_input(struct pbuf *p, struct netif *inp)
+void udp_input(struct pbuf *p, struct netif *inp)
 {
   struct udp_hdr *udphdr;
   struct udp_pcb *pcb, *prev;
@@ -1069,8 +1065,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
  *
  * @param pcb the udp pcb to disconnect.
  */
-void
-udp_disconnect(struct udp_pcb *pcb)
+void udp_disconnect(struct udp_pcb *pcb)
 {
   /* reset remote address association */
 #if LWIP_IPV4 && LWIP_IPV6
@@ -1097,8 +1092,7 @@ udp_disconnect(struct udp_pcb *pcb)
  * @param recv function pointer of the callback function
  * @param recv_arg additional argument to pass to the callback function
  */
-void
-udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
+void udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
 {
   /* remember recv() callback and user data */
   pcb->recv = recv;
@@ -1114,8 +1108,7 @@ udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
  *
  * @see udp_new()
  */
-void
-udp_remove(struct udp_pcb *pcb)
+void udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
 
@@ -1222,8 +1215,7 @@ void udp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_a
  *
  * @param udphdr pointer to the udp header in memory.
  */
-void
-udp_debug_print(struct udp_hdr *udphdr)
+void udp_debug_print(struct udp_hdr *udphdr)
 {
   LWIP_DEBUGF(UDP_DEBUG, ("UDP header:\n"));
   LWIP_DEBUGF(UDP_DEBUG, ("+-------------------------------+\n"));

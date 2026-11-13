@@ -1,0 +1,6 @@
+--- a/lib/system.h
++++ b/lib/system.h
+@@ -67,1 +67,3 @@
++/* Ensure standard allocation declarations are available without STDC_HEADERS. */
++#include <stdlib.h>
+ extern char *getenv (const char *);

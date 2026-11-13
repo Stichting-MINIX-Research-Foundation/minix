@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.14 2008/12/14 18:46:33 christos Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.15 2016/01/17 14:57:18 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -291,7 +291,7 @@ ex_probemedia(void)
 	}
 	printf("unknown connector\n");
 bad:
-	ether_medium = -1;
+	ether_medium = ETHERMEDIUM_BAD;
 }
 
 int
@@ -346,7 +346,7 @@ found:
 		ether_medium = ETHERMEDIUM_MII;
 	else {
 		ex_probemedia();
-		if (ether_medium < 0)
+		if (ether_medium == ETHERMEDIUM_BAD)
 			return 0;
 	}
 

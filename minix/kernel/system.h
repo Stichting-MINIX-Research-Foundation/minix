@@ -206,5 +206,9 @@ int do_padconf(struct proc * caller, message *m_ptr);
 #define do_padconf NULL
 #endif
 
+#if defined(__x86_64__)
+int do_mxvctl(struct proc * caller, message *m_ptr);
+#endif
+
 #endif	/* SYSTEM_H */
 

@@ -1,0 +1,206 @@
+.\" $NetBSD: iasl.8,v 1.4 2014/03/18 18:20:36 riastradh Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jukka Ruohonen.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 10, 2010
+.Os
+.Dt IASL 8
+.Sh NAME
+.Nm iasl
+.Nd Intel ASL compiler and disassembler
+.Tn Pq iASL
+.Sh SYNOPSIS
+.Nm
+.Op Ar options
+.Ao Ar input file Ac
+.Sh DESCRIPTION
+The
+.Nm
+is a fully-featured compiler for the
+.Tn ACPI
+Source Language
+.Tn Pq ASL .
+It translates
+.Tn ASL
+to
+.Tn ACPI
+Machine Language
+.Tn Pq AML ,
+but
+.Nm
+can also act as a disassembler, translating
+.Tn AML
+to
+.Tn ASL .
+.Sh OPTIONS
+.Ss Global
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl @ Ar file
+Specify command file.
+.It Fl I Ar dir
+Specify additional include directory.
+.El
+.Ss General Output
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl p Ar prefix
+Specify a path or filename
+.Ar prefix
+for all output files.
+.It Fl va
+Disable all errors and warnings in the summary.
+.It Fl vi
+Use less verbose errors and warnings.
+.It Fl vo
+Enable optimization comments.
+.It Fl vr
+Disable remarks.
+.It Fl vs
+Disable signon.
+.It Fl w Ar 1 | 2 | 3
+Set warning reporting level.
+.El
+.Ss AML Output Files
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl s Ar a | c
+Create
+.Tn AML
+in assembler
+.Pq Pa *.asm
+or C
+.Pq Pa *.c
+source file.
+.It Fl i Ar a | c
+Create assembler
+.Pq Pa *.inc
+or C
+.Pq Pa *.h
+include file.
+.It Fl t Ar a | c
+Create AML in assembler or C hex table
+.Pq Pa *.hex .
+.El
+.Ss AML Code Generation
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl oa
+Disable all optimizations (compatibility mode).
+.It Fl of
+Disable constant folding.
+.It Fl oi
+Disable integer optimization to operation codes.
+.It Fl on
+Disable named reference string optimization.
+.It Fl r Ar revision
+Override table header
+.Ar revision
+(1-255).
+.El
+.Ss Listings
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl l
+Create mixed,
+.Tn ASL
+and
+.Tn AML ,
+listing file
+.Pq Pa *.lst .
+.It Fl ln
+Create namespace file
+.Pq Pa *.nsp .
+.It Fl ls
+Create combined source file
+.Pq Pa *.src .
+.El
+.Ss AML Disassembler
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl d Ar file
+Disassemble binary
+.Tn ACPI
+table to a
+.Ar file
+.Pq Pa *.dsl .
+.It Fl dc Ar file
+Disassemble
+.Tn AML
+and immediately compile it.
+.It Fl e Ar f1 , f2
+Include
+.Tn ACPI
+table(s) for external symbol resolution.
+.It Fl 2
+Emit
+.Tn ACPI 2.0
+compatible
+.Tn ASL
+code.
+.It Fl g
+Get
+.Tn ACPI
+tables and write to files
+.Pq Pa *.dat .
+.El
+.Ss Help
+.Bl -tag -width "w 1 | 2 | 3 " -offset 4n -compact
+.It Fl h
+Display additional help and compiler debug options.
+.It Fl hc
+Display operators allowed in constant expressions.
+.It Fl hr
+Display
+.Tn ACPI
+reserved method names.
+.El
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr acpidump 8 ,
+.Xr amldb 8
+.Rs
+.%A Intel Corporation
+.%T iASL Compiler/Disassembler User Reference
+.%N Revision 2.00
+.%D September 18, 2009
+.%U http://www.acpica.org/download/aslcompiler.pdf
+.Re
+.Sh HISTORY
+The
+.Nm
+compiler/disassembler is part of the Intel
+.Tn ACPI
+Component Architecture
+.Tn Pq ACPICA .
+It first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+Among Intel engineers,
+.An Robert Moore Aq Mt robert.moore@intel.com
+was the chief architect behind
+.Nm .
+This manual page was written for
+.Nx
+by
+.An Jukka Ruohonen Aq Mt jruohonen@iki.fi .

@@ -364,7 +364,7 @@ static int m_char_open(devminor_t minor, int access, endpoint_t user_endpt)
   /* Check if the minor device number is ok. */
   if (minor < 0 || minor >= NR_DEVS || m_is_block(minor)) return ENXIO;
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
   if (minor == MEM_DEV)
   {
 	int r = sys_enable_iop(user_endpt);
@@ -414,7 +414,7 @@ static struct device *m_block_part(devminor_t minor)
 /*===========================================================================*
  *				m_block_transfer			     *
  *===========================================================================*/
-static int m_block_transfer(
+static ssize_t m_block_transfer(
   devminor_t minor,		/* minor device number */
   int do_write,			/* read or write? */
   u64_t position,		/* offset on device to read or write */
@@ -569,7 +569,7 @@ static int m_block_ioctl(devminor_t minor, unsigned long request,
 		size -= l;
 	}
 	size = rounddown(size, PAGE_SIZE);
-	r = munmap((void *) a, size);
+	r = munmap((void *)(uintptr_t) a, size);
 	if(r != OK) {
 		printf("memory: WARNING: munmap failed: %d\n", r);
 	}

@@ -1,0 +1,6 @@
+--- a/makeinfo/footnote.c
++++ b/makeinfo/footnote.c
+@@ -22,2 +22,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ #include "footnote.h"

@@ -33,8 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	unsigned long ret;
 	char *endp;

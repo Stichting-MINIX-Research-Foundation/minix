@@ -36,7 +36,7 @@ int mixer_ioctl(unsigned long request, void *val, int *UNUSED(len)) {
 /*=========================================================================*
  *				mixer_init				   
  *=========================================================================*/
-int mixer_init() {
+int mixer_init(void) {
 	/* Try to detect the mixer by writing to MIXER_DAC_LEVEL if the
 	* value written can be read back the mixer is there
 	*/

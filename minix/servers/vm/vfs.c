@@ -28,7 +28,10 @@
 #include "region.h"
 #include "sanitycheck.h"
 
-#define STATELEN 70
+/* Big enough for the largest state any caller passes. The VMVFSREQ_FDLOOKUP
+ * path (mmap.c) stores a whole 'message', which is 96 bytes on amd64 (LP64)
+ * vs 64 on i386 -- a fixed 70 overflowed reqstate[] on amd64. */
+#define STATELEN sizeof(message)
 
 static struct vfs_request_node {
 	message			reqmsg;

@@ -55,13 +55,20 @@ struct packet {
 	STAILQ_ENTRY(packet) next;
 };
 
-/* Allocated data chunks */
+/* Allocated data chunks. Header slots are always the larger mrg_rxbuf size so
+ * the same allocation works for both the legacy (10-byte) and modern (12-byte,
+ * num_buffers always present) virtio-net header. */
 static char *data_vir;
 static phys_bytes data_phys;
-static struct virtio_net_hdr *hdrs_vir;
+static struct virtio_net_hdr_mrg_rxbuf *hdrs_vir;
 static phys_bytes hdrs_phys;
 static struct packet *packets;
 static int in_rx;
+
+/* Size of the virtio-net header the device actually uses: 12 bytes on the
+ * modern (virtio-1.0) interface, 10 bytes on the legacy interface. Set once
+ * the device has been set up. */
+static size_t net_hdr_size;
 
 /* Packets on this list can be given to the host */
 static STAILQ_HEAD(free_list, packet) free_list;
@@ -87,6 +94,7 @@ static int virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
 static void virtio_net_stop(void);
 static int virtio_net_send(struct netdriver_data *data, size_t len);
 static ssize_t virtio_net_recv(struct netdriver_data *data, size_t max);
+static unsigned int virtio_net_get_link(uint32_t *media);
 static void virtio_net_intr(unsigned int mask);
 
 static const struct netdriver virtio_net_table = {
@@ -95,6 +103,7 @@ static const struct netdriver virtio_net_table = {
 	.ndr_stop	= virtio_net_stop,
 	.ndr_recv	= virtio_net_recv,
 	.ndr_send	= virtio_net_send,
+	.ndr_get_link	= virtio_net_get_link,
 	.ndr_intr	= virtio_net_intr,
 };
 
@@ -102,13 +111,12 @@ static const struct netdriver virtio_net_table = {
 static struct virtio_feature netf[] = {
 	{ "partial csum",	VIRTIO_NET_F_CSUM,	0,	0	},
 	{ "given mac",		VIRTIO_NET_F_MAC,	0,	1	},
-	{ "status ",		VIRTIO_NET_F_STATUS,	0,	0	},
+	{ "status ",		VIRTIO_NET_F_STATUS,	0,	1	},
 	{ "control channel",	VIRTIO_NET_F_CTRL_VQ,	0,	1	},
 	{ "control channel rx",	VIRTIO_NET_F_CTRL_RX,	0,	0	}
 };
 
-static int
-virtio_net_probe(unsigned int skip)
+static int virtio_net_probe(unsigned int skip)
 {
 	/* virtio-net has at least 2 queues */
 	int queues = 2;
@@ -130,8 +138,7 @@ virtio_net_probe(unsigned int skip)
 	return OK;
 }
 
-static void
-virtio_net_config(netdriver_addr_t * addr)
+static void virtio_net_config(netdriver_addr_t * addr)
 {
 	u32_t mac14;
 	u32_t mac56;
@@ -157,15 +164,16 @@ virtio_net_config(netdriver_addr_t * addr)
 		dput(("No status"));
 	}
 
-	if (virtio_host_supports(net_dev, VIRTIO_NET_F_CTRL_VQ))
+	if (virtio_host_supports(net_dev, VIRTIO_NET_F_CTRL_VQ)) {
 		dput(("Host supports control channel"));
-
-	if (virtio_host_supports(net_dev, VIRTIO_NET_F_CTRL_RX))
+	}
+	
+	if (virtio_host_supports(net_dev, VIRTIO_NET_F_CTRL_RX)) {
 		dput(("Host supports control channel for RX"));
+	}
 }
 
-static int
-virtio_net_alloc_bufs(void)
+static int virtio_net_alloc_bufs(void)
 {
 	data_vir = alloc_contig(PACKET_BUF_SZ, 0, &data_phys);
 
@@ -195,8 +203,7 @@ virtio_net_alloc_bufs(void)
 	return OK;
 }
 
-static void
-virtio_net_init_queues(void)
+static void virtio_net_init_queues(void)
 {
 	int i;
 	STAILQ_INIT(&free_list);
@@ -204,7 +211,7 @@ virtio_net_init_queues(void)
 
 	for (i = 0; i < BUF_PACKETS; i++) {
 		packets[i].idx = i;
-		packets[i].vhdr = &hdrs_vir[i];
+		packets[i].vhdr = &hdrs_vir[i].hdr;
 		packets[i].phdr = hdrs_phys + i * sizeof(hdrs_vir[i]);
 		packets[i].vdata = data_vir + i * MAX_PACK_SIZE;
 		packets[i].pdata = data_phys + i * MAX_PACK_SIZE;
@@ -212,8 +219,7 @@ virtio_net_init_queues(void)
 	}
 }
 
-static void
-virtio_net_refill_rx_queue(void)
+static void virtio_net_refill_rx_queue(void)
 {
 	struct vumap_phys phys[2];
 	struct packet *p;
@@ -226,7 +232,7 @@ virtio_net_refill_rx_queue(void)
 
 		phys[0].vp_addr = p->phdr;
 		assert(!(phys[0].vp_addr & 1));
-		phys[0].vp_size = sizeof(struct virtio_net_hdr);
+		phys[0].vp_size = net_hdr_size;
 
 		phys[1].vp_addr = p->pdata;
 		assert(!(phys[1].vp_addr & 1));
@@ -240,12 +246,12 @@ virtio_net_refill_rx_queue(void)
 		in_rx++;
 	}
 
-	if (in_rx == 0 && STAILQ_EMPTY(&free_list))
+	if (in_rx == 0 && STAILQ_EMPTY(&free_list)) {
 		dput(("warning: rx queue underflow!"));
+	}
 }
 
-static void
-virtio_net_check_queues(void)
+static void virtio_net_check_queues(void)
 {
 	struct packet *p;
 	size_t len;
@@ -268,8 +274,7 @@ virtio_net_check_queues(void)
 	}
 }
 
-static void
-virtio_net_check_pending(void)
+static void virtio_net_check_pending(void)
 {
 
 	/* Pending read and something in recv_list? */
@@ -280,16 +285,36 @@ virtio_net_check_pending(void)
 		netdriver_send();
 }
 
-static void
-virtio_net_intr(unsigned int __unused mask)
+/*
+ * Report link status. virtio has no notion of speed/duplex, so the media type
+ * is just "ethernet, autoselect". If the device exposes a status field
+ * (VIRTIO_NET_F_STATUS) use its link bit; otherwise the link is always up.
+ */
+static unsigned int virtio_net_get_link(uint32_t * media)
+{
+	u16_t status;
+
+	*media = IFM_ETHER | IFM_AUTO;
+
+	if (!virtio_host_supports(net_dev, VIRTIO_NET_F_STATUS))
+		return NDEV_LINK_UP;
+
+	/* virtio_net_config.status is at offset 6 (after the 6-byte mac). */
+	status = virtio_sread16(net_dev, 6);
+
+	return (status & VIRTIO_NET_S_LINK_UP) ? NDEV_LINK_UP : NDEV_LINK_DOWN;
+}
+
+static void virtio_net_intr(unsigned int __unused mask)
 {
 
 	/* Check and clear interrupt flag */
 	if (virtio_had_irq(net_dev)) {
 		virtio_net_check_queues();
 	} else {
-		if (!spurious_interrupt)
+		if (!spurious_interrupt) {
 			dput(("Spurious interrupt"));
+		}
 
 		spurious_interrupt = 1;
 	}
@@ -306,8 +331,7 @@ virtio_net_intr(unsigned int __unused mask)
  * Put user bytes into a free packet buffer, forward this packet to the TX
  * queue, and return OK.  If there are no free packet buffers, return SUSPEND.
  */
-static int
-virtio_net_send(struct netdriver_data * data, size_t len)
+static int virtio_net_send(struct netdriver_data * data, size_t len)
 {
 	struct vumap_phys phys[2];
 	struct packet *p;
@@ -326,7 +350,7 @@ virtio_net_send(struct netdriver_data * data, size_t len)
 
 	phys[0].vp_addr = p->phdr;
 	assert(!(phys[0].vp_addr & 1));
-	phys[0].vp_size = sizeof(struct virtio_net_hdr);
+	phys[0].vp_size = net_hdr_size;
 	phys[1].vp_addr = p->pdata;
 	assert(!(phys[1].vp_addr & 1));
 	phys[1].vp_size = len;
@@ -339,8 +363,7 @@ virtio_net_send(struct netdriver_data * data, size_t len)
  * Put a packet receive from the RX queue into a user buffer, and return the
  * packet length.  If there are no received packets, return SUSPEND.
  */
-static ssize_t
-virtio_net_recv(struct netdriver_data * data, size_t max)
+static ssize_t virtio_net_recv(struct netdriver_data * data, size_t max)
 {
 	struct packet *p;
 	ssize_t len;
@@ -353,9 +376,9 @@ virtio_net_recv(struct netdriver_data * data, size_t max)
 	STAILQ_REMOVE_HEAD(&recv_list, next);
 
 	/* Copy out the packet contents. */
-	if (p->len < sizeof(struct virtio_net_hdr))
+	if (p->len < net_hdr_size)
 		panic("received packet does not have virtio header");
-	len = p->len - sizeof(struct virtio_net_hdr);
+	len = p->len - net_hdr_size;
 	if ((size_t)len > max)
 		len = (ssize_t)max;
 
@@ -385,14 +408,20 @@ virtio_net_recv(struct netdriver_data * data, size_t max)
 /*
  * Initialize the driver and the virtual hardware.
  */
-static int
-virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
+static int virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
 	uint32_t * caps, unsigned int * ticks __unused)
 {
 	int r;
 
 	if ((r = virtio_net_probe(instance)) != OK)
 		return r;
+
+	/* The modern (virtio-1.0) interface always includes num_buffers in the
+	 * net header (12 bytes); the legacy interface omits it (10 bytes) since
+	 * we do not negotiate VIRTIO_NET_F_MRG_RXBUF. */
+	net_hdr_size = virtio_is_modern(net_dev) ?
+		sizeof(struct virtio_net_hdr_mrg_rxbuf) :
+		sizeof(struct virtio_net_hdr);
 
 	virtio_net_config(addr);
 
@@ -415,8 +444,7 @@ virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
 /*
  * The driver is terminating.  Clean up.
  */
-static void
-virtio_net_stop(void)
+static void virtio_net_stop(void)
 {
 
 	dput(("Terminating"));
@@ -434,8 +462,7 @@ virtio_net_stop(void)
 /*
  * The virtio-net device driver.
  */
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
 	env_setargs(argc, argv);

@@ -9,7 +9,7 @@
 #include "arch_smp.h"
 #include "spinlock.h"
 
-/* number of CPUs (execution strands in the system */
+/* Upper bound of discovered logical CPU IDs; not the online CPU count. */
 EXTERN unsigned ncpus;
 /* Number of virtual strands per physical core */
 EXTERN unsigned ht_per_core;
@@ -28,19 +28,37 @@ EXTERN unsigned bsp_cpu_id;
  */
 void smp_init(void);
 
-#define CPU_IS_BSP	1
-#define CPU_IS_READY	2
+/*
+ * CPU startup is a linear state machine. OFFLINE is the zero-initialized
+ * state; only the listed forward transitions are permitted. In particular,
+ * ONLINE and FAILED are mutually exclusive terminal states for boot.
+ */
+#define CPU_STATE_OFFLINE		0
+#define CPU_STATE_STARTING		1
+#define CPU_STATE_WAITING_FOR_LOCK	2
+#define CPU_STATE_INITIALIZING		3
+#define CPU_STATE_ONLINE		4
+#define CPU_STATE_FAILED		5
+#define CPU_STATE_STOPPING		6
 
 struct cpu {
-	u32_t flags;
+	volatile u32_t state;
 };
 
 EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 
-#define cpu_set_flag(cpu, flag)	do { cpus[cpu].flags |= (flag); } while(0)
-#define cpu_clear_flag(cpu, flag) do { cpus[cpu].flags &= ~(flag); } while(0)
-#define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
-#define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
+/*
+ * State changes race between the BSP and an AP. Compare-and-swap makes each
+ * transition conditional on its exact predecessor, so a late AP cannot
+ * overwrite a BSP timeout and an AP cannot become ONLINE after FAILED.
+ */
+#define cpu_state(cpu) \
+	__sync_val_compare_and_swap(&cpus[cpu].state, \
+		(u32_t)CPU_STATE_OFFLINE, (u32_t)CPU_STATE_OFFLINE)
+#define cpu_transition(cpu, from, to) \
+	__sync_bool_compare_and_swap(&cpus[cpu].state, \
+		(u32_t)(from), (u32_t)(to))
+#define cpu_is_ready(cpu) (cpu_state(cpu) == CPU_STATE_ONLINE)
 
 /*
  * Big Kernel Lock prevents more then one cpu executing the kernel code
@@ -52,8 +70,13 @@ SPINLOCK_DECLARE(big_kernel_lock)
 SPINLOCK_DECLARE(boot_lock)
 	
 void wait_for_APs_to_finish_booting(void);
-void ap_boot_finished(unsigned cpu);
-void smp_shutdown_aps(void );
+int ap_boot_waiting(unsigned cpu);
+int ap_boot_initializing(unsigned cpu);
+int ap_boot_finished(unsigned cpu);
+void ap_boot_failed(unsigned cpu);
+unsigned smp_online_count(void);
+u32_t smp_online_mask(void);
+int smp_shutdown_aps(void);
 
 /* IPI handlers */
 void smp_ipi_halt_handler(void);
@@ -68,6 +91,8 @@ void smp_schedule_vminhibit(struct proc * p);
 void smp_schedule_stop_proc_save_ctx(struct proc * p);
 /* migrate the full context of a process to the destination CPU */
 void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu);
+/* true while a cross-CPU scheduling request is in flight (run queues in flux) */
+int smp_sched_ipi_pending(void);
 
 void arch_send_smp_schedule_ipi(unsigned cpu);
 void arch_smp_halt_cpu(void);

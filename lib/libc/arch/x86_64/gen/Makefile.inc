@@ -10,7 +10,7 @@ SRCS+=	__setjmp14.S
 SRCS+=	_setjmp.S
 SRCS+=	__sigsetjmp14.S
 
-.if ${RUMPRUN} != "yes"
+.if ${RUMPRUN} != "yes" && !defined(__MINIX)
 SRCS+=	resumecontext.S swapcontext.S
 SRCS+=	_lwp.c makecontext.c
 .endif

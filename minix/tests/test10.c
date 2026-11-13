@@ -70,8 +70,7 @@ int main()
   return(-1);			/* impossible */
 }
 
-void spawn(n)
-int n;
+void spawn(int n)
 {
   int pid;
 
@@ -112,10 +111,7 @@ void mkfiles()
   close(fd);
 }
 
-void cr_file(name, size)
-char *name;
-int size;
-
+void cr_file(char *name, int size)
 {
   int fd;
 

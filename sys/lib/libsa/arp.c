@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.34 2014/03/29 14:25:10 jakllsch Exp $	*/
+/*	$NetBSD: arp.c,v 1.35 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -50,6 +50,7 @@
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else
+#include <arpa/inet.h>
 #include <string.h>
 #endif
 
@@ -97,6 +98,7 @@ u_char *
 arpwhohas(struct iodesc *d, struct in_addr addr)
 {
 	int i;
+	ssize_t ns;
 	struct ether_arp *ah;
 	struct arp_list *al;
 	struct {
@@ -122,12 +124,12 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 	/* Don't overflow cache */
 	if (arp_num > ARP_NUM - 1) {
 		arp_num = 1;	/* recycle */
-		printf("arpwhohas: overflowed arp_list!\n");
+		printf("%s: overflowed arp_list!\n", __func__);
 	}
 
 #ifdef ARP_DEBUG
  	if (debug)
- 		printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
+ 		printf("%s: send request for %s\n", __func__, inet_ntoa(addr));
 #endif
 
 	(void)memset(&wbuf.data, 0, sizeof(wbuf.data));
@@ -145,21 +147,20 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 	/* Store ip address in cache (incomplete entry). */
 	al->addr = addr;
 
-	i = sendrecv(d,
+	ns = sendrecv(d,
 	    arpsend, &wbuf.data, sizeof(wbuf.data),
 	    arprecv, &rbuf.data, sizeof(rbuf.data));
-	if (i == -1) {
-		panic("arp: no response for %s",
-			  inet_ntoa(addr));
+	if (ns == -1) {
+		panic("%s: no response for %s", __func__, inet_ntoa(addr));
 	}
 
 	/* Store ethernet address in cache */
 	ah = &rbuf.data.arp;
 #ifdef ARP_DEBUG
  	if (debug) {
-		printf("arp: response from %s\n",
+		printf("%s: response from %s\n", __func__,
 		    ether_sprintf(rbuf.eh.ether_shost));
-		printf("arp: cacheing %s --> %s\n",
+		printf("%s: cacheing %s --> %s\n", __func__,
 		    inet_ntoa(addr), ether_sprintf(ah->arp_sha));
 	}
 #endif
@@ -175,7 +176,7 @@ arpsend(struct iodesc *d, void *pkt, size_t len)
 
 #ifdef ARP_DEBUG
  	if (debug)
-		printf("arpsend: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	return sendether(d, pkt, len, bcea, ETHERTYPE_ARP);
@@ -193,16 +194,15 @@ arprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef ARP_DEBUG
- 	if (debug)
-		printf("arprecv: ");
+	if (debug)
+		printf("%s: ", __func__);
 #endif
-
 	n = readether(d, pkt, len, tleft, &etype);
 	errno = 0;	/* XXX */
 	if (n == -1 || (size_t)n < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("bad len=%ld\n", (signed long) n);
+			printf("bad len=%zd\n", n);
 #endif
 		return -1;
 	}
@@ -283,7 +283,7 @@ arp_reply(struct iodesc *d, void *pkt)
 	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arp_reply: bad hrd/pro/hln/pln\n");
+			printf("%s: bad hrd/pro/hln/pln\n", __func__);
 #endif
 		return;
 	}
@@ -291,7 +291,7 @@ arp_reply(struct iodesc *d, void *pkt)
 	if (arp->arp_op != htons(ARPOP_REQUEST)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arp_reply: not request!\n");
+			printf("%s: not request!\n", __func__);
 #endif
 		return;
 	}
@@ -302,7 +302,7 @@ arp_reply(struct iodesc *d, void *pkt)
 
 #ifdef ARP_DEBUG
 	if (debug) {
-		printf("arp_reply: to %s\n", ether_sprintf(arp->arp_sha));
+		printf("%s: to %s\n", __func__, ether_sprintf(arp->arp_sha));
 	}
 #endif
 

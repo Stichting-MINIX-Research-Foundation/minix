@@ -21,8 +21,7 @@ static ssize_t _uds_sendmsg_dgram(int sock, const struct msghdr *msg,
 /*
  * Send a message on a socket using a message structure.
  */
-static ssize_t
-__sendmsg(int fd, const struct msghdr * msg, int flags)
+static ssize_t __sendmsg(int fd, const struct msghdr * msg, int flags)
 {
 	struct iovec iov;
 	const struct msghdr *msgp;

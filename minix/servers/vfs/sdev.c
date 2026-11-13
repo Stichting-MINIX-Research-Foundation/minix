@@ -55,8 +55,7 @@
  * will return a negative error code, and also store the same negative error
  * code in the m_type field of the 'm_ptr' message structure.
  */
-static int
-sdev_sendrec(struct smap * sp, message * m_ptr)
+static int sdev_sendrec(struct smap * sp, message * m_ptr)
 {
 	int r;
 
@@ -79,8 +78,7 @@ sdev_sendrec(struct smap * sp, message * m_ptr)
 /*
  * Suspend the current process for later completion of its system call.
  */
-int
-sdev_suspend(dev_t dev, cp_grant_id_t grant0, cp_grant_id_t grant1,
+int sdev_suspend(dev_t dev, cp_grant_id_t grant0, cp_grant_id_t grant1,
 	cp_grant_id_t grant2, int fd, vir_bytes buf)
 {
 
@@ -115,8 +113,7 @@ sdev_suspend(dev_t dev, cp_grant_id_t grant0, cp_grant_id_t grant1,
  * device identifier(s) stored in the 'dev' array.  Return an error code upon
  * failure.
  */
-int
-sdev_socket(int domain, int type, int protocol, dev_t * dev, int pair)
+int sdev_socket(int domain, int type, int protocol, dev_t * dev, int pair)
 {
 	struct smap *sp;
 	message m;
@@ -175,8 +172,7 @@ sdev_socket(int domain, int type, int protocol, dev_t * dev, int pair)
  * Bind or connect a socket to a particular address.  These calls may block, so
  * suspend the current process instead of making the thread wait for the reply.
  */
-static int
-sdev_bindconn(dev_t dev, int type, vir_bytes addr, unsigned int addr_len,
+static int sdev_bindconn(dev_t dev, int type, vir_bytes addr, unsigned int addr_len,
 	int filp_flags)
 {
 	struct smap *sp;
@@ -216,8 +212,7 @@ sdev_bindconn(dev_t dev, int type, vir_bytes addr, unsigned int addr_len,
 /*
  * Bind a socket to a local address.
  */
-int
-sdev_bind(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
+int sdev_bind(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
 {
 
 	return sdev_bindconn(dev, SDEV_BIND, addr, addr_len, filp_flags);
@@ -226,8 +221,7 @@ sdev_bind(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
 /*
  * Connect a socket to a remote address.
  */
-int
-sdev_connect(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
+int sdev_connect(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
 {
 
 	return sdev_bindconn(dev, SDEV_CONNECT, addr, addr_len, filp_flags);
@@ -238,8 +232,7 @@ sdev_connect(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags)
  * while cancel requests use the same request format, they require a different
  * way of handling their replies.
  */
-static int
-sdev_simple(dev_t dev, int type, int param)
+static int sdev_simple(dev_t dev, int type, int param)
 {
 	struct smap *sp;
 	sockid_t sock_id;
@@ -276,8 +269,7 @@ sdev_simple(dev_t dev, int type, int param)
 /*
  * Put a socket in listening mode.
  */
-int
-sdev_listen(dev_t dev, int backlog)
+int sdev_listen(dev_t dev, int backlog)
 {
 
 	assert(backlog >= 0);
@@ -288,8 +280,7 @@ sdev_listen(dev_t dev, int backlog)
 /*
  * Accept a new connection on a socket.
  */
-int
-sdev_accept(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags,
+int sdev_accept(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags,
 	int listen_fd)
 {
 	struct smap *sp;
@@ -336,8 +327,7 @@ sdev_accept(dev_t dev, vir_bytes addr, unsigned int addr_len, int filp_flags,
  * sockets pass through this function.  The function is named sdev_readwrite
  * rather than sdev_sendrecv to avoid confusion with sdev_sendrec.
  */
-int
-sdev_readwrite(dev_t dev, vir_bytes data_buf, size_t data_len,
+int sdev_readwrite(dev_t dev, vir_bytes data_buf, size_t data_len,
 	vir_bytes ctl_buf, unsigned int ctl_len, vir_bytes addr_buf,
 	unsigned int addr_len, int flags, int rw_flag, int filp_flags,
 	vir_bytes user_buf)
@@ -413,8 +403,7 @@ sdev_readwrite(dev_t dev, vir_bytes data_buf, size_t data_len,
 /*
  * Perform I/O control.
  */
-int
-sdev_ioctl(dev_t dev, unsigned long request, vir_bytes buf, int filp_flags)
+int sdev_ioctl(dev_t dev, unsigned long request, vir_bytes buf, int filp_flags)
 {
 	struct smap *sp;
 	sockid_t sock_id;
@@ -450,8 +439,7 @@ sdev_ioctl(dev_t dev, unsigned long request, vir_bytes buf, int filp_flags)
 /*
  * Set socket options.
  */
-int
-sdev_setsockopt(dev_t dev, int level, int name, vir_bytes addr,
+int sdev_setsockopt(dev_t dev, int level, int name, vir_bytes addr,
 	unsigned int len)
 {
 	struct smap *sp;
@@ -500,8 +488,7 @@ sdev_setsockopt(dev_t dev, int level, int name, vir_bytes addr,
 /*
  * Send and receive a "get" request: getsockopt, getsockname, or getpeername.
  */
-static int
-sdev_get(dev_t dev, int type, int level, int name, vir_bytes addr,
+static int sdev_get(dev_t dev, int type, int level, int name, vir_bytes addr,
 	unsigned int * len)
 {
 	struct smap *sp;
@@ -557,8 +544,7 @@ sdev_get(dev_t dev, int type, int level, int name, vir_bytes addr,
 /*
  * Get socket options.
  */
-int
-sdev_getsockopt(dev_t dev, int level, int name, vir_bytes addr,
+int sdev_getsockopt(dev_t dev, int level, int name, vir_bytes addr,
 	unsigned int * len)
 {
 
@@ -568,8 +554,7 @@ sdev_getsockopt(dev_t dev, int level, int name, vir_bytes addr,
 /*
  * Get the local address of a socket.
  */
-int
-sdev_getsockname(dev_t dev, vir_bytes addr, unsigned int * addr_len)
+int sdev_getsockname(dev_t dev, vir_bytes addr, unsigned int * addr_len)
 {
 
 	return sdev_get(dev, SDEV_GETSOCKNAME, 0, 0, addr, addr_len);
@@ -578,8 +563,7 @@ sdev_getsockname(dev_t dev, vir_bytes addr, unsigned int * addr_len)
 /*
  * Get the remote address of a socket.
  */
-int
-sdev_getpeername(dev_t dev, vir_bytes addr, unsigned int * addr_len)
+int sdev_getpeername(dev_t dev, vir_bytes addr, unsigned int * addr_len)
 {
 
 	return sdev_get(dev, SDEV_GETPEERNAME, 0, 0, addr, addr_len);
@@ -588,8 +572,7 @@ sdev_getpeername(dev_t dev, vir_bytes addr, unsigned int * addr_len)
 /*
  * Shut down socket send and receive operations.
  */
-int
-sdev_shutdown(dev_t dev, int how)
+int sdev_shutdown(dev_t dev, int how)
 {
 
 	assert(how == SHUT_RD || how == SHUT_WR || how == SHUT_RDWR);
@@ -600,8 +583,7 @@ sdev_shutdown(dev_t dev, int how)
 /*
  * Close the socket identified by the given socket device number.
  */
-int
-sdev_close(dev_t dev, int may_suspend)
+int sdev_close(dev_t dev, int may_suspend)
 {
 	struct smap *sp;
 	sockid_t sock_id;
@@ -643,8 +625,7 @@ sdev_close(dev_t dev, int may_suspend)
  * Initiate a select call on a socket device.  Return OK iff the request was
  * sent, without suspending the process.
  */
-int
-sdev_select(dev_t dev, int ops)
+int sdev_select(dev_t dev, int ops)
 {
 	struct smap *sp;
 	sockid_t sock_id;
@@ -675,8 +656,7 @@ sdev_select(dev_t dev, int ops)
  * call resume_accept() to let the upper socket layer handle the rest.  This
  * function is always called from a worker thread, and may thus block.
  */
-static void
-sdev_finish_accept(struct fproc * rfp, message * m_ptr)
+static void sdev_finish_accept(struct fproc * rfp, message * m_ptr)
 {
 	struct smap *sp;
 	sockid_t sock_id;
@@ -728,8 +708,7 @@ sdev_finish_accept(struct fproc * rfp, message * m_ptr)
 /*
  * Worker thread stub for finishing successful accept requests.
  */
-static void
-do_accept_reply(void)
+static void do_accept_reply(void)
 {
 
 	sdev_finish_accept(fp, &job_m_in);
@@ -755,8 +734,7 @@ do_accept_reply(void)
  * accept requests; successful accept requests have their replies routed
  * through sdev_finish_accept() instead, because those require a worker thread.
  */
-static void
-sdev_finish(struct fproc * rfp, message * m_ptr)
+static void sdev_finish(struct fproc * rfp, message * m_ptr)
 {
 	unsigned int ctl_len, addr_len;
 	int callnr, status, flags;
@@ -908,8 +886,7 @@ sdev_finish(struct fproc * rfp, message * m_ptr)
  * Abort the suspended socket call for the given process, because the
  * corresponding socket driver has died.
  */
-void
-sdev_stop(struct fproc * rfp)
+void sdev_stop(struct fproc * rfp)
 {
 	message m;
 
@@ -936,8 +913,7 @@ sdev_stop(struct fproc * rfp)
  * issue a cancel request and then block until a reply comes in; the reply may
  * indicate success, in which case it must be handled accordingly.
  */
-void
-sdev_cancel(void)
+void sdev_cancel(void)
 {
 	struct smap *sp;
 	message m;
@@ -985,8 +961,7 @@ sdev_cancel(void)
  * (in the exceptional case of accept calls) spawning a new worker thread to
  * process the reply.  This function MUST NOT block its calling thread.
  */
-void
-sdev_reply(void)
+void sdev_reply(void)
 {
 	struct fproc *rfp;
 	struct smap *sp;

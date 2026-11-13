@@ -110,8 +110,7 @@ static ip4_addr_t     allrouters;
 /**
  * Initialize the IGMP module
  */
-void
-igmp_init(void)
+void igmp_init(void)
 {
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_init: initializing\n"));
 
@@ -188,8 +187,7 @@ igmp_stop(struct netif *netif)
  *
  * @param netif network interface on which report IGMP memberships
  */
-void
-igmp_report_groups(struct netif *netif)
+void igmp_report_groups(struct netif *netif)
 {
   struct igmp_group *group = netif_igmp_data(netif);
 
@@ -319,8 +317,7 @@ igmp_remove_group(struct netif* netif, struct igmp_group *group)
  * @param inp network interface on which the packet was received
  * @param dest destination ip address of the igmp packet
  */
-void
-igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
+void igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
 {
   struct igmp_msg*   igmp;
   struct igmp_group* group;
@@ -629,8 +626,7 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
  * The igmp timer function (both for NO_SYS=1 and =0)
  * Should be called every IGMP_TMR_INTERVAL milliseconds (100 ms is default).
  */
-void
-igmp_tmr(void)
+void igmp_tmr(void)
 {
   struct netif *netif;
 
@@ -655,8 +651,7 @@ igmp_tmr(void)
  *
  * @param group an igmp_group for which a timeout is reached
  */
-static void
-igmp_timeout(struct netif *netif, struct igmp_group *group)
+static void igmp_timeout(struct netif *netif, struct igmp_group *group)
 {
   /* If the state is IGMP_GROUP_DELAYING_MEMBER then we send a report for this group
      (unless it is the allsystems group) */
@@ -680,8 +675,7 @@ igmp_timeout(struct netif *netif, struct igmp_group *group)
  * @param max_time the time in multiples of IGMP_TMR_INTERVAL (decrease with
  *        every call to igmp_tmr())
  */
-static void
-igmp_start_timer(struct igmp_group *group, u8_t max_time)
+static void igmp_start_timer(struct igmp_group *group, u8_t max_time)
 {
 #ifdef LWIP_RAND
   group->timer = max_time > 2 ? (LWIP_RAND() % max_time) : 1;
@@ -701,8 +695,7 @@ igmp_start_timer(struct igmp_group *group, u8_t max_time)
  * @param group the igmp_group for which "delaying" membership report
  * @param maxresp query delay
  */
-static void
-igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
+static void igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
 {
   if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) ||
      ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) &&
@@ -746,8 +739,7 @@ igmp_ip_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  * @param group the group to which to send the packet
  * @param type the type of igmp packet to send
  */
-static void
-igmp_send(struct netif *netif, struct igmp_group *group, u8_t type)
+static void igmp_send(struct netif *netif, struct igmp_group *group, u8_t type)
 {
   struct pbuf*     p    = NULL;
   struct igmp_msg* igmp = NULL;

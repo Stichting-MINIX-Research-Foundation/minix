@@ -323,9 +323,7 @@ const struct protent lcp_protent = {
 /*
  * noopt - Disable all options (why?).
  */
-static int
-noopt(argv)
-    char **argv;
+static int noopt(char **argv)
 {
     BZERO((char *) &lcp_wantoptions[0], sizeof (struct lcp_options));
     BZERO((char *) &lcp_allowoptions[0], sizeof (struct lcp_options));
@@ -335,9 +333,7 @@ noopt(argv)
 #endif /* PPP_OPTIONS */
 
 #ifdef HAVE_MULTILINK
-static int
-setendpoint(argv)
-    char **argv;
+static int setendpoint(char **argv)
 {
     if (str_to_epdisc(&lcp_wantoptions[0].endpoint, *argv)) {
 	lcp_wantoptions[0].neg_endpoint = 1;
@@ -347,8 +343,7 @@ setendpoint(argv)
     return 0;
 }
 
-static void
-printendpoint(opt, printer, arg)
+static void printendpoint(opt, printer, arg)
     option_t *opt;
     void (*printer) (void *, char *, ...);
     void *arg;

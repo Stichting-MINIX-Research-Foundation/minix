@@ -12,8 +12,7 @@ static int check_request(struct rs_start *rs_start);
 /*===========================================================================*
  *				   do_up				     *
  *===========================================================================*/
-int do_up(m_ptr)
-message *m_ptr;					/* request message pointer */
+int do_up(message *m_ptr)
 {
 /* A request was made to start a new system service. */
   struct rproc *rp;
@@ -940,8 +939,7 @@ int do_upd_ready(message *m_ptr)
 /*===========================================================================*
  *				do_period				     *
  *===========================================================================*/
-void do_period(m_ptr)
-message *m_ptr;
+void do_period(message *m_ptr)
 {
   register struct rproc *rp;
   register struct rprocpub *rpub;
@@ -1092,8 +1090,7 @@ void do_sigchld()
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-int do_getsysinfo(m_ptr)
-message *m_ptr;
+int do_getsysinfo(message *m_ptr)
 {
   vir_bytes src_addr, dst_addr;
   int dst_proc;
@@ -1141,8 +1138,7 @@ message *m_ptr;
 /*===========================================================================*
  *				do_lookup				     *
  *===========================================================================*/
-int do_lookup(m_ptr)
-message *m_ptr;
+int do_lookup(message *m_ptr)
 {
 	static char namebuf[100];
 	int len, r;

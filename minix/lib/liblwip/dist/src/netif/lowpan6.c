@@ -98,8 +98,7 @@ static err_t dequeue_datagram(struct lowpan6_reass_helper *lrh);
  *
  * - Remove incomplete/old packets
  */
-void
-lowpan6_tmr(void)
+void lowpan6_tmr(void)
 {
   struct lowpan6_reass_helper *lrh, *lrh_temp;
 
@@ -139,8 +138,7 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh)
   return ERR_OK;
 }
 
-static s8_t
-lowpan6_context_lookup(const ip6_addr_t *ip6addr)
+static s8_t lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 {
   s8_t i;
 
@@ -154,8 +152,7 @@ lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 }
 
 /* Determine compression mode for unicast address. */
-static s8_t
-lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_addr *mac_addr)
+static s8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_addr *mac_addr)
 {
   if (mac_addr->addr_len == 2) {
     if ((ip6addr->addr[2] == (u32_t)PP_HTONL(0x000000ff)) &&
@@ -180,8 +177,7 @@ lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_add
 }
 
 /* Determine compression mode for multicast address. */
-static s8_t
-lowpan6_get_address_mode_mc(const ip6_addr_t *ip6addr)
+static s8_t lowpan6_get_address_mode_mc(const ip6_addr_t *ip6addr)
 {
   if ((ip6addr->addr[0] == PP_HTONL(0xff020000)) &&
       (ip6addr->addr[1] == 0) &&

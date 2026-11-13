@@ -106,20 +106,12 @@ void		freelocale(locale_t);
 struct lconv	*localeconv_l(locale_t);
 locale_t	newlocale(int, const char *, locale_t);
 
-#ifndef _LIBC
-extern struct _locale	_lc_global_locale;
-#else
-extern __dso_protected struct _locale	_lc_global_locale;
-#endif
+extern		       struct _locale	_lc_global_locale;
 #define LC_GLOBAL_LOCALE	(&_lc_global_locale)
 #endif /* _POSIX_SOURCE >= 200809 || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
-#  ifndef _LIBC
-extern const struct _locale _lc_C_locale;
-#  else
-extern __dso_protected const struct _locale _lc_C_locale;
-#  endif
+extern		       const struct _locale _lc_C_locale;
 #define LC_C_LOCALE		((locale_t)__UNCONST(&_lc_C_locale))
 #endif
 __END_DECLS

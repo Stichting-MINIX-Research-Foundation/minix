@@ -3,7 +3,9 @@
 
 #include <minix/com.h>
 #include <machine/interrupt.h>
+#if !defined(__x86_64__)
 #include <machine/multiboot.h>
+#endif
 
 /* Process table and system property related types. */ 
 typedef int proc_nr_t;			/* process table entry number */

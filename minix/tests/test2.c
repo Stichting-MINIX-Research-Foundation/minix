@@ -30,9 +30,7 @@ void test2f(void);
 void test2g(void);
 void sigpip(int s);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
@@ -347,8 +345,7 @@ void test2g()
   if (t4 - t3 < clocks_per_sec) e(7);
 }
 
-void sigpip(s)
-int s;				/* for ANSI */
+void sigpip(int s)
 {
   sigct++;
   cumsig++;

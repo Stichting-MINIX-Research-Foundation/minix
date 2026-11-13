@@ -289,8 +289,7 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 /*===========================================================================*
  *				read_only				     *
  *===========================================================================*/
-int
-read_only(
+int read_only(
 	struct vnode *vp		/* ptr to inode whose file sys is to be cked */
 )
 {

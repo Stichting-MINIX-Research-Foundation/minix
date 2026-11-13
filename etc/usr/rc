@@ -258,29 +258,41 @@ start)
     # Start the LWIP service.
     up lwip -dev /dev/bpf -script /etc/rs.lwip
 
-    # Load stable seed for TCP Initial Sequence Number generation (RFC 6528).
-    # The idea here is that (especially) after a system crash, the seed stays
-    # the same, so as to make it unlikely that incoming packets for connections
-    # from before the crash are accepted on connections after the crash.
-    TCPISN_LEN=$(sysctl -n net.inet.tcp.isn_secret | awk '{print length/2}')
-    if [ ! -f $TCPISN_FILE ]; then
-	# If the /usr file system is read-only, we cannot create the file.  In
-	# that case, we draw a temporary secret from the random service.
-	if grep ' \/usr .*rw.*' /etc/mtab >/dev/null; then
-	    dd if=/dev/random of=$TCPISN_FILE bs=$TCPISN_LEN count=1 2>/dev/null
-	else
-	    TCPISN_FILE=/dev/random
+    # Load a stable TCP Initial Sequence Number seed when LWIP is running.
+    # On configurations without LWIP, the MIB node is absent; do not let an
+    # unavailable optional network service produce shell diagnostics at boot.
+    if TCPISN_SECRET=$(sysctl -n net.inet.tcp.isn_secret 2>/dev/null) &&
+        [ -n "$TCPISN_SECRET" ]; then
+	TCPISN_LEN=$(printf '%s\n' "$TCPISN_SECRET" | awk '{print length/2}')
+	case "$TCPISN_LEN" in
+	''|*[!0-9]*) TCPISN_LEN=0 ;;
+	esac
+	if [ "$TCPISN_LEN" -gt 0 ]; then
+	    if [ ! -f "$TCPISN_FILE" ]; then
+		# If /usr is read-only, keep the seed only for this boot.
+		if grep ' \/usr .*rw.*' /etc/mtab >/dev/null; then
+		    dd if=/dev/random of="$TCPISN_FILE" bs="$TCPISN_LEN" count=1 2>/dev/null
+		else
+		    TCPISN_FILE=/dev/random
+		fi
+	    fi
+	    TCPISN_NEW_SECRET=$(dd if="$TCPISN_FILE" bs="$TCPISN_LEN" count=1 2>/dev/null |
+		hexdump -v -e '/1 "%02x"')
+	    if [ -n "$TCPISN_NEW_SECRET" ]; then
+		sysctl -qw "net.inet.tcp.isn_secret=$TCPISN_NEW_SECRET" 2>/dev/null || :
+	    fi
 	fi
     fi
-    sysctl -qw net.inet.tcp.isn_secret=`dd if=$TCPISN_FILE bs=$TCPISN_LEN \
-	count=1 2>/dev/null | hexdump -v -e '/1 "%02x"'` 2>/dev/null
 
-    # LWIP does not block until all network drivers have fully initialized and
-    # reported back to LWIP.  That may prevent proper configuration of the
-    # corresponding interfaces a bit later.  Sleep up to five seconds waiting
-    # for all registered network drivers to initialize and report to LWIP.
+    # Wait briefly for detected network drivers to register with LWIP.  The
+    # MIB node is only present when the LWIP service successfully started.
     for i in 1 2 3 4 5; do
-	[ $(sysctl -n minix.lwip.drivers.pending) -gt 0 ] && sleep 1
+	LWIP_PENDING=$(sysctl -n minix.lwip.drivers.pending 2>/dev/null) || break
+	case "$LWIP_PENDING" in
+	''|*[!0-9]*) break ;;
+	esac
+	[ "$LWIP_PENDING" -gt 0 ] || break
+	sleep 1
     done
 
     up uds

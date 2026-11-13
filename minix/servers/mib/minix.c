@@ -81,8 +81,7 @@ static struct mib_node mib_minix_table[] = {
 /*
  * Initialize the CTL_MINIX subtree.
  */
-void
-mib_minix_init(struct mib_node * node)
+void mib_minix_init(struct mib_node * node)
 {
 
 	MIB_INIT_ENODE(node, mib_minix_table);

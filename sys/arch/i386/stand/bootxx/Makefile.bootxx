@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.49 2015/08/20 11:38:27 uebayasi Exp $
+# $NetBSD: Makefile.bootxx,v 1.51 2018/07/25 23:45:32 kamil Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -6,10 +6,10 @@ AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
-PIE_CFLAGS=
-PIE_LDFLAGS=
-PIE_AFLAGS=
+NOPIE=
 NOMAN=
+NOLIBCSANITIZER=
+NOSANITIZER=
 PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
@@ -24,7 +24,7 @@ BOOTXX_MAXSIZE?= $$(( ${BOOTXX_SECTORS} * 512 ))
 
 SRCS= pbr.S label.S bootxx.S boot1.c
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# nothing
 
@@ -62,8 +62,9 @@ CPPFLAGS+= -DNO_LBA_CHECK
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
-AFLAGS+=   -m32
-CPUFLAGS=  -m32
+# MINIX's clang ignores -m32 and warns that it is unused.
+AFLAGS+=   ${${ACTIVE_CC} == "clang":?:-m32}
+CPUFLAGS=  ${${ACTIVE_CC} == "clang":?:-m32}
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else

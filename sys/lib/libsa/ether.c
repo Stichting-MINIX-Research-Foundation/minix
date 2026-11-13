@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.23 2014/03/29 14:30:16 jakllsch Exp $	*/
+/*	$NetBSD: ether.c,v 1.24 2019/03/31 20:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -65,7 +65,7 @@ sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
 
 #ifdef ETHER_DEBUG
  	if (debug)
-		printf("sendether: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	eh = (struct ether_header *)pkt - 1;
@@ -79,7 +79,7 @@ sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
 	if (n == -1 || (size_t)n < sizeof(*eh))
 		return -1;
 
-	n -= sizeof(*eh);
+	n -= (ssize_t)sizeof(*eh);
 	return n;
 }
 
@@ -97,7 +97,7 @@ readether(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft,
 
 #ifdef ETHER_DEBUG
  	if (debug)
-		printf("readether: called\n");
+		printf("%s: called\n", __func__);
 #endif
 
 	eh = (struct ether_header *)pkt - 1;
@@ -112,13 +112,13 @@ readether(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft,
 	    memcmp(bcea, eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
 #ifdef ETHER_DEBUG
 		if (debug)
-			printf("readether: not ours (ea=%s)\n",
+			printf("%s: not ours (ea=%s)\n", __func__,
 			    ether_sprintf(eh->ether_dhost));
 #endif
 		return -1;
 	}
 	*etype = ntohs(eh->ether_type);
 
-	n -= sizeof(*eh);
+	n -= (ssize_t)sizeof(*eh);
 	return n;
 }

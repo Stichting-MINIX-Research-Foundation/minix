@@ -427,12 +427,7 @@ static void ppp_vslp_printer(void *arg, const char *fmt, ...) {
  * log_packet - format a packet and log it.
  */
 
-void
-log_packet(p, len, prefix, level)
-    u_char *p;
-    int len;
-    char *prefix;
-    int level;
+void log_packet(u_char *p, int len, char *prefix, int level)
 {
 	init_pr_log(prefix, level);
 	ppp_format_packet(p, len, pr_log, &level);
@@ -495,10 +490,7 @@ static char line[256];		/* line to be logged accumulated here */
 static char *linep;		/* current pointer within line */
 static int llevel;		/* level for logging */
 
-void
-init_pr_log(prefix, level)
-     const char *prefix;
-     int level;
+void init_pr_log(const char *prefix, int level)
 {
 	linep = line;
 	if (prefix != NULL) {
@@ -508,8 +500,7 @@ init_pr_log(prefix, level)
 	llevel = level;
 }
 
-void
-end_pr_log()
+void end_pr_log()
 {
 	if (linep != line) {
 		*linep = 0;
@@ -520,8 +511,7 @@ end_pr_log()
 /*
  * pr_log - printer routine for outputting to log
  */
-void
-pr_log (void *arg, const char *fmt, ...)
+void pr_log (void *arg, const char *fmt, ...)
 {
 	int l, n;
 	va_list pvar;
@@ -736,8 +726,7 @@ void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len) {
  * complete_read - read a full `count' bytes from fd,
  * unless end-of-file or an error other than EINTR is encountered.
  */
-ssize_t
-complete_read(int fd, void *buf, size_t count)
+ssize_t complete_read(int fd, void *buf, size_t count)
 {
 	size_t done;
 	ssize_t nb;
@@ -776,9 +765,7 @@ static char lock_file[MAXPATHLEN];
 /*
  * lock - create a lock file for the named device
  */
-int
-lock(dev)
-    char *dev;
+int lock(char *dev)
 {
 #ifdef LOCKLIB
     int result;
@@ -905,9 +892,7 @@ lock(dev)
  * and another process could think the lock was stale if it checked
  * between when the parent died and the child rewrote the lockfile).
  */
-int
-relock(pid)
-    int pid;
+int relock(int pid)
 {
 #ifdef LOCKLIB
     /* XXX is there a way to do this? */
@@ -941,8 +926,7 @@ relock(pid)
 /*
  * unlock - remove our lockfile
  */
-void
-unlock()
+void unlock()
 {
     if (lock_file[0]) {
 #ifdef LOCKLIB

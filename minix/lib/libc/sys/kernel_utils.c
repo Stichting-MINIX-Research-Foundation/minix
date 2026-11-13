@@ -18,6 +18,7 @@
 #include <assert.h>
 
 extern struct minix_kerninfo *_minix_kerninfo;
+extern void __minix_init(void);
 
 /*
  * Get a pointer to the kernel information page.
@@ -25,6 +26,11 @@ extern struct minix_kerninfo *_minix_kerninfo;
 struct minix_kerninfo *
 get_minix_kerninfo(void)
 {
+	/* __minix_init is a __constructor__ that may not run in UEFI exec
+	 * startup if .init_array constructors are not iterated. Call it
+	 * lazily so _minix_kerninfo is always initialized before use. */
+	if (_minix_kerninfo == NULL)
+		__minix_init();
 
 	assert(_minix_kerninfo != NULL);
 
@@ -36,8 +42,7 @@ get_minix_kerninfo(void)
  * is used by routines that set up the stack when executing a new program.
  * It is used for userland exec(2) and in various system services.
  */
-vir_bytes
-minix_get_user_sp(void)
+vir_bytes minix_get_user_sp(void)
 {
 	struct minix_kerninfo *ki;
 

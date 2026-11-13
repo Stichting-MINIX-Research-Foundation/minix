@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.66 2022/11/17 06:40:40 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.66 2022/11/17 06:40:40 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
+#include "opt_uvmhist.h"
 #endif
 
 #include <sys/param.h>
@@ -65,13 +66,23 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $")
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#ifdef UVMHIST
 #include <uvm/uvm.h>
+#endif
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_stat.h>
 
 static int ffs_balloc_ufs1(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 static int ffs_balloc_ufs2(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 
+static daddr_t
+ffs_extb(struct fs *fs, struct ufs2_dinode *dp, daddr_t nb)
+{
+	return ufs_rw64(dp->di_extb[nb], UFS_FSNEEDSWAP(fs));
+}
+   
 /*
  * Balloc defines the structure of file system storage
  * by allocating the physical blocks on a device given
@@ -121,7 +132,8 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
-	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
+	UVMHIST_LOG(ubchist, "vp %#jx lbn 0x%jx size 0x%jx", (uintptr_t)vp,
+	    lbn, size, 0);
 
 	if (lbn < 0)
 		return (EFBIG);
@@ -138,10 +150,11 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
-			error = ffs_realloccg(ip, nb,
+			error = ffs_realloccg(ip, nb, ffs_getdb(fs, ip, nb),
 				    ffs_blkpref_ufs1(ip, lastlbn, nb, flags,
 					&ip->i_ffs1_db[0]),
-				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
+				    osize, (int)fs->fs_bsize, flags, cred, bpp,
+				    &newb);
 			if (error)
 				return (error);
 			ip->i_size = ffs_lblktosize(fs, nb + 1);
@@ -214,9 +227,10 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, lbn,
+				    ffs_getdb(fs, ip, lbn),
 				    ffs_blkpref_ufs1(ip, lbn, (int)lbn, flags,
 					&ip->i_ffs1_db[0]),
-				    osize, nsize, cred, bpp, &newb);
+				    osize, nsize, flags, cred, bpp, &newb);
 				if (error)
 					return (error);
 			}
@@ -529,6 +543,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	const int needswap = UFS_FSNEEDSWAP(fs);
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
+	KASSERT((ump->um_flags & UFS_EA) != 0 || (flags & IO_EXT) == 0);
+
 	lbn = ffs_lblkno(fs, off);
 	size = ffs_blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
@@ -536,16 +552,17 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
-	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
+	UVMHIST_LOG(ubchist, "vp %#jx lbn 0x%jx size 0x%jx", (uintptr_t)vp,
+	    lbn, size, 0);
 
 	if (lbn < 0)
 		return (EFBIG);
 
-#ifdef notyet
 	/*
 	 * Check for allocating external data.
 	 */
 	if (flags & IO_EXT) {
+		struct ufs2_dinode *dp = ip->i_din.ffs2_din;
 		if (lbn >= UFS_NXADDR)
 			return (EFBIG);
 		/*
@@ -560,16 +577,15 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (osize < fs->fs_bsize && osize > 0) {
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, -1 - nb,
-				    dp->di_extb[nb],
+				    ffs_extb(fs, dp, nb),
 				    ffs_blkpref_ufs2(ip, lastlbn, (int)nb,
 					flags, &dp->di_extb[0]),
-				    osize,
-				    (int)fs->fs_bsize, cred, &bp);
+				    osize, (int)fs->fs_bsize, flags, cred,
+				    &bp, &newb);
 				if (error)
 					return (error);
-				dp->di_extsize = smalllblktosize(fs, nb + 1);
+				dp->di_extsize = ffs_lblktosize(fs, nb + 1);
 				dp->di_extb[nb] = FFS_DBTOFSB(fs, bp->b_blkno);
-				bp->b_xflags |= BX_ALTDATA;
 				ip->i_flag |= IN_CHANGE | IN_UPDATE;
 				if (flags & IO_SYNC)
 					bwrite(bp);
@@ -580,19 +596,16 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		/*
 		 * All blocks are direct blocks
 		 */
-		if (flags & BA_METAONLY)
-			panic("ffs_balloc_ufs2: BA_METAONLY for ext block");
 		nb = dp->di_extb[lbn];
-		if (nb != 0 && dp->di_extsize >= smalllblktosize(fs, lbn + 1)) {
+		if (nb != 0 && dp->di_extsize >= ffs_lblktosize(fs, lbn + 1)) {
 			error = bread(vp, -1 - lbn, fs->fs_bsize,
 			    0, &bp);
 			if (error) {
 				return (error);
 			}
-			mutex_enter(&bp->b_interlock);
+			mutex_enter(bp->b_objlock);
 			bp->b_blkno = FFS_FSBTODB(fs, nb);
-			bp->b_xflags |= BX_ALTDATA;
-			mutex_exit(&bp->b_interlock);
+			mutex_exit(bp->b_objlock);
 			*bpp = bp;
 			return (0);
 		}
@@ -608,23 +621,21 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				if (error) {
 					return (error);
 				}
-				mutex_enter(&bp->b_interlock);
+				mutex_enter(bp->b_objlock);
 				bp->b_blkno = FFS_FSBTODB(fs, nb);
-				bp->b_xflags |= BX_ALTDATA;
-				mutex_exit(&bp->b_interlock);
+				mutex_exit(bp->b_objlock);
 			} else {
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, -1 - lbn,
-				    dp->di_extb[lbn],
+				    ffs_extb(fs, dp, lbn),
 				    ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
 				        &dp->di_extb[0]),
-				    osize, nsize, cred, &bp);
+				    osize, nsize, flags, cred, &bp, &newb);
 				if (error)
 					return (error);
-				bp->b_xflags |= BX_ALTDATA;
 			}
 		} else {
-			if (dp->di_extsize < smalllblktosize(fs, lbn + 1))
+			if (dp->di_extsize < ffs_lblktosize(fs, lbn + 1))
 				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
@@ -636,17 +647,15 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (error)
 				return (error);
 			error = ffs_getblk(vp, -1 - lbn, FFS_FSBTODB(fs, newb),
-			    nsize, (flags & BA_CLRBUF) != 0, &bp);
+			    nsize, (flags & B_CLRBUF) != 0, &bp);
 			if (error)
 				return error;
-			bp->b_xflags |= BX_ALTDATA;
 		}
 		dp->di_extb[lbn] = FFS_DBTOFSB(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
 	}
-#endif
 	/*
 	 * If the next write will extend the file into a new block,
 	 * and the file is currently composed of a fragment
@@ -659,10 +668,11 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
-			error = ffs_realloccg(ip, nb,
+			error = ffs_realloccg(ip, nb, ffs_getdb(fs, ip, lbn),
 				    ffs_blkpref_ufs2(ip, lastlbn, nb, flags,
 					&ip->i_ffs2_db[0]),
-				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
+				    osize, (int)fs->fs_bsize, flags, cred, bpp,
+				    &newb);
 			if (error)
 				return (error);
 			ip->i_size = ffs_lblktosize(fs, nb + 1);
@@ -735,9 +745,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, lbn,
+				    ffs_getdb(fs, ip, lbn),
 				    ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
 					&ip->i_ffs2_db[0]),
-				    osize, nsize, cred, bpp, &newb);
+				    osize, nsize, flags, cred, bpp, &newb);
 				if (error)
 					return (error);
 			}

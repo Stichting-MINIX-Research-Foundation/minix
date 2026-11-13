@@ -38,11 +38,25 @@ static void announce(void);
 void bsp_finish_booting(void)
 {
   int i;
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: bsp_finish_booting entered\r\n");
+#endif
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
 
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before setup_sysenter_syscall\r\n");
+#endif
+  setup_sysenter_syscall();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: setup_sysenter_syscall done\r\n");
+  direct_com_print("MINIX/amd64: before cpu_identify\r\n");
+#endif
   cpu_identify();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: cpu_identify done\r\n");
+#endif
 
   vm_running = 0;
   krandom.random_sources = RANDOM_SOURCES;
@@ -55,7 +69,13 @@ void bsp_finish_booting(void)
   /* it should point somewhere */
   get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
   get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
-  announce();				/* print MINIX startup banner */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before announce\r\n");
+#endif
+  announce();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: announce done\r\n");
+#endif				/* print MINIX startup banner */
 
   /*
    * we have access to the cpu local run queue, only now schedule the processes.
@@ -69,13 +89,26 @@ void bsp_finish_booting(void)
    * CPU accounting values, as the timer initialization (indirectly) uses them.
    */
   cycles_accounting_init();
-
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: cycles_accounting_init done\r\n");
+  direct_com_print("MINIX/amd64: before boot_cpu_init_timer\r\n");
+#endif
   if (boot_cpu_init_timer(system_hz)) {
+#if defined(__x86_64__)
+	  direct_com_print("MINIX/amd64: boot_cpu_init_timer FAILED\r\n");
+#endif
 	  panic("FATAL : failed to initialize timer interrupts, "
 			  "cannot continue without any clock source!");
   }
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: boot_cpu_init_timer done\r\n");
+  direct_com_print("MINIX/amd64: before fpu_init\r\n");
+#endif
 
   fpu_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: fpu_init done\r\n");
+#endif
 
 /* Warnings for sanity checks that take time. These warnings are printed
  * so it's a clear warning no full release should be done with them
@@ -92,18 +125,33 @@ void bsp_finish_booting(void)
 #endif
 
 #ifdef CONFIG_SMP
-  cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
-  machine.processors_count = ncpus;
+  if (!cpu_transition(bsp_cpu_id, CPU_STATE_OFFLINE, CPU_STATE_ONLINE))
+	  panic("BSP CPU %u has invalid startup state", bsp_cpu_id);
   machine.bsp_id = bsp_cpu_id;
 #else
   machine.processors_count = 1;
   machine.bsp_id = 0;
+  machine.processors_online = 1U;
 #endif
   
 
   /* Kernel may no longer use bits of memory as VM will be running soon */
   kernel_may_alloc = 0;
+#ifdef CONFIG_SMP
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before wait_for_APs_to_finish_booting\r\n");
+#endif
+  wait_for_APs_to_finish_booting();
+  machine.processors_count = smp_online_count();
+  machine.processors_online = smp_online_mask();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: wait_for_APs_to_finish_booting done\r\n");
+#endif
+#endif
 
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: calling switch_to_user\r\n");
+#endif
   switch_to_user();
   NOT_REACHABLE;
 }
@@ -114,6 +162,9 @@ void bsp_finish_booting(void)
  *===========================================================================*/
 void kmain(kinfo_t *local_cbi)
 {
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kmain entered\r\n");
+#endif
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
@@ -121,16 +172,38 @@ void kmain(kinfo_t *local_cbi)
   static int bss_test;
 
   /* bss sanity check */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kmain before BSS check\r\n");
+#endif
   assert(bss_test == 0);
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kmain BSS check passed\r\n");
+#endif
   bss_test = 1;
 
   /* save a global copy of the boot parameters */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kmain before kinfo copy\r\n");
+#endif
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kinfo copy done\r\n");
+  direct_com_print("MINIX/amd64: kmain before kmessages copy\r\n");
+#endif
   memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: kmessages copy done\r\n");
+#endif
 
    /* We have done this exercise in pre_init so we expect this code
       to simply work! */
+#if defined(__x86_64__)
+   direct_com_print("MINIX/amd64: kmain before board lookup\r\n");
+#endif
    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
+#if defined(__x86_64__)
+   direct_com_print("MINIX/amd64: board lookup done\r\n");
+#endif
 #ifdef __arm__
   /* We want to initialize serial before we do any output */
   arch_ser_init();
@@ -143,10 +216,20 @@ void kmain(kinfo_t *local_cbi)
 
   assert(sizeof(kinfo.boot_procs) == sizeof(image));
   memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: boot image copy done\r\n");
+  direct_com_print("MINIX/amd64: entering cstart\r\n");
+#endif
 
   cstart();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: cstart returned\r\n");
+#endif
 
   BKL_LOCK();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: BKL acquired after cstart\r\n");
+#endif
  
    DEBUGEXTRA(("main()\n"));
 
@@ -154,12 +237,26 @@ void kmain(kinfo_t *local_cbi)
    * for proc_addr() and proc_nr() macros. Do the same for the table with
    * privilege structures for the system processes and the ipc filter pool.
    */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before proc_init\r\n");
+#endif
   proc_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: proc_init done\r\n");
+  direct_com_print("MINIX/amd64: before IPCF_POOL_INIT\r\n");
+#endif
   IPCF_POOL_INIT();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: IPCF_POOL_INIT done\r\n");
+  direct_com_print("MINIX/amd64: checking boot module count\r\n");
+#endif
 
-   if(NR_BOOT_MODULES != kinfo.mbi.mi_mods_count)
+   if(NR_BOOT_MODULES != kinfo.module_count)
    	panic("expecting %d boot processes/modules, found %d",
-		NR_BOOT_MODULES, kinfo.mbi.mi_mods_count);
+		NR_BOOT_MODULES, kinfo.module_count);
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: boot module count OK\r\n");
+#endif
 
   /* Set up proc table entries for processes in boot image. */
   for (i=0; i < NR_BOOT_PROCS; ++i) {
@@ -178,7 +275,7 @@ void kmain(kinfo_t *local_cbi)
 
 	if(i >= NR_TASKS) {
 		/* Remember this so it can be passed to VM */
-		multiboot_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
+		kinfo_module_t *mb_mod = &kinfo.module_list[i - NR_TASKS];
 		ip->start_addr = mb_mod->mod_start;
 		ip->len = mb_mod->mod_end - mb_mod->mod_start;
 	}
@@ -271,6 +368,9 @@ void kmain(kinfo_t *local_cbi)
 	DEBUGEXTRA(("done\n"));
   }
 
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: boot process table initialized\r\n");
+#endif
   /* update boot procs info for VM */
   memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
 
@@ -280,7 +380,13 @@ void kmain(kinfo_t *local_cbi)
 	ipc_call_names[n] = #n; \
 }
 
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before arch_post_init\r\n");
+#endif
   arch_post_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: arch_post_init done\r\n");
+#endif
 
   IPCNAME(SEND);
   IPCNAME(RECEIVE);
@@ -290,9 +396,19 @@ void kmain(kinfo_t *local_cbi)
   IPCNAME(SENDA);
 
   /* System and processes initialization */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: before memory_init\r\n");
+#endif
   memory_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: memory_init done\r\n");
+  direct_com_print("MINIX/amd64: before system_init\r\n");
+#endif
   DEBUGEXTRA(("system_init()... "));
   system_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: system_init done\r\n");
+#endif
   DEBUGEXTRA(("done\n"));
 
   /* The bootstrap phase is over, so we can add the physical
@@ -303,12 +419,25 @@ void kmain(kinfo_t *local_cbi)
 #ifdef CONFIG_SMP
   if (config_no_apic) {
 	  DEBUGBASIC(("APIC disabled, disables SMP, using legacy PIC\n"));
+#if defined(__x86_64__)
+	  direct_com_print("MINIX/amd64: SMP fallback because APIC is disabled\r\n");
+#endif
 	  smp_single_cpu_fallback();
   } else if (config_no_smp) {
 	  DEBUGBASIC(("SMP disabled, using legacy PIC\n"));
+#if defined(__x86_64__)
+	  direct_com_print("MINIX/amd64: SMP fallback because SMP is disabled\r\n");
+#endif
 	  smp_single_cpu_fallback();
   } else {
+#if defined(__x86_64__)
+	  direct_com_print("MINIX/amd64: entering smp_init\r\n");
+#endif
 	  smp_init();
+#if defined(__x86_64__)
+	  direct_com_print("MINIX/amd64: smp_init returned\r\n");
+	  direct_com_print("MINIX/amd64: entering bsp_finish_booting\r\n");
+#endif
 	  /*
 	   * if smp_init() returns it means that it failed and we try to finish
 	   * single CPU booting
@@ -321,6 +450,9 @@ void kmain(kinfo_t *local_cbi)
    * are going to use everytime we execute kernel code. We finish booting and we
    * never return here
    */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: entering bsp_finish_booting\r\n");
+#endif
   bsp_finish_booting();
 #endif
 
@@ -379,13 +511,15 @@ void minix_shutdown(int how)
    * such a state that we can perform the whole boot process once restarted from
    * monitor again
    */
-  if (ncpus > 1)
-	  smp_shutdown_aps();
+  if (ncpus > 1 && !kinfo.minix_panicing &&
+      smp_shutdown_aps() != 0)
+	  panic("failed to stop all application processors");
 #endif
   hw_intr_disable_all();
   stop_local_timer();
 
   /* Show shutdown message */
+  if (kinfo.boot_mode == 0) {
   direct_cls();
   if((how & RB_POWERDOWN) == RB_POWERDOWN)
 	direct_print("MINIX has halted and will now power off.\n");
@@ -394,6 +528,7 @@ void minix_shutdown(int how)
 		     "It is safe to turn off your computer.\n");
   else
 	direct_print("MINIX will now reset.\n");
+  }
   arch_shutdown(how);
 }
 
@@ -408,14 +543,27 @@ void cstart(void)
   register char *value;				/* value in key=value pair */
 
   /* low-level initialization */
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: cstart entered; before prot_init\r\n");
+#endif
   prot_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: prot_init done\r\n");
+#endif
 
+#if 0 /* NN: for debug */
   /* determine verbosity */
   if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
+#else
+	  verboseboot = VERBOSEBOOT_MAX;
+#endif
 
   /* Initialize clock variables. */
   init_clock();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: init_clock done\r\n");
+#endif
 
   /* Get memory parameters. */
   value = env_get("ac_layout");
@@ -470,8 +618,15 @@ void cstart(void)
   DEBUGEXTRA(("intr_init(0)\n"));
 
   intr_init(0);
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: intr_init done\r\n");
+  direct_com_print("MINIX/amd64: entering arch_init\r\n");
+#endif
 
   arch_init();
+#if defined(__x86_64__)
+  direct_com_print("MINIX/amd64: arch_init done\r\n");
+#endif
 }
 
 /*===========================================================================*

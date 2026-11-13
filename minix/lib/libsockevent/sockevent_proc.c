@@ -11,8 +11,7 @@ static struct sockevent_proc *sockevent_freeprocs;
 /*
  * Initialize the process suspension table.
  */
-void
-sockevent_proc_init(void)
+void sockevent_proc_init(void)
 {
 	unsigned int slot;
 
@@ -43,8 +42,7 @@ sockevent_proc_alloc(void)
 /*
  * Free up a previously allocated socket process suspension entry for reuse.
  */
-void
-sockevent_proc_free(struct sockevent_proc * spr)
+void sockevent_proc_free(struct sockevent_proc * spr)
 {
 
 	spr->spr_next = sockevent_freeprocs;

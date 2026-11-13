@@ -92,8 +92,7 @@ static u16_t        syslocation_bufsize       = 0;    /* 0=not writable */
  * @param str if non-NULL then copy str pointer
  * @param len points to string length, excluding zero terminator
  */
-void
-snmp_mib2_set_sysdescr(const u8_t *str, const u16_t *len)
+void snmp_mib2_set_sysdescr(const u8_t *str, const u16_t *len)
 {
   if (str != NULL) {
     sysdescr     = str;
@@ -114,8 +113,7 @@ snmp_mib2_set_sysdescr(const u8_t *str, const u16_t *len)
  *        otherwise complete buffer is used for string.
  *        if bufsize is set to 0, the value is regarded as read-only.
  */
-void
-snmp_mib2_set_syscontact(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
+void snmp_mib2_set_syscontact(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
 {
   if (ocstr != NULL) {
     syscontact         = ocstr;
@@ -130,8 +128,7 @@ snmp_mib2_set_syscontact(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
  * @ingroup snmp_mib2
  * see \ref snmp_mib2_set_syscontact but set pointer to readonly memory
  */
-void
-snmp_mib2_set_syscontact_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
+void snmp_mib2_set_syscontact_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
   if (ocstr != NULL) {
     syscontact         = ocstr;
@@ -156,8 +153,7 @@ snmp_mib2_set_syscontact_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
  *        otherwise complete buffer is used for string.
  *        if bufsize is set to 0, the value is regarded as read-only.
  */
-void
-snmp_mib2_set_sysname(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
+void snmp_mib2_set_sysname(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
 {
   if (ocstr != NULL) {
     sysname         = ocstr;
@@ -172,8 +168,7 @@ snmp_mib2_set_sysname(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
  * @ingroup snmp_mib2
  * see \ref snmp_mib2_set_sysname but set pointer to readonly memory
  */
-void
-snmp_mib2_set_sysname_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
+void snmp_mib2_set_sysname_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
   if (ocstr != NULL) {
     sysname         = ocstr;
@@ -197,8 +192,7 @@ snmp_mib2_set_sysname_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
  *        otherwise complete buffer is used for string.
  *        if bufsize is set to 0, the value is regarded as read-only.
  */
-void
-snmp_mib2_set_syslocation(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
+void snmp_mib2_set_syslocation(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
 {
   if (ocstr != NULL) {
     syslocation         = ocstr;
@@ -213,8 +207,7 @@ snmp_mib2_set_syslocation(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
  * @ingroup snmp_mib2
  * see \ref snmp_mib2_set_syslocation but set pointer to readonly memory
  */
-void
-snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
+void snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
   if (ocstr != NULL) {
     syslocation         = ocstr;
@@ -226,8 +219,7 @@ snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 }
 
 
-static s16_t
-system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
+static s16_t system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   const u8_t*  var = NULL;
   const s16_t* var_len;

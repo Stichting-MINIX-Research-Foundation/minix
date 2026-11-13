@@ -161,8 +161,7 @@ static const int raw_results[][__arraycount(raw_states)] = {
  * Set up a RAW socket file descriptor in the requested state and pass it to
  * socklib_sweep_call() along with local and remote addresses and their length.
  */
-static int
-raw_sweep(int domain, int type, int protocol, enum state state,
+static int raw_sweep(int domain, int type, int protocol, enum state state,
 	enum call call)
 {
 	struct sockaddr_in sinA, sinB;
@@ -258,8 +257,7 @@ raw_sweep(int domain, int type, int protocol, enum state state,
 /*
  * Sweep test for socket calls versus socket states of RAW sockets.
  */
-static void
-test92a(void)
+static void test92a(void)
 {
 
 	subtest = 1;
@@ -274,8 +272,7 @@ test92a(void)
 /*
  * Basic I/O test for raw sockets.
  */
-static void
-test92b(void)
+static void test92b(void)
 {
 	struct sockaddr_in sinA, sinB, sinC;
 	struct sockaddr_in6 sin6A, sin6B, sin6C;
@@ -407,8 +404,7 @@ test92b(void)
 /*
  * Test the IPV6_CHECKSUM socket option.
  */
-static void
-test92c(void)
+static void test92c(void)
 {
 	struct sockaddr_in6 sin6;
 	struct icmp6_hdr icmp6_hdr;
@@ -666,8 +662,7 @@ test92c(void)
 /*
  * Test the ICMP6_FILTER socket option.
  */
-static void
-test92d(void)
+static void test92d(void)
 {
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in sin;
@@ -869,8 +864,7 @@ test92d(void)
  * particular, test that no checksum is generated or verified.  By now we have
  * already tested that none of the IPv6 socket options work on such sockets.
  */
-static void
-test92e(void)
+static void test92e(void)
 {
 	char buf[sizeof(struct ip) + sizeof(struct icmp6_hdr)];
 	struct sockaddr_in sin;
@@ -912,8 +906,7 @@ struct testpkt {
 /*
  * Test the IP_HDRINCL socket option.
  */
-static void
-test92f(void)
+static void test92f(void)
 {
 	struct sockaddr_in sin;
 	struct testpkt pkt, pkt2;
@@ -1063,8 +1056,7 @@ test92f(void)
  * and receives packets with that protocol number.  We already tested earlier
  * that IP_HDRINCL is disabled by default on IPPROTO_RAW sockets, too.
  */
-static void
-test92g(void)
+static void test92g(void)
 {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
@@ -1105,8 +1097,7 @@ test92g(void)
 /*
  * Test that connected raw sockets perform correct source-based filtering.
  */
-static void
-test92h(void)
+static void test92h(void)
 {
 	struct sockaddr_in sinA, sinB;
 	struct sockaddr_in6 sin6A, sin6B;
@@ -1228,8 +1219,7 @@ test92h(void)
  * Test sending large and small RAW packets.  This test is an altered copy of
  * test91e, but has been changed to IPv6 to cover a greater spectrum together.
  */
-static void
-test92i(void)
+static void test92i(void)
 {
 	struct sockaddr_in6 sin6;
 	struct msghdr msg;
@@ -1403,8 +1393,7 @@ test92i(void)
 /*
  * Test sending and receiving with bad pointers.
  */
-static void
-test92j(void)
+static void test92j(void)
 {
 	struct sockaddr_in sin;
 	char *ptr;
@@ -1455,8 +1444,7 @@ test92j(void)
 /*
  * Test basic sysctl(2) socket enumeration support.
  */
-static void
-test92k(void)
+static void test92k(void)
 {
 	struct kinfo_pcb ki;
 	struct sockaddr_in lsin, rsin;
@@ -1602,8 +1590,7 @@ test92k(void)
  * Test local and remote IPv6 address handling.  In particular, test scope IDs
  * and IPv4-mapped IPv6 addresses.
  */
-static void
-test92l(void)
+static void test92l(void)
 {
 
 	subtest = 12;
@@ -1614,8 +1601,7 @@ test92l(void)
 /*
  * Test setting and retrieving basic multicast transmission options.
  */
-static void
-test92m(void)
+static void test92m(void)
 {
 
 	subtest = 13;
@@ -1626,8 +1612,7 @@ test92m(void)
 /*
  * Test multicast support.
  */
-static void
-test92n(void)
+static void test92n(void)
 {
 
 	subtest = 14;
@@ -1642,8 +1627,7 @@ test92n(void)
  * (including space for ethernet headers, even on loopback interfaces), but not
  * to requests exceeding a single buffer.
  */
-static void
-test92o(void)
+static void test92o(void)
 {
 	struct sockaddr_in6 sin6;
 	struct icmp6_hdr packet;
@@ -1699,8 +1683,7 @@ test92o(void)
 /*
  * Test program for LWIP RAW sockets.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

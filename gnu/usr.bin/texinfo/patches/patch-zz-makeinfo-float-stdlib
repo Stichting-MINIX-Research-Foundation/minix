@@ -1,0 +1,6 @@
+--- a/makeinfo/float.c
++++ b/makeinfo/float.c
+@@ -22,2 +22,3 @@
+ #include "system.h"
++#include <stdlib.h>
+ #include "makeinfo.h"

@@ -342,7 +342,10 @@ static int fxp_probe(fxp_t *fp, int skip)
 
 	if (fp->fxp_type == FT_UNKNOWN)
 	{
-		printf("fxp_probe: device is not supported by this driver\n");
+		if (str)
+			printf("fxp_probe: %s is not supported by this driver\n", str);
+		else
+			printf("fxp_probe: device is not supported by this driver\n");
 		return FALSE;
 	}
 
@@ -494,8 +497,7 @@ static void fxp_init_hw(fxp_t *fp, netdriver_addr_t *addr,
 /*===========================================================================*
  *				fxp_init_buf				     *
  *===========================================================================*/
-static void fxp_init_buf(fp)
-fxp_t *fp;
+static void fxp_init_buf(fxp_t *fp)
 {
 	size_t rx_totbufsize, tx_totbufsize, tot_bufsize, alloc_bufsize;
 	char *alloc_buf;
@@ -519,7 +521,7 @@ fxp_t *fp;
 	alloc_bufsize= tot_bufsize;
 	alloc_buf= alloc_contig(alloc_bufsize, AC_ALIGN4K, &ph);
 	if (alloc_buf == NULL)
-		panic("fxp_init_buf: unable to alloc_contig size: %d",
+		panic("fxp_init_buf: unable to alloc_contig size: %zu",
 			alloc_bufsize);
 
 	buf= (phys_bytes)alloc_buf;
@@ -597,8 +599,7 @@ fxp_t *fp;
 /*===========================================================================*
  *				fxp_reset_hw				     *
  *===========================================================================*/
-static void fxp_reset_hw(fp)
-fxp_t *fp;
+static void fxp_reset_hw(fxp_t *fp)
 {
 /* Inline the function in init? */
 	port_t port;
@@ -820,7 +821,7 @@ static void fxp_check_restart(fxp_t *fp)
 static ssize_t fxp_recv(struct netdriver_data *data, size_t max)
 {
 	int fxp_rx_head, fxp_rx_nbuf;
-	port_t port;
+	//port_t port;
 	unsigned packlen;
 	u16_t rfd_status;
 	u16_t rfd_res;
@@ -829,7 +830,7 @@ static ssize_t fxp_recv(struct netdriver_data *data, size_t max)
 
 	fp= fxp_state;
 
-	port= fp->fxp_base_port;
+	//port= fp->fxp_base_port;
 
 	fxp_rx_head= fp->fxp_rx_head;
 	rfdp= &fp->fxp_rx_buf[fxp_rx_head];
@@ -895,8 +896,7 @@ static ssize_t fxp_recv(struct netdriver_data *data, size_t max)
 /*===========================================================================*
  *				fxp_do_conf				     *
  *===========================================================================*/
-static void fxp_do_conf(fp)
-fxp_t *fp;
+static void fxp_do_conf(fxp_t *fp)
 {
 	int r;
 	phys_bytes bus_addr;
@@ -928,11 +928,8 @@ fxp_t *fp;
 /*===========================================================================*
  *				fxp_cu_ptr_cmd				     *
  *===========================================================================*/
-static void fxp_cu_ptr_cmd(fp, cmd, bus_addr, check_idle)
-fxp_t *fp;
-int cmd;
-phys_bytes bus_addr;
-int check_idle;
+static void fxp_cu_ptr_cmd(fxp_t *fp, int cmd, phys_bytes bus_addr,
+	 int check_idle)
 {
 	spin_t spin;
 	port_t port;
@@ -968,11 +965,8 @@ int check_idle;
 /*===========================================================================*
  *				fxp_ru_ptr_cmd				     *
  *===========================================================================*/
-static void fxp_ru_ptr_cmd(fp, cmd, bus_addr, check_idle)
-fxp_t *fp;
-int cmd;
-phys_bytes bus_addr;
-int check_idle;
+static void fxp_ru_ptr_cmd(fxp_t *fp, int cmd, phys_bytes bus_addr,
+	 int check_idle)
 {
 	spin_t spin;
 	port_t port;
@@ -1005,8 +999,7 @@ int check_idle;
 /*===========================================================================*
  *				fxp_restart_ru				     *
  *===========================================================================*/
-static void fxp_restart_ru(fp)
-fxp_t *fp;
+static void fxp_restart_ru(fxp_t *fp)
 {
 	int i, fxp_rx_nbuf;
 	port_t port;
@@ -1323,12 +1316,16 @@ static unsigned int fxp_get_link(uint32_t *media)
  *===========================================================================*/
 static void fxp_report_link(fxp_t *fp)
 {
-	u16_t mii_ctrl, mii_status, mii_id1, mii_id2,
+	u16_t mii_ctrl, mii_status,	scr;
+	int link_up;
+#if VERBOSE
+	u16_t mii_id1, mii_id2,
 		mii_ana, mii_anlpa, mii_ane, mii_extstat,
-		mii_ms_ctrl, mii_ms_status, scr;
-	u32_t oui;
+		mii_ms_ctrl, mii_ms_status;
 	int model, rev;
-	int f, link_up;
+	u32_t oui;
+	int f;
+#endif
 
 	fp->fxp_report_link= FALSE;
 
@@ -1339,6 +1336,7 @@ static void fxp_report_link(fxp_t *fp)
 	mii_ctrl= mii_read(fp, MII_CTRL);
 	mii_read(fp, MII_STATUS); /* The status reg is latched, read twice */
 	mii_status= mii_read(fp, MII_STATUS);
+#if VERBOSE
 	mii_id1= mii_read(fp, MII_PHYID_H);
 	mii_id2= mii_read(fp, MII_PHYID_L);
 	mii_ana= mii_read(fp, MII_ANA);
@@ -1358,6 +1356,7 @@ static void fxp_report_link(fxp_t *fp)
 		mii_ms_ctrl= 0;
 		mii_ms_status= 0;
 	}
+#endif
 
 	/* How do we know about the link status? */
 	link_up= !!(mii_status & MII_STATUS_LS);
@@ -1371,19 +1370,19 @@ static void fxp_report_link(fxp_t *fp)
 		return;
 	}
 
+#if VERBOSE
 	oui= (mii_id1 << MII_PH_OUI_H_C_SHIFT) |
 		((mii_id2 & MII_PL_OUI_L_MASK) >> MII_PL_OUI_L_SHIFT);
 	model= ((mii_id2 & MII_PL_MODEL_MASK) >> MII_PL_MODEL_SHIFT);
 	rev= (mii_id2 & MII_PL_REV_MASK);
 
-#if VERBOSE
 	printf("OUI 0x%06x, Model 0x%02x, Revision 0x%x\n", oui, model, rev);
 #endif
 
 	if (mii_ctrl & (MII_CTRL_LB|MII_CTRL_PD|MII_CTRL_ISO))
 	{
-		f= 1;
 #if VERBOSE
+		f= 1;
 		printf("%s: PHY: ", netdriver_name());
 		if (mii_ctrl & MII_CTRL_LB)
 		{

@@ -114,8 +114,7 @@ static struct blockdriver virtio_blk_dtab  = {
 	.bdr_device	= virtio_blk_device
 };
 
-static int
-virtio_blk_open(devminor_t minor, int access)
+static int virtio_blk_open(devminor_t minor, int access)
 {
 	struct device *dev = virtio_blk_part(minor);
 
@@ -143,8 +142,7 @@ virtio_blk_open(devminor_t minor, int access)
 	return OK;
 }
 
-static int
-virtio_blk_close(devminor_t minor)
+static int virtio_blk_close(devminor_t minor)
 {
 	struct device *dev = virtio_blk_part(minor);
 
@@ -172,8 +170,7 @@ virtio_blk_close(devminor_t minor)
 	return OK;
 }
 
-static int
-prepare_bufs(struct vumap_vir *vir, struct vumap_phys *phys, int cnt, int w)
+static int prepare_bufs(struct vumap_vir *vir, struct vumap_phys *phys, int cnt, int w)
 {
 	for (int i = 0; i < cnt ; i++) {
 
@@ -196,8 +193,7 @@ prepare_bufs(struct vumap_vir *vir, struct vumap_phys *phys, int cnt, int w)
 	return OK;
 }
 
-static int
-prepare_vir_vec(endpoint_t endpt, struct vumap_vir *vir, iovec_s_t *iv,
+static int prepare_vir_vec(endpoint_t endpt, struct vumap_vir *vir, iovec_s_t *iv,
 		int cnt, vir_bytes *size)
 {
 	/* This is pretty much the same as sum_iovec from AHCI,
@@ -234,8 +230,7 @@ prepare_vir_vec(endpoint_t endpt, struct vumap_vir *vir, iovec_s_t *iv,
 	return OK;
 }
 
-static ssize_t
-virtio_blk_transfer(devminor_t minor, int write, u64_t position,
+static ssize_t virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 		    endpoint_t endpt, iovec_t *iovec, unsigned int cnt,
 		    int flags)
 {
@@ -281,7 +276,7 @@ virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 	 * needs to be sector (512 byte) aligned...
 	 */
 	if (position % VIRTIO_BLK_BLOCK_SIZE) {
-		dprintf(("Non sector-aligned access %016llx", position));
+		dprintf(("Non sector-aligned access %016llx", (unsigned long long)position));
 		return EINVAL;
 	}
 
@@ -368,14 +363,13 @@ virtio_blk_transfer(devminor_t minor, int write, u64_t position,
 
 	/* Error path */
 	dprintf(("ERROR status=%02x sector=%llu len=%lx cnt=%d op=%s t=%d",
-		 mystatus(tid), sector, size, pcnt,
+		 mystatus(tid), (unsigned long long)sector, size, pcnt,
 		 write ? "write" : "read", tid));
 
 	return virtio_blk_status2error(mystatus(tid));
 }
 
-static int
-virtio_blk_ioctl(devminor_t minor, unsigned long req, endpoint_t endpt,
+static int virtio_blk_ioctl(devminor_t minor, unsigned long req, endpoint_t endpt,
 		 cp_grant_id_t grant, endpoint_t UNUSED(user_endpt))
 {
 	switch (req) {
@@ -417,8 +411,7 @@ virtio_blk_part(devminor_t minor)
 	return NULL;
 }
 
-static void
-virtio_blk_geometry(devminor_t minor, struct part_geom *entry)
+static void virtio_blk_geometry(devminor_t minor, struct part_geom *entry)
 {
 	/* Only for the drive */
 	if (minor != 0)
@@ -433,8 +426,7 @@ virtio_blk_geometry(devminor_t minor, struct part_geom *entry)
 	entry->sectors = blk_config.geometry.sectors;
 }
 
-static void
-virtio_blk_device_intr(void)
+static void virtio_blk_device_intr(void)
 {
 	thread_id_t *tid;
 
@@ -443,8 +435,7 @@ virtio_blk_device_intr(void)
 		blockdriver_mt_wakeup(*tid);
 }
 
-static void
-virtio_blk_spurious_intr(void)
+static void virtio_blk_spurious_intr(void)
 {
 	/* Output a single message about spurious interrupts */
 	if (spurious_interrupt)
@@ -454,8 +445,7 @@ virtio_blk_spurious_intr(void)
 	spurious_interrupt = 1;
 }
 
-static void
-virtio_blk_intr(unsigned int irqs)
+static void virtio_blk_intr(unsigned int irqs)
 {
 
 	if (virtio_had_irq(blk_dev))
@@ -466,8 +456,7 @@ virtio_blk_intr(unsigned int irqs)
 	virtio_irq_enable(blk_dev);
 }
 
-static int
-virtio_blk_device(devminor_t minor, device_id_t *id)
+static int virtio_blk_device(devminor_t minor, device_id_t *id)
 {
 	struct device *dev = virtio_blk_part(minor);
 
@@ -479,8 +468,7 @@ virtio_blk_device(devminor_t minor, device_id_t *id)
 	return OK;
 }
 
-static int
-virtio_blk_flush(void)
+static int virtio_blk_flush(void)
 {
 	struct vumap_phys phys[2];
 	size_t phys_cnt = sizeof(phys) / sizeof(phys[0]);
@@ -524,8 +512,7 @@ virtio_blk_flush(void)
 	return virtio_blk_status2error(mystatus(tid));
 }
 
-static void
-virtio_blk_terminate(void)
+static void virtio_blk_terminate(void)
 {
 	/* Don't terminate if still opened */
 	if (open_count > 0)
@@ -534,8 +521,7 @@ virtio_blk_terminate(void)
 	blockdriver_mt_terminate();
 }
 
-static void
-virtio_blk_cleanup(void)
+static void virtio_blk_cleanup(void)
 {
 	/* Just free the memory we allocated */
 	virtio_blk_free_requests();
@@ -545,8 +531,7 @@ virtio_blk_cleanup(void)
 	blk_dev = NULL;
 }
 
-static int
-virtio_blk_status2error(u8_t status)
+static int virtio_blk_status2error(u8_t status)
 {
 	/* Convert a status from the host to an error */
 	switch (status) {
@@ -561,8 +546,7 @@ virtio_blk_status2error(u8_t status)
 	return OK;
 }
 
-static int
-virtio_blk_alloc_requests(void)
+static int virtio_blk_alloc_requests(void)
 {
 	/* Allocate memory for request headers and status field */
 
@@ -583,15 +567,13 @@ virtio_blk_alloc_requests(void)
 	return OK;
 }
 
-static void
-virtio_blk_free_requests(void)
+static void virtio_blk_free_requests(void)
 {
 	free_contig(hdrs_vir, VIRTIO_BLK_NUM_THREADS * sizeof(hdrs_vir[0]));
 	free_contig(status_vir, VIRTIO_BLK_NUM_THREADS * sizeof(status_vir[0]));
 }
 
-static int
-virtio_blk_feature_setup(void)
+static int virtio_blk_feature_setup(void)
 {
 	/* Feature setup for virtio-blk
 	 *
@@ -631,8 +613,7 @@ virtio_blk_feature_setup(void)
 	return 0;
 }
 
-static int
-virtio_blk_config(void)
+static int virtio_blk_config(void)
 {
 	u32_t sectors_low, sectors_high, size_mbs;
 
@@ -650,8 +631,7 @@ virtio_blk_config(void)
 	return 0;
 }
 
-static int
-virtio_blk_probe(int skip)
+static int virtio_blk_probe(int skip)
 {
 	int r;
 
@@ -685,8 +665,7 @@ virtio_blk_probe(int skip)
 	return OK;
 }
 
-static int
-sef_cb_init_fresh(int type, sef_init_info_t *info)
+static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 	long instance = 0;
 	int r;
@@ -708,8 +687,7 @@ sef_cb_init_fresh(int type, sef_init_info_t *info)
 	panic("%s: Unexpected failure (%d)", name, r);
 }
 
-static void
-sef_cb_signal_handler(int signo)
+static void sef_cb_signal_handler(int signo)
 {
 	/* Ignore all signals but SIGTERM */
 	if (signo != SIGTERM)
@@ -727,8 +705,7 @@ sef_cb_signal_handler(int signo)
 		exit(0);
 }
 
-static void
-sef_local_startup(void)
+static void sef_local_startup(void)
 {
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -739,8 +716,7 @@ sef_local_startup(void)
 	sef_startup();
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	env_setargs(argc, argv);
 	sef_local_startup();

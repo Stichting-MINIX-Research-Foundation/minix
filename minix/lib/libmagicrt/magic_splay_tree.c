@@ -44,8 +44,7 @@ static int splay_tree_foreach_helper (splay_tree, splay_tree_node,
 
 /* Deallocate NODE (a member of SP), and all its sub-trees.  */
 
-static void
-splay_tree_delete_helper (splay_tree sp, splay_tree_node node)
+static void splay_tree_delete_helper (splay_tree sp, splay_tree_node node)
 {
   splay_tree_node pending = 0;
   splay_tree_node active = 0;
@@ -105,8 +104,7 @@ splay_tree_delete_helper (splay_tree sp, splay_tree_node node)
 /* Rotate the edge joining the left child N with its parent P.  PP is the
    grandparents pointer to P.  */
 
-static inline void
-rotate_left (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
+static inline void rotate_left (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
 {
   splay_tree_node tmp;
   tmp = n->right;
@@ -118,8 +116,7 @@ rotate_left (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
 /* Rotate the edge joining the right child N with its parent P.  PP is the
    grandparents pointer to P.  */
 
-static inline void
-rotate_right (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
+static inline void rotate_right (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
 {
   splay_tree_node tmp;
   tmp = n->left;
@@ -130,8 +127,7 @@ rotate_right (splay_tree_node *pp, splay_tree_node p, splay_tree_node n)
 
 /* Bottom up splay of key.  */
 
-static void
-splay_tree_splay (splay_tree sp, splay_tree_key key)
+static void splay_tree_splay (splay_tree sp, splay_tree_key key)
 {
   if (sp->root == 0)
     return;
@@ -198,8 +194,7 @@ splay_tree_splay (splay_tree sp, splay_tree_key key)
    returns a non-zero value, the iteration ceases immediately, and the
    value is returned.  Otherwise, this function returns 0.  */
 
-static int
-splay_tree_foreach_helper (splay_tree sp, splay_tree_node node,
+static int splay_tree_foreach_helper (splay_tree sp, splay_tree_node node,
                            splay_tree_foreach_fn fn, void *data)
 {
   int val;
@@ -226,8 +221,7 @@ splay_tree_xmalloc_allocate (int size, void *data ATTRIBUTE_UNUSED)
   return (void *) xmalloc (size);
 }
 
-static void
-splay_tree_xmalloc_deallocate (void *object, void *data ATTRIBUTE_UNUSED)
+static void splay_tree_xmalloc_deallocate (void *object, void *data ATTRIBUTE_UNUSED)
 {
   free (object);
 }
@@ -276,8 +270,7 @@ splay_tree_new_with_allocator (splay_tree_compare_fn compare_fn,
 
 /* Deallocate SP.  */
 
-void
-splay_tree_delete (splay_tree sp)
+void splay_tree_delete (splay_tree sp)
 {
   splay_tree_delete_helper (sp, sp->root);
   (*sp->deallocate) ((char*) sp, sp->allocate_data);
@@ -339,8 +332,7 @@ splay_tree_insert (splay_tree sp, splay_tree_key key, splay_tree_value value)
 
 /* Remove KEY from SP.  It is not an error if it did not exist.  */
 
-void
-splay_tree_remove (splay_tree sp, splay_tree_key key)
+void splay_tree_remove (splay_tree sp, splay_tree_key key)
 {
   splay_tree_splay (sp, key);
 
@@ -489,16 +481,14 @@ splay_tree_successor (splay_tree sp, splay_tree_key key)
    iteration ceases immediately, and the value is returned.
    Otherwise, this function returns 0.  */
 
-int
-splay_tree_foreach (splay_tree sp, splay_tree_foreach_fn fn, void *data)
+int splay_tree_foreach (splay_tree sp, splay_tree_foreach_fn fn, void *data)
 {
   return splay_tree_foreach_helper (sp, sp->root, fn, data);
 }
 
 /* Splay-tree comparison function, treating the keys as ints.  */
 
-int
-splay_tree_compare_ints (splay_tree_key k1, splay_tree_key k2)
+int splay_tree_compare_ints (splay_tree_key k1, splay_tree_key k2)
 {
   if ((int) k1 < (int) k2)
     return -1;
@@ -510,8 +500,7 @@ splay_tree_compare_ints (splay_tree_key k1, splay_tree_key k2)
 
 /* Splay-tree comparison function, treating the keys as pointers.  */
 
-int
-splay_tree_compare_pointers (splay_tree_key k1, splay_tree_key k2)
+int splay_tree_compare_pointers (splay_tree_key k1, splay_tree_key k2)
 {
   if ((char*) k1 < (char*) k2)
     return -1;

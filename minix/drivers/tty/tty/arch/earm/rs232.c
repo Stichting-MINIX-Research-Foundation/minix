@@ -160,34 +160,29 @@ static inline void writew(vir_bytes addr, int val);
 static void write_chars(rs232_t *rs);
 static void read_chars(rs232_t *rs, unsigned int status);
 
-static inline unsigned int
-readw(vir_bytes addr)
+static inline unsigned int readw(vir_bytes addr)
 {
 	return *((volatile unsigned int *) addr);
 }
 
-static inline void
-writew(vir_bytes addr, int val)
+static inline void writew(vir_bytes addr, int val)
 {
 	*((volatile unsigned int *) addr) = val;
 }
 
-static inline unsigned int
-serial_in(rs232_t *rs, int offset)
+static inline unsigned int serial_in(rs232_t *rs, int offset)
 {
 	offset <<= rs->reg_offset;
 	return readw(rs->phys_base + offset);
 }
 
-static inline void
-serial_out(rs232_t *rs, int offset, int val)
+static inline void serial_out(rs232_t *rs, int offset, int val)
 {
 	offset <<= rs->reg_offset;
 	writew(rs->phys_base + offset, val);
 }
 
-static void
-rs_reset(rs232_t *rs)
+static void rs_reset(rs232_t *rs)
 {
 	u32_t syss;
 
@@ -199,8 +194,7 @@ rs_reset(rs232_t *rs)
 	} while (!(syss & UART_SYSS_RESETDONE));
 }
 
-static int
-rs_write(register tty_t *tp, int try)
+static int rs_write(register tty_t *tp, int try)
 {
 /* (*devwrite)() routine for RS232. */
 
@@ -224,15 +218,17 @@ rs_write(register tty_t *tp, int try)
 	/* While there is something to do. */
 	for (;;) {
 		ocount = buflen(rs->obuf) - rs->ocount;
+		/* Readiness probe: a write can proceed iff the output
+		 * buffer has room.  Do not clamp by tty_outleft here:
+		 * with no write in progress that is zero, which would
+		 * deny select/POLLOUT readiness on an idle line.
+		 */
+		if (try) return (ocount > 0 && !tp->tty_inhibited);
 		count = bufend(rs->obuf) - rs->ohead;
 		if (count > ocount) count = ocount;
 		if (count > tp->tty_outleft) count = tp->tty_outleft;
-		if (count == 0 || tp->tty_inhibited) {
-			if (try) return 0;
+		if (count == 0 || tp->tty_inhibited)
 			break;
-		}
-
-		if (try) return 1;
 
 		/* Copy from user space to the RS232 output buffer. */
 		if (tp->tty_outcaller == KERNEL) {
@@ -286,8 +282,7 @@ rs_write(register tty_t *tp, int try)
 	return 1;
 }
 
-static void
-rs_echo(tty_t *tp, int character)
+static void rs_echo(tty_t *tp, int character)
 {
 /* Echo one character.  (Like rs_write, but only one character, optionally.) */
 
@@ -308,8 +303,7 @@ rs_echo(tty_t *tp, int character)
 		rs->ohead -= buflen(rs->obuf);
 }
 
-static int
-rs_ioctl(tty_t *tp, int UNUSED(dummy))
+static int rs_ioctl(tty_t *tp, int UNUSED(dummy))
 {
 /* Reconfigure the line as soon as the output has drained. */
 	rs232_t *rs = tp->tty_priv;
@@ -318,8 +312,7 @@ rs_ioctl(tty_t *tp, int UNUSED(dummy))
 	return 0;	/* dummy */
 }
 
-static unsigned int
-omap_get_divisor(rs232_t *rs, unsigned int baud)
+static unsigned int omap_get_divisor(rs232_t *rs, unsigned int baud)
 {
 /* Calculate divisor value. The 16750 has two oversampling modes to reach
  * high baud rates with little error rate (see table 17-1 in OMAP TRM).
@@ -345,8 +338,7 @@ omap_get_divisor(rs232_t *rs, unsigned int baud)
 	return (rs->uartclk / oversampling) / baud;
 }
 
-static int
-termios_baud_rate(struct termios *term)
+static int termios_baud_rate(struct termios *term)
 {
 	int baud;
 	switch(term->c_ospeed) {
@@ -474,8 +466,7 @@ static void rs_config(rs232_t *rs)
 		panic("unable to enable interrupts");
 }
 
-void
-rs_init(tty_t *tp)
+void rs_init(tty_t *tp)
 {
 /* Initialize RS232 for one line. */
 	register rs232_t *rs;
@@ -585,8 +576,7 @@ rs_init(tty_t *tp)
 	istart(rs);
 }
 
-void
-rs_interrupt(message *m)
+void rs_interrupt(message *m)
 {
 	unsigned long irq_set;
 	int line;
@@ -602,8 +592,7 @@ rs_interrupt(message *m)
 	}
 }
 
-static int
-rs_icancel(tty_t *tp, int UNUSED(dummy))
+static int rs_icancel(tty_t *tp, int UNUSED(dummy))
 {
 /* Cancel waiting input. */
 	rs232_t *rs = tp->tty_priv;
@@ -614,8 +603,7 @@ rs_icancel(tty_t *tp, int UNUSED(dummy))
 	return 0;	/* dummy */
 }
 
-static int
-rs_ocancel(tty_t *tp, int UNUSED(dummy))
+static int rs_ocancel(tty_t *tp, int UNUSED(dummy))
 {
 /* Cancel pending output. */
 	rs232_t *rs = tp->tty_priv;
@@ -627,8 +615,7 @@ rs_ocancel(tty_t *tp, int UNUSED(dummy))
 	return 0;	/* dummy */
 }
 
-static int
-rs_read(tty_t *tp, int try)
+static int rs_read(tty_t *tp, int try)
 {
 /* Process characters from the circular input buffer. */
 
@@ -667,8 +654,7 @@ rs_read(tty_t *tp, int try)
 	return 0;
 }
 
-static void
-rs_ostart(rs232_t *rs)
+static void rs_ostart(rs232_t *rs)
 {
 /* Tell RS232 there is something waiting in the output buffer. */
 
@@ -676,8 +662,7 @@ rs_ostart(rs232_t *rs)
 	if (txready(rs)) write_chars(rs);
 }
 
-static int
-rs_break_on(tty_t *tp, int UNUSED(dummy))
+static int rs_break_on(tty_t *tp, int UNUSED(dummy))
 {
 /* Raise break condition */
 	rs232_t *rs = tp->tty_priv;
@@ -688,8 +673,7 @@ rs_break_on(tty_t *tp, int UNUSED(dummy))
 	return 0;	/* dummy */
 }
 
-static int
-rs_break_off(tty_t *tp, int UNUSED(dummy))
+static int rs_break_off(tty_t *tp, int UNUSED(dummy))
 {
 /* Clear break condition */
 	rs232_t *rs = tp->tty_priv;
@@ -700,16 +684,14 @@ rs_break_off(tty_t *tp, int UNUSED(dummy))
 	return 0;	/* dummy */
 }
 
-static int
-rs_open(tty_t *tp, int UNUSED(dummy))
+static int rs_open(tty_t *tp, int UNUSED(dummy))
 {
 	/* Set the speed to 115200 by default */
 	tp->tty_termios.c_ospeed = DFLT_BAUD;
 	return 0;
 }
 
-static int
-rs_close(tty_t *tp, int UNUSED(dummy))
+static int rs_close(tty_t *tp, int UNUSED(dummy))
 {
 /* The line is closed; optionally hang up. */
 	rs232_t *rs = tp->tty_priv;
@@ -726,8 +708,7 @@ rs_close(tty_t *tp, int UNUSED(dummy))
 
 /* Low level (interrupt) routines. */
 
-static void
-rs232_handler(struct rs232 *rs)
+static void rs232_handler(struct rs232 *rs)
 {
 /* Handle interrupt of a UART port */
 	unsigned int iir, lsr;
@@ -751,8 +732,7 @@ rs232_handler(struct rs232 *rs)
 	}
 }
 
-static void
-read_chars(rs232_t *rs, unsigned int status)
+static void read_chars(rs232_t *rs, unsigned int status)
 {
 	unsigned char c;
 
@@ -791,8 +771,7 @@ read_chars(rs232_t *rs, unsigned int status)
 	}
 }
 
-static void
-write_chars(rs232_t *rs)
+static void write_chars(rs232_t *rs)
 {
 /* If there is output to do and everything is ready, do it (local device is
  * known ready).
@@ -823,8 +802,7 @@ write_chars(rs232_t *rs)
 	}
 }
 
-static unsigned int
-check_modem_status(rs232_t *rs)
+static unsigned int check_modem_status(rs232_t *rs)
 {
 /* Check modem status */
 

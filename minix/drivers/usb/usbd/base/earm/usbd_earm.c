@@ -13,8 +13,7 @@
 /*===========================================================================*
  *    usbd_init_hcd                                                          *
  *===========================================================================*/
-int
-usbd_init_hcd(void)
+int usbd_init_hcd(void)
 {
 	/* More specific platform type than just EARM */
 	static struct machine platform;
@@ -39,8 +38,7 @@ usbd_init_hcd(void)
 /*===========================================================================*
  *    usbd_deinit_hcd                                                        *
  *===========================================================================*/
-void
-usbd_deinit_hcd(void)
+void usbd_deinit_hcd(void)
 {
 	/* More specific platform type than just EARM */
 	static struct machine platform;

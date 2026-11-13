@@ -162,8 +162,7 @@ volatile u8_t pbuf_free_ooseq_pending;
 #if !NO_SYS
 static
 #endif /* !NO_SYS */
-void
-pbuf_free_ooseq(void)
+void pbuf_free_ooseq(void)
 {
   struct tcp_pcb* pcb;
   SYS_ARCH_SET(pbuf_free_ooseq_pending, 0);
@@ -183,8 +182,7 @@ pbuf_free_ooseq(void)
 /**
  * Just a callback function for tcpip_callback() that calls pbuf_free_ooseq().
  */
-static void
-pbuf_free_ooseq_callback(void *arg)
+static void pbuf_free_ooseq_callback(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
   pbuf_free_ooseq();
@@ -192,8 +190,7 @@ pbuf_free_ooseq_callback(void *arg)
 #endif /* !NO_SYS */
 
 /** Queue a call to pbuf_free_ooseq if not already queued. */
-static void
-pbuf_pool_is_empty(void)
+static void pbuf_pool_is_empty(void)
 {
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
   SYS_ARCH_SET(pbuf_free_ooseq_pending, 1);
@@ -491,8 +488,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
  *
  * @note Despite its name, pbuf_realloc cannot grow the size of a pbuf (chain).
  */
-void
-pbuf_realloc(struct pbuf *p, u16_t new_len)
+void pbuf_realloc(struct pbuf *p, u16_t new_len)
 {
   struct pbuf *q;
   u16_t rem_len; /* remaining length */
@@ -567,8 +563,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  * @return non-zero on failure, zero on success.
  *
  */
-static u8_t
-pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
+static u8_t pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
 {
   u16_t type;
   void *payload;
@@ -667,8 +662,7 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
  * @return non-zero on failure, zero on success.
  *
  */
-u8_t
-pbuf_header(struct pbuf *p, s16_t header_size_increment)
+u8_t pbuf_header(struct pbuf *p, s16_t header_size_increment)
 {
    return pbuf_header_impl(p, header_size_increment, 0);
 }
@@ -677,8 +671,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
  * Same as pbuf_header but does not check if 'header_size > 0' is allowed.
  * This is used internally only, to allow PBUF_REF for RX.
  */
-u8_t
-pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
+u8_t pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
 {
    return pbuf_header_impl(p, header_size_increment, 1);
 }
@@ -747,8 +740,7 @@ pbuf_free_header(struct pbuf *q, u16_t size)
  * 1->1->1 becomes .......
  *
  */
-u8_t
-pbuf_free(struct pbuf *p)
+u8_t pbuf_free(struct pbuf *p)
 {
   u16_t type;
   struct pbuf *q;
@@ -832,8 +824,7 @@ pbuf_free(struct pbuf *p)
  * @param p first pbuf of chain
  * @return the number of pbufs in a chain
  */
-u16_t
-pbuf_clen(const struct pbuf *p)
+u16_t pbuf_clen(const struct pbuf *p)
 {
   u16_t len;
 
@@ -852,8 +843,7 @@ pbuf_clen(const struct pbuf *p)
  * @param p pbuf to increase reference counter of
  *
  */
-void
-pbuf_ref(struct pbuf *p)
+void pbuf_ref(struct pbuf *p)
 {
   /* pbuf given? */
   if (p != NULL) {
@@ -872,8 +862,7 @@ pbuf_ref(struct pbuf *p)
  *
  * @see pbuf_chain()
  */
-void
-pbuf_cat(struct pbuf *h, struct pbuf *t)
+void pbuf_cat(struct pbuf *h, struct pbuf *t)
 {
   struct pbuf *p;
 
@@ -914,8 +903,7 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
  * The ->ref field of the first pbuf of the tail chain is adjusted.
  *
  */
-void
-pbuf_chain(struct pbuf *h, struct pbuf *t)
+void pbuf_chain(struct pbuf *h, struct pbuf *t)
 {
   pbuf_cat(h, t);
   /* t is now referenced by h */
@@ -1047,8 +1035,7 @@ pbuf_copy(struct pbuf *p_to, const struct pbuf *p_from)
  * @param offset offset into the packet buffer from where to begin copying len bytes
  * @return the number of bytes copied, or 0 on failure
  */
-u16_t
-pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
+u16_t pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
 {
   const struct pbuf *p;
   u16_t left;
@@ -1375,8 +1362,7 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
  * @param offset offset into p of the byte to return
  * @return byte at an offset into p OR ZERO IF 'offset' >= p->tot_len
  */
-u8_t
-pbuf_get_at(const struct pbuf* p, u16_t offset)
+u8_t pbuf_get_at(const struct pbuf* p, u16_t offset)
 {
   int ret = pbuf_try_get_at(p, offset);
   if (ret >= 0) {
@@ -1393,8 +1379,7 @@ pbuf_get_at(const struct pbuf* p, u16_t offset)
  * @param offset offset into p of the byte to return
  * @return byte at an offset into p [0..0xFF] OR negative if 'offset' >= p->tot_len
  */
-int
-pbuf_try_get_at(const struct pbuf* p, u16_t offset)
+int pbuf_try_get_at(const struct pbuf* p, u16_t offset)
 {
   u16_t q_idx;
   const struct pbuf* q = pbuf_skip_const(p, offset, &q_idx);
@@ -1415,8 +1400,7 @@ pbuf_try_get_at(const struct pbuf* p, u16_t offset)
  * @param offset offset into p of the byte to write
  * @param data byte to write at an offset into p
  */
-void
-pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
+void pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
 {
   u16_t q_idx;
   struct pbuf* q = pbuf_skip(p, offset, &q_idx);
@@ -1438,8 +1422,7 @@ pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
  * @return zero if equal, nonzero otherwise
  *         (0xffff if p is too short, diffoffset+1 otherwise)
  */
-u16_t
-pbuf_memcmp(const struct pbuf* p, u16_t offset, const void* s2, u16_t n)
+u16_t pbuf_memcmp(const struct pbuf* p, u16_t offset, const void* s2, u16_t n)
 {
   u16_t start = offset;
   const struct pbuf* q = p;
@@ -1480,8 +1463,7 @@ pbuf_memcmp(const struct pbuf* p, u16_t offset, const void* s2, u16_t n)
  * @param start_offset offset into p at which to start searching
  * @return 0xFFFF if substr was not found in p or the index where it was found
  */
-u16_t
-pbuf_memfind(const struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
+u16_t pbuf_memfind(const struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
 {
   u16_t i;
   u16_t max = p->tot_len - mem_len;
@@ -1507,8 +1489,7 @@ pbuf_memfind(const struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_o
  * @param substr string to search for in p, maximum length is 0xFFFE
  * @return 0xFFFF if substr was not found in p or the index where it was found
  */
-u16_t
-pbuf_strstr(const struct pbuf* p, const char* substr)
+u16_t pbuf_strstr(const struct pbuf* p, const char* substr)
 {
   size_t substr_len;
   if ((substr == NULL) || (substr[0] == 0) || (p->tot_len == 0xFFFF)) {

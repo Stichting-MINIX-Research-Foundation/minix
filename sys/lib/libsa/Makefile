@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2015/09/07 03:44:19 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.91 2019/07/21 16:53:17 rin Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -7,12 +7,21 @@ SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
 SA_USE_LOADFILE?= no		# Generic executable loading support
 SA_ENABLE_LS_OP?= no		# Filesystems ls operation
+SA_ENABLE_BIENDIAN?= no		# Biendian support
+				# (currently only for loadfile_elf*)
 
 #DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 		-DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
 #COPTS+= -ansi -pedantic -Wall
+
+# For testing
+#WARNS=6
+#NOSSP=yes
+#NOFORTIFY=yes
+#COPTS+=-ffreestanding -Wpointer-sign
+#CPPFLAGS+= -I${.CURDIR}/../../ -I${.CURDIR}
 
 .if defined(SA_EXTRADIR)
 .-include "${SA_EXTRADIR}/Makefile.inc"
@@ -34,12 +43,10 @@ SRCS+=	bootcfg.c
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
 .endif
-.if !defined(__MINIX)
 SRCS+=	bcopy.c bzero.c	# Remove me eventually.
-.endif # !defined(__MINIX)
 
 # io routines
-SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
+SRCS+=	closeall.c dev.c disklabel.c ioctl.c nullfs.c stat.c fstat.c
 SRCS+=	close.c lseek.c open.c read.c write.c
 .if (${SA_USE_CREAD} == "yes")
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
@@ -72,7 +79,12 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 
-SRCS+=	ffsv1.c ffsv2.c
+.if (${SA_ENABLE_BIENDIAN} == "yes")
+CPPFLAGS+=	-DLIBSA_BIENDIAN_SUPPORT
+SRCS+=		byteorder.c
+.endif
+
+SRCS+=	ffsv1.c ffsv2.c ffs_bswap.c
 SRCS+=	lfsv1.c lfsv2.c
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
@@ -83,23 +95,9 @@ SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
-.if defined(__MINIX)
-# NetBSD has it in libkern, MINIX lacks it
-SRCS+=	xlat_mbr_fstype.c
-.PATH.c: ${NETBSDSRCDIR}/sys/lib/libkern
-
-# NetBSD has it in libkern, MINIX has it in libc but not libminc...
-SRCS+=	md5c.c
-.PATH.c: ${NETBSDSRCDIR}/common/lib/libc/md
-.endif # defined(__MINIX)
-
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS:O}
-	@echo building standard ${LIB} library
-	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
-	@echo done
+lib${LIB}.o:: ${OBJS:O} __buildstdlib
 
 CPPFLAGS+=	-Wno-pointer-sign
 

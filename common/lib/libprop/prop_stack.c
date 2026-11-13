@@ -1,4 +1,4 @@
-/* $NetBSD: prop_stack.c,v 1.2 2007/08/30 12:23:54 joerg Exp $ */
+/* $NetBSD: prop_stack.c,v 1.3 2019/05/08 02:25:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include "prop_stack.h"
 #include "prop_object_impl.h"
+#include "prop_stack.h"
 
 void
 _prop_stack_init(prop_stack_t stack)

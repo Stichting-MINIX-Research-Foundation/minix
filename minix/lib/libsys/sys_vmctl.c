@@ -12,8 +12,8 @@ int sys_vmctl(endpoint_t who, int param, u32_t value)
   return(r);
 }
 
-/* Get page directory base register */
-int sys_vmctl_get_pdbr(endpoint_t who, u32_t *pdbr)
+/* Get page directory base register (CR3 on x86, TTBR on ARM). */
+int sys_vmctl_get_pdbr(endpoint_t who, phys_bytes *pdbr)
 {
   message m;
   int r;
@@ -22,7 +22,7 @@ int sys_vmctl_get_pdbr(endpoint_t who, u32_t *pdbr)
   m.SVMCTL_PARAM = VMCTL_GET_PDBR;
   r = _kernel_call(SYS_VMCTL, &m);
   if(r == OK) {
-	*pdbr = m.SVMCTL_VALUE;
+	*pdbr = (phys_bytes)m.SVMCTL_PTROOT;
   }
   return(r);
 }

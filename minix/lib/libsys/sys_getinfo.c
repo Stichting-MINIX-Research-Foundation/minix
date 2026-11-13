@@ -6,12 +6,7 @@
 /*===========================================================================*
  *                                sys_getinfo				     *
  *===========================================================================*/
-int sys_getinfo(request, ptr, len, ptr2, len2)
-int request; 				/* system info requested */
-void *ptr;				/* pointer where to store it */
-int len;				/* max length of value to get */
-void *ptr2;				/* second pointer */
-int len2;				/* length or process nr */ 
+int sys_getinfo(int request, void *ptr, int len, void *ptr2, int len2)
 {
     message m;
 

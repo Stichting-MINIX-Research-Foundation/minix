@@ -7,17 +7,26 @@
 #include "serial.h"
 #include "glo.h"
 
+#define MULTIBOOT_VIDEO_BUFFER		0xB8000
+
+#define MULTIBOOT_CONSOLE_LINES		25
+#define MULTIBOOT_CONSOLE_COLS		80
+
 /* Give non-zero values to avoid them in BSS */
 static int print_line = 1, print_col = 1;
 
 #include <sys/video.h>
 
-extern char *video_mem;
+extern kinfo_t kinfo;
+static char *video_mem;
+
 #define VIDOFFSET(line, col) ((line) * MULTIBOOT_CONSOLE_COLS * 2 + (col) * 2)
 #define VIDSIZE VIDOFFSET(MULTIBOOT_CONSOLE_LINES-1,MULTIBOOT_CONSOLE_COLS-1)
 
 void direct_put_char(char c, int line, int col) 
 {
+	if (kinfo.boot_mode != 0) return;
+	video_mem = (char *)MULTIBOOT_VIDEO_BUFFER;
 	int offset = VIDOFFSET(line, col);
 	video_mem[offset] = c;
 	video_mem[offset+1] = 0x07;	/* grey-on-black */
@@ -25,6 +34,8 @@ void direct_put_char(char c, int line, int col)
 
 static char direct_get_char(int line, int col) 
 {
+	video_mem = (char *)MULTIBOOT_VIDEO_BUFFER;
+	//video_mem = (char *)(kinfo.fb.framebuffer_addr);
 	return video_mem[VIDOFFSET(line, col)];
 }
 
@@ -33,6 +44,7 @@ void direct_cls(void)
 	/* Clear screen */
 	int i,j;
 
+	if (kinfo.boot_mode != 0) return;
 	for(i = 0; i < MULTIBOOT_CONSOLE_COLS; i++)
 		for(j = 0; j < MULTIBOOT_CONSOLE_LINES; j++)
 			direct_put_char(' ', j, i);
@@ -62,6 +74,7 @@ static void direct_scroll_up(int lines)
 
 void direct_print_char(char c)
 {
+	if (kinfo.boot_mode != 0) return;
 	while (print_line >= MULTIBOOT_CONSOLE_LINES)
 		direct_scroll_up(1);
 
@@ -113,6 +126,8 @@ void direct_print(const char *str)
 int direct_read_char(unsigned char *ch)
 {
 	unsigned long sb;
+
+	if (kinfo.boot_mode != 0) return 0;
 
 	sb = inb(KB_STATUS);
 

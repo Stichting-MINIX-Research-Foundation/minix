@@ -41,8 +41,7 @@
 #include "lwip/sys.h"
 #include <string.h>
         
-static void
-call_synced_function(struct threadsync_data *call_data, snmp_threadsync_called_fn fn)
+static void call_synced_function(struct threadsync_data *call_data, snmp_threadsync_called_fn fn)
 {
   sys_mutex_lock(&call_data->threadsync_node->instance->sem_usage_mutex);
   call_data->threadsync_node->instance->sync_fn(fn, call_data);
@@ -50,8 +49,7 @@ call_synced_function(struct threadsync_data *call_data, snmp_threadsync_called_f
   sys_mutex_unlock(&call_data->threadsync_node->instance->sem_usage_mutex);
 }
 
-static void
-threadsync_get_value_synced(void *ctx)
+static void threadsync_get_value_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
@@ -60,8 +58,7 @@ threadsync_get_value_synced(void *ctx)
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
 
-static s16_t
-threadsync_get_value(struct snmp_node_instance* instance, void* value)
+static s16_t threadsync_get_value(struct snmp_node_instance* instance, void* value)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
 
@@ -71,8 +68,7 @@ threadsync_get_value(struct snmp_node_instance* instance, void* value)
   return call_data->retval.s16;
 }
 
-static void
-threadsync_set_test_synced(void *ctx)
+static void threadsync_set_test_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
@@ -93,8 +89,7 @@ threadsync_set_test(struct snmp_node_instance* instance, u16_t len, void *value)
   return call_data->retval.err;
 }
 
-static void
-threadsync_set_value_synced(void *ctx)
+static void threadsync_set_value_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
@@ -115,8 +110,7 @@ threadsync_set_value(struct snmp_node_instance* instance, u16_t len, void *value
   return call_data->retval.err;
 }
 
-static void
-threadsync_release_instance_synced(void* ctx)
+static void threadsync_release_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
   
@@ -125,8 +119,7 @@ threadsync_release_instance_synced(void* ctx)
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
 
-static void
-threadsync_release_instance(struct snmp_node_instance *instance)
+static void threadsync_release_instance(struct snmp_node_instance *instance)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
   
@@ -135,8 +128,7 @@ threadsync_release_instance(struct snmp_node_instance *instance)
   }
 }
 
-static void
-get_instance_synced(void* ctx)
+static void get_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
   const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;
@@ -146,8 +138,7 @@ get_instance_synced(void* ctx)
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
 
-static void
-get_next_instance_synced(void* ctx)
+static void get_next_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
   const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;

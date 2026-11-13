@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.39 2015/05/20 18:21:17 riastradh Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.40 2017/02/09 04:37:35 kre Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.39 2015/05/20 18:21:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.40 2017/02/09 04:37:35 kre Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -52,17 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.39 2015/05/20 18:21:17 riastradh Exp
 #endif
 
 void
-ffs_sb_swap(struct fs *o, struct fs *n)
+ffs_sb_swap(const struct fs *o, struct fs *n)
 {
 	size_t i;
-	u_int32_t *o32, *n32;
+	const u_int32_t *o32;
+	u_int32_t *n32;
 
 	/*
 	 * In order to avoid a lot of lines, as the first N fields (52)
 	 * of the superblock up to fs_fmod are u_int32_t, we just loop
 	 * here to convert them.
 	 */
-	o32 = (u_int32_t *)o;
+	o32 = (const u_int32_t *)o;
 	n32 = (u_int32_t *)n;
 	for (i = 0; i < offsetof(struct fs, fs_fmod) / sizeof(u_int32_t); i++)
 		n32[i] = bswap32(o32[i]);
@@ -178,7 +179,7 @@ ffs_csum_swap(struct csum *o, struct csum *n, int size)
 }
 
 void
-ffs_csumtotal_swap(struct csum_total *o, struct csum_total *n)
+ffs_csumtotal_swap(const struct csum_total *o, struct csum_total *n)
 {
 	n->cs_ndir = bswap64(o->cs_ndir);
 	n->cs_nbfree = bswap64(o->cs_nbfree);

@@ -8,6 +8,8 @@
 
 #if defined(__i386__)
 #include "kernel/arch/i386/include/archconst.h"
+#elif defined(__x86_64__)
+#include "kernel/arch/x86_64/include/archconst.h"
 #endif
 
 #ifndef CONFIG_MAX_CPUS
@@ -366,6 +368,7 @@ void mib_remote_init(void);
 int mib_register(const message *, int);
 int mib_deregister(const message *, int);
 int mib_remote_info(unsigned int, uint32_t, char *, size_t, char *, size_t);
+int mib_remote_evict_stale(struct mib_node *);
 ssize_t mib_remote_call(struct mib_call *, struct mib_node *,
 	struct mib_oldp *, struct mib_newp *);
 

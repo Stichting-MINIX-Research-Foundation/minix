@@ -1,0 +1,2177 @@
+--- a/makeinfo/cmds.c
++++ b/makeinfo/cmds.c
+@@ -42,10 +42,10 @@
+ #endif
+ 
+ /* Options. */
+-static void cm_exampleindent (void),
+-     cm_firstparagraphindent (void),
+-     cm_paragraphindent (void),
+-     cm_novalidate (void);
++static void cm_exampleindent (int arg, int arg2, int arg3),
++     cm_firstparagraphindent (int arg, int arg2, int arg3),
++     cm_paragraphindent (int arg, int arg2, int arg3),
++     cm_novalidate (int arg, int arg2, int arg3);
+ 
+ /* Internals. */
+ static void cm_obsolete (int arg, int start, int end),
+@@ -375,14 +375,14 @@ COMMAND command_table[] = {
+ 
+ /* Commands which insert their own names. */
+ void
+-insert_self (int arg)
++insert_self (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     add_word (command);
+ }
+ 
+ void
+-insert_space (int arg)
++insert_space (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -396,7 +396,7 @@ insert_space (int arg)
+ /* Insert a comma.  Useful when a literal , would break our parsing of
+    multiple arguments.  */
+ void
+-cm_comma (int arg)
++cm_comma (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     add_char (',');
+@@ -405,7 +405,7 @@ cm_comma (int arg)
+ 
+ /* Force a line break in the output. */
+ void
+-cm_asterisk (void)
++cm_asterisk (int arg, int arg2, int arg3)
+ {
+   if (html)
+     add_word ("<br>");
+@@ -416,13 +416,13 @@ cm_asterisk (void)
+   else
+     {
+       close_single_paragraph ();
+-      cm_noindent ();
++      cm_noindent (0, 0, 0);
+     }
+ }
+ 
+ /* Insert ellipsis. */
+ void
+-cm_dots (int arg)
++cm_dots (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -440,7 +440,7 @@ cm_dots (int arg)
+ 
+ /* Insert ellipsis for sentence end. */
+ void
+-cm_enddots (int arg)
++cm_enddots (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -460,7 +460,7 @@ cm_enddots (int arg)
+ }
+ 
+ void
+-cm_bullet (int arg)
++cm_bullet (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -476,7 +476,7 @@ cm_bullet (int arg)
+ }
+ 
+ void
+-cm_minus (int arg)
++cm_minus (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -491,7 +491,7 @@ cm_minus (int arg)
+ 
+ /* Formatting a dimension unit.  */
+ void
+-cm_dmn (int arg)
++cm_dmn (int arg, int arg2, int arg3)
+ {
+   if (html)
+     insert_html_tag_with_attribute (arg, "span", "class=\"dmn\"");
+@@ -504,7 +504,7 @@ cm_dmn (int arg)
+ 
+ /* Insert "TeX". */
+ void
+-cm_TeX (int arg)
++cm_TeX (int arg, int arg2, int arg3)
+ {
+   static int last_position;
+ 
+@@ -526,7 +526,7 @@ cm_TeX (int arg)
+ 
+ /* Insert "LaTeX".  */
+ void
+-cm_LaTeX (int arg)
++cm_LaTeX (int arg, int arg2, int arg3)
+ {
+   static int last_position;
+ 
+@@ -548,7 +548,7 @@ cm_LaTeX (int arg)
+ 
+ /* Copyright symbol.  */
+ void
+-cm_copyright (int arg)
++cm_copyright (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -565,7 +565,7 @@ cm_copyright (int arg)
+ 
+ /* Registered symbol.  */
+ void
+-cm_registeredsymbol (int arg)
++cm_registeredsymbol (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -581,7 +581,7 @@ cm_registeredsymbol (int arg)
+ }
+ 
+ void
+-cm_today (int arg)
++cm_today (int arg, int arg2, int arg3)
+ {
+   static char *months[12] =
+     { N_("January"), N_("February"), N_("March"), N_("April"), N_("May"),
+@@ -597,7 +597,7 @@ cm_today (int arg)
+ }
+ 
+ void
+-cm_comment (void)
++cm_comment (int arg, int arg2, int arg3)
+ {
+   /* For HTML, do not output comments before HTML header is written,
+      otherwise comments before @settitle cause an empty <title> in the
+@@ -649,7 +649,7 @@ cm_comment (void)
+       free (line);
+     }
+   else
+-    cm_ignore_line ();
++    cm_ignore_line (0, 0, 0);
+ }
+ 
+ 
+@@ -769,19 +769,19 @@ cm_acronym_or_abbr (int arg, int is_abbr)
+ }
+ 
+ void
+-cm_acronym (int arg)
++cm_acronym (int arg, int arg2, int arg3)
+ {
+   cm_acronym_or_abbr (arg, 0);
+ }
+ 
+ void
+-cm_abbr (int arg)
++cm_abbr (int arg, int arg2, int arg3)
+ {
+   cm_acronym_or_abbr (arg, 1);
+ }
+ 
+ void
+-cm_tt (int arg)
++cm_tt (int arg, int arg2, int arg3)
+ {
+   /* @t{} is a no-op in Info.  */
+   if (html)
+@@ -791,7 +791,7 @@ cm_tt (int arg)
+ }
+ 
+ void
+-cm_code (int arg)
++cm_code (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     in_fixed_width_font++;
+@@ -857,7 +857,7 @@ cm_code (int arg)
+ }
+ 
+ void
+-cm_kbd (int arg)
++cm_kbd (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     xml_insert_element (KBD, arg);
+@@ -873,7 +873,7 @@ cm_kbd (int arg)
+     { /* People use @kbd in an example to get the "user input" font.
+          We don't want quotes in that case.  */
+       if (!in_fixed_width_font)
+-        cm_code (arg);
++        cm_code (arg, 0, 0);
+     }
+ }
+ 
+@@ -899,7 +899,7 @@ cm_indicate_url (int arg, int start, int end)
+ }
+ 
+ void
+-cm_key (int arg)
++cm_key (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     xml_insert_element (KEY, arg);
+@@ -987,7 +987,7 @@ cm_sc (int arg, int start_pos, int end_pos)
+ }
+ 
+ void
+-cm_dfn (int arg, int position)
++cm_dfn (int arg, int position, int arg3)
+ {
+   if (xml)
+     xml_insert_element (DFN, arg);
+@@ -1003,7 +1003,7 @@ cm_dfn (int arg, int position)
+ }
+ 
+ void
+-cm_emph (int arg)
++cm_emph (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     xml_insert_element (EMPH, arg);
+@@ -1014,7 +1014,7 @@ cm_emph (int arg)
+ }
+ 
+ void
+-cm_verb (int arg)
++cm_verb (int arg, int arg2, int arg3)
+ {
+   int character;
+   int delimiter = 0; /* avoid warning */
+@@ -1118,7 +1118,7 @@ cm_strong (int arg, int start_pos, int end_pos)
+ }
+ 
+ void
+-cm_cite (int arg, int position)
++cm_cite (int arg, int position, int arg3)
+ {
+   if (xml)
+     xml_insert_element (CITE, arg);        
+@@ -1143,7 +1143,7 @@ cm_not_fixed_width (int arg, int start, int end)
+ }
+ 
+ void
+-cm_i (int arg)
++cm_i (int arg, int arg2, int arg3)
+ {
+   /* Make use of <lineannotation> of Docbook, if we are
+      inside an @example or similar.  */
+@@ -1159,7 +1159,7 @@ cm_i (int arg)
+ }
+ 
+ void
+-cm_slanted (int arg)
++cm_slanted (int arg, int arg2, int arg3)
+ {
+   /* Make use of <lineannotation> of Docbook, if we are
+      inside an @example or similar.  */
+@@ -1175,7 +1175,7 @@ cm_slanted (int arg)
+ }
+ 
+ void
+-cm_b (int arg)
++cm_b (int arg, int arg2, int arg3)
+ {
+   /* See cm_i comments.  */
+   extern int printing_index;
+@@ -1192,7 +1192,7 @@ cm_b (int arg)
+ }
+ 
+ void
+-cm_r (int arg)
++cm_r (int arg, int arg2, int arg3)
+ {
+   /* See cm_i comments.  */
+   extern int printing_index;
+@@ -1207,7 +1207,7 @@ cm_r (int arg)
+ }
+ 
+ void
+-cm_sansserif (int arg)
++cm_sansserif (int arg, int arg2, int arg3)
+ {
+   /* See cm_i comments.  */
+   extern int printing_index;
+@@ -1222,7 +1222,7 @@ cm_sansserif (int arg)
+ }
+ 
+ void
+-cm_titlefont (int arg)
++cm_titlefont (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     xml_insert_element (TITLEFONT, arg);
+@@ -1244,30 +1244,30 @@ cm_titlefont (int arg)
+ /* Unfortunately, we cannot interpret @math{} contents like TeX does.  We just
+    pass them through.  */
+ void
+-cm_math (int arg)
++cm_math (int arg, int arg2, int arg3)
+ {
+   if (xml && !docbook)
+     xml_insert_element (MATH, arg);
+ }
+ 
+ /* Various commands are no-op's. */
+ void
+-cm_no_op (void)
++cm_no_op (int arg, int arg2, int arg3)
+ {
+ }
+ 
+ 
+ /* For proofing single chapters, etc.  */
+ void
+-cm_novalidate (void)
++cm_novalidate (int arg, int arg2, int arg3)
+ {
+   validating = 0;
+ }
+ 
+ 
+ /* Prevent the argument from being split across two lines. */
+ void
+-cm_w (int arg)
++cm_w (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     non_splitting_words++;
+@@ -1287,15 +1287,15 @@ cm_w (int arg)
+    for TeX (the space stretches and stretches, and does not inhibit
+    hyphenation).  */
+ void
+-cm_tie (int arg)
++cm_tie (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+-      cm_w (START);
++      cm_w (START, 0, 0);
+       add_char (' ');
+     }
+   else
+-    cm_w (END);
++    cm_w (END, 0, 0);
+ }
+ 
+ /* Explain that this command is obsolete, thus the user shouldn't
+@@ -1311,16 +1311,16 @@ cm_obsolete (int arg, int start, int end)
+ /* Inhibit the indentation of the next paragraph, but not of following
+    paragraphs.  */
+ void
+-cm_noindent (void)
++cm_noindent (int arg, int arg2, int arg3)
+ {
+   if (!inhibit_paragraph_indentation)
+     inhibit_paragraph_indentation = -1;
+ }
+ 
+ void
+-cm_noindent_cmd (void)
++cm_noindent_cmd (int arg, int arg2, int arg3)
+ {
+-  cm_noindent ();
++  cm_noindent (0, 0, 0);
+   xml_no_indent = 1;
+   skip_whitespace_and_newlines();
+ 
+@@ -1337,7 +1337,7 @@ cm_noindent_cmd (void)
+ 
+ /* Force indentation of the next paragraph. */
+ void
+-cm_indent (void)
++cm_indent (int arg, int arg2, int arg3)
+ {
+   inhibit_paragraph_indentation = 0;
+   xml_no_indent = 0;
+@@ -1358,7 +1358,7 @@ cm_indent (void)
+    switch files.  Finally, complain, or at least warn.  It doesn't
+    really matter, anyway, since this doesn't get executed.  */
+ void
+-cm_setfilename (void)
++cm_setfilename (int arg, int arg2, int arg3)
+ {
+   char *filename;
+   get_rest_of_line (1, &filename);
+@@ -1369,7 +1369,7 @@ cm_setfilename (void)
+ }
+ 
+ void
+-cm_settitle (void)
++cm_settitle (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1396,14 +1396,14 @@ cm_ignore_arg (int arg, int start_pos, int end_pos)
+ 
+ /* Ignore argument on rest of line.  */
+ void
+-cm_ignore_line (void)
++cm_ignore_line (int arg, int arg2, int arg3)
+ {
+   discard_until ("\n");
+ }
+ 
+ /* Insert the number of blank lines passed as argument. */
+ void
+-cm_sp (void)
++cm_sp (int arg, int arg2, int arg3)
+ {
+   int lines;
+   char *line;
+@@ -1456,12 +1456,12 @@ cm_sp (void)
+ 
+ /* @dircategory LINE outputs INFO-DIR-SECTION LINE, unless --no-headers.  */ 
+ void
+-cm_dircategory (void)
++cm_dircategory (int arg, int arg2, int arg3)
+ {
+   char *line;
+ 
+   if (html || docbook)
+-    cm_ignore_line ();
++    cm_ignore_line (0, 0, 0);
+   else if (xml)
+     {
+       xml_insert_element (DIRCATEGORY, START);
+@@ -1490,7 +1490,7 @@ cm_dircategory (void)
+    Then center the line of text.
+    */
+ void
+-cm_center (void)
++cm_center (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1510,7 +1510,7 @@ cm_center (void)
+       int fudge_factor = 1;
+ 
+       filling_enabled = indented_fill = 0;
+-      cm_noindent ();
++      cm_noindent (0, 0, 0);
+       start = output_paragraph_offset;
+ 
+       if (html)
+@@ -1562,47 +1562,47 @@ cm_center (void)
+ 
+ /* Show what an expression returns. */
+ void
+-cm_result (int arg)
++cm_result (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word (html ? "=&gt;" : "=>");
+ }
+ 
+ /* What an expression expands to. */
+ void
+-cm_expansion (int arg)
++cm_expansion (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word (html ? "==&gt;" : "==>");
+ }
+ 
+ /* Indicates two expressions are equivalent. */
+ void
+-cm_equiv (int arg)
++cm_equiv (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word ("==");
+ }
+ 
+ /* What an expression may print. */
+ void
+-cm_print (int arg)
++cm_print (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word ("-|");
+ }
+ 
+ /* An error signaled. */
+ void
+-cm_error (int arg)
++cm_error (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word (html ? "error--&gt;" : "error-->");
+ }
+ 
+ /* The location of point in an example of a buffer. */
+ void
+-cm_point (int arg)
++cm_point (int arg, int arg2, int arg3)
+ {
+   if (arg == END)
+     add_word ("-!-");
+@@ -1611,7 +1611,7 @@ cm_point (int arg)
+ /* @exdent: Start a new line with just this text on it.
+    The text is outdented one level if possible. */
+ void
+-cm_exdent (void)
++cm_exdent (int arg, int arg2, int arg3)
+ {
+   char *line;
+   int save_indent = current_indent;
+@@ -1730,15 +1730,15 @@ handle_include (int verbatim_include)
+ 
+ /* Include file as if put in @verbatim environment */
+ void
+-cm_verbatiminclude (void)
++cm_verbatiminclude (int arg, int arg2, int arg3)
+ {
+   handle_include (1); 
+ }
+ 
+ 
+ /* Remember this file, and move onto the next. */
+ void
+-cm_include (void)
++cm_include (int arg, int arg2, int arg3)
+ {
+   handle_include (0); 
+ }
+@@ -1747,7 +1747,7 @@ cm_include (void)
+ /* @bye: Signals end of processing.  Easy to make this happen. */
+ 
+ void
+-cm_bye (void)
++cm_bye (int arg, int arg2, int arg3)
+ {
+   discard_braces (); /* should not have any unclosed braces left */
+   input_text_offset = input_text_length;
+@@ -1756,7 +1756,7 @@ cm_bye (void)
+ /* @paragraphindent */
+ 
+ static void
+-cm_paragraphindent (void)
++cm_paragraphindent (int arg1, int arg2, int arg3)
+ {
+   char *arg;
+ 
+@@ -1782,7 +1782,7 @@ set_example_indentation_increment (char *string)
+ }
+ 
+ static void
+-cm_exampleindent (void)
++cm_exampleindent (int arg1, int arg2, int arg3)
+ {
+   char *arg;
+   
+@@ -1812,7 +1812,7 @@ set_firstparagraphindent (char *string)
+ }
+ 
+ static void
+-cm_firstparagraphindent (void)
++cm_firstparagraphindent (int arg1, int arg2, int arg3)
+ {
+   char *arg;
+ 
+@@ -1828,7 +1828,7 @@ cm_firstparagraphindent (void)
+   
+    Do this also for ?, !, and :.  */
+ void
+-cm_colon (void)
++cm_colon (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1861,7 +1861,7 @@ cm_colon (void)
+ /* Ending sentences explicitly.  Currently, only outputs entities for XML
+    output, for other formats it calls insert_self.  */
+ void
+-cm_punct (int arg)
++cm_punct (int arg, int arg2, int arg3)
+ {
+   if (xml && !docbook)
+     {
+@@ -1880,6 +1880,6 @@ cm_punct (int arg)
+     }
+   else
+     {
+-      insert_self (arg);
++      insert_self (arg, 0, 0);
+     }
+ }
+--- a/makeinfo/cmds.h
++++ b/makeinfo/cmds.h
+@@ -26,7 +26,7 @@
+ /* The three arguments a command can get are a flag saying whether it is
+    before argument parsing (START) or after (END), the starting position
+    of the arguments, and the ending position.  */
+-typedef void COMMAND_FUNCTION (); /* So we can say COMMAND_FUNCTION *foo; */
++typedef void COMMAND_FUNCTION (int, int, int);
+ 
+ /* Each command has an associated function.  When the command is
+    encountered in the text, the associated function is called with START
+@@ -58,158 +58,158 @@ typedef struct acronym_desc
+ } ACRONYM_DESC;
+ 
+ /* Texinfo commands.  */
+-extern void insert_self (int arg),
+-  insert_space (int arg),
+-  cm_ignore_line (void),
++extern void insert_self (int arg, int arg2, int arg3),
++  insert_space (int arg, int arg2, int arg3),
++  cm_ignore_line (int arg, int arg2, int arg3),
+   cm_ignore_arg (int arg, int start_pos, int end_pos),
+-  cm_comment (void),
+-  cm_no_op (void);
++  cm_comment (int arg, int arg2, int arg3),
++  cm_no_op (int arg, int arg2, int arg3);
+ 
+ /* Document structure and meta information.  */
+-extern void cm_setfilename (void),
+-  cm_settitle (void),
+-  cm_documentdescription (void),
+-  cm_node (void),
+-  cm_menu (void),
+-  cm_detailmenu (void),
+-  cm_dircategory (void),
+-  cm_direntry (void),
+-  cm_bye (void);
++extern void cm_setfilename (int arg, int arg2, int arg3),
++  cm_settitle (int arg, int arg2, int arg3),
++  cm_documentdescription (int arg, int arg2, int arg3),
++  cm_node (int arg, int arg2, int arg3),
++  cm_menu (int arg, int arg2, int arg3),
++  cm_detailmenu (int arg, int arg2, int arg3),
++  cm_dircategory (int arg, int arg2, int arg3),
++  cm_direntry (int arg, int arg2, int arg3),
++  cm_bye (int arg, int arg2, int arg3);
+ 
+ /* File inclusion.  */
+-extern void cm_include (void),
+-  cm_verbatiminclude (void);
++extern void cm_include (int arg, int arg2, int arg3),
++  cm_verbatiminclude (int arg, int arg2, int arg3);
+ 
+ /* Cross referencing commands.  */
+-extern void cm_anchor (int arg),
+-  cm_xref (int arg),
+-  cm_pxref (int arg),
+-  cm_ref (int arg),
+-  cm_inforef (int arg),
+-  cm_uref (int arg);
++extern void cm_anchor (int arg, int arg2, int arg3),
++  cm_xref (int arg, int arg2, int arg3),
++  cm_pxref (int arg, int arg2, int arg3),
++  cm_ref (int arg, int arg2, int arg3),
++  cm_inforef (int arg, int arg2, int arg3),
++  cm_uref (int arg, int arg2, int arg3);
+ 
+ /* Special insertions.  */
+-extern void cm_LaTeX (int arg),
+-  cm_TeX (int arg),
+-  cm_bullet (int arg),
+-  cm_colon (void),
+-  cm_comma (int arg),
+-  cm_copyright (int arg),
+-  cm_dots (int arg),
+-  cm_enddots (int arg),
+-  cm_equiv (int arg),
+-  cm_error (int arg),
+-  cm_expansion (int arg),
+-  cm_image (int arg),
+-  cm_insert_copying (void),
+-  cm_minus (int arg),
+-  cm_point (int arg),
+-  cm_print (int arg),
+-  cm_punct (int arg),
+-  cm_registeredsymbol (int arg),
+-  cm_result (int arg);
++extern void cm_LaTeX (int arg, int arg2, int arg3),
++  cm_TeX (int arg, int arg2, int arg3),
++  cm_bullet (int arg, int arg2, int arg3),
++  cm_colon (int arg, int arg2, int arg3),
++  cm_comma (int arg, int arg2, int arg3),
++  cm_copyright (int arg, int arg2, int arg3),
++  cm_dots (int arg, int arg2, int arg3),
++  cm_enddots (int arg, int arg2, int arg3),
++  cm_equiv (int arg, int arg2, int arg3),
++  cm_error (int arg, int arg2, int arg3),
++  cm_expansion (int arg, int arg2, int arg3),
++  cm_image (int arg, int arg2, int arg3),
++  cm_insert_copying (int arg, int arg2, int arg3),
++  cm_minus (int arg, int arg2, int arg3),
++  cm_point (int arg, int arg2, int arg3),
++  cm_print (int arg, int arg2, int arg3),
++  cm_punct (int arg, int arg2, int arg3),
++  cm_registeredsymbol (int arg, int arg2, int arg3),
++  cm_result (int arg, int arg2, int arg3);
+ 
+ /* Emphasis and markup.  */
+-extern void cm_acronym (int arg),
+-  cm_abbr (int arg),
+-  cm_b (int arg),
+-  cm_cite (int arg, int position),
+-  cm_code (int arg),
+-  cm_dfn (int arg, int position),
+-  cm_dmn (int arg),
+-  cm_email (int arg),
+-  cm_emph (int arg),
+-  cm_i (int arg),
+-  cm_kbd (int arg),
+-  cm_key (int arg),
+-  cm_math (int arg),
++extern void cm_acronym (int arg, int arg2, int arg3),
++  cm_abbr (int arg, int arg2, int arg3),
++  cm_b (int arg, int arg2, int arg3),
++  cm_cite (int arg, int position, int arg3),
++  cm_code (int arg, int arg2, int arg3),
++  cm_dfn (int arg, int position, int arg3),
++  cm_dmn (int arg, int arg2, int arg3),
++  cm_email (int arg, int arg2, int arg3),
++  cm_emph (int arg, int arg2, int arg3),
++  cm_i (int arg, int arg2, int arg3),
++  cm_kbd (int arg, int arg2, int arg3),
++  cm_key (int arg, int arg2, int arg3),
++  cm_math (int arg, int arg2, int arg3),
+   cm_not_fixed_width (int arg, int start, int end),
+-  cm_r (int arg),
+-  cm_sansserif (int arg),
++  cm_r (int arg, int arg2, int arg3),
++  cm_sansserif (int arg, int arg2, int arg3),
+   cm_sc (int arg, int start_pos, int end_pos),
+-  cm_slanted (int arg),
++  cm_slanted (int arg, int arg2, int arg3),
+   cm_strong (int arg, int start_pos, int end_pos),
+-  cm_tt (int arg),
++  cm_tt (int arg, int arg2, int arg3),
+   cm_indicate_url (int arg, int start, int end),
+   cm_var (int arg, int start_pos, int end_pos),
+-  cm_verb (int arg);
++  cm_verb (int arg, int arg2, int arg3);
+ 
+ /* Block environments.  */
+-extern void cm_cartouche (void),
+-  cm_group (void),
+-  cm_display (void),
+-  cm_smalldisplay (void),
+-  cm_example (void),
+-  cm_smallexample (void),
+-  cm_smalllisp (void),
+-  cm_lisp (void),
+-  cm_format (void),
+-  cm_smallformat (void),
+-  cm_quotation (void),
+-  cm_copying (void),
+-  cm_flushleft (void),
+-  cm_flushright (void),
+-  cm_verbatim (void),
+-  cm_end (void);
++extern void cm_cartouche (int arg, int arg2, int arg3),
++  cm_group (int arg, int arg2, int arg3),
++  cm_display (int arg, int arg2, int arg3),
++  cm_smalldisplay (int arg, int arg2, int arg3),
++  cm_example (int arg, int arg2, int arg3),
++  cm_smallexample (int arg, int arg2, int arg3),
++  cm_smalllisp (int arg, int arg2, int arg3),
++  cm_lisp (int arg, int arg2, int arg3),
++  cm_format (int arg, int arg2, int arg3),
++  cm_smallformat (int arg, int arg2, int arg3),
++  cm_quotation (int arg, int arg2, int arg3),
++  cm_copying (int arg, int arg2, int arg3),
++  cm_flushleft (int arg, int arg2, int arg3),
++  cm_flushright (int arg, int arg2, int arg3),
++  cm_verbatim (int arg, int arg2, int arg3),
++  cm_end (int arg, int arg2, int arg3);
+ 
+ /* Tables, lists, enumerations.  */
+-extern void cm_table (void),
+-  cm_ftable (void),
+-  cm_vtable (void),
+-  cm_itemize (void),
+-  cm_enumerate (void),
+-  cm_multitable (void),
+-  cm_headitem (void),
+-  cm_item (void),
+-  cm_itemx (void),
+-  cm_tab (void);
+-
+-extern void cm_center (void),
+-  cm_exdent (void),
+-  cm_indent (void),
+-  cm_noindent (void),
+-  cm_noindent_cmd (void);
++extern void cm_table (int arg, int arg2, int arg3),
++  cm_ftable (int arg, int arg2, int arg3),
++  cm_vtable (int arg, int arg2, int arg3),
++  cm_itemize (int arg, int arg2, int arg3),
++  cm_enumerate (int arg, int arg2, int arg3),
++  cm_multitable (int arg, int arg2, int arg3),
++  cm_headitem (int arg, int arg2, int arg3),
++  cm_item (int arg, int arg2, int arg3),
++  cm_itemx (int arg, int arg2, int arg3),
++  cm_tab (int arg, int arg2, int arg3);
++
++extern void cm_center (int arg, int arg2, int arg3),
++  cm_exdent (int arg, int arg2, int arg3),
++  cm_indent (int arg, int arg2, int arg3),
++  cm_noindent (int arg, int arg2, int arg3),
++  cm_noindent_cmd (int arg, int arg2, int arg3);
+ 
+ /* Line and page breaks.  */
+-extern void cm_asterisk (void),
+-  cm_sp (void),
+-  cm_page (void);
++extern void cm_asterisk (int arg, int arg2, int arg3),
++  cm_sp (int arg, int arg2, int arg3),
++  cm_page (int arg, int arg2, int arg3);
+ 
+ /* Non breaking words.  */
+-extern void cm_tie (int arg),
+-  cm_w (int arg);
++extern void cm_tie (int arg, int arg2, int arg3),
++  cm_w (int arg, int arg2, int arg3);
+ 
+ /* Title page creation.  */
+-extern void cm_titlepage (void),
+-  cm_author (void),
+-  cm_titlepage_cmds (void),
+-  cm_titlefont (int arg),
+-  cm_today (int arg);
++extern void cm_titlepage (int arg, int arg2, int arg3),
++  cm_author (int arg, int arg2, int arg3),
++  cm_titlepage_cmds (int arg, int arg2, int arg3),
++  cm_titlefont (int arg, int arg2, int arg3),
++  cm_today (int arg, int arg2, int arg3);
+ 
+ /* Floats.  */
+-extern void cm_float (void),
+-  cm_caption (int arg),
+-  cm_shortcaption (void),
+-  cm_listoffloats (void);
++extern void cm_float (int arg, int arg2, int arg3),
++  cm_caption (int arg, int arg2, int arg3),
++  cm_shortcaption (int arg, int arg2, int arg3),
++  cm_listoffloats (int arg, int arg2, int arg3);
+ 
+ /* Indices.  */
+-extern void cm_kindex (void),
+-  cm_cindex (void),
+-  cm_findex (void),
+-  cm_pindex (void),
+-  cm_vindex (void),
+-  cm_tindex (void),
+-  cm_defindex (void),
+-  cm_defcodeindex (void),
+-  cm_synindex (void),
+-  cm_printindex (void);
++extern void cm_kindex (int arg, int arg2, int arg3),
++  cm_cindex (int arg, int arg2, int arg3),
++  cm_findex (int arg, int arg2, int arg3),
++  cm_pindex (int arg, int arg2, int arg3),
++  cm_vindex (int arg, int arg2, int arg3),
++  cm_tindex (int arg, int arg2, int arg3),
++  cm_defindex (int arg, int arg2, int arg3),
++  cm_defcodeindex (int arg, int arg2, int arg3),
++  cm_synindex (int arg, int arg2, int arg3),
++  cm_printindex (int arg, int arg2, int arg3);
+ 
+ /* Conditionals. */
+-extern void cm_set (void),
+-  cm_clear (void),
+-  cm_ifset (void),
+-  cm_ifclear (void),
+-  cm_ifeq (void),
++extern void cm_set (int arg, int arg2, int arg3),
++  cm_clear (int arg, int arg2, int arg3),
++  cm_ifset (int arg, int arg2, int arg3),
++  cm_ifclear (int arg, int arg2, int arg3),
++  cm_ifeq (int arg, int arg2, int arg3),
+   cm_value (int arg, int start_pos, int end_pos);
+ 
+ #endif /* !CMDS_H */
+--- a/makeinfo/defun.c
++++ b/makeinfo/defun.c
+@@ -688,7 +688,7 @@ defun_internal (int type, int x_p)
+    If the name of the calling command ends in `x', then this is an extra
+    entry included in the body of an insertion of the same type. */
+ void
+-cm_defun (void)
++cm_defun (int arg, int arg2, int arg3)
+ {
+   int type;
+   char *base_command = xstrdup (command);  /* command with any `x' removed */
+--- a/makeinfo/defun.h
++++ b/makeinfo/defun.h
+@@ -27,7 +27,7 @@
+ #include "insertion.h"
+ 
+ extern enum insertion_type get_base_type (int type);
+-extern void cm_defun (void);
++extern void cm_defun (int arg, int arg2, int arg3);
+ 
+ #endif /* !DEFUN_H */
+ 
+--- a/makeinfo/float.c
++++ b/makeinfo/float.c
+@@ -169,7 +169,7 @@ float_type_exists (char *check_type)
+ }
+ 
+ void
+-cm_listoffloats (void)
++cm_listoffloats (int arg, int arg2, int arg3)
+ {
+   char *float_type;
+   get_rest_of_line (1, &float_type);
+@@ -197,7 +197,7 @@ cm_listoffloats (void)
+       /* These are for the text following @listoffloats command.
+          Handling them with delayed writes is too late.  */
+       close_paragraph ();
+-      cm_noindent ();
++      cm_noindent (0, 0, 0);
+ 
+       sprintf (list_command, "@%s %s", command, float_type);
+       register_delayed_write (list_command);
+--- a/makeinfo/footnote.c
++++ b/makeinfo/footnote.c
+@@ -73,7 +73,7 @@ set_footnote_style (char *string)
+ }
+ 
+ void
+-cm_footnotestyle (void)
++cm_footnotestyle (int arg1, int arg2, int arg3)
+ {
+   char *arg;
+ 
+@@ -135,7 +135,7 @@ free_pending_notes (void)
+     footnote *{this is a footnote}
+     where "*" is the (optional) marker character for this note. */
+ void
+-cm_footnote (void)
++cm_footnote (int arg, int arg2, int arg3)
+ {
+   char *marker;
+   char *note;
+--- a/makeinfo/footnote.h
++++ b/makeinfo/footnote.h
+@@ -30,8 +30,8 @@ extern int number_footnotes;
+ extern int already_outputting_pending_notes;
+ 
+ /* The Texinfo @commands.  */
+-extern void cm_footnote (void);
+-extern void cm_footnotestyle (void);
++extern void cm_footnote (int arg, int arg2, int arg3);
++extern void cm_footnotestyle (int arg, int arg2, int arg3);
+ 
+ extern int set_footnote_style (char *string);    /* called for -s option */
+ 
+--- a/makeinfo/index.c
++++ b/makeinfo/index.c
+@@ -265,7 +265,7 @@ index_add_arg (char *name)
+ 
+ /* The function which user defined index commands call. */
+ static void
+-gen_index (void)
++gen_index (int arg, int arg2, int arg3)
+ {
+   char *name = xstrdup (command);
+   if (strlen (name) >= strlen ("index"))
+@@ -426,13 +426,13 @@ gen_defindex (int code)
+ }
+ 
+ void
+-cm_defindex (void)
++cm_defindex (int arg, int arg2, int arg3)
+ {
+   gen_defindex (0);
+ }
+ 
+ void
+-cm_defcodeindex (void)
++cm_defcodeindex (int arg, int arg2, int arg3)
+ {
+   gen_defindex (1);
+ }
+@@ -441,7 +441,7 @@ cm_defcodeindex (void)
+    Make the first one be a synonym for the second one, i.e. make the
+    first one have the same index as the second one. */
+ void
+-cm_synindex (void)
++cm_synindex (int arg, int arg2, int arg3)
+ {
+   int source, target;
+   char *abbrev1, *abbrev2;
+@@ -471,37 +471,37 @@ cm_synindex (void)
+ }
+ 
+ void
+-cm_pindex (void)                    /* Pinhead index. */
++cm_pindex (int arg, int arg2, int arg3)                    /* Pinhead index. */
+ {
+   index_add_arg ("pg");
+ }
+ 
+ void
+-cm_vindex (void)                    /* Variable index. */
++cm_vindex (int arg, int arg2, int arg3)                    /* Variable index. */
+ {
+   index_add_arg ("vr");
+ }
+ 
+ void
+-cm_kindex (void)                    /* Key index. */
++cm_kindex (int arg, int arg2, int arg3)                    /* Key index. */
+ {
+   index_add_arg ("ky");
+ }
+ 
+ void
+-cm_cindex (void)                    /* Concept index. */
++cm_cindex (int arg, int arg2, int arg3)                    /* Concept index. */
+ {
+   index_add_arg ("cp");
+ }
+ 
+ void
+-cm_findex (void)                    /* Function index. */
++cm_findex (int arg, int arg2, int arg3)                    /* Function index. */
+ {
+   index_add_arg ("fn");
+ }
+ 
+ void
+-cm_tindex (void)                    /* Data Type index. */
++cm_tindex (int arg, int arg2, int arg3)                    /* Data Type index. */
+ {
+   index_add_arg ("tp");
+ }
+@@ -726,7 +726,7 @@ int printing_index = 0;
+ /* Takes one arg, a short name of an index to print.
+    Outputs a menu of the sorted elements of the index. */
+ void
+-cm_printindex (void)
++cm_printindex (int arg, int arg2, int arg3)
+ {
+   char *index_name;
+   get_rest_of_line (0, &index_name);
+--- a/makeinfo/insertion.c
++++ b/makeinfo/insertion.c
+@@ -404,7 +404,7 @@ enum_html (void)
+ 
+ /* Conditionally parse based on the current command name. */
+ void
+-command_name_condition (void)
++command_name_condition (int arg, int arg2, int arg3)
+ {
+   char *discarder = xmalloc (8 + strlen (command));
+ 
+@@ -536,7 +536,7 @@ begin_insertion (enum insertion_type type)
+ 	}
+ 
+       if (!html && !no_headers)
+-        cm_insert_copying ();
++        cm_insert_copying (0, 0, 0);
+ 
+       if (docbook)
+         xml_insert_element (LEGALNOTICE, END);
+@@ -1347,14 +1347,14 @@ discard_insertions (int specials_ok)
+ /* Insertion (environment) commands.  */
+ 
+ void
+-cm_quotation (void)
++cm_quotation (int arg, int arg2, int arg3)
+ {
+   /* We start the blockquote element in the insertion.  */
+   begin_insertion (quotation);
+ }
+ 
+ void
+-cm_example (void)
++cm_example (int arg, int arg2, int arg3)
+ {
+   if (docbook && current_insertion_type () == floatenv)
+     xml_begin_docbook_float (FLOATEXAMPLE);
+@@ -1378,7 +1378,7 @@ cm_example (void)
+ }
+ 
+ void
+-cm_smallexample (void)
++cm_smallexample (int arg, int arg2, int arg3)
+ {
+   if (docbook && current_insertion_type () == floatenv)
+     xml_begin_docbook_float (FLOATEXAMPLE);
+@@ -1397,7 +1397,7 @@ cm_smallexample (void)
+ }
+ 
+ void
+-cm_lisp (void)
++cm_lisp (int arg, int arg2, int arg3)
+ {
+   if (docbook && current_insertion_type () == floatenv)
+     xml_begin_docbook_float (FLOATEXAMPLE);
+@@ -1416,7 +1416,7 @@ cm_lisp (void)
+ }
+ 
+ void
+-cm_smalllisp (void)
++cm_smalllisp (int arg, int arg2, int arg3)
+ {
+   if (docbook && current_insertion_type () == floatenv)
+     xml_begin_docbook_float (FLOATEXAMPLE);
+@@ -1435,7 +1435,7 @@ cm_smalllisp (void)
+ }
+ 
+ void
+-cm_cartouche (void)
++cm_cartouche (int arg, int arg2, int arg3)
+ {
+   if (docbook && current_insertion_type () == floatenv)
+     xml_begin_docbook_float (CARTOUCHE);
+@@ -1446,14 +1446,14 @@ cm_cartouche (void)
+ }
+ 
+ void
+-cm_copying (void)
++cm_copying (int arg, int arg2, int arg3)
+ {
+   begin_insertion (copying);
+ }
+ 
+ /* Not an insertion, despite the name, but it goes with cm_copying.  */
+ void
+-cm_insert_copying (void)
++cm_insert_copying (int arg, int arg2, int arg3)
+ {
+   if (!copying_text)
+     {
+@@ -1473,7 +1473,7 @@ cm_insert_copying (void)
+ }
+ 
+ void
+-cm_format (void)
++cm_format (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1496,7 +1496,7 @@ cm_format (void)
+ }
+ 
+ void
+-cm_smallformat (void)
++cm_smallformat (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1512,7 +1512,7 @@ cm_smallformat (void)
+ }
+ 
+ void
+-cm_display (void)
++cm_display (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1528,7 +1528,7 @@ cm_display (void)
+ }
+ 
+ void
+-cm_smalldisplay (void)
++cm_smalldisplay (int arg, int arg2, int arg3)
+ {
+   if (xml)
+     {
+@@ -1544,16 +1544,16 @@ cm_smalldisplay (void)
+ }
+ 
+ void
+-cm_direntry (void)
++cm_direntry (int arg, int arg2, int arg3)
+ {
+   if (html || xml || no_headers)
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+   else
+     begin_insertion (direntry);
+ }
+ 
+ void
+-cm_documentdescription (void)
++cm_documentdescription (int arg, int arg2, int arg3)
+ {
+   if (html)
+     begin_insertion (documentdescription);
+@@ -1565,12 +1565,12 @@ cm_documentdescription (void)
+     }
+ 
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ 
+ void
+-cm_itemize (void)
++cm_itemize (int arg, int arg2, int arg3)
+ {
+   begin_insertion (itemize);
+ }
+@@ -1605,7 +1605,7 @@ do_enumeration (int type, char *default_string)
+ }
+ 
+ void
+-cm_enumerate (void)
++cm_enumerate (int arg, int arg2, int arg3)
+ {
+   do_enumeration (enumerate, "1");
+ }
+@@ -1706,199 +1706,199 @@ handle_verbatim_environment (int find_end_verbatim)
+ }
+ 
+ void
+-cm_verbatim (void)
++cm_verbatim (int arg, int arg2, int arg3)
+ {
+   handle_verbatim_environment (1);
+ }
+ 
+ void
+-cm_table (void)
++cm_table (int arg, int arg2, int arg3)
+ {
+   begin_insertion (table);
+ }
+ 
+ void
+-cm_multitable (void)
++cm_multitable (int arg, int arg2, int arg3)
+ {
+   begin_insertion (multitable); /* @@ */
+ }
+ 
+ void
+-cm_ftable (void)
++cm_ftable (int arg, int arg2, int arg3)
+ {
+   begin_insertion (ftable);
+ }
+ 
+ void
+-cm_vtable (void)
++cm_vtable (int arg, int arg2, int arg3)
+ {
+   begin_insertion (vtable);
+ }
+ 
+ void
+-cm_group (void)
++cm_group (int arg, int arg2, int arg3)
+ {
+   begin_insertion (group);
+ }
+ 
+ /* Insert raw HTML (no escaping of `<' etc.). */
+ void
+-cm_html (int arg)
++cm_html (int arg, int arg2, int arg3)
+ {
+   if (process_html)
+     begin_insertion (rawhtml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_xml (int arg)
++cm_xml (int arg, int arg2, int arg3)
+ {
+   if (process_xml)
+     begin_insertion (rawxml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_docbook (int arg)
++cm_docbook (int arg, int arg2, int arg3)
+ {
+   if (process_docbook)
+     begin_insertion (rawdocbook);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifdocbook (void)
++cm_ifdocbook (int arg, int arg2, int arg3)
+ {
+   if (process_docbook)
+     begin_insertion (ifdocbook);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnotdocbook (void)
++cm_ifnotdocbook (int arg, int arg2, int arg3)
+ {
+   if (!process_docbook)
+     begin_insertion (ifnotdocbook);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifhtml (void)
++cm_ifhtml (int arg, int arg2, int arg3)
+ {
+   if (process_html)
+     begin_insertion (ifhtml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnothtml (void)
++cm_ifnothtml (int arg, int arg2, int arg3)
+ {
+   if (!process_html)
+     begin_insertion (ifnothtml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ 
+ void
+-cm_ifinfo (void)
++cm_ifinfo (int arg, int arg2, int arg3)
+ {
+   if (process_info)
+     begin_insertion (ifinfo);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnotinfo (void)
++cm_ifnotinfo (int arg, int arg2, int arg3)
+ {
+   if (!process_info)
+     begin_insertion (ifnotinfo);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ 
+ void
+-cm_ifplaintext (void)
++cm_ifplaintext (int arg, int arg2, int arg3)
+ {
+   if (process_plaintext)
+     begin_insertion (ifplaintext);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnotplaintext (void)
++cm_ifnotplaintext (int arg, int arg2, int arg3)
+ {
+   if (!process_plaintext)
+     begin_insertion (ifnotplaintext);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ 
+ void
+-cm_tex (void)
++cm_tex (int arg, int arg2, int arg3)
+ {
+   if (process_tex)
+     begin_insertion (rawtex);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_iftex (void)
++cm_iftex (int arg, int arg2, int arg3)
+ {
+   if (process_tex)
+     begin_insertion (iftex);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnottex (void)
++cm_ifnottex (int arg, int arg2, int arg3)
+ {
+   if (!process_tex)
+     begin_insertion (ifnottex);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifxml (void)
++cm_ifxml (int arg, int arg2, int arg3)
+ {
+   if (process_xml)
+     begin_insertion (ifxml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_ifnotxml (void)
++cm_ifnotxml (int arg, int arg2, int arg3)
+ {
+   if (!process_xml)
+     begin_insertion (ifnotxml);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ 
+ /* Generic xrefable block with a caption.  */
+ void
+-cm_float (void)
++cm_float (int arg, int arg2, int arg3)
+ {
+   begin_insertion (floatenv);
+ }
+ 
+ void
+-cm_caption (int arg)
++cm_caption (int arg, int arg2, int arg3)
+ {
+   char *temp;
+ 
+@@ -1930,21 +1930,21 @@ cm_caption (int arg)
+ 
+ /* Begin an insertion where the lines are not filled or indented. */
+ void
+-cm_flushleft (void)
++cm_flushleft (int arg, int arg2, int arg3)
+ {
+   begin_insertion (flushleft);
+ }
+ 
+ /* Begin an insertion where the lines are not filled, and each line is
+    forced to the right-hand side of the page. */
+ void
+-cm_flushright (void)
++cm_flushright (int arg, int arg2, int arg3)
+ {
+   begin_insertion (flushright);
+ }
+ 
+ void
+-cm_menu (void)
++cm_menu (int arg, int arg2, int arg3)
+ {
+   if (current_node == NULL && !macro_expansion_output_stream)
+     {
+@@ -1957,7 +1957,7 @@ cm_menu (void)
+ }
+ 
+ void
+-cm_detailmenu (void)
++cm_detailmenu (int arg, int arg2, int arg3)
+ {
+   if (current_node == NULL && !macro_expansion_output_stream)
+     { /* Problems anyway, @detailmenu should always be inside @menu.  */
+@@ -1970,17 +1970,17 @@ cm_detailmenu (void)
+ /* Title page commands. */
+ 
+ void
+-cm_titlepage (void)
++cm_titlepage (int arg, int arg2, int arg3)
+ {
+   titlepage_cmd_present = 1;
+   if (xml && !docbook)
+     begin_insertion (titlepage);
+   else
+-    command_name_condition ();
++    command_name_condition (0, 0, 0);
+ }
+ 
+ void
+-cm_author (void)
++cm_author (int arg, int arg2, int arg3)
+ {
+   char *rest;
+   get_rest_of_line (1, &rest);
+@@ -2024,7 +2024,7 @@ cm_author (void)
+ }
+ 
+ void
+-cm_titlepage_cmds (void)
++cm_titlepage_cmds (int arg, int arg2, int arg3)
+ {
+   char *rest;
+ 
+@@ -2053,7 +2053,7 @@ cm_titlepage_cmds (void)
+ 
+ /* End existing insertion block. */
+ void
+-cm_end (void)
++cm_end (int arg, int arg2, int arg3)
+ {
+   char *temp;
+   int type;
+@@ -2104,7 +2104,7 @@ command_needs_braces (char *cmd)
+ 
+ 
+ void
+-cm_item (void)
++cm_item (int arg, int arg2, int arg3)
+ {
+   char *rest_of_line, *item_func;
+ 
+@@ -2361,18 +2361,18 @@ cm_item (void)
+ }
+ 
+ void
+-cm_itemx (void)
++cm_itemx (int arg, int arg2, int arg3)
+ {
+   itemx_flag++;
+-  cm_item ();
++  cm_item (0, 0, 0);
+   itemx_flag--;
+ }
+ 
+ int headitem_flag = 0;
+ 
+ void
+-cm_headitem (void)
++cm_headitem (int arg, int arg2, int arg3)
+ {
+   headitem_flag = 1;
+-  cm_item ();
++  cm_item (0, 0, 0);
+ }
+--- a/makeinfo/insertion.h
++++ b/makeinfo/insertion.h
+@@ -61,13 +61,13 @@ extern int headitem_flag;
+ extern int after_headitem;
+ 
+ extern void init_insertion_stack (void);
+-extern void command_name_condition (void);
+-extern void cm_ifdocbook (void), cm_ifnotdocbook(void), cm_docbook (int arg);
+-extern void cm_ifhtml (void), cm_ifnothtml(void), cm_html (int arg);
+-extern void cm_ifinfo (void), cm_ifnotinfo (void);
+-extern void cm_ifplaintext (void), cm_ifnotplaintext(void);
+-extern void cm_iftex (void), cm_ifnottex (void), cm_tex (void);
+-extern void cm_ifxml (void), cm_ifnotxml (void), cm_xml (int arg);
++extern void command_name_condition (int arg, int arg2, int arg3);
++extern void cm_ifdocbook (int arg, int arg2, int arg3), cm_ifnotdocbook(int arg, int arg2, int arg3), cm_docbook (int arg, int arg2, int arg3);
++extern void cm_ifhtml (int arg, int arg2, int arg3), cm_ifnothtml(int arg, int arg2, int arg3), cm_html (int arg, int arg2, int arg3);
++extern void cm_ifinfo (int arg, int arg2, int arg3), cm_ifnotinfo (int arg, int arg2, int arg3);
++extern void cm_ifplaintext (int arg, int arg2, int arg3), cm_ifnotplaintext(int arg, int arg2, int arg3);
++extern void cm_iftex (int arg, int arg2, int arg3), cm_ifnottex (int arg, int arg2, int arg3), cm_tex (int arg, int arg2, int arg3);
++extern void cm_ifxml (int arg, int arg2, int arg3), cm_ifnotxml (int arg, int arg2, int arg3), cm_xml (int arg, int arg2, int arg3);
+ extern void handle_verbatim_environment (int find_end_verbatim);
+ extern void begin_insertion (enum insertion_type type);
+ extern void pop_insertion (void);
+--- a/makeinfo/lang.c
++++ b/makeinfo/lang.c
+@@ -559,7 +559,7 @@ language_type language_table[] = {
+    a language block, we just output an empty element.  Anyways, a stream based
+    parser can make good use of it.  */
+ void
+-cm_documentlanguage (void)
++cm_documentlanguage (int arg, int arg2, int arg3)
+ {
+   language_code_type c;
+   char *lang_arg;
+@@ -618,7 +618,7 @@ cm_search_iso_map (char *html)
+ /* @documentencoding.  Set the translation table.  */
+ 
+ void
+-cm_documentencoding (void)
++cm_documentencoding (int arg, int arg2, int arg3)
+ {
+   if (!handling_delayed_writes)
+     {
+@@ -839,7 +839,7 @@ cm_accent_generic_no_headers (int arg, int start, int end, int single,
+    special HTML support.  */
+ 
+ void
+-cm_accent (int arg)
++cm_accent (int arg, int arg2, int arg3)
+ {
+   int old_escape_html = escape_html;
+   escape_html = 0;
+@@ -945,7 +945,7 @@ cm_accent_tilde (int arg, int start, int end)
+ 
+ /* Non-English letters/characters that don't insert themselves.  */
+ void
+-cm_special_char (int arg)
++cm_special_char (int arg, int arg2, int arg3)
+ {
+   int old_escape_html = escape_html;
+   escape_html = 0;
+--- a/makeinfo/lang.h
++++ b/makeinfo/lang.h
+@@ -131,11 +131,11 @@ extern encoding_type encoding_table[];
+ 
+ 
+ /* The commands.  */
+-extern void cm_documentlanguage (void),
+-     cm_documentencoding (void);
++extern void cm_documentlanguage (int arg, int arg2, int arg3),
++     cm_documentencoding (int arg, int arg2, int arg3);
+ 
+ /* Accents, other non-English characters.  */
+-void cm_accent (int arg), cm_special_char (int arg),
++void cm_accent (int arg, int arg2, int arg3), cm_special_char (int arg, int arg2, int arg3),
+      cm_dotless (int arg, int start, int end);
+ 
+ extern void cm_accent_umlaut (int arg, int start, int end),
+--- a/makeinfo/macro.c
++++ b/makeinfo/macro.c
+@@ -702,13 +702,13 @@ define_macro (char *mactype, int recursive)
+ }
+ 
+ void 
+-cm_macro (void)
++cm_macro (int arg, int arg2, int arg3)
+ {
+   define_macro ("macro", 0);
+ }
+ 
+ void 
+-cm_rmacro (void)
++cm_rmacro (int arg, int arg2, int arg3)
+ {
+   define_macro ("rmacro", 1);
+ }
+@@ -737,7 +737,7 @@ delete_macro (char *name)
+ }
+ 
+ void
+-cm_unmacro (void)
++cm_unmacro (int arg, int arg2, int arg3)
+ {
+   int i;
+   char *line, *name;
+@@ -993,7 +993,7 @@ static alias_type *aliases;
+ /* @alias aname = cmdname */
+ 
+ void
+-cm_alias (void)
++cm_alias (int arg, int arg2, int arg3)
+ {
+   alias_type *a = xmalloc (sizeof (alias_type));
+ 
+@@ -1052,7 +1052,7 @@ static enclosure_stack_type *enclosure_stack;
+ 
+ /* @definfoenclose */
+ void
+-cm_definfoenclose (void)
++cm_definfoenclose (int arg, int arg2, int arg3)
+ {
+   enclosure_type *e = xmalloc (sizeof (enclosure_type));
+ 
+--- a/makeinfo/macro.h
++++ b/makeinfo/macro.h
+@@ -69,8 +69,8 @@ extern int enclosure_command (char *tok);
+ extern void enclosure_expand (int arg, int start, int end);
+ 
+ /* The @commands.  */
+-extern void cm_macro (void), cm_rmacro (void), cm_unmacro (void);
+-extern void cm_alias (void), cm_definfoenclose (void);
++extern void cm_macro (int arg, int arg2, int arg3), cm_rmacro (int arg, int arg2, int arg3), cm_unmacro (int arg, int arg2, int arg3);
++extern void cm_alias (int arg, int arg2, int arg3), cm_definfoenclose (int arg, int arg2, int arg3);
+ 
+ extern int array_len (char **array);
+ extern void free_array (char **array);
+--- a/makeinfo/makeinfo.c
++++ b/makeinfo/makeinfo.c
+@@ -186,7 +186,7 @@ remember_error (void)
+       fprintf (stderr, _("Too many errors!  Gave up.\n"));
+       flush_file_stack ();
+       if (errors_printed - max_error_level < 2)
+-	cm_bye ();
++	cm_bye (0, 0, 0);
+       xexit (1);
+     }
+ }
+@@ -318,7 +318,7 @@ warning (format, va_alist)
+ 
+ /* The other side of a malformed expression. */
+ static void
+-misplaced_brace (void)
++misplaced_brace (int arg, int arg2, int arg3)
+ {
+   line_error (_("Misplaced %c"), '}');
+ }
+@@ -3249,7 +3249,7 @@ next_nonwhitespace_character (void)
+ /* An external image is a reference, kind of.  The parsing is (not
+    coincidentally) similar, anyway.  */
+ void
+-cm_image (int arg)
++cm_image (int arg, int arg2, int arg3)
+ {
+   char *name_arg, *w_arg, *h_arg, *alt_arg, *ext_arg;
+ 
+@@ -3561,26 +3561,26 @@ set_p (char *name)
+ 
+ /* Create a variable whose name appears as the first word on this line. */
+ void
+-cm_set (void)
++cm_set (int arg, int arg2, int arg3)
+ {
+   handle_variable (SET);
+ }
+ 
+ /* Remove a variable whose name appears as the first word on this line. */
+ void
+-cm_clear (void)
++cm_clear (int arg, int arg2, int arg3)
+ {
+   handle_variable (CLEAR);
+ }
+ 
+ void
+-cm_ifset (void)
++cm_ifset (int arg, int arg2, int arg3)
+ {
+   handle_variable (IFSET);
+ }
+ 
+ void
+-cm_ifclear (void)
++cm_ifclear (int arg, int arg2, int arg3)
+ {
+   handle_variable (IFCLEAR);
+ }
+@@ -3592,7 +3592,7 @@ cm_ifclear (void)
+    if ARG1 and ARG2 caselessly string compare to the same string, otherwise,
+    it produces no output. */
+ void
+-cm_ifeq (void)
++cm_ifeq (int arg, int arg2, int arg3)
+ {
+   char **arglist;
+ 
+--- a/makeinfo/multi.c
++++ b/makeinfo/multi.c
+@@ -405,7 +405,7 @@ static void
+ init_column (void)
+ {
+   /* don't indent 1st paragraph in the item */
+-  cm_noindent ();
++  cm_noindent (0, 0, 0);
+ 
+   /* throw away possible whitespace after @item or @tab command */
+   skip_whitespace ();
+@@ -580,7 +580,7 @@ multitable_item (void)
+ 
+ /* select a new column in current row of multitable */
+ void
+-cm_tab (void)
++cm_tab (int arg, int arg2, int arg3)
+ {
+   if (!multitable_active)
+     error (_("ignoring @tab outside of multitable"));
+--- a/makeinfo/node.c
++++ b/makeinfo/node.c
+@@ -538,7 +538,7 @@ add_html_names (char *node)
+    It is an error not to do so.
+    The defaults come from the menu in this node's parent. */
+ void
+-cm_node (void)
++cm_node (int arg, int arg2, int arg3)
+ {
+   static long epilogue_len = 0L;
+   char *node, *prev, *next, *up;
+@@ -1098,7 +1098,7 @@ cm_node (void)
+ 
+ /* Cross-reference target at an arbitrary spot.  */
+ void
+-cm_anchor (int arg)
++cm_anchor (int arg, int arg2, int arg3)
+ {
+   char *anchor;
+   char *fname_for_anchor = NULL;
+--- a/makeinfo/sectioning.c
++++ b/makeinfo/sectioning.c
+@@ -326,7 +326,7 @@ sectioning_underscore (char *cmd)
+   /* If we're not indenting the first paragraph, we shall make it behave
+      like @noindent is called directly after the section heading. */
+   if (! do_first_par_indent)
+-    cm_noindent ();
++    cm_noindent (0, 0, 0);
+ 
+   temp = xmalloc (2 + strlen (cmd));
+   temp[0] = COMMAND_PREFIX;
+@@ -603,15 +603,15 @@ sectioning_html (int level, char *cmd)
+ 
+ /* Shift the meaning of @section to @chapter. */
+ void
+-cm_raisesections (void)
++cm_raisesections (int arg, int arg2, int arg3)
+ {
+   discard_until ("\n");
+   section_alist_offset--;
+ }
+ 
+ /* Shift the meaning of @chapter to @section. */
+ void
+-cm_lowersections (void)
++cm_lowersections (int arg, int arg2, int arg3)
+ {
+   discard_until ("\n");
+   section_alist_offset++;
+@@ -630,7 +630,7 @@ cm_ideprecated (int arg, int start, int end)
+ /* Treat this just like @unnumbered.  The only difference is
+    in node defaulting. */
+ void
+-cm_top (void)
++cm_top (int arg, int arg2, int arg3)
+ {
+   /* It is an error to have more than one @top. */
+   if (top_node_seen && strcmp (current_node, "Top") != 0)
+@@ -668,7 +668,7 @@ cm_top (void)
+           return;
+         }
+ 
+-      cm_unnumbered ();
++      cm_unnumbered (0, 0, 0);
+ 
+       /* The most recently defined node is the top node. */
+       tag_table->flags |= TAG_FLAG_IS_TOP;
+@@ -709,67 +709,67 @@ cm_top (void)
+ 
+ /* The remainder of the text on this line is a chapter heading. */
+ void
+-cm_chapter (void)
++cm_chapter (int arg, int arg2, int arg3)
+ {
+   enum_marker = 0;
+   sectioning_underscore ("chapter");
+ }
+ 
+ /* The remainder of the text on this line is a section heading. */
+ void
+-cm_section (void)
++cm_section (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("section");
+ }
+ 
+ /* The remainder of the text on this line is a subsection heading. */
+ void
+-cm_subsection (void)
++cm_subsection (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("subsection");
+ }
+ 
+ /* The remainder of the text on this line is a subsubsection heading. */
+ void
+-cm_subsubsection (void)
++cm_subsubsection (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("subsubsection");
+ }
+ 
+ /* The remainder of the text on this line is an unnumbered heading. */
+ void
+-cm_unnumbered (void)
++cm_unnumbered (int arg, int arg2, int arg3)
+ {
+   enum_marker = UNNUMBERED_MAGIC;
+   sectioning_underscore ("unnumbered");
+ }
+ 
+ /* The remainder of the text on this line is an unnumbered section heading. */
+ void
+-cm_unnumberedsec (void)
++cm_unnumberedsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("unnumberedsec");
+ }
+ 
+ /* The remainder of the text on this line is an unnumbered
+    subsection heading. */
+ void
+-cm_unnumberedsubsec (void)
++cm_unnumberedsubsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("unnumberedsubsec");
+ }
+ 
+ /* The remainder of the text on this line is an unnumbered
+    subsubsection heading. */
+ void
+-cm_unnumberedsubsubsec (void)
++cm_unnumberedsubsubsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("unnumberedsubsubsec");
+ }
+ 
+ /* The remainder of the text on this line is an appendix heading. */
+ void
+-cm_appendix (void)
++cm_appendix (int arg, int arg2, int arg3)
+ {
+   /* Reset top level number so we start from Appendix A */
+   if (enum_marker != APPENDIX_MAGIC)
+@@ -780,53 +780,53 @@ cm_appendix (void)
+ 
+ /* The remainder of the text on this line is an appendix section heading. */
+ void
+-cm_appendixsec (void)
++cm_appendixsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("appendixsec");
+ }
+ 
+ /* The remainder of the text on this line is an appendix subsection heading. */
+ void
+-cm_appendixsubsec (void)
++cm_appendixsubsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("appendixsubsec");
+ }
+ 
+ /* The remainder of the text on this line is an appendix
+    subsubsection heading. */
+ void
+-cm_appendixsubsubsec (void)
++cm_appendixsubsubsec (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("appendixsubsubsec");
+ }
+ 
+ /* Compatibility functions substitute for chapter, section, etc. */
+ void
+-cm_majorheading (void)
++cm_majorheading (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("majorheading");
+ }
+ 
+ void
+-cm_chapheading (void)
++cm_chapheading (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("chapheading");
+ }
+ 
+ void
+-cm_heading (void)
++cm_heading (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("heading");
+ }
+ 
+ void
+-cm_subheading (void)
++cm_subheading (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("subheading");
+ }
+ 
+ void
+-cm_subsubheading (void)
++cm_subsubheading (int arg, int arg2, int arg3)
+ {
+   sectioning_underscore ("subsubheading");
+ }
+--- a/makeinfo/sectioning.h
++++ b/makeinfo/sectioning.h
+@@ -27,35 +27,35 @@
+ /* Sectioning.  */
+ 
+ /* Level 4.  */
+-extern void cm_chapter (void),
+-  cm_unnumbered (void),
+-  cm_appendix (void),
+-  cm_top (void);
++extern void cm_chapter (int arg, int arg2, int arg3),
++  cm_unnumbered (int arg, int arg2, int arg3),
++  cm_appendix (int arg, int arg2, int arg3),
++  cm_top (int arg, int arg2, int arg3);
+ 
+ /* Level 3.  */
+-extern void cm_section (void),
+-  cm_unnumberedsec (void),
+-  cm_appendixsec (void);
++extern void cm_section (int arg, int arg2, int arg3),
++  cm_unnumberedsec (int arg, int arg2, int arg3),
++  cm_appendixsec (int arg, int arg2, int arg3);
+ 
+ /* Level 2.  */
+-extern void cm_subsection (void),
+-  cm_unnumberedsubsec (void),
+-  cm_appendixsubsec (void);
++extern void cm_subsection (int arg, int arg2, int arg3),
++  cm_unnumberedsubsec (int arg, int arg2, int arg3),
++  cm_appendixsubsec (int arg, int arg2, int arg3);
+ 
+ /* Level 1.  */
+-extern void cm_subsubsection (void),
+-  cm_unnumberedsubsubsec (void),
+-  cm_appendixsubsubsec (void);
++extern void cm_subsubsection (int arg, int arg2, int arg3),
++  cm_unnumberedsubsubsec (int arg, int arg2, int arg3),
++  cm_appendixsubsubsec (int arg, int arg2, int arg3);
+ 
+ /* Headings.  */
+-extern void cm_heading (void),
+-  cm_chapheading (void),
+-  cm_subheading (void),
+-  cm_subsubheading (void),
+-  cm_majorheading (void);
+-
+-extern void cm_raisesections (void),
+-  cm_lowersections (void),
++extern void cm_heading (int arg, int arg2, int arg3),
++  cm_chapheading (int arg, int arg2, int arg3),
++  cm_subheading (int arg, int arg2, int arg3),
++  cm_subsubheading (int arg, int arg2, int arg3),
++  cm_majorheading (int arg, int arg2, int arg3);
++
++extern void cm_raisesections (int arg, int arg2, int arg3),
++  cm_lowersections (int arg, int arg2, int arg3),
+   cm_ideprecated (int arg, int start, int end);
+ 
+ extern void
+--- a/makeinfo/toc.c
++++ b/makeinfo/toc.c
+@@ -354,7 +354,7 @@ shortcontents_update_info (void)
+ }
+ 
+ void
+-cm_contents (int arg)
++cm_contents (int arg, int arg2, int arg3)
+ {
+   /* the file where we found the @contents directive */
+   static char *contents_filename;
+--- a/makeinfo/toc.h
++++ b/makeinfo/toc.h
+@@ -42,6 +42,6 @@ extern int toc_add_entry (char *tocname, int level,
+ extern void toc_free (void);
+ extern char *toc_find_section_of_node (char *node);
+ 
+-extern void cm_contents (int arg);
++extern void cm_contents (int arg, int arg2, int arg3);
+ 
+ #endif /* not TOC_H */
+--- a/makeinfo/xref.c
++++ b/makeinfo/xref.c
+@@ -112,7 +112,7 @@ get_xref_token (int expand)
+ 
+ /* Make a cross reference. */
+ void
+-cm_xref (int arg)
++cm_xref (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -394,12 +394,12 @@ cm_xref (int arg)
+ }
+ 
+ void
+-cm_pxref (int arg)
++cm_pxref (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+       px_ref_flag++;
+-      cm_xref (arg);
++      cm_xref (arg, 0, 0);
+       px_ref_flag--;
+     }
+   /* cm_xref isn't called with arg == END, which disables the code near
+@@ -409,19 +409,19 @@ cm_pxref (int arg)
+ }
+ 
+ void
+-cm_ref (int arg)
++cm_ref (int arg, int arg2, int arg3)
+ {
+   /* See the comments in cm_pxref about the checks for punctuation.  */
+   if (arg == START)
+     {
+       ref_flag++;
+-      cm_xref (arg);
++      cm_xref (arg, 0, 0);
+       ref_flag--;
+     }
+ }
+ 
+ void
+-cm_inforef (int arg)
++cm_inforef (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -485,7 +485,7 @@ cm_inforef (int arg)
+ 
+ /* A URL reference.  */
+ void
+-cm_uref (int arg)
++cm_uref (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+@@ -567,7 +567,7 @@ cm_uref (int arg)
+ 
+ /* An email reference.  */
+ void
+-cm_email (int arg)
++cm_email (int arg, int arg2, int arg3)
+ {
+   if (arg == START)
+     {
+--- a/util/texindex.c
++++ b/util/texindex.c
+@@ -123,7 +123,7 @@ int compare_full (const void *, const void *);
+ void pfatal_with_name (const char *name);
+ void fatal (const char *format, const char *arg);
+ void error (const char *format, const char *arg);
+-void *xmalloc (), *xrealloc ();
++void *xmalloc (size_t), *xrealloc (void *, size_t);
+ static char *concat3 (const char *, const char *, const char *);
+ 
+ int
+@@ -477,7 +477,7 @@ find_field (struct keyfield *keyfield, char *str, long int *lengthptr)
+ {
+   char *start;
+   char *end;
+-  char *(*fun) ();
++  char *(*fun) (char*, int, int, int);
+ 
+   if (keyfield->braced)
+     fun = find_braced_pos;

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.30 2015/05/12 14:59:35 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.35 2022/08/07 23:49:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,9 +43,6 @@ static pthread_mutex_t _prop_refcnt_mtx = PTHREAD_MUTEX_INITIALIZER;
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
-#if defined(__minix)
-#include <assert.h>
-#endif /* defined(__minix) */
 #endif
 
 #ifdef _STANDALONE
@@ -71,7 +68,7 @@ _prop_standalone_realloc(void *v, size_t size)
 		memcpy(rv, v, size);	/* XXX */
 		dealloc(v, 0);		/* XXX */
 	}
-	
+
 	return (rv);
 }
 #endif /* _STANDALONE */
@@ -119,7 +116,7 @@ _prop_object_externalize_start_tag(
 	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
 	    _prop_object_externalize_append_char(ctx, '>') == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -163,7 +160,7 @@ _prop_object_externalize_empty_tag(
 	    _prop_object_externalize_append_char(ctx, '>') == false ||
 	    _prop_object_externalize_append_char(ctx, '\n') == false)
 	    	return (false);
-	
+
 	return (true);
 }
 
@@ -432,7 +429,7 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	    (taglen != ctx->poic_tagname_len ||
 	     memcmp(tag, ctx->poic_tagname, taglen) != 0))
 		return (false);
-	
+
 	/* Check for empty tag. */
 	if (*cp == '/') {
 		if (ctx->poic_tag_type != _PROP_TAG_TYPE_START)
@@ -473,14 +470,14 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	}
 
 	ctx->poic_tagattr_len = cp - ctx->poic_tagattr;
-	
+
 	cp++;
 	if (*cp != '\"')
 		return (false);
 	cp++;
 	if (_PROP_EOF(*cp))
 		return (false);
-	
+
 	ctx->poic_tagattrval = cp;
 	while (*cp != '\"') {
 		if (_PROP_EOF(*cp))
@@ -488,7 +485,7 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 		cp++;
 	}
 	ctx->poic_tagattrval_len = cp - ctx->poic_tagattrval;
-	
+
 	cp++;
 	if (*cp != '>')
 		return (false);
@@ -510,7 +507,7 @@ _prop_object_internalize_decode_string(
 	const char *src;
 	size_t tarindex;
 	char c;
-	
+
 	tarindex = 0;
 	src = ctx->poic_cp;
 
@@ -569,7 +566,7 @@ _prop_object_internalize_decode_string(
 		*sizep = tarindex;
 	if (cpp != NULL)
 		*cpp = src;
-	
+
 	return (true);
 }
 
@@ -721,11 +718,10 @@ _prop_object_internalize_context_alloc(const char *xml)
 {
 	struct _prop_object_internalize_context *ctx;
 
-	ctx = _PROP_MALLOC(sizeof(struct _prop_object_internalize_context),
-			   M_TEMP);
+	ctx = _PROP_MALLOC(sizeof(*ctx), M_TEMP);
 	if (ctx == NULL)
 		return (NULL);
-	
+
 	ctx->poic_xml = ctx->poic_cp = xml;
 
 	/*
@@ -738,7 +734,7 @@ _prop_object_internalize_context_alloc(const char *xml)
 		if (_PROP_EOF(*xml) || *xml != '<')
 			goto bad;
 
-#define	MATCH(str)	(memcmp(&xml[1], str, sizeof(str) - 1) == 0)
+#define	MATCH(str)	(strncmp(&xml[1], str, strlen(str)) == 0)
 
 		/*
 		 * Skip over the XML preamble that Apple XML property
@@ -808,12 +804,12 @@ _prop_object_externalize_file_dirname(const char *path, char *result)
 	 */
 	if (path == NULL || *path == '\0')
 		goto singledot;
-	
+
 	/* String trailing slashes, if any. */
 	lastp = path + strlen(path) - 1;
 	while (lastp != path && *lastp == '/')
 		lastp--;
-	
+
 	/* Terminate path at the last occurrence of '/'. */
 	do {
 		if (*lastp == '/') {
@@ -918,7 +914,7 @@ _prop_object_internalize_map_file(const char *fname)
 	mf = _PROP_MALLOC(sizeof(*mf), M_TEMP);
 	if (mf == NULL)
 		return (NULL);
-	
+
 	fd = open(fname, O_RDONLY, 0400);
 	if (fd == -1) {
 		_PROP_FREE(mf, M_TEMP);
@@ -953,8 +949,10 @@ _prop_object_internalize_map_file(const char *fname)
 		_PROP_FREE(mf, M_TEMP);
 		return (NULL);
 	}
-#if !defined(__minix)
-	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_SEQUENTIAL);
+#if defined(POSIX_MADV_SEQUENTIAL) && !defined(__minix)
+	(void) posix_madvise(mf->poimf_xml, mf->poimf_mapsize,
+	    POSIX_MADV_SEQUENTIAL);
+#endif
 
 	if (need_guard) {
 		if (mmap(mf->poimf_xml + mf->poimf_mapsize,
@@ -967,7 +965,6 @@ _prop_object_internalize_map_file(const char *fname)
 		}
 		mf->poimf_mapsize += pgsize;
 	}
-#endif /* !defined(__minix) */
 
 	return (mf);
 }
@@ -977,20 +974,16 @@ _prop_object_internalize_map_file(const char *fname)
  *	Unmap a file previously mapped for internalizing.
  */
 void
-#if defined(__minix)
-__dead
-#endif /* defined(__minix) */
 _prop_object_internalize_unmap_file(
     struct _prop_object_internalize_mapped_file *mf)
 {
 
-#if !defined(__minix)
-	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_DONTNEED);
+#if defined(POSIX_MADV_DONTNEED) && !defined(__minix)
+	(void) posix_madvise(mf->poimf_xml, mf->poimf_mapsize,
+	    POSIX_MADV_DONTNEED);
+#endif
 	(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
 	_PROP_FREE(mf, M_TEMP);
-#else
-	abort();
-#endif /*  !defined(__minix) */
 }
 #endif /* !_KERNEL && !_STANDALONE */
 
@@ -1034,7 +1027,7 @@ prop_object_release_emergency(prop_object_t obj)
 
 		/* Save pointerto unlock function */
 		unlock = po->po_type->pot_unlock;
-		
+
 		/* Dance a bit to make sure we always get the non-racy ocnt */
 		_PROP_ATOMIC_DEC32_NV(&po->po_refcnt, ocnt);
 		ocnt++;
@@ -1045,8 +1038,8 @@ prop_object_release_emergency(prop_object_t obj)
 				unlock();
 			break;
 		}
-		
-		_PROP_ASSERT(po->po_type);		
+
+		_PROP_ASSERT(po->po_type);
 		if ((po->po_type->pot_free)(NULL, &obj) ==
 		    _PROP_OBJECT_FREE_DONE) {
 			if (unlock != NULL)
@@ -1056,7 +1049,7 @@ prop_object_release_emergency(prop_object_t obj)
 
 		if (unlock != NULL)
 			unlock();
-		
+
 		parent = po;
 		_PROP_ATOMIC_INC32(&po->po_refcnt);
 	}
@@ -1078,7 +1071,7 @@ prop_object_release(prop_object_t obj)
 {
 	struct _prop_object *po;
 	struct _prop_stack stack;
-	void (*unlock)(void); 
+	void (*unlock)(void);
 	int ret;
 	uint32_t ocnt;
 
@@ -1094,7 +1087,7 @@ prop_object_release(prop_object_t obj)
 
 			/* Save pointer to object unlock function */
 			unlock = po->po_type->pot_unlock;
-			
+
 			_PROP_ATOMIC_DEC32_NV(&po->po_refcnt, ocnt);
 			ocnt++;
 			_PROP_ASSERT(ocnt != 0);
@@ -1105,7 +1098,7 @@ prop_object_release(prop_object_t obj)
 					unlock();
 				break;
 			}
-			
+
 			ret = (po->po_type->pot_free)(&stack, &obj);
 
 			if (unlock != NULL)
@@ -1113,7 +1106,7 @@ prop_object_release(prop_object_t obj)
 
 			if (ret == _PROP_OBJECT_FREE_DONE)
 				break;
-			
+
 			_PROP_ATOMIC_INC32(&po->po_refcnt);
 		} while (ret == _PROP_OBJECT_FREE_RECURSE);
 		if (ret == _PROP_OBJECT_FREE_FAILED)
@@ -1169,7 +1162,7 @@ prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
 
 	if (po1->po_type != po2->po_type)
 		return (false);
-    
+
  continue_subtree:
 	ret = (*po1->po_type->pot_equals)(obj1, obj2,
 					  &stored_pointer1, &stored_pointer2,
@@ -1201,7 +1194,7 @@ finish:
 		po1 = obj1;
 		(*po1->po_type->pot_equals_finish)(obj1, obj2);
 	}
-	return (false);		
+	return (false);
 }
 
 /*

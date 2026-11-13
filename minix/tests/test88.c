@@ -67,8 +67,7 @@ static void *bad_ptr;
  * Spawn a child process, with a pair of pipes to talk to it bidirectionally.
  * Drop user and group privileges in the child process if requested.
  */
-static void
-spawn(struct link * link, void (* proc)(struct link *), int drop)
+static void spawn(struct link * link, void (* proc)(struct link *), int drop)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -128,8 +127,7 @@ spawn(struct link * link, void (* proc)(struct link *), int drop)
 /*
  * Wait for a child process to terminate, and clean up.
  */
-static void
-collect(struct link * link)
+static void collect(struct link * link)
 {
 	int status;
 
@@ -145,8 +143,7 @@ collect(struct link * link)
 /*
  * Forcibly terminate a child process, and clean up.
  */
-static void
-terminate(struct link * link)
+static void terminate(struct link * link)
 {
 	int status;
 
@@ -168,8 +165,7 @@ terminate(struct link * link)
 /*
  * Send an integer value to the child or parent.
  */
-static void
-snd(struct link * link, int val)
+static void snd(struct link * link, int val)
 {
 
 	if (write(link->sndfd, (void *)&val, sizeof(val)) != sizeof(val)) e(0);
@@ -178,8 +174,7 @@ snd(struct link * link, int val)
 /*
  * Receive an integer value from the child or parent, or -1 on EOF.
  */
-static int
-rcv(struct link * link)
+static int rcv(struct link * link)
 {
 	int r, val;
 
@@ -194,8 +189,7 @@ rcv(struct link * link)
 /*
  * Child procedure that creates semaphore sets.
  */
-static void
-test_perm_child(struct link * parent)
+static void test_perm_child(struct link * parent)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -295,8 +289,7 @@ test_perm_child(struct link * parent)
  * 'owner_test' variable is set, the test will change slightly so as to allow
  * testing of operations that require a matching uid/cuid.
  */
-static void
-test_perm(void (* proc)(struct link *), int owner_test)
+static void test_perm(void (* proc)(struct link *), int owner_test)
 {
 	struct link child1, child2;
 	int n, shift, bit, mask, rmask, drop1, drop2, sugid, id[3];
@@ -395,8 +388,7 @@ test_perm(void (* proc)(struct link *), int owner_test)
  * nothing keeps a process from opening a semaphore set with fewer privileges
  * than required by the operations the process subsequently issues on the set.
  */
-static void
-test88a_perm(struct link * parent)
+static void test88a_perm(struct link * parent)
 {
 	int r, tbit, bit, mask, id[3];
 
@@ -449,8 +441,7 @@ test88a_perm(struct link * parent)
 /*
  * Test the basic semget(2) functionality.
  */
-static void
-test88a(void)
+static void test88a(void)
 {
 	struct seminfo seminfo;
 	struct semid_ds semds;
@@ -648,8 +639,7 @@ test88a(void)
 /*
  * Test semop(2) permission checks.
  */
-static void
-test88b_perm(struct link * parent)
+static void test88b_perm(struct link * parent)
 {
 	struct sembuf sops[2];
 	size_t nsops;
@@ -744,8 +734,7 @@ test88b_perm(struct link * parent)
 /*
  * Signal handler.
  */
-static void
-got_signal(int sig)
+static void got_signal(int sig)
 {
 
 	if (sig != SIGHUP) e(0);
@@ -756,8 +745,7 @@ got_signal(int sig)
 /*
  * Child process for semop(2) tests, mainly testing blocking operations.
  */
-static void
-test88b_child(struct link * parent)
+static void test88b_child(struct link * parent)
 {
 	struct sembuf sops[5];
 	struct sigaction act;
@@ -911,8 +899,7 @@ test88b_child(struct link * parent)
 /*
  * Test the basic semop(2) functionality.
  */
-static void
-test88b(void)
+static void test88b(void)
 {
 	struct seminfo seminfo;
 	struct semid_ds semds;
@@ -1540,8 +1527,7 @@ test88b(void)
 /*
  * Test semctl(2) permission checks, part 1: regular commands.
  */
-static void
-test88c_perm1(struct link * parent)
+static void test88c_perm1(struct link * parent)
 {
 	static const int cmds[] = { GETVAL, GETPID, GETNCNT, GETZCNT };
 	struct semid_ds semds;
@@ -1665,8 +1651,7 @@ test88c_perm1(struct link * parent)
 /*
  * Test semctl(2) permission checks, part 2: the IPC_SET command.
  */
-static void
-test88c_perm2(struct link * parent)
+static void test88c_perm2(struct link * parent)
 {
 	struct semid_ds semds;
 	int r, shift, id[3];
@@ -1711,8 +1696,7 @@ test88c_perm2(struct link * parent)
 /*
  * Test semctl(2) permission checks, part 3: the IPC_RMID command.
  */
-static void
-test88c_perm3(struct link * parent)
+static void test88c_perm3(struct link * parent)
 {
 	int r, shift, id[3];
 
@@ -1741,8 +1725,7 @@ test88c_perm3(struct link * parent)
 /*
  * Test the basic semctl(2) functionality.
  */
-static void
-test88c(void)
+static void test88c(void)
 {
 	static const int cmds[] = { GETVAL, GETPID, GETNCNT, GETZCNT };
 	struct seminfo seminfo;
@@ -2299,8 +2282,7 @@ test88c(void)
  * Test SEM_UNDO support.  Right now this functionality is missing altogether.
  * For now, we test that any attempt to use SEM_UNDO fails.
  */
-static void
-test88d(void)
+static void test88d(void)
 {
 	struct sembuf sop;
 	int id;
@@ -2344,8 +2326,7 @@ enum {
  * Auxiliary child procedure.  The auxiliary children will deadlock until the
  * semaphore set is removed.
  */
-static void
-test88e_childaux(struct link * parent)
+static void test88e_childaux(struct link * parent)
 {
 	struct sembuf sops[3];
 	struct seminfo seminfo;
@@ -2389,8 +2370,7 @@ test88e_childaux(struct link * parent)
 /*
  * First child procedure.
  */
-static void
-test88e_child1(struct link * parent)
+static void test88e_child1(struct link * parent)
 {
 	struct sembuf sops[3];
 	size_t nsops;
@@ -2442,8 +2422,7 @@ test88e_child1(struct link * parent)
 /*
  * Second child procedure.
  */
-static void
-test88e_child2(struct link * parent)
+static void test88e_child2(struct link * parent)
 {
 	struct sembuf sops[2];
 	size_t nsops;
@@ -2490,8 +2469,7 @@ test88e_child2(struct link * parent)
 /*
  * Third child procedure.
  */
-static void
-test88e_child3(struct link * parent)
+static void test88e_child3(struct link * parent)
 {
 	struct sembuf sops[1];
 	size_t nsops;
@@ -2520,8 +2498,7 @@ test88e_child3(struct link * parent)
 /*
  * Perform one test for operations affecting multiple processes.
  */
-static void
-sub88e(unsigned int match, unsigned int resume, unsigned int aux)
+static void sub88e(unsigned int match, unsigned int resume, unsigned int aux)
 {
 	struct link aux1, aux2, child1, child2, child3;
 	struct sembuf sop;
@@ -2754,8 +2731,7 @@ sub88e(unsigned int match, unsigned int resume, unsigned int aux)
  * unaffected by additional waiters that are not being resumed; 5) identifier
  * removal properly resumes all affected waiters.
  */
-static void
-test88e(void)
+static void test88e(void)
 {
 	unsigned int resume, match, aux;
 
@@ -2771,8 +2747,7 @@ test88e(void)
  * Verify that non-root processes can use sysctl(2) to see semaphore sets
  * created by root.
  */
-static void
-test88f_child(struct link * parent)
+static void test88f_child(struct link * parent)
 {
 	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_INFO,
 	    KERN_SYSVIPC_SEM_INFO };
@@ -2812,8 +2787,7 @@ test88f_child(struct link * parent)
  * Test sysctl(2) based information retrieval.  This test aims to ensure that
  * in particular ipcs(1) and ipcrm(1) will be able to do their jobs.
  */
-static void
-test88f(void)
+static void test88f(void)
 {
 	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_INFO,
 	    KERN_SYSVIPC_SEM_INFO };
@@ -2942,8 +2916,7 @@ test88f(void)
 /*
  * Initialize the test.
  */
-static void
-test88_init(void)
+static void test88_init(void)
 {
 	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM };
 	struct group *gr;
@@ -2984,8 +2957,7 @@ test88_init(void)
 /*
  * Test program for SysV IPC semaphores.
  */
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	int i, m;
 

@@ -132,8 +132,7 @@ static struct omap_timer *fr_timer;
 
 static int done = 0;
 
-int
-bsp_register_timer_handler(const irq_handler_t handler)
+int bsp_register_timer_handler(const irq_handler_t handler)
 {
 	/* Initialize the CLOCK's interrupt hook. */
 	omap3_timer_hook.proc_nr_e = NONE;
@@ -154,8 +153,7 @@ static kern_phys_map fr_timer_user_phys_map;	/* struct for when the free */
 						/* userland */
 
 /* callback for when the free running clock gets mapped */
-int
-kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
+int kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
 {
 	/* the only thing we need to do at this stage is to set the address */
 	/* in the kerninfo struct */
@@ -169,8 +167,7 @@ kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
 	return 0;
 }
 
-void
-omap3_frclock_init(void)
+void omap3_frclock_init(void)
 {
 	u32_t tisr;
 
@@ -257,14 +254,12 @@ omap3_frclock_init(void)
 	done = 1;
 }
 
-void
-omap3_frclock_stop(void)
+void omap3_frclock_stop(void)
 {
 	mmio_clear(fr_timer->base + fr_timer->regs->TCLR, OMAP3_TCLR_ST);
 }
 
-void
-bsp_timer_init(unsigned freq)
+void bsp_timer_init(unsigned freq)
 {
 	/* we only support 1ms resolution */
 	u32_t tisr;
@@ -327,14 +322,12 @@ bsp_timer_init(unsigned freq)
 	omap3_frclock_init();
 }
 
-void
-bsp_timer_stop(void)
+void bsp_timer_stop(void)
 {
 	mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 }
 
-static u32_t
-read_frc(void)
+static u32_t read_frc(void)
 {
 	if (done == 0) {
 		return 0;
@@ -356,8 +349,7 @@ read_frc(void)
  *  compose the 64 bits time based on the current timer value
  *   and high_frc.
  */
-static void
-frc_overflow_check(u32_t cur_frc)
+static void frc_overflow_check(u32_t cur_frc)
 {
 	static int prev_frc_valid;
 	static u32_t prev_frc;
@@ -368,8 +360,7 @@ frc_overflow_check(u32_t cur_frc)
 	prev_frc_valid = 1;
 }
 
-void
-bsp_timer_int_handler(void)
+void bsp_timer_int_handler(void)
 {
 	/* Clear all interrupts */
 	u32_t tisr, now;
@@ -386,8 +377,7 @@ bsp_timer_int_handler(void)
 }
 
 /* Use the free running clock as TSC */
-void
-read_tsc_64(u64_t * t)
+void read_tsc_64(u64_t * t)
 {
 	u32_t now;
 	now = read_frc();

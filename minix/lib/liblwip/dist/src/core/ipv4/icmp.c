@@ -76,8 +76,7 @@ static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
  * @param p the icmp echo request packet, p->payload pointing to the icmp header
  * @param inp the netif on which this packet was received
  */
-void
-icmp_input(struct pbuf *p, struct netif *inp)
+void icmp_input(struct pbuf *p, struct netif *inp)
 {
   u8_t type;
 #ifdef LWIP_DEBUG
@@ -297,8 +296,7 @@ icmperr:
  *          p->payload pointing to the IP header
  * @param t type of the 'unreachable' packet
  */
-void
-icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
+void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 {
   MIB2_STATS_INC(mib2.icmpoutdestunreachs);
   icmp_send_response(p, ICMP_DUR, t);
@@ -312,8 +310,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
  *          p->payload pointing to the IP header
  * @param t type of the 'time exceeded' packet
  */
-void
-icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
+void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 {
   MIB2_STATS_INC(mib2.icmpouttimeexcds);
   icmp_send_response(p, ICMP_TE, t);
@@ -329,8 +326,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
  * @param type Type of the ICMP header
  * @param code Code of the ICMP header
  */
-static void
-icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
+static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 {
   struct pbuf *q;
   struct ip_hdr *iphdr;

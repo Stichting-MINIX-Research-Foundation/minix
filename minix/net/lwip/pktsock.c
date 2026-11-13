@@ -55,8 +55,7 @@ struct pktaddr6 {
  * resources in any form, as socket creation may still fail later, in which
  * case no destruction function is called.
  */
-int
-pktsock_socket(struct pktsock * pkt, int domain, size_t sndbuf, size_t rcvbuf,
+int pktsock_socket(struct pktsock * pkt, int domain, size_t sndbuf, size_t rcvbuf,
 	struct sock ** sockp)
 {
 
@@ -81,8 +80,7 @@ pktsock_socket(struct pktsock * pkt, int domain, size_t sndbuf, size_t rcvbuf,
  * Return TRUE if the given packet can and should be received on the given
  * socket, or FALSE if there is a reason not to receive the packet.
  */
-static int
-pktsock_may_recv(struct pktsock * pkt, struct pbuf * pbuf)
+static int pktsock_may_recv(struct pktsock * pkt, struct pbuf * pbuf)
 {
 
 	/*
@@ -113,8 +111,7 @@ pktsock_may_recv(struct pktsock * pkt, struct pbuf * pbuf)
  * socket.  If so, return the amount of space for ancillary information that
  * will be necessary for the packet.  If not, return a negative value.
  */
-int
-pktsock_test_input(struct pktsock * pkt, struct pbuf * pbuf)
+int pktsock_test_input(struct pktsock * pkt, struct pbuf * pbuf)
 {
 
 	/*
@@ -135,8 +132,7 @@ pktsock_test_input(struct pktsock * pkt, struct pbuf * pbuf)
  * A packet has arrived on a packet socket.  We own the given packet buffer,
  * and so we must free it if we do not want to keep it.
  */
-void
-pktsock_input(struct pktsock * pkt, struct pbuf * pbuf,
+void pktsock_input(struct pktsock * pkt, struct pbuf * pbuf,
 	const ip_addr_t * srcaddr, uint16_t port)
 {
 	struct pktaddr4 pktaddr4;
@@ -254,8 +250,7 @@ pktsock_input(struct pktsock * pkt, struct pbuf * pbuf,
  * or the unspecified ('any') address if no source address was specified using
  * the options.  On failure, return a negative error code.
  */
-int
-pktsock_get_pktinfo(struct pktsock * pkt, struct pktopt * pkto,
+int pktsock_get_pktinfo(struct pktsock * pkt, struct pktopt * pkto,
 	struct ifdev ** ifdevp, ip_addr_t * src_addrp)
 {
 	struct ifdev *ifdev, *ifdev2;
@@ -363,8 +358,7 @@ pktsock_get_pktinfo(struct pktsock * pkt, struct pktopt * pkto,
  * return OK, with any parsed options merged into the set of packet options
  * 'pkto'.  On failure, return a negative error code.
  */
-static int
-pktsock_parse_ctl_v4(struct pktsock * pkt __unused, struct cmsghdr * cmsg,
+static int pktsock_parse_ctl_v4(struct pktsock * pkt __unused, struct cmsghdr * cmsg,
 	socklen_t len, struct pktopt * pkto)
 {
 	uint8_t byte;
@@ -428,8 +422,7 @@ pktsock_parse_ctl_v4(struct pktsock * pkt __unused, struct cmsghdr * cmsg,
  * return OK, with any parsed options merged into the set of packet options
  * 'pkto'.  On failure, return a negative error code.
  */
-static int
-pktsock_parse_ctl_v6(struct pktsock * pkt, struct cmsghdr * cmsg,
+static int pktsock_parse_ctl_v6(struct pktsock * pkt, struct cmsghdr * cmsg,
 	socklen_t len, struct pktopt * pkto)
 {
 	struct in6_pktinfo ipi6;
@@ -508,8 +501,7 @@ pktsock_parse_ctl_v6(struct pktsock * pkt, struct cmsghdr * cmsg,
  * 'ctl_len'.  On success, return OK, with any parsed packet options stored in
  * 'pkto'.  On failure, return a negative error code.
  */
-int
-pktsock_get_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
+int pktsock_get_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, struct pktopt * pkto)
 {
 	struct msghdr msghdr;
@@ -574,8 +566,7 @@ pktsock_get_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
  * buffer 'pbuf' that must already have been allocated with the appropriate
  * size.
  */
-int
-pktsock_get_data(struct pktsock * pkt, const struct sockdriver_data * data,
+int pktsock_get_data(struct pktsock * pkt, const struct sockdriver_data * data,
 	size_t len, struct pbuf * pbuf)
 
 {
@@ -586,8 +577,7 @@ pktsock_get_data(struct pktsock * pkt, const struct sockdriver_data * data,
 /*
  * Dequeue and free the head of the receive queue of a packet socket.
  */
-static void
-pktsock_dequeue(struct pktsock * pkt)
+static void pktsock_dequeue(struct pktsock * pkt)
 {
 	struct pbuf *pbuf, **pnext;
 	size_t size;
@@ -611,8 +601,7 @@ pktsock_dequeue(struct pktsock * pkt)
 /*
  * Perform preliminary checks on a receive request.
  */
-int
-pktsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
+int pktsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
 	int flags)
 {
 
@@ -632,8 +621,7 @@ pktsock_pre_recv(struct sock * sock __unused, endpoint_t user_endpt __unused,
  * in the buffer 'ptr' with size 'len'.  Return the (padded) size of the chunk
  * that was generated as a result.
  */
-static size_t
-pktsock_add_ctl(int level, int type, void * ptr, socklen_t len, size_t off)
+static size_t pktsock_add_ctl(int level, int type, void * ptr, socklen_t len, size_t off)
 {
 	struct cmsghdr cmsg;
 	size_t size;
@@ -680,8 +668,7 @@ pktsock_add_ctl(int level, int type, void * ptr, socklen_t len, size_t off)
  * data were generated than copied out, also merge the MSG_CTRUNC flag into
  * 'rflags'.  On failure, return a negative error code.
  */
-static int
-pktsock_put_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
+static int pktsock_put_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, struct pkthdr * pkthdr, void * pktaddr,
 	int * rflags)
 {
@@ -790,8 +777,7 @@ pktsock_put_ctl(struct pktsock * pkt, const struct sockdriver_data * ctl,
 /*
  * Receive data on a packet socket.
  */
-int
-pktsock_recv(struct sock * sock, const struct sockdriver_data * data,
+int pktsock_recv(struct sock * sock, const struct sockdriver_data * data,
 	size_t len, size_t * off, const struct sockdriver_data * ctl,
 	socklen_t ctl_len, socklen_t * ctl_off, struct sockaddr * addr,
 	socklen_t * addr_len, endpoint_t user_endpt __unused, int flags,
@@ -882,8 +868,7 @@ pktsock_recv(struct sock * sock, const struct sockdriver_data * data,
  * Test whether data can be received on a packet socket, and if so, how many
  * bytes of data.
  */
-int
-pktsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
+int pktsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
 {
 	struct pktsock *pkt = (struct pktsock *)sock;
 
@@ -900,8 +885,7 @@ pktsock_test_recv(struct sock * sock, size_t min __unused, size_t * size)
  * the caller is multicast aware.  Remember this, because that means the socket
  * may also receive traffic to multicast destinations.
  */
-void
-pktsock_set_mcaware(struct pktsock * pkt)
+void pktsock_set_mcaware(struct pktsock * pkt)
 {
 
 	ipsock_set_flag(&pkt->pkt_ipsock, PKTF_MCAWARE);
@@ -910,8 +894,7 @@ pktsock_set_mcaware(struct pktsock * pkt)
 /*
  * Set socket options on a packet socket.
  */
-int
-pktsock_setsockopt(struct pktsock * pkt, int level, int name,
+int pktsock_setsockopt(struct pktsock * pkt, int level, int name,
 	const struct sockdriver_data * data, socklen_t len,
 	struct ipopts * ipopts)
 {
@@ -1101,8 +1084,7 @@ pktsock_setsockopt(struct pktsock * pkt, int level, int name,
 /*
  * Retrieve socket options on a packet socket.
  */
-int
-pktsock_getsockopt(struct pktsock * pkt, int level, int name,
+int pktsock_getsockopt(struct pktsock * pkt, int level, int name,
 	const struct sockdriver_data * data, socklen_t * len,
 	struct ipopts * ipopts)
 {
@@ -1189,8 +1171,7 @@ pktsock_getsockopt(struct pktsock * pkt, int level, int name,
 /*
  * Drain the receive queue of a packet socket.
  */
-static void
-pktsock_drain(struct pktsock * pkt)
+static void pktsock_drain(struct pktsock * pkt)
 {
 
 	while (pkt->pkt_rcvhead != NULL)
@@ -1203,8 +1184,7 @@ pktsock_drain(struct pktsock * pkt)
 /*
  * Shut down a packet socket for reading and/or writing.
  */
-void
-pktsock_shutdown(struct pktsock * pkt, unsigned int mask)
+void pktsock_shutdown(struct pktsock * pkt, unsigned int mask)
 {
 
 	if (mask & SFL_SHUT_RD)
@@ -1214,8 +1194,7 @@ pktsock_shutdown(struct pktsock * pkt, unsigned int mask)
 /*
  * Close a packet socket.
  */
-void
-pktsock_close(struct pktsock * pkt)
+void pktsock_close(struct pktsock * pkt)
 {
 
 	pktsock_drain(pkt);
@@ -1228,8 +1207,7 @@ pktsock_close(struct pktsock * pkt)
  * for sysctl(7).  NetBSD returns the used portion of each buffer, but that
  * would be quite some extra effort for us (TODO).
  */
-size_t
-pktsock_get_recvlen(struct pktsock * pkt)
+size_t pktsock_get_recvlen(struct pktsock * pkt)
 {
 
 	return pkt->pkt_rcvlen;

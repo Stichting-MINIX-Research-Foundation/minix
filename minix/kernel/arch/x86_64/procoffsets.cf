@@ -1,0 +1,26 @@
+
+include "kernel/kernel.h"
+
+struct proc
+member DIREG  p_reg.di
+member SIREG  p_reg.si
+member BPREG  p_reg.fp
+member BXREG  p_reg.bx
+member DXREG  p_reg.dx
+member CXREG  p_reg.cx
+member AXREG  p_reg.retreg
+member R8REG  p_reg.r8
+member R9REG  p_reg.r9
+member R10REG p_reg.r10
+member R11REG p_reg.r11
+member R12REG p_reg.r12
+member R13REG p_reg.r13
+member R14REG p_reg.r14
+member R15REG p_reg.r15
+member PCREG  p_reg.pc
+member CSREG  p_reg.cs
+member PSWREG p_reg.psw
+member SPREG  p_reg.sp
+member P_CR3  p_seg.p_cr3
+member P_KERN_TRAP_STYLE p_seg.p_kern_trap_style
+member P_MAGIC p_magic

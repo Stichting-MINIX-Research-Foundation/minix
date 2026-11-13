@@ -517,6 +517,8 @@
 ./usr/libdata/debug/usr/games/strfile.debug             minix-debug     debug
 ./usr/libdata/debug/usr/games/tetris.debug              minix-debug     debug
 ./usr/libdata/debug/usr/games/unstr.debug               minix-debug     debug
+./usr/libdata/debug/usr/games/worm.debug                minix-debug     debug
+./usr/libdata/debug/usr/games/worms.debug               minix-debug     debug
 ./usr/libdata/debug/usr/lib                             minix-debug
 ./usr/libdata/debug/usr/lib/i18n                        minix-debug
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug   minix-debug     debug
@@ -545,7 +547,7 @@
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug     minix-debug     debug
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug     minix-debug     debug
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug       minix-debug     debug
-./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug        minix-debug     debug
+./usr/libdata/debug/usr/lib/libbfd.so.17.0.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libbind9.so.8.2.debug       minix-debug     debug
 ./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug   minix-debug     debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug         minix-debug     debug
@@ -565,6 +567,7 @@
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug       minix-debug     debug
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug       minix-debug     debug
+./usr/libdata/debug/usr/lib/libgnuctf.so.0.0.debug      minix-debug     debug
 ./usr/libdata/debug/usr/lib/libintl.so.1.1.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libirs.so.8.2.debug         minix-debug     debug
 ./usr/libdata/debug/usr/lib/libisc.so.8.2.debug         minix-debug     debug
@@ -583,7 +586,7 @@
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug      minix-debug     debug
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug minix-debug     debug
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug        minix-debug     gcc=5,gcccmds,debug
-./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug     minix-debug     debug
+./usr/libdata/debug/usr/lib/libopcodes.so.10.0.debug     minix-debug     debug
 ./usr/libdata/debug/usr/lib/libpcap.so.5.1.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.1.debug         minix-debug     debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug        minix-debug     debug
@@ -637,7 +640,7 @@
 ./usr/libdata/debug/usr/sbin/fbdctl.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/i2cscan.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/inetd.debug                minix-debug     debug
-./usr/libdata/debug/usr/sbin/installboot_nbsd.debug     minix-debug     debug
+./usr/libdata/debug/usr/sbin/installboot.debug          minix-debug     debug
 ./usr/libdata/debug/usr/sbin/kernel.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/link.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/sbin/makefs.debug               minix-debug     debug
