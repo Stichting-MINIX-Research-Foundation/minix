@@ -283,7 +283,7 @@ static int mxv_region_pa(void *region, u64_t *pa)
 	if ((basic & VMX_BASIC_32BIT_PA) && (*pa >> 32))
 		return ENOTSUP;
 
-	return OK;
+	return 0;
 }
 
 static int mxv_vmxon(u64_t pa)
@@ -295,7 +295,7 @@ static int mxv_vmxon(u64_t pa)
 		: "m"(pa)
 		: "cc", "memory");
 
-	return failed ? EIO : OK;
+	return failed ? EIO : 0;
 }
 
 static int mxv_vmclear(u64_t pa)
@@ -307,7 +307,7 @@ static int mxv_vmclear(u64_t pa)
 		: "m"(pa)
 		: "cc", "memory");
 
-	return failed ? EIO : OK;
+	return failed ? EIO : 0;
 }
 
 static int mxv_vmptrld(u64_t pa)
@@ -319,7 +319,7 @@ static int mxv_vmptrld(u64_t pa)
 		: "m"(pa)
 		: "cc", "memory");
 
-	return failed ? EIO : OK;
+	return failed ? EIO : 0;
 }
 
 static int mxv_vmwrite(u64_t field, u64_t value)
@@ -331,7 +331,7 @@ static int mxv_vmwrite(u64_t field, u64_t value)
 		: "r"(field), "rm"(value)
 		: "cc");
 
-	return failed ? EIO : OK;
+	return failed ? EIO : 0;
 }
 
 static int mxv_vmread(u64_t field, u64_t *value)
@@ -347,7 +347,7 @@ static int mxv_vmread(u64_t field, u64_t *value)
 	if (failed)
 		return EIO;
 	*value = result;
-	return OK;
+	return 0;
 }
 
 static int mxv_adjust_controls(u32_t msr, u32_t requested, u32_t *value)
@@ -362,7 +362,7 @@ static int mxv_adjust_controls(u32_t msr, u32_t requested, u32_t *value)
 		return ENOTSUP;
 
 	*value = (requested | must_be_one) & may_be_one;
-	return OK;
+	return 0;
 }
 
 static int mxv_vmx_control_msrs(struct mxv_cpu_state *cpu,
@@ -382,15 +382,15 @@ static int mxv_vmx_control_msrs(struct mxv_cpu_state *cpu,
 	}
 
 	r = mxv_adjust_controls(pin_msr, VMX_PIN_EXT_INTR_EXITING, pin);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	r = mxv_adjust_controls(proc_msr, VMX_CPU_HLT_EXITING, proc);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	r = mxv_adjust_controls(exit_msr,
 		VMX_EXIT_SAVE_DEBUG | VMX_EXIT_HOST_64BIT | VMX_EXIT_LOAD_EFER,
 		exit);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	return mxv_adjust_controls(entry_msr,
 		VMX_ENTRY_LOAD_DEBUG | VMX_ENTRY_GUEST_IA32E |
@@ -409,7 +409,7 @@ static int mxv_segment(u64_t gdt_base, u16_t gdt_limit, u16_t selector,
 	memset(segment, 0, sizeof(*segment));
 	if (selector == 0) {
 		segment->access = (1U << 16); /* unusable */
-		return OK;
+		return 0;
 	}
 	if (selector & 0x4)
 		return ENOTSUP; /* LDT selectors are not used by this probe */
@@ -446,11 +446,11 @@ static int mxv_segment(u64_t gdt_base, u16_t gdt_limit, u16_t selector,
 	segment->base = base;
 	segment->limit = limit;
 	segment->access = access;
-	return OK;
+	return 0;
 }
 
 #define MXV_W(field, value) do { \
-	if (mxv_vmwrite((field), (u64_t)(value)) != OK) \
+	if (mxv_vmwrite((field), (u64_t)(value)) != 0) \
 		return EIO; \
 } while (0)
 
@@ -482,19 +482,19 @@ int mxv_vmx_prepare_entry(struct mxv_vcpu *vcpu, u64_t host_rsp,
 		return EINVAL;
 
 	r = mxv_segment(gdtr.base, gdtr.limit, host_es, &es);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_cs, &cs);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_ss, &ss);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_ds, &ds);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_fs, &fs);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_gs, &gs);
-	if (r != OK) return r;
+	if (r != 0) return r;
 	r = mxv_segment(gdtr.base, gdtr.limit, host_tr, &tr);
-	if (r != OK) return r;
+	if (r != 0) return r;
 
 	cr0 = read_cr0();
 	cr3 = read_cr3();
@@ -513,7 +513,7 @@ int mxv_vmx_prepare_entry(struct mxv_vcpu *vcpu, u64_t host_rsp,
 
 	r = mxv_vmx_control_msrs(&mxv_cpus[cpuid], &pin, &proc,
 		&exit, &entry);
-	if (r != OK)
+	if (r != 0)
 		return r;
 
 	fs_base = mxv_rdmsr(IA32_FS_BASE);
@@ -604,7 +604,7 @@ int mxv_vmx_prepare_entry(struct mxv_vcpu *vcpu, u64_t host_rsp,
 	MXV_W(VMCS_GUEST_VMCS_LINK_POINTER, ~(u64_t)0);
 	MXV_W(VMCS_GUEST_IA32_EFER, efer);
 
-	return OK;
+	return 0;
 }
 
 #undef MXV_W
@@ -613,11 +613,11 @@ int mxv_vmx_exit_complete(struct mxv_vcpu *vcpu)
 {
 	u64_t reason, qualification, guest_rip;
 
-	if (mxv_vmread(VMCS_EXIT_REASON, &reason) != OK)
+	if (mxv_vmread(VMCS_EXIT_REASON, &reason) != 0)
 		return EIO;
-	if (mxv_vmread(VMCS_EXIT_QUALIFICATION, &qualification) != OK)
+	if (mxv_vmread(VMCS_EXIT_QUALIFICATION, &qualification) != 0)
 		return EIO;
-	if (mxv_vmread(VMCS_GUEST_RIP, &guest_rip) != OK)
+	if (mxv_vmread(VMCS_GUEST_RIP, &guest_rip) != 0)
 		return EIO;
 
 	vcpu->last_exit = (u32_t)(reason & 0xffff);
@@ -627,14 +627,14 @@ int mxv_vmx_exit_complete(struct mxv_vcpu *vcpu)
 	if (vcpu->last_exit != MXV_EXIT_VMCALL)
 		return EIO;
 
-	return OK;
+	return 0;
 }
 
 int mxv_vmx_entry_failed(struct mxv_vcpu *vcpu)
 {
 	u64_t error = 0;
 
-	if (mxv_vmread(VMCS_VM_INSTRUCTION_ERROR, &error) == OK)
+	if (mxv_vmread(VMCS_VM_INSTRUCTION_ERROR, &error) == 0)
 		vcpu->last_error = (u32_t)error;
 	else
 		vcpu->last_error = 0xffffffffU;
@@ -669,7 +669,7 @@ int mxv_vmx_cpu_enable(void)
 		return EINVAL;
 	cpu = &mxv_cpus[cpuid];
 	if (cpu->vmxon)
-		return OK;
+		return 0;
 
 	caps = mxv_vmx_capabilities();
 	if ((caps & MXV_CAP_REQUIRED) != MXV_CAP_REQUIRED)
@@ -677,7 +677,7 @@ int mxv_vmx_cpu_enable(void)
 
 	basic = mxv_rdmsr(IA32_VMX_BASIC);
 	r = mxv_region_pa(mxv_vmxon_regions[cpuid], &pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	revision = (u32_t)(basic & VMX_BASIC_REVISION_MASK);
 	memset(mxv_vmxon_regions[cpuid], 0, MXV_PAGE_SIZE);
@@ -688,14 +688,14 @@ int mxv_vmx_cpu_enable(void)
 	write_cr4(cr4);
 
 	r = mxv_vmxon(pa);
-	if (r != OK) {
+	if (r != 0) {
 		write_cr4(cpu->original_cr4);
 		return r;
 	}
 
 	cpu->vmx_basic = basic;
 	cpu->vmxon = 1;
-	return OK;
+	return 0;
 }
 
 int mxv_vmx_cpu_disable(void)
@@ -707,7 +707,7 @@ int mxv_vmx_cpu_disable(void)
 		return EINVAL;
 	cpu = &mxv_cpus[cpuid];
 	if (!cpu->vmxon)
-		return OK;
+		return 0;
 
 	for (i = 0; i < MXV_MAX_VCPUS; i++) {
 		if (mxv_vcpus[i].in_use && mxv_vcpus[i].cpu == cpuid)
@@ -718,7 +718,7 @@ int mxv_vmx_cpu_disable(void)
 	write_cr4(cpu->original_cr4);
 	cpu->vmxon = 0;
 	cpu->vmx_basic = 0;
-	return OK;
+	return 0;
 }
 
 int mxv_vcpu_create(endpoint_t owner, u64_t *handle)
@@ -740,7 +740,7 @@ int mxv_vcpu_create(endpoint_t owner, u64_t *handle)
 		return ENOSPC;
 
 	r = mxv_region_pa(mxv_vmcs_regions[i], &pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	revision = (u32_t)(mxv_cpus[cpuid].vmx_basic &
 		VMX_BASIC_REVISION_MASK);
@@ -748,7 +748,7 @@ int mxv_vcpu_create(endpoint_t owner, u64_t *handle)
 	*(u32_t *)mxv_vmcs_regions[i] = revision;
 
 	r = mxv_vmclear(pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 
 	vcpu = &mxv_vcpus[i];
@@ -761,7 +761,7 @@ int mxv_vcpu_create(endpoint_t owner, u64_t *handle)
 		vcpu->generation = mxv_next_generation++;
 
 	*handle = ((u64_t)vcpu->generation << 32) | (u32_t)(i + 1);
-	return OK;
+	return 0;
 }
 
 int mxv_vcpu_destroy(endpoint_t owner, u64_t handle)
@@ -777,14 +777,14 @@ int mxv_vcpu_destroy(endpoint_t owner, u64_t handle)
 		return EBUSY;
 
 	r = mxv_region_pa(mxv_vmcs_regions[vcpu - mxv_vcpus], &pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	r = mxv_vmclear(pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 
 	memset(vcpu, 0, sizeof(*vcpu));
-	return OK;
+	return 0;
 }
 
 int mxv_vcpu_run_probe(endpoint_t owner, u64_t handle, u64_t *exit_reason)
@@ -804,21 +804,21 @@ int mxv_vcpu_run_probe(endpoint_t owner, u64_t handle, u64_t *exit_reason)
 		return ENXIO;
 
 	r = mxv_region_pa(mxv_vmcs_regions[vcpu - mxv_vcpus], &pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	r = mxv_vmclear(pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 	r = mxv_vmptrld(pa);
-	if (r != OK)
+	if (r != 0)
 		return r;
 
 	vcpu->last_exit = 0;
 	vcpu->last_error = 0;
 	r = mxv_vmx_enter(vcpu);
-	if (r != OK)
+	if (r != 0)
 		return r;
 
 	*exit_reason = vcpu->last_exit;
-	return OK;
+	return 0;
 }
