@@ -574,6 +574,10 @@ int map_free(struct vir_region *region)
 {
 	int r;
 
+	/* Never release backing pages while an MXV EPT slot owns the region. */
+	if (region == NULL || region->mxv_pin_token != 0)
+		return EBUSY;
+
 	if((r=map_subfree(region, 0, region->length)) != OK) {
 		printf("%d\n", __LINE__);
 		return r;
@@ -1086,6 +1090,12 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 	}
 
 	regionstart = r->vaddr + offset;
+
+	/* EPT may continue to reference these pages.  Refuse all partial
+	 * and complete unmaps until the kernel token has been detached.
+	 */
+	if (r->mxv_pin_token != 0)
+		return EBUSY;
 
 	/* unreference its memory */
 	map_subfree(r, offset, len);

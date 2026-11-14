@@ -20,6 +20,12 @@ int vm_set_priv(endpoint_t ep, void *buf, int sys_proc);
 int vm_update(endpoint_t src_e, endpoint_t dst_e, int flags);
 int vm_memctl(endpoint_t ep, int req, void** addr, size_t *len);
 int vm_prepare(endpoint_t src_e, endpoint_t dst_e, int flags);
+
+/* MXV Phase-2 contiguous Guest RAM pin lifecycle. */
+#if defined(__x86_64__)
+int vm_mxv_pin(void *addr, size_t len, u64_t *token);
+int vm_mxv_unpin(void *addr, u64_t token);
+#endif
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
         dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);

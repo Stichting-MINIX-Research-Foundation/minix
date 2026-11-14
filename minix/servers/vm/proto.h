@@ -198,6 +198,10 @@ int do_rs_prepare(message *m);
 int do_rs_update(message *m);
 int do_rs_memctl(message *m);
 
+/* mxv.c */
+int do_mxv_mem_pin(message *m);
+int do_mxv_mem_unpin(message *m);
+
 /* pb.c */
 struct phys_block *pb_new(phys_bytes phys);
 void pb_free(struct phys_block *);

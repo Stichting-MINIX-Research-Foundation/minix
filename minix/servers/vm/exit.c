@@ -13,12 +13,14 @@
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/bitmap.h>
+#include <minix/mxvctl.h>
 
 #include <errno.h>
 #include <assert.h>
 
 #include "glo.h"
 #include "proto.h"
+#include "regionavl.h"
 #include "util.h"
 #include "sanitycheck.h"
 
@@ -30,8 +32,38 @@ static void reset_vm_rusage(struct vmproc *vmp)
 	vmp->vm_major_page_fault = 0;
 }
 
+static void
+mxv_owner_cleanup(struct vmproc *vmp)
+{
+#if defined(__x86_64__)
+	struct mxvctl_req req;
+	struct vir_region *vr;
+	region_iter iter;
+	int r;
+
+	if (vmp->vm_endpoint >= 0) {
+		memset(&req, 0, sizeof(req));
+		req.version = MXVCTL_API_VERSION;
+		req.operation = MXV_OWNER_DIED;
+		req.object_handle = (u64_t)(int64_t)vmp->vm_endpoint;
+		r = sys_mxvctl_req(&req);
+		if (r != OK)
+			panic("MXV: owner cleanup for %d failed: %d",
+			    vmp->vm_endpoint, r);
+	}
+	region_start_iter_least(&vmp->vm_regions_avl, &iter);
+	while ((vr = region_get_iter(&iter))) {
+		vr->mxv_pin_token = 0;
+		region_incr_iter(&iter);
+	}
+#else
+	(void)vmp;
+#endif
+}
+
 void free_proc(struct vmproc *vmp)
 {
+	mxv_owner_cleanup(vmp);
 	map_free_proc(vmp);
 	pt_free(&vmp->vm_pt);
 	region_init(&vmp->vm_regions_avl);

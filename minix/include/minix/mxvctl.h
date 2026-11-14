@@ -1,9 +1,8 @@
 /*
- * MXV kernel control ABI, Phase 1.
+ * MXV kernel control ABI.
  *
- * This interface is deliberately limited to a hardware capability query,
- * VMX lifecycle management, and a kernel-owned VM-entry smoke test.  It does
- * not accept guest-supplied code, register state, physical addresses, or RAM.
+ * Phase 2 adds opaque page-pin tokens and kernel-owned EPT memslots. Physical
+ * addresses and raw EPT pointers are never accepted from userland.
  */
 #ifndef _MINIX_MXVCTL_H
 #define _MINIX_MXVCTL_H
@@ -16,6 +15,48 @@
 #define MXV_VCPU_CREATE          3
 #define MXV_VCPU_DESTROY         4
 #define MXV_VCPU_RUN_PROBE       5
+#define MXV_PIN_RANGE            6
+#define MXV_PIN_RELEASE          7
+#define MXV_VM_CREATE            8
+#define MXV_VM_DESTROY           9
+#define MXV_MEM_ATTACH           10
+#define MXV_MEM_DETACH           11
+#define MXV_OWNER_DIED           12
+
+#define MXV_MEM_READ             0x01
+#define MXV_MEM_WRITE            0x02
+#define MXV_MEM_EXEC             0x04
+#define MXV_MEM_DIRTY_LOG        0x08 /* reserved; rejected in Phase 2 */
+
+#define MXV_MAX_MEMSLOTS         8
+#define MXV_MAX_RAM_BYTES        (16ULL * 1024 * 1024 * 1024)
+
+#include <stdint.h>
+
+/* Fixed-size versioned request layout from the Phase-2 design. */
+struct mxvctl_req {
+	uint32_t version;
+	uint32_t operation;
+	uint64_t object_handle;
+	uint64_t arg0;
+	uint64_t arg1;
+	uint32_t grant_id;
+	uint32_t flags;
+	uint64_t generation;
+	uint64_t reserved[2];
+};
+
+/* Versioned GPA-to-pin mapping descriptor. */
+struct mxv_memslot_req {
+	uint32_t version;
+	uint32_t slot_id;
+	uint32_t flags;
+	uint32_t reserved;
+	uint64_t guest_phys;
+	uint64_t size;
+	uint64_t pin_token;
+	uint64_t generation;
+};
 
 #define MXV_CAP_VMX              (1ULL << 0)
 #define MXV_CAP_FEATURE_LOCKED   (1ULL << 1)
