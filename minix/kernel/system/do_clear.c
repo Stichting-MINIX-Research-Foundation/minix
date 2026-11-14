@@ -6,6 +6,9 @@
  */
 
 #include "kernel/system.h"
+#if defined(__x86_64__)
+#include "arch_proto.h"
+#endif
 
 #include <minix/endpoint.h>
 
@@ -32,10 +35,14 @@ int do_clear(struct proc * caller, message * m_ptr)
   }
   rc = proc_addr(exit_p);	/* clean up */
 
-  release_address_space(rc);
-
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return OK;
+
+#if defined(__x86_64__)
+  /* Revoke MXV EPT/pin references before the process pages can be reused. */
+  mxv_owner_died(rc->p_endpoint);
+#endif
+  release_address_space(rc);
 
   /* Check the table with IRQ hooks to see if hooks should be released. */
   for (i=0; i < NR_IRQ_HOOKS; i++) {

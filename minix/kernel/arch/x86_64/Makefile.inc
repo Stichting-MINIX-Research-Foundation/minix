@@ -181,4 +181,4 @@ apic_asm.o head.o klib.o mpx.o: sconst.h
 
 
 # MXV Phase-1 Intel VMX lifecycle and controlled VMLAUNCH probe.
-SRCS+= mxv_vmx.c mxv_entry.S
+SRCS+= mxv_vmx.c mxv_ept.c mxv_entry.S

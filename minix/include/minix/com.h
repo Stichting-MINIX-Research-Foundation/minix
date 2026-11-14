@@ -276,7 +276,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, \
-    SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET
+    SYS_DIAGCTL, SYS_STATECTL, SYS_SAFEMEMSET, SYS_MXVCTL
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #   define _DIO_INPUT		0x001
@@ -776,7 +776,11 @@
 #define VM_RS_PREPARE		(VM_RQ_BASE+48)
 
 /* Total. */
-#define NR_VM_CALLS				49
+/* MXV contiguous guest-RAM pin lifecycle (VM server only). */
+#define VM_MXV_MEM_PIN		(VM_RQ_BASE+49)
+#define VM_MXV_MEM_UNPIN	(VM_RQ_BASE+50)
+
+#define NR_VM_CALLS				51
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */
@@ -791,7 +795,7 @@
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
     VM_BRK, VM_MMAP, VM_MUNMAP, VM_MAP_PHYS, VM_UNMAP_PHYS, VM_INFO, \
-    VM_GETRUSAGE /* VM_GETRUSAGE is to be removed from this list ASAP */
+    VM_GETRUSAGE, VM_MXV_MEM_PIN, VM_MXV_MEM_UNPIN
 
 /*===========================================================================*
  *                Messages for IPC server				     *

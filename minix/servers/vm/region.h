@@ -43,6 +43,7 @@ typedef struct vir_region {
 	mem_type_t	*def_memtype; /* Default instantiated memory type. */
 	int		remaps;
 	int		id;     /* unique id */
+	u64_t		mxv_pin_token;	/* Nonzero while EPT owns these pages. */
 
 	union {
 		phys_bytes phys;	/* VR_DIRECT */

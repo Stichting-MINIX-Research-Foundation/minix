@@ -288,6 +288,20 @@ int mxv_vmx_prepare_entry(struct mxv_vcpu *vcpu, u64_t host_rsp, u64_t host_rip)
 int mxv_vmx_exit_complete(struct mxv_vcpu *vcpu);
 int mxv_vmx_entry_failed(struct mxv_vcpu *vcpu);
 
+/* MXV Phase-2 kernel-owned pin and EPT memslot API. */
+int mxv_pin_range(endpoint_t owner, vir_bytes user_virt, u64_t size,
+	u64_t *token);
+int mxv_pin_release(endpoint_t owner, u64_t token);
+int mxv_vm_create(endpoint_t owner, u64_t *handle);
+int mxv_vm_destroy(endpoint_t owner, u64_t handle);
+int mxv_mem_attach(endpoint_t owner, u64_t vm_handle, u64_t pin_token,
+	u64_t gpa, u64_t size, u32_t flags, u32_t slot_id,
+	u64_t *generation);
+int mxv_mem_detach(endpoint_t owner, u64_t vm_handle, u32_t slot_id,
+	u64_t generation);
+u64_t mxv_vm_eptp(endpoint_t owner, u64_t vm_handle);
+void mxv_owner_died(endpoint_t owner);
+
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"
 
